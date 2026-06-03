@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(zarya VERSION 0.1.0 LANGUAGES CXX)
+project(zarya VERSION 0.2.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -50,9 +50,13 @@ set(ZARYA_SOURCES
     src/app/Application.cpp
     src/ui/MainWindow.cpp
     src/ui/ProfileDialog.cpp
+    src/ui/SettingsDialog.cpp
+    src/ui/ImportVlessDialog.cpp
     src/ui/models/ProfileTableModel.cpp
     ${ZARYA_CORE_SOURCES}
     src/storage/ProfileStore.cpp
+    src/storage/AppSettings.cpp
+    src/import/VlessUriParser.cpp
     src/platform/Platform.cpp
     src/storage/AppPaths.cpp
     ${ZARYA_DOMAIN_SOURCES}
@@ -62,6 +66,8 @@ set(ZARYA_HEADERS
     src/app/Application.h
     src/ui/MainWindow.h
     src/ui/ProfileDialog.h
+    src/ui/SettingsDialog.h
+    src/ui/ImportVlessDialog.h
     src/ui/models/ProfileTableModel.h
     src/core/ICoreAdapter.h
     src/core/XrayAdapter.h
@@ -70,6 +76,8 @@ set(ZARYA_HEADERS
     src/core/SingBoxAdapter.h
     src/core/CoreManager.h
     src/storage/ProfileStore.h
+    src/storage/AppSettings.h
+    src/import/VlessUriParser.h
     src/platform/Platform.h
     src/storage/AppPaths.h
     src/domain/Profile.h
@@ -100,7 +108,9 @@ add_executable(zarya_xray_config_test
     ${ZARYA_CORE_SOURCES}
     ${ZARYA_DOMAIN_SOURCES}
     src/storage/ProfileStore.cpp
+    src/storage/AppSettings.cpp
     src/storage/AppPaths.cpp
+    src/platform/Platform.cpp
 )
 
 target_include_directories(zarya_xray_config_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)

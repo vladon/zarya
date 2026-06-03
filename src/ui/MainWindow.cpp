@@ -1,8 +1,10 @@
 #include "ui/MainWindow.h"
 
-#include "platform/Platform.h"
 #include "storage/AppPaths.h"
+#include "storage/AppSettings.h"
+#include "ui/ImportVlessDialog.h"
 #include "ui/ProfileDialog.h"
+#include "ui/SettingsDialog.h"
 
 #include <QFile>
 #include <QFileInfo>
@@ -28,7 +30,8 @@ MainWindow::MainWindow(QWidget* parent)
     setupConnections();
     loadProfilesOnStartup();
     updateStatusBar();
-    appendLog(QStringLiteral("Zarya started. Profiles: %1").arg(m_profileStore.filePath()));
+    appendLog(QStringLiteral("Zarya 0.2 started. Profiles: %1").arg(m_profileStore.filePath()));
+    appendLog(QStringLiteral("Xray path: %1").arg(AppSettings::instance().resolvedXrayPath()));
 }
 
 void MainWindow::setupUi()
@@ -64,12 +67,16 @@ void MainWindow::setupMenuBar()
     m_saveAction = fileMenu->addAction(QStringLiteral("&Save profiles"));
     m_loadAction = fileMenu->addAction(QStringLiteral("&Reload profiles"));
     fileMenu->addSeparator();
+    m_settingsAction = fileMenu->addAction(QStringLiteral("&Settings…"));
+    fileMenu->addSeparator();
     fileMenu->addAction(QStringLiteral("E&xit"), this, &QWidget::close);
 
     auto* profileMenu = menuBar()->addMenu(QStringLiteral("&Profiles"));
     m_addAction = profileMenu->addAction(QStringLiteral("&Add…"));
     m_editAction = profileMenu->addAction(QStringLiteral("&Edit…"));
     m_deleteAction = profileMenu->addAction(QStringLiteral("&Delete"));
+    profileMenu->addSeparator();
+    m_importAction = profileMenu->addAction(QStringLiteral("Import &VLESS link…"));
 
     auto* coreMenu = menuBar()->addMenu(QStringLiteral("&Core"));
     m_startAction = coreMenu->addAction(QStringLiteral("&Start"));
@@ -87,6 +94,7 @@ void MainWindow::setupToolBar()
     m_toolBar->addAction(m_addAction);
     m_toolBar->addAction(m_editAction);
     m_toolBar->addAction(m_deleteAction);
+    m_toolBar->addAction(m_importAction);
     m_toolBar->addSeparator();
     m_toolBar->addAction(m_startAction);
     m_toolBar->addAction(m_stopAction);
@@ -100,8 +108,10 @@ void MainWindow::setupConnections()
     connect(m_addAction, &QAction::triggered, this, &MainWindow::onAddProfile);
     connect(m_editAction, &QAction::triggered, this, &MainWindow::onEditProfile);
     connect(m_deleteAction, &QAction::triggered, this, &MainWindow::onDeleteProfile);
+    connect(m_importAction, &QAction::triggered, this, &MainWindow::onImportVless);
     connect(m_saveAction, &QAction::triggered, this, &MainWindow::onSaveProfiles);
     connect(m_loadAction, &QAction::triggered, this, &MainWindow::onLoadProfiles);
+    connect(m_settingsAction, &QAction::triggered, this, &MainWindow::onSettings);
     connect(m_startAction, &QAction::triggered, this, &MainWindow::onStartCore);
     connect(m_stopAction, &QAction::triggered, this, &MainWindow::onStopCore);
 
@@ -118,9 +128,13 @@ void MainWindow::appendLog(const QString& line)
 
 void MainWindow::updateStatusBar()
 {
+    const AppSettings& settings = AppSettings::instance();
     if (m_coreManager.isRunning()) {
         statusBar()->showMessage(
-            QStringLiteral("Running: %1").arg(m_coreManager.runningCoreName()));
+            QStringLiteral("Running: %1 | SOCKS 127.0.0.1:%2 | HTTP 127.0.0.1:%3")
+                .arg(m_coreManager.runningCoreName())
+                .arg(settings.socksPort())
+                .arg(settings.httpPort()));
         m_startAction->setEnabled(false);
         m_stopAction->setEnabled(true);
     } else {
@@ -141,7 +155,7 @@ int MainWindow::selectedRow() const
 
 void MainWindow::onAddProfile()
 {
-    Profile profile = Profile::createDefault();
+    Profile profile = Profile::createVlessRealityDefault();
     if (!ProfileDialog::editProfile(this, profile)) {
         return;
     }
@@ -186,6 +200,22 @@ void MainWindow::onDeleteProfile()
     appendLog(QStringLiteral("Deleted profile: %1").arg(name));
 }
 
+void MainWindow::onImportVless()
+{
+    ImportVlessDialog dialog(this);
+    if (dialog.exec() != QDialog::Accepted) {
+        return;
+    }
+
+    const QVector<Profile> imported = dialog.importedProfiles();
+    for (const Profile& profile : imported) {
+        m_tableModel.addProfile(profile);
+        appendLog(QStringLiteral("Imported profile: %1").arg(profile.name));
+    }
+
+    onSaveProfiles();
+}
+
 void MainWindow::onSaveProfiles()
 {
     QString error;
@@ -212,6 +242,14 @@ void MainWindow::onLoadProfiles()
                   .arg(m_profileStore.filePath()));
 }
 
+void MainWindow::onSettings()
+{
+    SettingsDialog dialog(this);
+    dialog.exec();
+    appendLog(QStringLiteral("Settings updated. Xray path: %1")
+                  .arg(AppSettings::instance().resolvedXrayPath()));
+}
+
 void MainWindow::loadProfilesOnStartup()
 {
     QString error;
@@ -231,17 +269,6 @@ ICoreAdapter* MainWindow::adapterFor(CoreType type)
         return &m_singBoxAdapter;
     }
     return nullptr;
-}
-
-QString MainWindow::coreExecutablePath(CoreType type) const
-{
-    switch (type) {
-    case CoreType::Xray:
-        return Platform::defaultXrayExecutablePath();
-    case CoreType::SingBox:
-        return Platform::defaultSingBoxExecutablePath();
-    }
-    return {};
 }
 
 QString MainWindow::configPathFor(CoreType type) const
@@ -285,12 +312,21 @@ void MainWindow::onStartCore()
         return;
     }
 
+    if (profile.coreType != CoreType::Xray) {
+        QMessageBox::information(this, QStringLiteral("Start core"),
+                                 QStringLiteral("Only Xray profiles can be started in this "
+                                                "milestone."));
+        return;
+    }
+
     ICoreAdapter* adapter = adapterFor(profile.coreType);
     if (!adapter) {
         QMessageBox::warning(this, QStringLiteral("Start core"),
                              QStringLiteral("No adapter for selected core type."));
         return;
     }
+
+    appendLog(QStringLiteral("Generating config…"));
 
     const ConfigGenerationResult generation = adapter->generateConfig(profile);
     if (!generation.success) {
@@ -307,22 +343,36 @@ void MainWindow::onStartCore()
         return;
     }
 
-    appendLog(QStringLiteral("Wrote config: %1").arg(configPath));
+    appendLog(QStringLiteral("Config path: %1").arg(configPath));
 
-    const QString executablePath = coreExecutablePath(profile.coreType);
+    const QString executablePath = AppSettings::instance().resolvedXrayPath();
     if (!QFileInfo::exists(executablePath)) {
         const QString message =
-            QStringLiteral("Core executable not found:\n%1\n\nPlace the binary under ./cores/")
+            QStringLiteral("Xray executable not found:\n%1\n\nConfigure the path in Settings "
+                           "(e.g. .\\cores\\xray\\xray.exe).")
                 .arg(executablePath);
-        QMessageBox::warning(this, QStringLiteral("Core not found"), message);
+        QMessageBox::warning(this, QStringLiteral("Xray not found"), message);
         appendLog(message);
         return;
     }
 
-    const QStringList arguments = adapter->argumentsForConfig(configPath);
-    appendLog(QStringLiteral("Starting %1: %2 %3")
-                  .arg(adapter->displayName(), executablePath, arguments.join(QLatin1Char(' '))));
-    m_coreManager.start(executablePath, adapter->displayName(), arguments);
+    appendLog(QStringLiteral("Validating Xray config…"));
+    const CoreValidationResult validation =
+        m_coreManager.validateConfig(executablePath, configPath);
+    if (!validation.output.isEmpty()) {
+        appendLog(validation.output);
+    }
+    if (!validation.success) {
+        QMessageBox::warning(this, QStringLiteral("Config validation failed"),
+                             validation.errorMessage);
+        appendLog(QStringLiteral("Validation failed."));
+        return;
+    }
+    appendLog(QStringLiteral("Validation OK"));
+
+    const AppSettings& settings = AppSettings::instance();
+    appendLog(QStringLiteral("Starting Xray…"));
+    m_coreManager.startCore(executablePath, configPath, adapter->displayName());
 }
 
 void MainWindow::onStopCore()
@@ -333,7 +383,10 @@ void MainWindow::onStopCore()
 
 void MainWindow::onCoreStarted(const QString& coreName)
 {
-    appendLog(QStringLiteral("Core started: %1").arg(coreName));
+    const AppSettings& settings = AppSettings::instance();
+    appendLog(QStringLiteral("%1 started").arg(coreName));
+    appendLog(QStringLiteral("SOCKS: 127.0.0.1:%1").arg(settings.socksPort()));
+    appendLog(QStringLiteral("HTTP: 127.0.0.1:%1").arg(settings.httpPort()));
     updateStatusBar();
 }
 
@@ -357,9 +410,9 @@ void MainWindow::onCoreError(const QString& message)
 
 void MainWindow::onAbout()
 {
-    QMessageBox::about(this, QStringLiteral("About Zarya"),
-                       QStringLiteral("Zarya 0.1.0\n\nNative proxy profile manager "
-                                      "with external Xray / sing-box cores."));
+    QMessageBox::about(
+        this, QStringLiteral("About Zarya"),
+        QStringLiteral("Zarya 0.2\n\nNative proxy profile manager with Xray VLESS REALITY support."));
 }
 
 } // namespace zarya

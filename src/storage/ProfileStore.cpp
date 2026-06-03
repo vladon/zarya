@@ -27,22 +27,31 @@ QJsonObject profileToJson(const Profile& profile)
     object.insert(QStringLiteral("id"), profile.id);
     object.insert(QStringLiteral("name"), profile.name);
     object.insert(QStringLiteral("protocol"), protocolTypeToString(profile.protocol));
+    object.insert(QStringLiteral("coreType"), coreTypeToString(profile.coreType));
     object.insert(QStringLiteral("address"), profile.address);
     object.insert(QStringLiteral("port"), profile.port);
+    object.insert(QStringLiteral("uuid"), profile.uuidPassword);
     object.insert(QStringLiteral("uuidPassword"), profile.uuidPassword);
-    object.insert(QStringLiteral("security"), profile.security);
-    object.insert(QStringLiteral("network"), profile.network);
-    object.insert(QStringLiteral("sni"), profile.sni);
+    object.insert(QStringLiteral("encryption"), profile.encryption);
     object.insert(QStringLiteral("flow"), profile.flow);
     object.insert(QStringLiteral("remark"), profile.remark);
     object.insert(QStringLiteral("enabled"), profile.enabled);
-    object.insert(QStringLiteral("coreType"), coreTypeToString(profile.coreType));
 
+    object.insert(QStringLiteral("network"), profile.network);
+    insertIfNotEmpty(object, QStringLiteral("path"), profile.path);
+    insertIfNotEmpty(object, QStringLiteral("host"), profile.host);
+    insertIfNotEmpty(object, QStringLiteral("headerType"), profile.headerType);
+
+    object.insert(QStringLiteral("security"), profile.security);
     insertIfNotEmpty(object, QStringLiteral("serverName"), profile.serverName);
+    insertIfNotEmpty(object, QStringLiteral("sni"), profile.sni);
     insertIfNotEmpty(object, QStringLiteral("publicKey"), profile.publicKey);
     insertIfNotEmpty(object, QStringLiteral("shortId"), profile.shortId);
     insertIfNotEmpty(object, QStringLiteral("spiderX"), profile.spiderX);
     insertIfNotEmpty(object, QStringLiteral("fingerprint"), profile.fingerprint);
+    if (profile.allowInsecure) {
+        object.insert(QStringLiteral("allowInsecure"), true);
+    }
 
     return object;
 }
@@ -53,22 +62,40 @@ Profile profileFromJson(const QJsonObject& object)
     profile.id = object.value(QStringLiteral("id")).toString();
     profile.name = object.value(QStringLiteral("name")).toString();
     profile.protocol = protocolTypeFromString(object.value(QStringLiteral("protocol")).toString());
+    profile.coreType = coreTypeFromString(object.value(QStringLiteral("coreType")).toString());
     profile.address = object.value(QStringLiteral("address")).toString();
     profile.port = object.value(QStringLiteral("port")).toInt(443);
-    profile.uuidPassword = object.value(QStringLiteral("uuidPassword")).toString();
+
+    profile.uuidPassword = object.value(QStringLiteral("uuid")).toString();
+    if (profile.uuidPassword.isEmpty()) {
+        profile.uuidPassword = object.value(QStringLiteral("uuidPassword")).toString();
+    }
+
+    profile.encryption = object.value(QStringLiteral("encryption")).toString();
+    if (profile.encryption.isEmpty()) {
+        profile.encryption = QStringLiteral("none");
+    }
+
     profile.security = object.value(QStringLiteral("security")).toString();
     profile.network = object.value(QStringLiteral("network")).toString();
+    if (profile.network.isEmpty()) {
+        profile.network = QStringLiteral("tcp");
+    }
+    profile.path = object.value(QStringLiteral("path")).toString();
+    profile.host = object.value(QStringLiteral("host")).toString();
+    profile.headerType = object.value(QStringLiteral("headerType")).toString();
+
     profile.sni = object.value(QStringLiteral("sni")).toString();
     profile.flow = object.value(QStringLiteral("flow")).toString();
     profile.remark = object.value(QStringLiteral("remark")).toString();
     profile.enabled = object.value(QStringLiteral("enabled")).toBool(true);
-    profile.coreType = coreTypeFromString(object.value(QStringLiteral("coreType")).toString());
 
     profile.serverName = object.value(QStringLiteral("serverName")).toString();
     profile.publicKey = object.value(QStringLiteral("publicKey")).toString();
     profile.shortId = object.value(QStringLiteral("shortId")).toString();
     profile.spiderX = object.value(QStringLiteral("spiderX")).toString();
     profile.fingerprint = object.value(QStringLiteral("fingerprint")).toString();
+    profile.allowInsecure = object.value(QStringLiteral("allowInsecure")).toBool(false);
 
     if (profile.id.isEmpty()) {
         profile.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
@@ -134,7 +161,7 @@ bool ProfileStore::save(const QVector<Profile>& profiles, QString* errorMessage)
     }
 
     QJsonObject root;
-    root.insert(QStringLiteral("version"), 1);
+    root.insert(QStringLiteral("version"), 2);
     root.insert(QStringLiteral("profiles"), array);
 
     QFile file(m_filePath);

@@ -8,10 +8,10 @@
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QFormLayout>
-#include <QGroupBox>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QSpinBox>
+#include <QTabWidget>
 #include <QUuid>
 #include <QVBoxLayout>
 
@@ -21,9 +21,12 @@ ProfileDialog::ProfileDialog(QWidget* parent)
     : QDialog(parent)
 {
     setWindowTitle(QStringLiteral("Profile"));
+    m_tabs = new QTabWidget(this);
 
-    m_nameEdit = new QLineEdit(this);
-    m_protocolCombo = new QComboBox(this);
+    auto* basicPage = new QWidget(this);
+    auto* basicForm = new QFormLayout(basicPage);
+    m_nameEdit = new QLineEdit(basicPage);
+    m_protocolCombo = new QComboBox(basicPage);
     m_protocolCombo->addItem(QStringLiteral("VLESS"), static_cast<int>(ProtocolType::Vless));
     m_protocolCombo->addItem(QStringLiteral("VMess"), static_cast<int>(ProtocolType::Vmess));
     m_protocolCombo->addItem(QStringLiteral("Trojan"), static_cast<int>(ProtocolType::Trojan));
@@ -31,77 +34,83 @@ ProfileDialog::ProfileDialog(QWidget* parent)
                              static_cast<int>(ProtocolType::Shadowsocks));
     m_protocolCombo->addItem(QStringLiteral("SOCKS"), static_cast<int>(ProtocolType::Socks));
 
-    m_coreCombo = new QComboBox(this);
+    m_coreCombo = new QComboBox(basicPage);
     m_coreCombo->addItem(QStringLiteral("Xray"), static_cast<int>(CoreType::Xray));
     m_coreCombo->addItem(QStringLiteral("SingBox"), static_cast<int>(CoreType::SingBox));
 
-    m_addressEdit = new QLineEdit(this);
-    m_portSpin = new QSpinBox(this);
+    m_addressEdit = new QLineEdit(basicPage);
+    m_portSpin = new QSpinBox(basicPage);
     m_portSpin->setRange(1, 65535);
     m_portSpin->setValue(443);
+    m_uuidEdit = new QLineEdit(basicPage);
+    m_encryptionEdit = new QLineEdit(basicPage);
+    m_encryptionEdit->setPlaceholderText(QStringLiteral("none"));
+    m_enabledCheck = new QCheckBox(QStringLiteral("Enabled"), basicPage);
+    m_enabledCheck->setChecked(true);
 
-    m_uuidEdit = new QLineEdit(this);
-    m_securityCombo = new QComboBox(this);
+    basicForm->addRow(QStringLiteral("Name"), m_nameEdit);
+    basicForm->addRow(QStringLiteral("Protocol"), m_protocolCombo);
+    basicForm->addRow(QStringLiteral("Core"), m_coreCombo);
+    basicForm->addRow(QStringLiteral("Address"), m_addressEdit);
+    basicForm->addRow(QStringLiteral("Port"), m_portSpin);
+    basicForm->addRow(QStringLiteral("UUID"), m_uuidEdit);
+    basicForm->addRow(QStringLiteral("Encryption"), m_encryptionEdit);
+    basicForm->addRow(QString(), m_enabledCheck);
+
+    auto* transportPage = new QWidget(this);
+    auto* transportForm = new QFormLayout(transportPage);
+    m_networkCombo = new QComboBox(transportPage);
+    m_networkCombo->addItem(QStringLiteral("tcp"), QStringLiteral("tcp"));
+    m_networkCombo->addItem(QStringLiteral("ws"), QStringLiteral("ws"));
+    m_networkCombo->addItem(QStringLiteral("grpc"), QStringLiteral("grpc"));
+    m_pathEdit = new QLineEdit(transportPage);
+    m_hostEdit = new QLineEdit(transportPage);
+    m_headerTypeEdit = new QLineEdit(transportPage);
+    transportForm->addRow(QStringLiteral("Network"), m_networkCombo);
+    transportForm->addRow(QStringLiteral("Path"), m_pathEdit);
+    transportForm->addRow(QStringLiteral("Host"), m_hostEdit);
+    transportForm->addRow(QStringLiteral("Header type"), m_headerTypeEdit);
+
+    m_realityTab = new QWidget(this);
+    auto* realityForm = new QFormLayout(m_realityTab);
+    m_securityCombo = new QComboBox(m_realityTab);
     m_securityCombo->addItem(QStringLiteral("none"), QStringLiteral("none"));
     m_securityCombo->addItem(QStringLiteral("tls"), QStringLiteral("tls"));
     m_securityCombo->addItem(QStringLiteral("reality"), QStringLiteral("reality"));
-
-    m_networkEdit = new QLineEdit(this);
-    m_networkEdit->setPlaceholderText(QStringLiteral("tcp"));
-
-    m_serverNameEdit = new QLineEdit(this);
-    m_serverNameEdit->setPlaceholderText(QStringLiteral("REALITY / TLS server name"));
-
-    m_sniEdit = new QLineEdit(this);
-    m_sniEdit->setPlaceholderText(QStringLiteral("Legacy alias for server name"));
-
-    m_flowEdit = new QLineEdit(this);
-    m_flowEdit->setPlaceholderText(QStringLiteral("xtls-rprx-vision"));
-
-    m_publicKeyEdit = new QLineEdit(this);
-    m_publicKeyEdit->setPlaceholderText(QStringLiteral("REALITY public key (pbk)"));
-
-    m_shortIdEdit = new QLineEdit(this);
-    m_shortIdEdit->setPlaceholderText(QStringLiteral("Hex short ID (sid)"));
-
-    m_fingerprintEdit = new QLineEdit(this);
-    m_fingerprintEdit->setPlaceholderText(QStringLiteral("chrome"));
-
-    m_spiderXEdit = new QLineEdit(this);
-    m_spiderXEdit->setPlaceholderText(QStringLiteral("/"));
-
-    m_remarkEdit = new QLineEdit(this);
-    m_enabledCheck = new QCheckBox(QStringLiteral("Enabled"), this);
-    m_enabledCheck->setChecked(true);
-
-    auto* realityLayout = new QFormLayout;
-    realityLayout->addRow(QStringLiteral("Public key"), m_publicKeyEdit);
-    realityLayout->addRow(QStringLiteral("Short ID"), m_shortIdEdit);
-    realityLayout->addRow(QStringLiteral("Fingerprint"), m_fingerprintEdit);
-    realityLayout->addRow(QStringLiteral("Spider X"), m_spiderXEdit);
-
-    auto* realityBox = new QGroupBox(QStringLiteral("REALITY"), this);
-    realityBox->setLayout(realityLayout);
-    m_realityGroup = realityBox;
-
-    auto* form = new QFormLayout;
-    form->addRow(QStringLiteral("Name"), m_nameEdit);
-    form->addRow(QStringLiteral("Protocol"), m_protocolCombo);
-    form->addRow(QStringLiteral("Core"), m_coreCombo);
-    form->addRow(QStringLiteral("Address"), m_addressEdit);
-    form->addRow(QStringLiteral("Port"), m_portSpin);
-    form->addRow(QStringLiteral("UUID / Password"), m_uuidEdit);
-    form->addRow(QStringLiteral("Security"), m_securityCombo);
-    form->addRow(QStringLiteral("Network"), m_networkEdit);
-    form->addRow(QStringLiteral("Server name"), m_serverNameEdit);
-    form->addRow(QStringLiteral("SNI (legacy)"), m_sniEdit);
-    form->addRow(QStringLiteral("Flow"), m_flowEdit);
-    form->addRow(QString(), m_realityGroup);
-    form->addRow(QStringLiteral("Remark"), m_remarkEdit);
-    form->addRow(QString(), m_enabledCheck);
-
     connect(m_securityCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
             &ProfileDialog::onSecurityChanged);
+
+    m_serverNameEdit = new QLineEdit(m_realityTab);
+    m_publicKeyEdit = new QLineEdit(m_realityTab);
+    m_shortIdEdit = new QLineEdit(m_realityTab);
+    m_fingerprintEdit = new QLineEdit(m_realityTab);
+    m_fingerprintEdit->setPlaceholderText(QStringLiteral("chrome"));
+    m_spiderXEdit = new QLineEdit(m_realityTab);
+    m_spiderXEdit->setPlaceholderText(QStringLiteral("/"));
+
+    realityForm->addRow(QStringLiteral("Security"), m_securityCombo);
+    realityForm->addRow(QStringLiteral("Server name (SNI)"), m_serverNameEdit);
+    realityForm->addRow(QStringLiteral("Public key"), m_publicKeyEdit);
+    realityForm->addRow(QStringLiteral("Short ID"), m_shortIdEdit);
+    realityForm->addRow(QStringLiteral("Fingerprint"), m_fingerprintEdit);
+    realityForm->addRow(QStringLiteral("SpiderX"), m_spiderXEdit);
+
+    auto* advancedPage = new QWidget(this);
+    auto* advancedForm = new QFormLayout(advancedPage);
+    m_flowEdit = new QLineEdit(advancedPage);
+    m_flowEdit->setPlaceholderText(QStringLiteral("xtls-rprx-vision"));
+    m_sniEdit = new QLineEdit(advancedPage);
+    m_remarkEdit = new QLineEdit(advancedPage);
+    m_allowInsecureCheck = new QCheckBox(QStringLiteral("Allow insecure TLS"), advancedPage);
+    advancedForm->addRow(QStringLiteral("Flow"), m_flowEdit);
+    advancedForm->addRow(QStringLiteral("Legacy SNI field"), m_sniEdit);
+    advancedForm->addRow(QStringLiteral("Remark"), m_remarkEdit);
+    advancedForm->addRow(QString(), m_allowInsecureCheck);
+
+    m_tabs->addTab(basicPage, QStringLiteral("Basic"));
+    m_tabs->addTab(transportPage, QStringLiteral("Transport"));
+    m_tabs->addTab(m_realityTab, QStringLiteral("TLS / REALITY"));
+    m_tabs->addTab(advancedPage, QStringLiteral("Advanced"));
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     connect(buttons, &QDialogButtonBox::accepted, this, [this]() {
@@ -115,11 +124,9 @@ ProfileDialog::ProfileDialog(QWidget* parent)
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
     auto* layout = new QVBoxLayout(this);
-    layout->addLayout(form);
+    layout->addWidget(m_tabs);
     layout->addWidget(buttons);
-    resize(520, 560);
-
-    updateRealityFieldVisibility();
+    resize(520, 420);
 }
 
 void ProfileDialog::setProfile(const Profile& profile)
@@ -156,29 +163,29 @@ bool ProfileDialog::validateInput(QString* errorMessage) const
 void ProfileDialog::onSecurityChanged(int index)
 {
     Q_UNUSED(index);
-    updateRealityFieldVisibility();
-
-    if (m_securityCombo->currentData().toString() == QStringLiteral("reality")
-        && m_flowEdit->text().trimmed().isEmpty()) {
-        m_flowEdit->setText(QStringLiteral("xtls-rprx-vision"));
-    }
-    if (m_securityCombo->currentData().toString() == QStringLiteral("reality")
-        && m_networkEdit->text().trimmed().isEmpty()) {
-        m_networkEdit->setText(QStringLiteral("tcp"));
+    updateRealityTabVisibility();
+    if (m_securityCombo->currentData().toString() == QStringLiteral("reality")) {
+        if (m_networkCombo->currentText() != QStringLiteral("tcp")) {
+            m_networkCombo->setCurrentText(QStringLiteral("tcp"));
+        }
+        if (m_fingerprintEdit->text().trimmed().isEmpty()) {
+            m_fingerprintEdit->setText(QStringLiteral("chrome"));
+        }
     }
 }
 
-void ProfileDialog::updateRealityFieldVisibility()
+void ProfileDialog::updateRealityTabVisibility()
 {
-    const bool reality =
-        m_securityCombo->currentData().toString() == QStringLiteral("reality");
-    m_realityGroup->setVisible(reality);
+    const bool reality = m_securityCombo->currentData().toString() == QStringLiteral("reality");
+    m_tabs->setTabEnabled(m_tabs->indexOf(m_realityTab), true);
+    Q_UNUSED(reality);
 }
 
 void ProfileDialog::populateFromProfile(const Profile& profile)
 {
     m_profileId = profile.id;
     m_nameEdit->setText(profile.name);
+
     const int protocolIndex = m_protocolCombo->findData(static_cast<int>(profile.protocol));
     if (protocolIndex >= 0) {
         m_protocolCombo->setCurrentIndex(protocolIndex);
@@ -187,9 +194,22 @@ void ProfileDialog::populateFromProfile(const Profile& profile)
     if (coreIndex >= 0) {
         m_coreCombo->setCurrentIndex(coreIndex);
     }
+
     m_addressEdit->setText(profile.address);
     m_portSpin->setValue(profile.port);
     m_uuidEdit->setText(profile.uuidPassword);
+    m_encryptionEdit->setText(profile.encryption);
+    m_enabledCheck->setChecked(profile.enabled);
+
+    const int networkIndex = m_networkCombo->findData(profile.network);
+    if (networkIndex >= 0) {
+        m_networkCombo->setCurrentIndex(networkIndex);
+    } else {
+        m_networkCombo->setCurrentText(profile.network);
+    }
+    m_pathEdit->setText(profile.path);
+    m_hostEdit->setText(profile.host);
+    m_headerTypeEdit->setText(profile.headerType);
 
     QString security = profile.security.trimmed().toLower();
     if (security.isEmpty()) {
@@ -198,21 +218,18 @@ void ProfileDialog::populateFromProfile(const Profile& profile)
     const int securityIndex = m_securityCombo->findData(security);
     if (securityIndex >= 0) {
         m_securityCombo->setCurrentIndex(securityIndex);
-    } else {
-        m_securityCombo->setCurrentIndex(0);
     }
 
-    m_networkEdit->setText(profile.network);
-    m_serverNameEdit->setText(profile.serverName);
-    m_sniEdit->setText(profile.sni);
-    m_flowEdit->setText(profile.flow);
+    m_serverNameEdit->setText(profile.serverName.isEmpty() ? profile.sni : profile.serverName);
     m_publicKeyEdit->setText(profile.publicKey);
     m_shortIdEdit->setText(profile.shortId);
     m_fingerprintEdit->setText(profile.fingerprint);
     m_spiderXEdit->setText(profile.spiderX);
+    m_flowEdit->setText(profile.flow);
+    m_sniEdit->setText(profile.sni);
     m_remarkEdit->setText(profile.remark);
-    m_enabledCheck->setChecked(profile.enabled);
-    updateRealityFieldVisibility();
+    m_allowInsecureCheck->setChecked(profile.allowInsecure);
+    updateRealityTabVisibility();
 }
 
 Profile ProfileDialog::profileFromFields() const
@@ -228,17 +245,29 @@ Profile ProfileDialog::profileFromFields() const
     profile.address = m_addressEdit->text().trimmed();
     profile.port = m_portSpin->value();
     profile.uuidPassword = m_uuidEdit->text().trimmed();
+    profile.encryption = m_encryptionEdit->text().trimmed().isEmpty()
+                             ? QStringLiteral("none")
+                             : m_encryptionEdit->text().trimmed();
+    profile.enabled = m_enabledCheck->isChecked();
+
+    profile.network = m_networkCombo->currentData().toString();
+    if (profile.network.isEmpty()) {
+        profile.network = m_networkCombo->currentText().trimmed();
+    }
+    profile.path = m_pathEdit->text().trimmed();
+    profile.host = m_hostEdit->text().trimmed();
+    profile.headerType = m_headerTypeEdit->text().trimmed();
+
     profile.security = m_securityCombo->currentData().toString();
-    profile.network = m_networkEdit->text().trimmed();
     profile.serverName = m_serverNameEdit->text().trimmed();
     profile.sni = m_sniEdit->text().trimmed();
-    profile.flow = m_flowEdit->text().trimmed();
     profile.publicKey = m_publicKeyEdit->text().trimmed();
     profile.shortId = m_shortIdEdit->text().trimmed();
     profile.fingerprint = m_fingerprintEdit->text().trimmed();
     profile.spiderX = m_spiderXEdit->text().trimmed();
+    profile.flow = m_flowEdit->text().trimmed();
     profile.remark = m_remarkEdit->text().trimmed();
-    profile.enabled = m_enabledCheck->isChecked();
+    profile.allowInsecure = m_allowInsecureCheck->isChecked();
     return profile;
 }
 

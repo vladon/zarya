@@ -35,7 +35,7 @@ ProfileValidationResult validateProfileForDialog(const Profile& profile)
     }
 
     if (profile.uuidPassword.trimmed().isEmpty()) {
-        return {false, QStringLiteral("UUID / password cannot be empty.")};
+        return {false, QStringLiteral("UUID is required.")};
     }
 
     if (profile.protocol == ProtocolType::Vless && profile.isSecurityReality()) {
@@ -43,30 +43,22 @@ ProfileValidationResult validateProfileForDialog(const Profile& profile)
             return {false, QStringLiteral("Public key is required for REALITY.")};
         }
         if (profile.effectiveServerName().isEmpty()) {
-            return {false,
-                    QStringLiteral("Server name (or SNI) is required for REALITY.")};
+            return {false, QStringLiteral("Server name (SNI) is required for REALITY.")};
         }
         const QString network = normalizedNetwork(profile);
-        if (!network.isEmpty() && network.compare(QStringLiteral("tcp"), Qt::CaseInsensitive) != 0) {
-            return {false, QStringLiteral("REALITY with Xray currently requires network tcp.")};
+        if (network.compare(QStringLiteral("tcp"), Qt::CaseInsensitive) != 0) {
+            return {false, QStringLiteral("REALITY with Xray requires network tcp.")};
         }
         if (!isHexShortId(profile.shortId.trimmed())) {
             return {false,
                     QStringLiteral(
                         "Short ID must be even-length hexadecimal (max 16 hex digits), or empty.")};
         }
-        const QString flow = profile.flow.trimmed();
-        if (!flow.isEmpty()
-            && flow.compare(QStringLiteral("xtls-rprx-vision"), Qt::CaseInsensitive) != 0) {
-            return {false,
-                    QStringLiteral(
-                        "For REALITY vision, flow must be xtls-rprx-vision or left empty.")};
-        }
     }
 
     if (profile.protocol == ProtocolType::Vless && profile.isSecurityTls()) {
         if (profile.effectiveServerName().isEmpty()) {
-            return {false, QStringLiteral("Server name (or SNI) is recommended for TLS.")};
+            return {false, QStringLiteral("Server name (SNI) is recommended for TLS.")};
         }
     }
 
@@ -75,20 +67,7 @@ ProfileValidationResult validateProfileForDialog(const Profile& profile)
 
 ProfileValidationResult validateProfileForXray(const Profile& profile)
 {
-    const ProfileValidationResult dialogResult = validateProfileForDialog(profile);
-    if (!dialogResult.ok) {
-        return dialogResult;
-    }
-
-    if (profile.protocol != ProtocolType::Vless) {
-        return {true, {}};
-    }
-
-    if (profile.isSecurityReality()) {
-        return {true, {}};
-    }
-
-    return {true, {}};
+    return validateProfileForDialog(profile);
 }
 
 } // namespace zarya

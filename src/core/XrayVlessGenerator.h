@@ -5,11 +5,18 @@
 
 namespace zarya {
 
+struct XrayInboundPorts {
+    int socksPort = 10808;
+    int httpPort = 10809;
+};
+
 class XrayVlessGenerator {
 public:
-    static ConfigGenerationResult generate(const Profile& profile);
+    static ConfigGenerationResult generate(const Profile& profile,
+                                           const XrayInboundPorts& ports = {});
     static QJsonObject buildProxyOutbound(const Profile& profile, QString* errorMessage);
-    static QJsonObject buildFullConfig(const QJsonObject& proxyOutbound);
+    static QJsonObject buildFullConfig(const QJsonObject& proxyOutbound,
+                                       const XrayInboundPorts& ports);
 
 private:
     static QJsonObject buildVlessUser(const Profile& profile);

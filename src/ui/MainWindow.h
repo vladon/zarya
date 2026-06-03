@@ -25,8 +25,10 @@ private slots:
     void onAddProfile();
     void onEditProfile();
     void onDeleteProfile();
+    void onImportVless();
     void onSaveProfiles();
     void onLoadProfiles();
+    void onSettings();
     void onStartCore();
     void onStopCore();
     void onCoreStarted(const QString& coreName);
@@ -45,7 +47,6 @@ private:
     int selectedRow() const;
     bool writeConfigFile(const QString& path, const QJsonObject& config, QString* error) const;
     ICoreAdapter* adapterFor(CoreType type);
-    QString coreExecutablePath(CoreType type) const;
     QString configPathFor(CoreType type) const;
     void loadProfilesOnStartup();
 
@@ -62,10 +63,12 @@ private:
     QAction* m_addAction = nullptr;
     QAction* m_editAction = nullptr;
     QAction* m_deleteAction = nullptr;
+    QAction* m_importAction = nullptr;
     QAction* m_startAction = nullptr;
     QAction* m_stopAction = nullptr;
     QAction* m_saveAction = nullptr;
     QAction* m_loadAction = nullptr;
+    QAction* m_settingsAction = nullptr;
 };
 
 } // namespace zarya
