@@ -1,25 +1,21 @@
-# Run zarya_xray_config_test with Qt MinGW toolchain (Windows).
+# Run zarya_xray_config_test using Visual Studio 2026 (MSVC) + Qt msvc2022_64.
 $ErrorActionPreference = "Stop"
 
-$QtRoot = if ($env:QT_ROOT) { $env:QT_ROOT } else { "C:\Qt" }
-$QtVersion = if ($env:QT_VERSION) { $env:QT_VERSION } else { "6.8.3" }
-$MingwKit = "$QtRoot\$QtVersion\mingw_64"
-$MingwTools = "$QtRoot\Tools\mingw1310_64"
-
-if (-not (Test-Path "$MingwKit\bin\qmake.exe")) {
-    Write-Error "Qt not found at $MingwKit. Set QT_ROOT / QT_VERSION or install via: python -m aqt install-qt windows desktop $QtVersion win64_mingw -O $QtRoot"
-}
-
-$env:Path = "$MingwTools\bin;$MingwKit\bin;C:\Program Files\CMake\bin;$env:Path"
 $RepoRoot = Split-Path -Parent $PSScriptRoot
+& (Join-Path $PSScriptRoot "configure-msvc2026.ps1")
 
+$Config = "Release"
 Push-Location $RepoRoot
 try {
-    if (-not (Test-Path build\CMakeCache.txt)) {
-        cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="$MingwKit" -DCMAKE_BUILD_TYPE=Release
+    cmake --build build --config $Config --target zarya_xray_config_test -j 8
+    $testExe = Join-Path $RepoRoot "build\$Config\zarya_xray_config_test.exe"
+    if (-not (Test-Path $testExe)) {
+        Write-Error "Test binary not found: $testExe"
     }
-    cmake --build build --target zarya_xray_config_test -j 4
-    & .\build\zarya_xray_config_test.exe
+
+    $QtMsvc = if ($env:QT_MSVC_DIR) { $env:QT_MSVC_DIR } else { "C:\Qt\6.8.3\msvc2022_64" }
+    $env:Path = "$QtMsvc\bin;$env:Path"
+    & $testExe
     exit $LASTEXITCODE
 } finally {
     Pop-Location
