@@ -5,6 +5,8 @@
 #include "domain/Profile.h"
 #include "domain/ProtocolType.h"
 #include "domain/Subscription.h"
+#include "app/StartupOptions.h"
+#include "packaging/PackagingInfo.h"
 #include "storage/AppPaths.h"
 #include "storage/AppSettings.h"
 #include "ui/ImportVlessDialog.h"
@@ -18,6 +20,7 @@
 #include <QComboBox>
 #include <QEvent>
 #include <QSettings>
+#include <QTimer>
 #include <QFile>
 #include <QFileInfo>
 #include <QHeaderView>
@@ -49,7 +52,8 @@ MainWindow::MainWindow(QWidget* parent)
     restoreWindowState();
     loadAllOnStartup();
     updateStatusBar();
-    appendLog(QStringLiteral("Zarya 0.9 started. Profiles: %1").arg(m_profileStore.filePath()));
+    appendLog(QStringLiteral("Zarya %1 started. Profiles: %2")
+                  .arg(PackagingInfo::versionString(), m_profileStore.filePath()));
     appendLog(QStringLiteral("System proxy backend: %1 (support: %2)")
                   .arg(m_systemProxy.backendName(), m_systemProxy.supportLevel()));
     if (!m_systemProxy.limitations().isEmpty()) {
@@ -263,7 +267,9 @@ QString MainWindow::routingStatusText() const
 void MainWindow::setupAppController()
 {
     m_appController.setDialogParent(this);
-    m_appController.setAfterCoreStartedCallback([this]() { tryAutoEnableSystemProxy(); });
+    m_appController.setAfterCoreStartedCallback([this]() {
+        tryAutoEnableSystemProxy(m_appController.lastStartWasAutostart());
+    });
     m_appController.setSaveApplicationStateCallback([this](QString* error) {
         saveWindowState();
         return saveAll(error);
@@ -378,7 +384,7 @@ QString MainWindow::trayStatusText() const
 
 void MainWindow::saveWindowState()
 {
-    QSettings settings;
+    QSettings& settings = AppSettings::settings();
     settings.setValue(QStringLiteral("window/geometry"), saveGeometry());
     settings.setValue(QStringLiteral("window/state"), saveState());
     if (m_splitter) {
@@ -393,7 +399,7 @@ void MainWindow::saveWindowState()
 
 void MainWindow::restoreWindowState()
 {
-    QSettings settings;
+    QSettings& settings = AppSettings::settings();
     if (settings.contains(QStringLiteral("window/geometry"))) {
         restoreGeometry(settings.value(QStringLiteral("window/geometry")).toByteArray());
     }
@@ -490,10 +496,94 @@ bool MainWindow::confirmSystemProxyChangeIfNeeded()
            == QMessageBox::Yes;
 }
 
-void MainWindow::tryAutoEnableSystemProxy()
+void MainWindow::logStartupContext(const StartupOptions& options)
+{
+    if (AppPaths::isPortableMode()) {
+        appendLog(QStringLiteral("Portable mode enabled"));
+    }
+    appendLog(QStringLiteral("Data dir: %1").arg(AppPaths::dataDir()));
+    appendLog(QStringLiteral("Runtime dir: %1").arg(AppPaths::runtimeDir()));
+    appendLog(QStringLiteral("Packaging: %1 %2")
+                  .arg(PackagingInfo::versionString(), PackagingInfo::platformName()));
+    appendLog(QStringLiteral("Log level: %1")
+                  .arg(StartupOptionsParser::logLevelToString(options.logLevel)));
+}
+
+void MainWindow::finishStartup(const StartupOptions& options)
 {
     const AppSettings& settings = AppSettings::instance();
-    if (!settings.autoEnableSystemProxyOnStart()) {
+    const bool startMinimized =
+        options.startMinimizedEffective(settings.startMinimizedToTray());
+
+    if (startMinimized) {
+        if (trayIsAvailable()) {
+            appendLog(QStringLiteral("Starting minimized to tray"));
+            hideToTray(false);
+        } else {
+            appendLog(QStringLiteral("Tray unavailable; showing main window"));
+            show();
+        }
+    } else {
+        show();
+    }
+
+    QString profileIdToStart;
+    if (!options.startProfileId.isEmpty()) {
+        profileIdToStart = options.startProfileId;
+    } else if (!options.noAutostartProfile && settings.autoStartLastProfile()) {
+        profileIdToStart = settings.lastStartedProfileId();
+    }
+
+    if (profileIdToStart.isEmpty()) {
+        return;
+    }
+
+    const int delayMs = settings.autoStartDelaySeconds() * 1000;
+    appendLog(QStringLiteral("Scheduling profile autostart in %1 seconds")
+                  .arg(settings.autoStartDelaySeconds()));
+
+    QTimer::singleShot(delayMs, this, [this, profileIdToStart]() {
+        if (!startProfileById(profileIdToStart, true)) {
+            notifyTray(QStringLiteral("Zarya"),
+                       QStringLiteral("Autostart profile failed. See log for details."));
+        }
+    });
+}
+
+bool MainWindow::startProfileById(const QString& profileId, bool fromAutostart)
+{
+    Profile* profile = profileById(profileId);
+    if (!profile) {
+        appendLog(QStringLiteral("Autostart profile failed: profile not found (%1)").arg(profileId));
+        return false;
+    }
+    if (!profile->enabled) {
+        appendLog(QStringLiteral("Autostart profile failed: profile is disabled (%1)")
+                      .arg(profile->name));
+        return false;
+    }
+
+    appendLog(QStringLiteral("Autostarting profile: %1").arg(profile->name));
+    selectProfileById(profileId);
+    return m_appController.startProfile(*profile, fromAutostart);
+}
+
+Profile* MainWindow::profileById(const QString& profileId)
+{
+    for (Profile& profile : m_allProfiles) {
+        if (profile.id == profileId) {
+            return &profile;
+        }
+    }
+    return nullptr;
+}
+
+void MainWindow::tryAutoEnableSystemProxy(bool fromAutostart)
+{
+    const AppSettings& settings = AppSettings::instance();
+    const bool shouldEnable = fromAutostart ? settings.autoEnableSystemProxyAfterAutoStart()
+                                            : settings.autoEnableSystemProxyOnStart();
+    if (!shouldEnable) {
         return;
     }
 

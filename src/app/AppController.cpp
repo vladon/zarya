@@ -116,8 +116,14 @@ QString AppController::configPathFor(CoreType type) const
     return {};
 }
 
-bool AppController::startProfile(const Profile& profile)
+bool AppController::lastStartWasAutostart() const
 {
+    return m_lastStartWasAutostart;
+}
+
+bool AppController::startProfile(const Profile& profile, bool fromAutostart)
+{
+    m_lastStartWasAutostart = fromAutostart;
     if (!profile.enabled) {
         emit logLine(QStringLiteral("Profile is disabled."));
         return false;
@@ -240,6 +246,7 @@ bool AppController::startProfile(const Profile& profile)
 
     emit logLine(QStringLiteral("Starting Xray…"));
     m_coreManager->startCore(executablePath, configPath, m_xrayAdapter->displayName());
+    AppSettings::instance().setLastStartedProfileId(profile.id);
     return true;
 }
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "app/StartupOptions.h"
+
 #include <QApplication>
 
 namespace zarya {
@@ -11,6 +13,11 @@ public:
     Application(int& argc, char** argv);
 
     static Application* instance();
+
+    const StartupOptions& startupOptions() const;
+
+private:
+    StartupOptions m_startupOptions;
 };
 
 } // namespace zarya

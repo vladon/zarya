@@ -6,7 +6,15 @@ namespace zarya {
 
 class AppPaths {
 public:
+    static void initialize(bool portableRequested);
+
+    static bool isPortableMode();
+    static QString applicationDir();
+    static QString dataDir();
+    static QString configDir();
+    static QString configFilePath();
     static QString appDataDir();
+    static QString coresDir();
     static QString profilesFilePath();
     static QString subscriptionsFilePath();
     static QString routingFilePath();
@@ -15,6 +23,11 @@ public:
     static QString singBoxConfigPath();
     static QString testRuntimeDir();
     static QString testConfigPath(const QString& profileId);
+    static QString portableFlagPath();
+
+private:
+    static void ensureDir(const QString& path);
+    static bool s_portableMode;
 };
 
 } // namespace zarya

@@ -1,6 +1,10 @@
 #pragma once
 
+#include "platform/IAutostartManager.h"
+
 #include <QDialog>
+
+#include <memory>
 
 class QCheckBox;
 class QComboBox;
@@ -54,7 +58,16 @@ private:
     QCheckBox* m_confirmExitWhileRunningCheck = nullptr;
 
     QComboBox* m_routingProfileCombo = nullptr;
+
+    QCheckBox* m_startAtLoginCheck = nullptr;
+    QCheckBox* m_startMinimizedToTrayCheck = nullptr;
+    QCheckBox* m_autoStartLastProfileCheck = nullptr;
+    QCheckBox* m_autoEnableProxyAfterAutoStartCheck = nullptr;
+    QSpinBox* m_autoStartDelaySpin = nullptr;
+    QLabel* m_autostartBackendLabel = nullptr;
+
     RoutingManager& m_routingManager;
+    std::unique_ptr<IAutostartManager> m_autostartManager;
 };
 
 } // namespace zarya

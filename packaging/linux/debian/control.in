@@ -1,0 +1,8 @@
+Package: zarya
+Version: @ZARYA_VERSION_STRING@
+Section: net
+Priority: optional
+Architecture: amd64
+Maintainer: Zarya <dev@zarya.app>
+Description: Cross-platform Qt proxy client
+ Zarya manages proxy profiles and launches Xray.

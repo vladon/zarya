@@ -1,6 +1,6 @@
 # Zarya
 
-Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). This repository contains milestone **0.4**: VLESS REALITY launch, Windows system proxy, and **subscription** import/update.
+Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). Cross-platform Qt 6 desktop proxy client (milestones 0.1–0.10): profiles, subscriptions, Xray, routing, system proxy, tray, autostart, and packaging.
 
 ## Requirements
 
@@ -259,6 +259,45 @@ Zarya can enable a **local HTTP proxy** as the OS/desktop system proxy. This is 
 
 TUN transparent proxy is planned separately.
 
+## Startup behavior
+
+Settings → **Startup**:
+
+- **Start Zarya when I log in** — OS autostart (Windows Run key, macOS LaunchAgent, Linux XDG autostart)
+- **Start minimized to tray** — hide the main window on launch
+- **Auto-start last used profile** — after a delay, start the last profile you ran manually
+- **Enable system proxy after auto-starting profile** — separate from manual-start proxy option
+
+On launch, Zarya can wait a few seconds after login before auto-starting a profile so the desktop session is ready.
+
+## Portable mode
+
+Place `portable.flag` next to the executable, or pass `--portable`.
+
+Data is stored under `./data` (profiles, subscriptions, routing, `settings.ini`). Runtime files go under `./runtime`. Core binaries are expected under `./cores/xray/`.
+
+Non-portable mode continues to use the OS app data directory.
+
+## CLI arguments
+
+| Argument | Description |
+|----------|-------------|
+| `--portable` / `-p` | Use app-local `data/` directory |
+| `--minimized` / `-m` | Start hidden to tray |
+| `--no-autostart-profile` | Skip auto-start of last profile |
+| `--start-profile <id>` | Start a specific profile after launch |
+| `--log-level <level>` | `debug`, `info`, `warn`, or `error` |
+
+## Packaging
+
+| Platform | Artifact | Script |
+|----------|----------|--------|
+| Windows | `Zarya-0.10.0-windows-x64-portable.zip` | `scripts/package-windows.ps1` |
+| macOS | `Zarya.app` / zip | `scripts/package-macos.sh` |
+| Linux | `Zarya-0.10.0-linux-x64.tar.gz` | `scripts/package-linux.sh` |
+
+See `packaging/windows/portable-layout.md` for the portable ZIP layout. Signed installers, notarization, and in-app auto-update are not included in 0.10.
+
 ## Supported runnable protocols (Xray)
 
 | Protocol | Transports | Security | Notes |
@@ -271,7 +310,7 @@ TUN transparent proxy is planned separately.
 
 **Imported but not runnable yet:** Shadowsocks with `plugin=`, exotic transports (xhttp), Clash YAML providers.
 
-## Usage (0.9)
+## Usage (0.10)
 
 1. Launch **zarya**.
 2. Configure **Xray** path in Settings if needed.

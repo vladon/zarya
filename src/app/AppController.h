@@ -27,7 +27,8 @@ public:
     void setAfterCoreStartedCallback(std::function<void()> callback);
     void setSaveApplicationStateCallback(std::function<bool(QString*)> callback);
 
-    bool startProfile(const Profile& profile);
+    bool startProfile(const Profile& profile, bool fromAutostart = false);
+    bool lastStartWasAutostart() const;
     bool stopCurrentProfile();
     bool isCoreRunning() const;
 
@@ -61,6 +62,7 @@ private:
     QWidget* m_dialogParent = nullptr;
     std::function<void()> m_afterCoreStarted;
     std::function<bool(QString*)> m_saveApplicationState;
+    bool m_lastStartWasAutostart = false;
 };
 
 } // namespace zarya

@@ -2,11 +2,15 @@
 
 #include <QString>
 
+class QSettings;
+
 namespace zarya {
 
 class AppSettings {
 public:
     static AppSettings& instance();
+
+    static QSettings& settings();
 
     QString xrayExecutablePath() const;
     void setXrayExecutablePath(const QString& path);
@@ -63,6 +67,24 @@ public:
 
     QString macPreferredNetworkService() const;
     void setMacPreferredNetworkService(const QString& service);
+
+    bool startMinimizedToTray() const;
+    void setStartMinimizedToTray(bool enabled);
+
+    bool autoStartLastProfile() const;
+    void setAutoStartLastProfile(bool enabled);
+
+    bool autoEnableSystemProxyAfterAutoStart() const;
+    void setAutoEnableSystemProxyAfterAutoStart(bool enabled);
+
+    int autoStartDelaySeconds() const;
+    void setAutoStartDelaySeconds(int seconds);
+
+    QString lastStartedProfileId() const;
+    void setLastStartedProfileId(const QString& profileId);
+
+    bool startAtLogin() const;
+    void setStartAtLogin(bool enabled);
 
     static bool defaultAutoEnableSystemProxyOnStart();
     static bool defaultMinimizeToTrayOnClose();

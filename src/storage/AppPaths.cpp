@@ -1,42 +1,100 @@
 #include "storage/AppPaths.h"
 
+#include <QCoreApplication>
 #include <QDir>
+#include <QFile>
 #include <QStandardPaths>
 
 namespace zarya {
 
-QString AppPaths::appDataDir()
-{
-    const QString base = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
-    QDir dir(base);
-    if (!dir.exists()) {
-        dir.mkpath(QStringLiteral("."));
-    }
-    return dir.absolutePath();
-}
+bool AppPaths::s_portableMode = false;
 
-QString AppPaths::profilesFilePath()
+void AppPaths::ensureDir(const QString& path)
 {
-    return QDir(appDataDir()).filePath(QStringLiteral("profiles.json"));
-}
-
-QString AppPaths::subscriptionsFilePath()
-{
-    return QDir(appDataDir()).filePath(QStringLiteral("subscriptions.json"));
-}
-
-QString AppPaths::routingFilePath()
-{
-    return QDir(appDataDir()).filePath(QStringLiteral("routing.json"));
-}
-
-QString AppPaths::runtimeDir()
-{
-    const QString path = QDir(appDataDir()).filePath(QStringLiteral("runtime"));
     QDir dir(path);
     if (!dir.exists()) {
         dir.mkpath(QStringLiteral("."));
     }
+}
+
+QString AppPaths::applicationDir()
+{
+    return QCoreApplication::applicationDirPath();
+}
+
+QString AppPaths::portableFlagPath()
+{
+    return QDir(applicationDir()).filePath(QStringLiteral("portable.flag"));
+}
+
+void AppPaths::initialize(bool portableRequested)
+{
+    s_portableMode = portableRequested || QFile::exists(portableFlagPath());
+    if (s_portableMode) {
+        ensureDir(dataDir());
+        ensureDir(runtimeDir());
+        ensureDir(coresDir());
+    }
+}
+
+bool AppPaths::isPortableMode()
+{
+    return s_portableMode;
+}
+
+QString AppPaths::dataDir()
+{
+    if (s_portableMode) {
+        return QDir(applicationDir()).filePath(QStringLiteral("data"));
+    }
+    const QString base = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+    ensureDir(base);
+    return base;
+}
+
+QString AppPaths::configDir()
+{
+    return dataDir();
+}
+
+QString AppPaths::configFilePath()
+{
+    if (s_portableMode) {
+        return QDir(dataDir()).filePath(QStringLiteral("settings.ini"));
+    }
+    return {};
+}
+
+QString AppPaths::appDataDir()
+{
+    return dataDir();
+}
+
+QString AppPaths::coresDir()
+{
+    return QDir(applicationDir()).filePath(QStringLiteral("cores"));
+}
+
+QString AppPaths::profilesFilePath()
+{
+    return QDir(dataDir()).filePath(QStringLiteral("profiles.json"));
+}
+
+QString AppPaths::subscriptionsFilePath()
+{
+    return QDir(dataDir()).filePath(QStringLiteral("subscriptions.json"));
+}
+
+QString AppPaths::routingFilePath()
+{
+    return QDir(dataDir()).filePath(QStringLiteral("routing.json"));
+}
+
+QString AppPaths::runtimeDir()
+{
+    const QString path = s_portableMode ? QDir(applicationDir()).filePath(QStringLiteral("runtime"))
+                                        : QDir(dataDir()).filePath(QStringLiteral("runtime"));
+    ensureDir(path);
     return path;
 }
 
@@ -53,10 +111,7 @@ QString AppPaths::singBoxConfigPath()
 QString AppPaths::testRuntimeDir()
 {
     const QString path = QDir(runtimeDir()).filePath(QStringLiteral("test"));
-    QDir dir(path);
-    if (!dir.exists()) {
-        dir.mkpath(QStringLiteral("."));
-    }
+    ensureDir(path);
     return path;
 }
 
