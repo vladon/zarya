@@ -22,6 +22,7 @@ set(ZARYA_SOURCES
     src/core/SingBoxAdapter.cpp
     src/core/CoreManager.cpp
     src/storage/ProfileStore.cpp
+    src/platform/Platform.cpp
     src/storage/AppPaths.cpp
     src/domain/Profile.cpp
     src/domain/CoreType.cpp
@@ -33,8 +34,12 @@ set(ZARYA_HEADERS
     src/ui/MainWindow.h
     src/ui/ProfileDialog.h
     src/ui/models/ProfileTableModel.h
+    src/core/ICoreAdapter.h
+    src/core/XrayAdapter.h
+    src/core/SingBoxAdapter.h
     src/core/CoreManager.h
     src/storage/ProfileStore.h
+    src/platform/Platform.h
     src/storage/AppPaths.h
     src/domain/Profile.h
     src/domain/CoreType.h
@@ -50,3 +55,5 @@ target_link_libraries(zarya PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)
 if(WIN32)
     set_target_properties(zarya PROPERTIES WIN32_EXECUTABLE TRUE)
 endif()
+
+install(TARGETS zarya RUNTIME DESTINATION bin)
