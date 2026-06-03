@@ -1,5 +1,7 @@
 #include "ui/MainWindow.h"
 
+#include "ui/TrayController.h"
+
 #include "domain/Profile.h"
 #include "domain/ProtocolType.h"
 #include "domain/Subscription.h"
@@ -10,8 +12,11 @@
 #include "ui/SettingsDialog.h"
 #include "ui/SubscriptionManagerDialog.h"
 
+#include <QApplication>
 #include <QCloseEvent>
 #include <QComboBox>
+#include <QEvent>
+#include <QSettings>
 #include <QFile>
 #include <QFileInfo>
 #include <QHeaderView>
@@ -27,30 +32,22 @@
 
 namespace zarya {
 
-namespace {
-
-bool vmessFailureMayBeClockSkew(const QString& text)
-{
-    const QString lower = text.toLower();
-    return lower.contains(QStringLiteral("auth")) || lower.contains(QStringLiteral("rejected"))
-           || lower.contains(QStringLiteral("invalid user"))
-           || lower.contains(QStringLiteral("not found"));
-}
-
-} // namespace
-
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
+    , m_appController(&m_coreManager, &m_systemProxy, &m_xrayAdapter, &m_testManager, this)
 {
     setupUi();
     setupMenuBar();
     setupToolBar();
+    setupAppController();
     setupConnections();
+    setupTray();
     connect(&m_subscriptionManager, &SubscriptionManager::logLine, this, &MainWindow::appendLog);
 
+    restoreWindowState();
     loadAllOnStartup();
     updateStatusBar();
-    appendLog(QStringLiteral("Zarya 0.6 started. Profiles: %1").arg(m_profileStore.filePath()));
+    appendLog(QStringLiteral("Zarya 0.7 started. Profiles: %1").arg(m_profileStore.filePath()));
     appendLog(QStringLiteral("Subscriptions: %1").arg(m_subscriptionStore.filePath()));
     appendLog(QStringLiteral("Xray path: %1").arg(AppSettings::instance().resolvedXrayPath()));
     if (!m_systemProxy.isSupported()) {
@@ -78,12 +75,12 @@ void MainWindow::setupUi()
     m_logView->setMaximumBlockCount(5000);
     m_logView->setPlaceholderText(QStringLiteral("Core and application logs appear here…"));
 
-    auto* splitter = new QSplitter(Qt::Vertical, this);
-    splitter->addWidget(m_tableView);
-    splitter->addWidget(m_logView);
-    splitter->setStretchFactor(0, 3);
-    splitter->setStretchFactor(1, 1);
-    setCentralWidget(splitter);
+    m_splitter = new QSplitter(Qt::Vertical, this);
+    m_splitter->addWidget(m_tableView);
+    m_splitter->addWidget(m_logView);
+    m_splitter->setStretchFactor(0, 3);
+    m_splitter->setStretchFactor(1, 1);
+    setCentralWidget(m_splitter);
 
     statusBar()->showMessage(QStringLiteral("Ready"));
 }
@@ -96,7 +93,13 @@ void MainWindow::setupMenuBar()
     fileMenu->addSeparator();
     m_settingsAction = fileMenu->addAction(QStringLiteral("&Settings…"));
     fileMenu->addSeparator();
-    fileMenu->addAction(QStringLiteral("E&xit"), this, &QWidget::close);
+    m_showAction = fileMenu->addAction(QStringLiteral("&Show"));
+    m_hideToTrayAction = fileMenu->addAction(QStringLiteral("Hide to &Tray"));
+    fileMenu->addSeparator();
+    m_exitAction = fileMenu->addAction(QStringLiteral("E&xit"));
+    connect(m_showAction, &QAction::triggered, this, &MainWindow::showFromTray);
+    connect(m_hideToTrayAction, &QAction::triggered, this, [this]() { hideToTray(false); });
+    connect(m_exitAction, &QAction::triggered, this, &MainWindow::requestApplicationQuit);
 
     auto* profileMenu = menuBar()->addMenu(QStringLiteral("&Profiles"));
     m_addAction = profileMenu->addAction(QStringLiteral("&Add…"));
@@ -194,8 +197,20 @@ void MainWindow::setupConnections()
 
     connect(&m_coreManager, &CoreManager::started, this, &MainWindow::onCoreStarted);
     connect(&m_coreManager, &CoreManager::stopped, this, &MainWindow::onCoreStopped);
-    connect(&m_coreManager, &CoreManager::logLine, this, &MainWindow::onCoreLogLine);
-    connect(&m_coreManager, &CoreManager::errorOccurred, this, &MainWindow::onCoreError);
+    connect(&m_appController, &AppController::logLine, this, &MainWindow::appendLog);
+    connect(&m_appController, &AppController::coreStateChanged, this, [this]() {
+        updateStatusBar();
+        if (m_trayController) {
+            m_trayController->updateMenuState();
+        }
+    });
+    connect(&m_appController, &AppController::proxyStateChanged, this, [this]() {
+        updateStatusBar();
+        if (m_trayController) {
+            m_trayController->updateMenuState();
+        }
+    });
+    connect(&m_appController, &AppController::quitApproved, this, &MainWindow::onQuitApproved);
 
     connect(m_testSelectedAction, &QAction::triggered, this, &MainWindow::onTestSelected);
     connect(m_testAllAction, &QAction::triggered, this, &MainWindow::onTestAll);
@@ -226,6 +241,177 @@ QString MainWindow::systemProxyStatusText() const
     return m_systemProxy.uiStatusText();
 }
 
+void MainWindow::setupAppController()
+{
+    m_appController.setDialogParent(this);
+    m_appController.setAfterCoreStartedCallback([this]() { tryAutoEnableSystemProxy(); });
+    m_appController.setSaveApplicationStateCallback([this](QString* error) {
+        saveWindowState();
+        return saveAll(error);
+    });
+}
+
+void MainWindow::setupTray()
+{
+    m_trayController = new TrayController(&m_appController, this, this);
+    if (m_trayController->isAvailable()) {
+        m_hideToTrayAction->setEnabled(true);
+    } else {
+        m_hideToTrayAction->setEnabled(false);
+        appendLog(QStringLiteral("Tray unavailable"));
+    }
+}
+
+AppController* MainWindow::appController()
+{
+    return &m_appController;
+}
+
+bool MainWindow::hasSelectedProfile() const
+{
+    return selectedRow() >= 0;
+}
+
+bool MainWindow::isTestingBusy() const
+{
+    return m_testManager.isBusy();
+}
+
+bool MainWindow::isSubscriptionUpdateBusy() const
+{
+    return m_subscriptionUpdateBusy;
+}
+
+bool MainWindow::canRestoreSystemProxy() const
+{
+    return m_systemProxy.hasSavedState() && m_systemProxy.isSupported();
+}
+
+bool MainWindow::trayIsAvailable() const
+{
+    return m_trayController && m_trayController->isAvailable();
+}
+
+void MainWindow::showFromTray()
+{
+    show();
+    raise();
+    activateWindow();
+    appendLog(QStringLiteral("Window restored from tray"));
+}
+
+void MainWindow::hideToTray(bool notify)
+{
+    if (!trayIsAvailable()) {
+        hide();
+        return;
+    }
+    hide();
+    appendLog(QStringLiteral("Window hidden to tray"));
+    if (notify && AppSettings::instance().showTrayNotifications() && !m_trayCloseNotificationShown) {
+        notifyTray(QStringLiteral("Zarya"),
+                   QStringLiteral("Zarya is still running in the system tray."));
+        m_trayCloseNotificationShown = true;
+    }
+}
+
+void MainWindow::startSelectedProfile()
+{
+    Profile* profilePtr = selectedProfileInStorage();
+    if (!profilePtr) {
+        appendLog(QStringLiteral("Select a profile to start."));
+        return;
+    }
+    m_appController.startProfile(*profilePtr);
+}
+
+void MainWindow::testSelected()
+{
+    onTestSelected();
+}
+
+void MainWindow::updateAllSubscriptions()
+{
+    onUpdateAllSubscriptions();
+}
+
+void MainWindow::requestApplicationQuit()
+{
+    m_appController.requestQuit();
+}
+
+bool MainWindow::shouldHideToTrayOnClose() const
+{
+    return trayIsAvailable() && AppSettings::instance().minimizeToTrayOnClose();
+}
+
+void MainWindow::notifyTray(const QString& title, const QString& message)
+{
+    if (m_trayController) {
+        m_trayController->showNotification(title, message);
+    }
+}
+
+QString MainWindow::trayStatusText() const
+{
+    return trayIsAvailable() ? QStringLiteral("available") : QStringLiteral("unavailable");
+}
+
+void MainWindow::saveWindowState()
+{
+    QSettings settings;
+    settings.setValue(QStringLiteral("window/geometry"), saveGeometry());
+    settings.setValue(QStringLiteral("window/state"), saveState());
+    if (m_splitter) {
+        settings.setValue(QStringLiteral("window/splitter"), m_splitter->saveState());
+    }
+    const int row = selectedRow();
+    if (row >= 0) {
+        settings.setValue(QStringLiteral("window/lastProfileId"),
+                          m_tableModel.profileAt(row).id);
+    }
+}
+
+void MainWindow::restoreWindowState()
+{
+    QSettings settings;
+    if (settings.contains(QStringLiteral("window/geometry"))) {
+        restoreGeometry(settings.value(QStringLiteral("window/geometry")).toByteArray());
+    }
+    if (settings.contains(QStringLiteral("window/state"))) {
+        restoreState(settings.value(QStringLiteral("window/state")).toByteArray());
+    }
+    if (m_splitter && settings.contains(QStringLiteral("window/splitter"))) {
+        m_splitter->restoreState(settings.value(QStringLiteral("window/splitter")).toByteArray());
+    }
+    const QString lastProfileId = settings.value(QStringLiteral("window/lastProfileId")).toString();
+    if (!lastProfileId.isEmpty()) {
+        selectProfileById(lastProfileId);
+    }
+}
+
+void MainWindow::selectProfileById(const QString& profileId)
+{
+    for (int row = 0; row < m_tableModel.rowCount(); ++row) {
+        if (m_tableModel.profileAt(row).id == profileId) {
+            m_tableView->selectRow(row);
+            break;
+        }
+    }
+}
+
+void MainWindow::changeEvent(QEvent* event)
+{
+    if (event->type() == QEvent::WindowStateChange && trayIsAvailable()
+        && AppSettings::instance().minimizeToTrayOnMinimize()
+        && (windowState() & Qt::WindowMinimized)) {
+        event->accept();
+        hideToTray(false);
+        return;
+    }
+    QMainWindow::changeEvent(event);
+}
+
 void MainWindow::updateStatusBar()
 {
     if (m_testManager.isBusy()) {
@@ -239,9 +425,8 @@ void MainWindow::updateStatusBar()
     }
 
     const AppSettings& settings = AppSettings::instance();
-    QString message =
-        QStringLiteral("Idle | Core: %1 | System proxy: %2")
-            .arg(coreStatusText(), systemProxyStatusText());
+    QString message = QStringLiteral("Idle | Core: %1 | System proxy: %2 | Tray: %3")
+                            .arg(coreStatusText(), systemProxyStatusText(), trayStatusText());
 
     if (m_coreManager.isRunning()) {
         message += QStringLiteral(" | SOCKS 127.0.0.1:%1 | HTTP 127.0.0.1:%2")
@@ -326,20 +511,25 @@ void MainWindow::tryRestoreSystemProxy(SystemProxyRestoreMode mode, bool showFai
 
 void MainWindow::closeEvent(QCloseEvent* event)
 {
-    if (m_testManager.isBusy()) {
-        m_testManager.cancel();
+    if (m_quitting) {
+        QMainWindow::closeEvent(event);
+        return;
     }
 
-    if (AppSettings::instance().restoreProxyOnExit()) {
-        tryRestoreSystemProxy(SystemProxyRestoreMode::Automatic, true);
+    if (shouldHideToTrayOnClose()) {
+        event->ignore();
+        hideToTray(true);
+        return;
     }
 
-    if (m_coreManager.isRunning()) {
-        appendLog(QStringLiteral("Stopping core on exit…"));
-        m_coreManager.stop();
-    }
+    event->ignore();
+    requestApplicationQuit();
+}
 
-    QMainWindow::closeEvent(event);
+void MainWindow::onQuitApproved()
+{
+    m_quitting = true;
+    QApplication::quit();
 }
 
 void MainWindow::loadAllOnStartup()
@@ -500,8 +690,16 @@ void MainWindow::onUpdateSelectedSubscription()
 
 void MainWindow::onUpdateAllSubscriptions()
 {
+    m_subscriptionUpdateBusy = true;
+    if (m_trayController) {
+        m_trayController->updateMenuState();
+    }
     const QVector<SubscriptionUpdateResult> results =
         m_subscriptionManager.updateAll(m_subscriptions, m_allProfiles);
+    m_subscriptionUpdateBusy = false;
+    if (m_trayController) {
+        m_trayController->updateMenuState();
+    }
     QString error;
     if (!saveAll(&error)) {
         QMessageBox::warning(this, QStringLiteral("Save failed"), error);
@@ -679,106 +877,12 @@ void MainWindow::onStartCore()
                                  QStringLiteral("Select a profile to start."));
         return;
     }
-
-    Profile* profilePtr = selectedProfileInStorage();
-    if (!profilePtr) {
-        return;
-    }
-    const Profile profile = *profilePtr;
-    if (!profile.enabled) {
-        QMessageBox::information(this, QStringLiteral("Start core"),
-                                 QStringLiteral("Selected profile is disabled."));
-        return;
-    }
-
-    if (profile.coreType != CoreType::Xray) {
-        QMessageBox::information(this, QStringLiteral("Start core"),
-                                 QStringLiteral("Only Xray profiles can be started in this "
-                                                "milestone."));
-        return;
-    }
-
-    ICoreAdapter* adapter = adapterFor(profile.coreType);
-    if (!adapter) {
-        QMessageBox::warning(this, QStringLiteral("Start core"),
-                             QStringLiteral("No adapter for selected core type."));
-        return;
-    }
-
-    QString unsupportedReason;
-    if (!m_xrayAdapter.supportsProfile(profile, &unsupportedReason)) {
-        QMessageBox::warning(this, QStringLiteral("Unsupported profile"), unsupportedReason);
-        appendLog(QStringLiteral("Unsupported profile: %1").arg(unsupportedReason));
-        return;
-    }
-
-    appendLog(QStringLiteral("Generating Xray outbound: %1")
-                  .arg(protocolTypeToString(profile.protocol)));
-    if (!profile.network.trimmed().isEmpty()) {
-        appendLog(QStringLiteral("Network: %1").arg(profile.network));
-    }
-    if (!profile.security.trimmed().isEmpty()) {
-        appendLog(QStringLiteral("Security: %1").arg(profile.security));
-    }
-
-    const ConfigGenerationResult generation = adapter->generateConfig(profile);
-    if (!generation.success) {
-        QMessageBox::warning(this, QStringLiteral("Config generation"), generation.errorMessage);
-        appendLog(QStringLiteral("Config generation failed: %1").arg(generation.errorMessage));
-        return;
-    }
-
-    const QString configPath = configPathFor(profile.coreType);
-    QString writeError;
-    if (!writeConfigFile(configPath, generation.config, &writeError)) {
-        QMessageBox::warning(this, QStringLiteral("Config write"), writeError);
-        appendLog(QStringLiteral("Failed to write config: %1").arg(writeError));
-        return;
-    }
-
-    appendLog(QStringLiteral("Config path: %1").arg(configPath));
-
-    const QString executablePath = AppSettings::instance().resolvedXrayPath();
-    if (!QFileInfo::exists(executablePath)) {
-        const QString message =
-            QStringLiteral("Xray executable not found:\n%1\n\nConfigure the path in Settings "
-                           "(e.g. .\\cores\\xray\\xray.exe).")
-                .arg(executablePath);
-        QMessageBox::warning(this, QStringLiteral("Xray not found"), message);
-        appendLog(message);
-        return;
-    }
-
-    appendLog(QStringLiteral("Validating Xray config…"));
-    const CoreValidationResult validation =
-        m_coreManager.validateConfig(executablePath, configPath);
-    if (!validation.output.isEmpty()) {
-        appendLog(validation.output);
-    }
-    if (!validation.success) {
-        if (profile.protocol == ProtocolType::Vmess) {
-            appendLog(QStringLiteral("Validation failed for VMess profile"));
-            if (vmessFailureMayBeClockSkew(validation.output + validation.errorMessage)) {
-                appendLog(QStringLiteral(
-                    "VMess note: check system UTC time synchronization."));
-            }
-        }
-        QMessageBox::warning(this, QStringLiteral("Config validation failed"),
-                             validation.errorMessage);
-        appendLog(QStringLiteral("Validation failed."));
-        return;
-    }
-    appendLog(QStringLiteral("Validation OK"));
-
-    appendLog(QStringLiteral("Starting Xray…"));
-    m_coreManager.startCore(executablePath, configPath, adapter->displayName());
+    startSelectedProfile();
 }
 
 void MainWindow::onStopCore()
 {
-    appendLog(QStringLiteral("Stopping core…"));
-    tryRestoreSystemProxy(SystemProxyRestoreMode::Automatic, true);
-    m_coreManager.stop();
+    m_appController.stopCurrentProfile();
 }
 
 void MainWindow::onEnableSystemProxy()
@@ -828,14 +932,14 @@ void MainWindow::onCoreStarted(const QString& coreName)
     appendLog(QStringLiteral("%1 started").arg(coreName));
     appendLog(QStringLiteral("SOCKS: 127.0.0.1:%1").arg(settings.socksPort()));
     appendLog(QStringLiteral("HTTP: 127.0.0.1:%1").arg(settings.httpPort()));
-    tryAutoEnableSystemProxy();
+    notifyTray(QStringLiteral("Zarya"), QStringLiteral("Proxy core started"));
     updateStatusBar();
 }
 
 void MainWindow::onCoreStopped()
 {
-    tryRestoreSystemProxy(SystemProxyRestoreMode::Automatic, true);
     appendLog(QStringLiteral("Core stopped."));
+    notifyTray(QStringLiteral("Zarya"), QStringLiteral("Proxy core stopped"));
     updateStatusBar();
 }
 
@@ -1018,8 +1122,8 @@ void MainWindow::onAbout()
     QMessageBox::about(
         this, QStringLiteral("About Zarya"),
         QStringLiteral(
-            "Zarya 0.6\n\nNative proxy profile manager with Xray (VLESS, VMess, Trojan, "
-            "Shadowsocks), Windows system proxy, subscriptions, and node testing."));
+            "Zarya 0.7\n\nNative proxy profile manager with system tray, Xray multi-protocol "
+            "support, Windows system proxy, subscriptions, and node testing."));
 }
 
 } // namespace zarya

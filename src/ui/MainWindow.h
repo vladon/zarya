@@ -1,5 +1,6 @@
 #pragma once
 
+#include "app/AppController.h"
 #include "core/CoreManager.h"
 #include "core/SingBoxAdapter.h"
 #include "core/XrayAdapter.h"
@@ -16,12 +17,15 @@
 class QAction;
 class QCloseEvent;
 class QComboBox;
+class QEvent;
 class QPlainTextEdit;
+class QSplitter;
 class QTableView;
 class QToolBar;
 
 namespace zarya {
 
+class TrayController;
 struct Profile;
 struct Subscription;
 
@@ -31,8 +35,25 @@ class MainWindow : public QMainWindow {
 public:
     explicit MainWindow(QWidget* parent = nullptr);
 
+    bool hasSelectedProfile() const;
+    bool isTestingBusy() const;
+    bool isSubscriptionUpdateBusy() const;
+    bool canRestoreSystemProxy() const;
+    bool trayIsAvailable() const;
+
+    AppController* appController();
+
+public slots:
+    void showFromTray();
+    void hideToTray(bool notify = false);
+    void startSelectedProfile();
+    void testSelected();
+    void updateAllSubscriptions();
+    void requestApplicationQuit();
+
 protected:
     void closeEvent(QCloseEvent* event) override;
+    void changeEvent(QEvent* event) override;
 
 private slots:
     void onAddProfile();
@@ -67,14 +88,20 @@ private slots:
     void onCoreLogLine(const QString& line);
     void onCoreError(const QString& message);
     void onAbout();
+    void onQuitApproved();
 
 private:
     void setupUi();
     void setupMenuBar();
     void setupToolBar();
     void setupConnections();
+    void setupAppController();
+    void setupTray();
     void appendLog(const QString& line);
     void updateStatusBar();
+    void saveWindowState();
+    void restoreWindowState();
+    void selectProfileById(const QString& profileId);
     int selectedRow() const;
     int indexOfProfileById(const QString& profileId) const;
     Profile* selectedProfileInStorage();
@@ -90,12 +117,15 @@ private:
     void startTestsForIds(const QVector<QString>& profileIds, TestMode mode);
     void setTestingUiBusy(bool busy);
     void showProfileContextMenu(const QPoint& position);
+    bool shouldHideToTrayOnClose() const;
 
     bool confirmSystemProxyChangeIfNeeded();
     void tryAutoEnableSystemProxy();
     void tryRestoreSystemProxy(SystemProxyRestoreMode mode, bool showFailureDialog);
     QString coreStatusText() const;
     QString systemProxyStatusText() const;
+    QString trayStatusText() const;
+    void notifyTray(const QString& title, const QString& message);
 
     QVector<Profile> m_allProfiles;
     QVector<Subscription> m_subscriptions;
@@ -110,12 +140,18 @@ private:
     XrayAdapter m_xrayAdapter;
     SingBoxAdapter m_singBoxAdapter;
     SystemProxyController m_systemProxy;
+    AppController m_appController;
+    TrayController* m_trayController = nullptr;
 
+    QSplitter* m_splitter = nullptr;
     QTableView* m_tableView = nullptr;
     QPlainTextEdit* m_logView = nullptr;
     QToolBar* m_toolBar = nullptr;
     QComboBox* m_profileFilterCombo = nullptr;
 
+    QAction* m_showAction = nullptr;
+    QAction* m_hideToTrayAction = nullptr;
+    QAction* m_exitAction = nullptr;
     QAction* m_addAction = nullptr;
     QAction* m_editAction = nullptr;
     QAction* m_deleteAction = nullptr;
@@ -138,6 +174,9 @@ private:
 
     int m_testProgressDone = 0;
     int m_testProgressTotal = 0;
+    bool m_trayCloseNotificationShown = false;
+    bool m_subscriptionUpdateBusy = false;
+    bool m_quitting = false;
 };
 
 } // namespace zarya

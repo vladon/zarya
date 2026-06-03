@@ -76,6 +76,19 @@ SettingsDialog::SettingsDialog(QWidget* parent)
         new QCheckBox(QStringLiteral("Skip TCP test before real delay"), this);
     m_skipTcpBeforeRealDelayCheck->setChecked(settings.skipTcpBeforeRealDelay());
 
+    m_minimizeToTrayOnCloseCheck =
+        new QCheckBox(QStringLiteral("Close button hides to tray"), this);
+    m_minimizeToTrayOnCloseCheck->setChecked(settings.minimizeToTrayOnClose());
+    m_minimizeToTrayOnMinimizeCheck =
+        new QCheckBox(QStringLiteral("Minimize hides to tray"), this);
+    m_minimizeToTrayOnMinimizeCheck->setChecked(settings.minimizeToTrayOnMinimize());
+    m_showTrayNotificationsCheck =
+        new QCheckBox(QStringLiteral("Show tray notifications"), this);
+    m_showTrayNotificationsCheck->setChecked(settings.showTrayNotifications());
+    m_confirmExitWhileRunningCheck =
+        new QCheckBox(QStringLiteral("Confirm exit while core is running"), this);
+    m_confirmExitWhileRunningCheck->setChecked(settings.confirmExitWhileRunning());
+
     auto* coreForm = new QFormLayout;
     coreForm->addRow(QStringLiteral("Xray executable"), pathRow);
     coreForm->addRow(QStringLiteral("Local SOCKS port"), m_socksPortSpin);
@@ -105,6 +118,15 @@ SettingsDialog::SettingsDialog(QWidget* parent)
     auto* testingGroup = new QGroupBox(QStringLiteral("Testing"), this);
     testingGroup->setLayout(testingForm);
 
+    auto* desktopForm = new QFormLayout;
+    desktopForm->addRow(QString(), m_minimizeToTrayOnCloseCheck);
+    desktopForm->addRow(QString(), m_minimizeToTrayOnMinimizeCheck);
+    desktopForm->addRow(QString(), m_showTrayNotificationsCheck);
+    desktopForm->addRow(QString(), m_confirmExitWhileRunningCheck);
+
+    auto* desktopGroup = new QGroupBox(QStringLiteral("Desktop behavior"), this);
+    desktopGroup->setLayout(desktopForm);
+
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel,
                                          this);
     connect(buttons, &QDialogButtonBox::accepted, this, [this]() {
@@ -118,8 +140,9 @@ SettingsDialog::SettingsDialog(QWidget* parent)
     layout->addWidget(coreGroup);
     layout->addWidget(proxyGroup);
     layout->addWidget(testingGroup);
+    layout->addWidget(desktopGroup);
     layout->addWidget(buttons);
-    resize(580, 460);
+    resize(580, 540);
 }
 
 void SettingsDialog::onBrowseXray()
@@ -159,6 +182,10 @@ bool SettingsDialog::validateAndSave()
     settings.setRealDelayTimeoutMs(m_realDelayTimeoutSpin->value());
     settings.setMaxConcurrentTests(m_maxConcurrentTestsSpin->value());
     settings.setSkipTcpBeforeRealDelay(m_skipTcpBeforeRealDelayCheck->isChecked());
+    settings.setMinimizeToTrayOnClose(m_minimizeToTrayOnCloseCheck->isChecked());
+    settings.setMinimizeToTrayOnMinimize(m_minimizeToTrayOnMinimizeCheck->isChecked());
+    settings.setShowTrayNotifications(m_showTrayNotificationsCheck->isChecked());
+    settings.setConfirmExitWhileRunning(m_confirmExitWhileRunningCheck->isChecked());
     return true;
 }
 

@@ -191,6 +191,15 @@ ProxyServer = http=127.0.0.1:10809;https=127.0.0.1:10809
 ProxyOverride = <local>
 ```
 
+## Desktop behavior
+
+- Closing the main window can **hide Zarya to the system tray** instead of quitting (default on Windows when a tray is available).
+- Use **tray → Exit** or **File → Exit** to fully quit.
+- On full exit, Zarya stops the core, cancels tests, and attempts to restore Windows system proxy settings.
+- **Double-click** the tray icon to show or hide the main window.
+- Some Linux desktops do not provide a system tray; close-to-tray is disabled automatically there.
+- Change behavior in **Settings → Desktop behavior**.
+
 ## Node testing
 
 Test profiles from the **Test** menu or toolbar:
@@ -222,7 +231,7 @@ Run `zarya_testing_test` for unit checks of TCP ping and port allocation.
 
 **Imported but not runnable yet:** Shadowsocks with `plugin=`, exotic transports (xhttp), Clash YAML providers.
 
-## Usage (0.6)
+## Usage (0.7)
 
 1. Launch **zarya**.
 2. Configure **Xray** path in Settings if needed.
