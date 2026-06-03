@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(zarya VERSION 0.8.0 LANGUAGES CXX)
+project(zarya VERSION 0.9.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -76,15 +76,24 @@ set(ZARYA_CORE_SOURCES
 
 set(ZARYA_PLATFORM_SOURCES
     src/platform/Platform.cpp
+    src/platform/PlatformProcessUtils.cpp
     src/platform/SystemProxyManagerFactory.cpp
     src/platform/SystemProxyController.cpp
     src/platform/SystemProxyDebug.cpp
+    src/platform/stub/StubSystemProxyManager.cpp
 )
 
 if(WIN32)
     list(APPEND ZARYA_PLATFORM_SOURCES src/platform/windows/WindowsSystemProxyManager.cpp)
-else()
-    list(APPEND ZARYA_PLATFORM_SOURCES src/platform/stub/StubSystemProxyManager.cpp)
+elseif(APPLE)
+    list(APPEND ZARYA_PLATFORM_SOURCES src/platform/macos/MacSystemProxyManager.cpp)
+elseif(UNIX)
+    list(APPEND ZARYA_PLATFORM_SOURCES
+        src/platform/linux/LinuxDesktopEnvironment.cpp
+        src/platform/linux/GnomeSystemProxyManager.cpp
+        src/platform/linux/KdeSystemProxyManager.cpp
+        src/platform/linux/LinuxSystemProxyManager.cpp
+    )
 endif()
 
 set(ZARYA_SOURCES

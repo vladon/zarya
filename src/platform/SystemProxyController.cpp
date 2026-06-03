@@ -12,6 +12,8 @@ QString uiStatusToString(SystemProxyUiStatus status)
     switch (status) {
     case SystemProxyUiStatus::Unsupported:
         return QStringLiteral("unsupported");
+    case SystemProxyUiStatus::Partial:
+        return QStringLiteral("partial");
     case SystemProxyUiStatus::Off:
         return QStringLiteral("off");
     case SystemProxyUiStatus::On:
@@ -22,18 +24,43 @@ QString uiStatusToString(SystemProxyUiStatus status)
     return QStringLiteral("off");
 }
 
+SystemProxyUiStatus initialUiStatus(const ISystemProxyManager* manager)
+{
+    if (!manager) {
+        return SystemProxyUiStatus::Unsupported;
+    }
+    if (manager->supportLevel() == QStringLiteral("partial")) {
+        return SystemProxyUiStatus::Partial;
+    }
+    return manager->isSupported() ? SystemProxyUiStatus::Off : SystemProxyUiStatus::Unsupported;
+}
+
 } // namespace
 
 SystemProxyController::SystemProxyController()
     : m_manager(SystemProxyManagerFactory::create())
 {
-    m_uiStatus = m_manager->isSupported() ? SystemProxyUiStatus::Off
-                                            : SystemProxyUiStatus::Unsupported;
+    m_uiStatus = initialUiStatus(m_manager.get());
 }
 
 bool SystemProxyController::isSupported() const
 {
     return m_manager && m_manager->isSupported();
+}
+
+QString SystemProxyController::backendName() const
+{
+    return m_manager ? m_manager->backendName() : QStringLiteral("Unsupported");
+}
+
+QString SystemProxyController::supportLevel() const
+{
+    return m_manager ? m_manager->supportLevel() : QStringLiteral("unsupported");
+}
+
+QString SystemProxyController::limitations() const
+{
+    return m_manager ? m_manager->limitations() : QString();
 }
 
 SystemProxyUiStatus SystemProxyController::uiStatus() const
@@ -43,7 +70,14 @@ SystemProxyUiStatus SystemProxyController::uiStatus() const
 
 QString SystemProxyController::uiStatusText() const
 {
-    return uiStatusToString(m_uiStatus);
+    const QString status = uiStatusToString(m_uiStatus);
+    if (m_uiStatus == SystemProxyUiStatus::On && m_manager) {
+        return QStringLiteral("%1 via %2").arg(status, m_manager->backendName());
+    }
+    if (m_uiStatus == SystemProxyUiStatus::Partial && m_manager) {
+        return QStringLiteral("%1 (%2)").arg(status, m_manager->backendName());
+    }
+    return status;
 }
 
 bool SystemProxyController::hasSavedState() const
@@ -63,12 +97,22 @@ QString SystemProxyController::lastError() const
 
 void SystemProxyController::logCurrentState(const std::function<void(const QString&)>& logLine) const
 {
-    if (!isSupported()) {
+    if (!m_manager) {
         logLine(QStringLiteral("System proxy unsupported on this platform."));
         return;
     }
 
-    logLine(QStringLiteral("Reading current Windows proxy settings…"));
+    logLine(QStringLiteral("System proxy backend: %1").arg(m_manager->backendName()));
+    if (!m_manager->limitations().isEmpty()) {
+        logLine(m_manager->limitations());
+    }
+
+    if (!m_manager->isSupported()) {
+        logLine(QStringLiteral("System proxy unsupported: %1").arg(m_manager->limitations()));
+        return;
+    }
+
+    logLine(QStringLiteral("Reading current proxy state…"));
     QString error;
     const SystemProxyState state = m_manager->readCurrentState(&error);
     if (!error.isEmpty()) {
@@ -86,7 +130,7 @@ bool SystemProxyController::ensurePreviousStateSaved(
         return true;
     }
 
-    logLine(QStringLiteral("Reading current Windows proxy settings…"));
+    logLine(QStringLiteral("Reading current proxy state…"));
     QString error;
     m_savedState = m_manager->readCurrentState(&error);
     if (!error.isEmpty()) {
@@ -106,10 +150,35 @@ bool SystemProxyController::ensurePreviousStateSaved(
 bool SystemProxyController::enableLocalHttpProxy(
     int port, const std::function<void(const QString&)>& logLine, QString* errorMessage)
 {
-    if (!isSupported()) {
+    if (!m_manager) {
         m_lastError = QStringLiteral("System proxy unsupported on this platform.");
         m_uiStatus = SystemProxyUiStatus::Unsupported;
         logLine(m_lastError);
+        if (errorMessage) {
+            *errorMessage = m_lastError;
+        }
+        return false;
+    }
+
+    logLine(QStringLiteral("System proxy backend: %1").arg(m_manager->backendName()));
+
+    if (m_manager->supportLevel() == QStringLiteral("partial")) {
+        m_lastError = m_manager->limitations();
+        m_uiStatus = SystemProxyUiStatus::Partial;
+        logLine(QStringLiteral("KDE proxy support is partial/unsupported"));
+        logLine(m_lastError);
+        if (errorMessage) {
+            *errorMessage = m_lastError;
+        }
+        return false;
+    }
+
+    if (!isSupported()) {
+        m_lastError = m_manager->limitations().isEmpty()
+                          ? QStringLiteral("System proxy unsupported on this platform.")
+                          : m_manager->limitations();
+        m_uiStatus = SystemProxyUiStatus::Unsupported;
+        logLine(QStringLiteral("System proxy unsupported: %1").arg(m_lastError));
         if (errorMessage) {
             *errorMessage = m_lastError;
         }
@@ -122,10 +191,15 @@ bool SystemProxyController::enableLocalHttpProxy(
     }
 
     const QString host = QStringLiteral("127.0.0.1");
-    const QString proxyServer =
-        QStringLiteral("http=%1:%2;https=%1:%2").arg(host).arg(port);
+    logLine(QStringLiteral("Applying HTTP/HTTPS proxy %1:%2").arg(host).arg(port));
 
-    logLine(QStringLiteral("Applying system proxy: %1").arg(proxyServer));
+    if (m_manager->backendName().contains(QStringLiteral("macOS"), Qt::CaseInsensitive)) {
+        for (const QString& service : m_savedState.affectedNetworkServices) {
+            logLine(QStringLiteral("Applying to macOS service: %1").arg(service));
+        }
+    } else if (m_manager->backendName().contains(QStringLiteral("GNOME"), Qt::CaseInsensitive)) {
+        logLine(QStringLiteral("Applying GNOME proxy settings"));
+    }
 
     QString error;
     if (!m_manager->applyHttpProxy(host, port, &error)) {
@@ -141,7 +215,7 @@ bool SystemProxyController::enableLocalHttpProxy(
     m_enabledByZarya = true;
     m_uiStatus = SystemProxyUiStatus::On;
     m_lastError.clear();
-    logLine(QStringLiteral("Windows proxy settings changed notification sent."));
+    logLine(QStringLiteral("System proxy applied successfully."));
     return true;
 }
 
@@ -197,7 +271,6 @@ bool SystemProxyController::restorePreviousProxy(SystemProxyRestoreMode mode,
     }
 
     logLine(QStringLiteral("Proxy restore success."));
-    logLine(QStringLiteral("Windows proxy settings changed notification sent."));
     clearRuntimeState();
     return true;
 }
@@ -208,7 +281,7 @@ void SystemProxyController::clearRuntimeState()
     m_enabledByZarya = false;
     m_savedState = {};
     m_lastError.clear();
-    m_uiStatus = isSupported() ? SystemProxyUiStatus::Off : SystemProxyUiStatus::Unsupported;
+    m_uiStatus = initialUiStatus(m_manager.get());
 }
 
 } // namespace zarya

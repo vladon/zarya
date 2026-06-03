@@ -23,6 +23,22 @@ bool WindowsSystemProxyManager::isSupported() const
     return true;
 }
 
+QString WindowsSystemProxyManager::backendName() const
+{
+    return QStringLiteral("Windows WinINet");
+}
+
+QString WindowsSystemProxyManager::supportLevel() const
+{
+    return QStringLiteral("full");
+}
+
+QString WindowsSystemProxyManager::limitations() const
+{
+    return QStringLiteral(
+        "Uses WinINet registry settings. Affects applications that use the Windows system proxy.");
+}
+
 SystemProxyState WindowsSystemProxyManager::readCurrentState(QString* errorMessage)
 {
     Q_UNUSED(errorMessage);
@@ -34,6 +50,9 @@ SystemProxyState WindowsSystemProxyManager::readCurrentState(QString* errorMessa
     state.proxyOverride = settings.value(QStringLiteral("ProxyOverride")).toString();
     state.autoDetect = settings.value(QStringLiteral("AutoDetect"), 0).toUInt() != 0;
     state.autoConfigUrl = settings.value(QStringLiteral("AutoConfigURL")).toString();
+    state.platform = QStringLiteral("windows");
+    state.backend = backendName();
+    state.supportLevel = supportLevel();
     return state;
 }
 

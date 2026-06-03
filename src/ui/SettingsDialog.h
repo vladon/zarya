@@ -11,6 +11,7 @@ class QSpinBox;
 
 namespace zarya {
 
+class ISystemProxyManager;
 class RoutingManager;
 
 class SettingsDialog : public QDialog {
@@ -34,6 +35,12 @@ private:
     QCheckBox* m_autoEnableSystemProxyCheck = nullptr;
     QCheckBox* m_restoreProxyOnExitCheck = nullptr;
     QLabel* m_httpEndpointLabel = nullptr;
+    QLabel* m_proxyBackendLabel = nullptr;
+    QLabel* m_proxySupportLabel = nullptr;
+    QLabel* m_proxyLimitationsLabel = nullptr;
+    QLabel* m_linuxDesktopLabel = nullptr;
+    QCheckBox* m_macApplyAllServicesCheck = nullptr;
+    QLineEdit* m_macPreferredServiceEdit = nullptr;
 
     QLineEdit* m_testUrlEdit = nullptr;
     QSpinBox* m_tcpTimeoutSpin = nullptr;

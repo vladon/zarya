@@ -11,6 +11,7 @@ namespace zarya {
 
 enum class SystemProxyUiStatus {
     Unsupported,
+    Partial,
     Off,
     On,
     Failed,
@@ -26,6 +27,9 @@ public:
     SystemProxyController();
 
     bool isSupported() const;
+    QString backendName() const;
+    QString supportLevel() const;
+    QString limitations() const;
     SystemProxyUiStatus uiStatus() const;
     QString uiStatusText() const;
     bool hasSavedState() const;

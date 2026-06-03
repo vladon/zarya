@@ -58,6 +58,12 @@ public:
     QString selectedRoutingProfileId() const;
     void setSelectedRoutingProfileId(const QString& profileId);
 
+    bool macApplyProxyToAllServices() const;
+    void setMacApplyProxyToAllServices(bool enabled);
+
+    QString macPreferredNetworkService() const;
+    void setMacPreferredNetworkService(const QString& service);
+
     static bool defaultAutoEnableSystemProxyOnStart();
     static bool defaultMinimizeToTrayOnClose();
 
