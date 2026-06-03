@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(zarya VERSION 0.3.0 LANGUAGES CXX)
+project(zarya VERSION 0.4.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -14,7 +14,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 option(ZARYA_STATIC_QT "Link Qt statically into zarya (requires a static Qt build)" OFF)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Network)
 include(ZaryaQt)
 
 zarya_detect_static_qt(_zarya_qt_is_static)
@@ -35,6 +35,16 @@ set(ZARYA_DOMAIN_SOURCES
     src/domain/CoreType.cpp
     src/domain/ProtocolType.cpp
     src/domain/ProfileValidation.cpp
+    src/domain/ProfileSourceType.cpp
+    src/domain/Subscription.cpp
+    src/domain/SubscriptionStatus.cpp
+)
+
+set(ZARYA_SUBSCRIPTION_SOURCES
+    src/subscription/ShareLinkParser.cpp
+    src/subscription/SubscriptionParser.cpp
+    src/subscription/SubscriptionDownloader.cpp
+    src/subscription/SubscriptionManager.cpp
 )
 
 set(ZARYA_CORE_SOURCES
@@ -65,9 +75,14 @@ set(ZARYA_SOURCES
     src/ui/ProfileDialog.cpp
     src/ui/SettingsDialog.cpp
     src/ui/ImportVlessDialog.cpp
+    src/ui/SubscriptionDialog.cpp
+    src/ui/SubscriptionManagerDialog.cpp
     src/ui/models/ProfileTableModel.cpp
+    src/ui/models/SubscriptionTableModel.cpp
     ${ZARYA_CORE_SOURCES}
+    ${ZARYA_SUBSCRIPTION_SOURCES}
     src/storage/ProfileStore.cpp
+    src/storage/SubscriptionStore.cpp
     src/storage/AppSettings.cpp
     src/import/VlessUriParser.cpp
     ${ZARYA_PLATFORM_SOURCES}
@@ -81,7 +96,10 @@ set(ZARYA_HEADERS
     src/ui/ProfileDialog.h
     src/ui/SettingsDialog.h
     src/ui/ImportVlessDialog.h
+    src/ui/SubscriptionDialog.h
+    src/ui/SubscriptionManagerDialog.h
     src/ui/models/ProfileTableModel.h
+    src/ui/models/SubscriptionTableModel.h
     src/core/ICoreAdapter.h
     src/core/XrayAdapter.h
     src/core/XrayVlessGenerator.h
@@ -89,8 +107,16 @@ set(ZARYA_HEADERS
     src/core/SingBoxAdapter.h
     src/core/CoreManager.h
     src/storage/ProfileStore.h
+    src/storage/SubscriptionStore.h
     src/storage/AppSettings.h
     src/import/VlessUriParser.h
+    src/subscription/ShareLinkParser.h
+    src/subscription/SubscriptionParser.h
+    src/subscription/SubscriptionDownloader.h
+    src/subscription/SubscriptionManager.h
+    src/domain/ProfileSourceType.h
+    src/domain/Subscription.h
+    src/domain/SubscriptionStatus.h
     src/platform/Platform.h
     src/platform/ISystemProxyManager.h
     src/platform/SystemProxyState.h
@@ -109,6 +135,7 @@ add_executable(zarya ${ZARYA_SOURCES} ${ZARYA_HEADERS})
 target_include_directories(zarya PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 zarya_link_qt_widgets_app(zarya)
+target_link_libraries(zarya PRIVATE Qt6::Network)
 
 if(WIN32)
     set_target_properties(zarya PROPERTIES WIN32_EXECUTABLE TRUE)
@@ -131,6 +158,8 @@ add_executable(zarya_xray_config_test
     src/storage/AppPaths.cpp
     src/platform/Platform.cpp
     src/import/VlessUriParser.cpp
+    src/subscription/ShareLinkParser.cpp
+    src/subscription/SubscriptionParser.cpp
 )
 
 target_include_directories(zarya_xray_config_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -154,3 +183,18 @@ if(WIN32)
     zarya_link_qt_core(zarya_system_proxy_test)
     target_link_libraries(zarya_system_proxy_test PRIVATE wininet)
 endif()
+
+add_executable(zarya_subscription_test
+    tests/subscription_test.cpp
+    ${ZARYA_SUBSCRIPTION_SOURCES}
+    ${ZARYA_DOMAIN_SOURCES}
+    src/storage/ProfileStore.cpp
+    src/storage/SubscriptionStore.cpp
+    src/storage/AppPaths.cpp
+    src/import/VlessUriParser.cpp
+)
+
+target_include_directories(zarya_subscription_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+zarya_link_qt_core(zarya_subscription_test)
+target_link_libraries(zarya_subscription_test PRIVATE Qt6::Network)

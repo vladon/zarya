@@ -1,29 +1,28 @@
 #pragma once
 
-#include "domain/Profile.h"
+#include "domain/Subscription.h"
 
 #include <QAbstractTableModel>
 #include <QVector>
 
 namespace zarya {
 
-class ProfileTableModel : public QAbstractTableModel {
+class SubscriptionTableModel : public QAbstractTableModel {
     Q_OBJECT
 
 public:
     enum Column {
         Name = 0,
-        Protocol,
-        Address,
-        Port,
-        Core,
-        Source,
-        Subscription,
+        Url,
         Enabled,
+        Profiles,
+        LastUpdated,
+        Status,
+        LastError,
         ColumnCount,
     };
 
-    explicit ProfileTableModel(QObject* parent = nullptr);
+    explicit SubscriptionTableModel(QObject* parent = nullptr);
 
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     int columnCount(const QModelIndex& parent = QModelIndex()) const override;
@@ -31,17 +30,12 @@ public:
     QVariant headerData(int section, Qt::Orientation orientation,
                         int role = Qt::DisplayRole) const override;
 
-    const Profile& profileAt(int row) const;
-    Profile& profileAt(int row);
-    void setProfiles(const QVector<Profile>& profiles);
-    QVector<Profile> profiles() const;
-
-    void addProfile(const Profile& profile);
-    bool updateProfile(int row, const Profile& profile);
-    bool removeProfile(int row);
+    void setSubscriptions(const QVector<Subscription>& subscriptions);
+    const Subscription& subscriptionAt(int row) const;
+    int rowForSubscriptionId(const QString& id) const;
 
 private:
-    QVector<Profile> m_profiles;
+    QVector<Subscription> m_subscriptions;
 };
 
 } // namespace zarya

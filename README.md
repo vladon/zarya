@@ -1,12 +1,12 @@
 # Zarya
 
-Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). This repository contains milestone **0.3**: VLESS REALITY profiles, Xray launch with config validation, `vless://` import, and **Windows system proxy** integration.
+Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). This repository contains milestone **0.4**: VLESS REALITY launch, Windows system proxy, and **subscription** import/update.
 
 ## Requirements
 
 - **CMake** 3.21 or newer
 - **C++20** compiler (MSVC 2019+, GCC 10+, Clang 12+)
-- **Qt 6.2+** with modules: Core, Gui, Widgets
+- **Qt 6.2+** with modules: Core, Gui, Widgets, Network
 
 No other third-party libraries are required for the application itself. **Xray** is optional and only needed when starting a profile.
 
@@ -27,8 +27,9 @@ python -m aqt install-qt windows desktop 6.8.3 win64_msvc2022_64 -O C:\Qt
 cmake --build build --config Release --target zarya
 .\build\Release\zarya.exe
 
-# Config test
+# Tests
 .\scripts\run-xray-config-test.ps1
+.\build\Release\zarya_subscription_test.exe
 ```
 
 ### Static Release binary (no Qt DLLs)
@@ -124,6 +125,42 @@ Generated runtime configs:
 
 - `…/Zarya/runtime/config-xray.json`
 
+## Subscriptions
+
+Add subscription URLs under **Subscriptions → Manage**. Zarya downloads the list and imports share links into profiles grouped by subscription.
+
+**Supported subscription formats:**
+
+- Plain UTF-8 text — one share link per line
+- Base64-encoded text of the same link list
+- Share links: `vless://`, `vmess://`, `trojan://`, `ss://`
+
+**Unsupported:** Clash YAML, sing-box JSON subscriptions, provider metadata blocks.
+
+**Update behavior:**
+
+- **Update Selected** (profile filter set to a subscription) or **Update All**
+- Manual profiles are never changed or deleted
+- Nodes removed from the remote list are marked `[missing]` (soft-delete), not erased
+- Failed updates keep existing profiles unchanged
+
+**Runnable today:** only **VLESS REALITY over TCP via Xray**. Other imported protocols appear in the table for reference until a later milestone.
+
+**Local test server:**
+
+```powershell
+cd examples
+python -m http.server 8080
+# Add subscription URL: http://127.0.0.1:8080/sub-plain.txt
+```
+
+Example plain subscription: [examples/sub-plain.txt](examples/sub-plain.txt)
+
+Data files:
+
+- `…/Zarya/subscriptions.json`
+- `…/Zarya/profiles.json` (includes `sourceType`, `subscriptionId`, `sourceKey`)
+
 ## Windows system proxy
 
 On **Windows**, Zarya can set the system HTTP/HTTPS proxy to the local Xray HTTP inbound (`127.0.0.1:<httpPort>`, default **10809**).
@@ -154,7 +191,7 @@ ProxyServer = http=127.0.0.1:10809;https=127.0.0.1:10809
 ProxyOverride = <local>
 ```
 
-## Usage (0.3)
+## Usage (0.4)
 
 1. Launch **zarya**.
 2. Configure **Xray** path in Settings if needed.
@@ -205,7 +242,8 @@ src/
 - **Xray**: VLESS with TLS or REALITY (TCP); `xtls-rprx-vision` flow supported.
 - **sing-box**: adapter stub only; cannot start.
 - **System proxy**: Windows only; no PAC/TUN; macOS/Linux stub.
-- No subscriptions, routing/DNS editors, delay tests, tray icon, or auto-update.
+- **Subscriptions**: no scheduled auto-update; no Clash/sing-box subscription formats.
+- No routing/DNS editors, delay tests, tray icon, or packaging.
 - No packaging/installer in this milestone.
 - Milestone 0.1 `profiles.json` files still load; missing fields get safe defaults.
 

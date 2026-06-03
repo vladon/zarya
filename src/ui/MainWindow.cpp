@@ -1,12 +1,16 @@
 #include "ui/MainWindow.h"
 
+#include "domain/Profile.h"
+#include "domain/Subscription.h"
 #include "storage/AppPaths.h"
 #include "storage/AppSettings.h"
 #include "ui/ImportVlessDialog.h"
 #include "ui/ProfileDialog.h"
 #include "ui/SettingsDialog.h"
+#include "ui/SubscriptionManagerDialog.h"
 
 #include <QCloseEvent>
+#include <QComboBox>
 #include <QFile>
 #include <QFileInfo>
 #include <QHeaderView>
@@ -29,9 +33,12 @@ MainWindow::MainWindow(QWidget* parent)
     setupMenuBar();
     setupToolBar();
     setupConnections();
-    loadProfilesOnStartup();
+    connect(&m_subscriptionManager, &SubscriptionManager::logLine, this, &MainWindow::appendLog);
+
+    loadAllOnStartup();
     updateStatusBar();
-    appendLog(QStringLiteral("Zarya 0.3 started. Profiles: %1").arg(m_profileStore.filePath()));
+    appendLog(QStringLiteral("Zarya 0.4 started. Profiles: %1").arg(m_profileStore.filePath()));
+    appendLog(QStringLiteral("Subscriptions: %1").arg(m_subscriptionStore.filePath()));
     appendLog(QStringLiteral("Xray path: %1").arg(AppSettings::instance().resolvedXrayPath()));
     if (!m_systemProxy.isSupported()) {
         appendLog(QStringLiteral("System proxy unsupported on this platform."));
@@ -80,7 +87,14 @@ void MainWindow::setupMenuBar()
     m_editAction = profileMenu->addAction(QStringLiteral("&Edit…"));
     m_deleteAction = profileMenu->addAction(QStringLiteral("&Delete"));
     profileMenu->addSeparator();
-    m_importAction = profileMenu->addAction(QStringLiteral("Import &VLESS link…"));
+    m_importAction = profileMenu->addAction(QStringLiteral("Import &share links…"));
+
+    auto* subscriptionsMenu = menuBar()->addMenu(QStringLiteral("Su&bscriptions"));
+    m_subscriptionsAction = subscriptionsMenu->addAction(QStringLiteral("&Manage…"));
+    m_updateSubscriptionAction =
+        subscriptionsMenu->addAction(QStringLiteral("Update &Selected"));
+    m_updateAllSubscriptionsAction =
+        subscriptionsMenu->addAction(QStringLiteral("Update &All"));
 
     auto* coreMenu = menuBar()->addMenu(QStringLiteral("&Core"));
     m_startAction = coreMenu->addAction(QStringLiteral("&Start"));
@@ -106,6 +120,13 @@ void MainWindow::setupToolBar()
     m_toolBar->addAction(m_deleteAction);
     m_toolBar->addAction(m_importAction);
     m_toolBar->addSeparator();
+    m_toolBar->addAction(m_subscriptionsAction);
+    m_toolBar->addAction(m_updateSubscriptionAction);
+    m_toolBar->addAction(m_updateAllSubscriptionsAction);
+    m_profileFilterCombo = new QComboBox(this);
+    m_profileFilterCombo->setMinimumWidth(180);
+    m_toolBar->addWidget(m_profileFilterCombo);
+    m_toolBar->addSeparator();
     m_toolBar->addAction(m_startAction);
     m_toolBar->addAction(m_stopAction);
     m_toolBar->addSeparator();
@@ -125,6 +146,13 @@ void MainWindow::setupConnections()
     connect(m_saveAction, &QAction::triggered, this, &MainWindow::onSaveProfiles);
     connect(m_loadAction, &QAction::triggered, this, &MainWindow::onLoadProfiles);
     connect(m_settingsAction, &QAction::triggered, this, &MainWindow::onSettings);
+    connect(m_subscriptionsAction, &QAction::triggered, this, &MainWindow::onSubscriptions);
+    connect(m_updateSubscriptionAction, &QAction::triggered, this,
+            &MainWindow::onUpdateSelectedSubscription);
+    connect(m_updateAllSubscriptionsAction, &QAction::triggered, this,
+            &MainWindow::onUpdateAllSubscriptions);
+    connect(m_profileFilterCombo, qOverload<int>(&QComboBox::currentIndexChanged), this,
+            &MainWindow::onProfileFilterChanged);
     connect(m_startAction, &QAction::triggered, this, &MainWindow::onStartCore);
     connect(m_stopAction, &QAction::triggered, this, &MainWindow::onStopCore);
     connect(m_enableSystemProxyAction, &QAction::triggered, this,
@@ -254,13 +282,193 @@ void MainWindow::closeEvent(QCloseEvent* event)
     QMainWindow::closeEvent(event);
 }
 
+void MainWindow::loadAllOnStartup()
+{
+    QString error;
+    m_allProfiles = m_profileStore.load(&error);
+    if (!error.isEmpty()) {
+        appendLog(QStringLiteral("Startup profile load warning: %1").arg(error));
+    }
+
+    m_subscriptions = m_subscriptionStore.load(&error);
+    if (!error.isEmpty()) {
+        appendLog(QStringLiteral("Startup subscription load warning: %1").arg(error));
+    }
+
+    refreshProfileFilterCombo();
+    refreshProfileView();
+}
+
+bool MainWindow::saveAll(QString* errorMessage)
+{
+    QString error;
+    if (!m_profileStore.save(m_allProfiles, &error)) {
+        if (errorMessage) {
+            *errorMessage = error;
+        }
+        return false;
+    }
+    if (!m_subscriptionStore.save(m_subscriptions, &error)) {
+        if (errorMessage) {
+            *errorMessage = error;
+        }
+        return false;
+    }
+    return true;
+}
+
+void MainWindow::refreshProfileFilterCombo()
+{
+    const QString previous = m_profileFilterKey;
+    m_profileFilterCombo->blockSignals(true);
+    m_profileFilterCombo->clear();
+    m_profileFilterCombo->addItem(QStringLiteral("All profiles"), QString());
+    m_profileFilterCombo->addItem(QStringLiteral("Manual"), QStringLiteral("__manual__"));
+    for (const Subscription& subscription : m_subscriptions) {
+        m_profileFilterCombo->addItem(subscription.name, subscription.id);
+    }
+
+    const int index = m_profileFilterCombo->findData(previous);
+    m_profileFilterCombo->setCurrentIndex(index >= 0 ? index : 0);
+    m_profileFilterKey = m_profileFilterCombo->currentData().toString();
+    m_profileFilterCombo->blockSignals(false);
+}
+
+void MainWindow::refreshProfileView()
+{
+    QVector<Profile> visible;
+    visible.reserve(m_allProfiles.size());
+    for (const Profile& profile : m_allProfiles) {
+        if (profile.deletedBySubscriptionUpdate) {
+            continue;
+        }
+        if (m_profileFilterKey == QStringLiteral("__manual__") && !profile.isManual()) {
+            continue;
+        }
+        if (!m_profileFilterKey.isEmpty() && m_profileFilterKey != QStringLiteral("__manual__")
+            && profile.subscriptionId != m_profileFilterKey) {
+            continue;
+        }
+        visible.append(profile);
+    }
+    m_tableModel.setProfiles(visible);
+}
+
+void MainWindow::onProfileFilterChanged(int index)
+{
+    Q_UNUSED(index);
+    m_profileFilterKey = m_profileFilterCombo->currentData().toString();
+    refreshProfileView();
+}
+
+int MainWindow::indexOfProfileById(const QString& profileId) const
+{
+    for (int i = 0; i < m_allProfiles.size(); ++i) {
+        if (m_allProfiles.at(i).id == profileId) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+Profile* MainWindow::selectedProfileInStorage()
+{
+    const int row = selectedRow();
+    if (row < 0) {
+        return nullptr;
+    }
+    const QString profileId = m_tableModel.profileAt(row).id;
+    const int index = indexOfProfileById(profileId);
+    if (index < 0) {
+        return nullptr;
+    }
+    return &m_allProfiles[index];
+}
+
+void MainWindow::onSubscriptions()
+{
+    SubscriptionManagerDialog dialog(
+        this, m_subscriptions, m_allProfiles, m_subscriptionManager, m_subscriptionStore,
+        m_profileStore,
+        [this](const QString& line) { appendLog(line); },
+        [this]() {
+            refreshProfileFilterCombo();
+            refreshProfileView();
+        });
+    dialog.exec();
+    refreshProfileFilterCombo();
+    refreshProfileView();
+}
+
+void MainWindow::onUpdateSelectedSubscription()
+{
+    QString subscriptionId = m_profileFilterKey;
+    if (subscriptionId.isEmpty() || subscriptionId == QStringLiteral("__manual__")) {
+        QMessageBox::information(
+            this, QStringLiteral("Update subscription"),
+            QStringLiteral("Select a subscription in the profile filter, or use Subscriptions → "
+                           "Manage to update a specific entry."));
+        return;
+    }
+
+    int index = -1;
+    for (int i = 0; i < m_subscriptions.size(); ++i) {
+        if (m_subscriptions.at(i).id == subscriptionId) {
+            index = i;
+            break;
+        }
+    }
+    if (index < 0) {
+        QMessageBox::warning(this, QStringLiteral("Update subscription"),
+                             QStringLiteral("Subscription not found."));
+        return;
+    }
+
+    const SubscriptionUpdateResult result =
+        m_subscriptionManager.updateSubscription(m_subscriptions[index], m_allProfiles);
+    QString error;
+    if (!saveAll(&error)) {
+        QMessageBox::warning(this, QStringLiteral("Save failed"), error);
+    }
+    refreshProfileFilterCombo();
+    refreshProfileView();
+
+    if (!result.success) {
+        QMessageBox::warning(this, QStringLiteral("Update failed"), result.errorMessage);
+    }
+}
+
+void MainWindow::onUpdateAllSubscriptions()
+{
+    const QVector<SubscriptionUpdateResult> results =
+        m_subscriptionManager.updateAll(m_subscriptions, m_allProfiles);
+    QString error;
+    if (!saveAll(&error)) {
+        QMessageBox::warning(this, QStringLiteral("Save failed"), error);
+    }
+    refreshProfileFilterCombo();
+    refreshProfileView();
+
+    int failed = 0;
+    for (const SubscriptionUpdateResult& result : results) {
+        if (!result.success) {
+            ++failed;
+        }
+    }
+    if (failed > 0) {
+        QMessageBox::warning(this, QStringLiteral("Update all"),
+                             QStringLiteral("%1 subscription(s) failed to update.").arg(failed));
+    }
+}
+
 void MainWindow::onAddProfile()
 {
     Profile profile = Profile::createVlessRealityDefault();
     if (!ProfileDialog::editProfile(this, profile)) {
         return;
     }
-    m_tableModel.addProfile(profile);
+    m_allProfiles.append(profile);
+    refreshProfileView();
     appendLog(QStringLiteral("Added profile: %1").arg(profile.name));
 }
 
@@ -273,12 +481,12 @@ void MainWindow::onEditProfile()
         return;
     }
 
-    Profile profile = m_tableModel.profileAt(row);
-    if (!ProfileDialog::editProfile(this, profile)) {
+    Profile* profile = selectedProfileInStorage();
+    if (!profile || !ProfileDialog::editProfile(this, *profile)) {
         return;
     }
-    m_tableModel.updateProfile(row, profile);
-    appendLog(QStringLiteral("Updated profile: %1").arg(profile.name));
+    refreshProfileView();
+    appendLog(QStringLiteral("Updated profile: %1").arg(profile->name));
 }
 
 void MainWindow::onDeleteProfile()
@@ -290,14 +498,20 @@ void MainWindow::onDeleteProfile()
         return;
     }
 
-    const QString name = m_tableModel.profileAt(row).name;
+    const QString profileId = m_tableModel.profileAt(row).id;
+    const int index = indexOfProfileById(profileId);
+    if (index < 0) {
+        return;
+    }
+    const QString name = m_allProfiles.at(index).name;
     if (QMessageBox::question(this, QStringLiteral("Delete profile"),
                               QStringLiteral("Delete profile \"%1\"?").arg(name))
         != QMessageBox::Yes) {
         return;
     }
 
-    m_tableModel.removeProfile(row);
+    m_allProfiles.removeAt(index);
+    refreshProfileView();
     appendLog(QStringLiteral("Deleted profile: %1").arg(name));
 }
 
@@ -310,36 +524,45 @@ void MainWindow::onImportVless()
 
     const QVector<Profile> imported = dialog.importedProfiles();
     for (const Profile& profile : imported) {
-        m_tableModel.addProfile(profile);
+        m_allProfiles.append(profile);
         appendLog(QStringLiteral("Imported profile: %1").arg(profile.name));
     }
 
+    refreshProfileView();
     onSaveProfiles();
 }
 
 void MainWindow::onSaveProfiles()
 {
     QString error;
-    if (!m_profileStore.save(m_tableModel.profiles(), &error)) {
+    if (!saveAll(&error)) {
         QMessageBox::warning(this, QStringLiteral("Save failed"), error);
         appendLog(QStringLiteral("Save failed: %1").arg(error));
         return;
     }
     appendLog(QStringLiteral("Profiles saved to %1").arg(m_profileStore.filePath()));
+    appendLog(QStringLiteral("Subscriptions saved to %1").arg(m_subscriptionStore.filePath()));
 }
 
 void MainWindow::onLoadProfiles()
 {
     QString error;
-    const QVector<Profile> profiles = m_profileStore.load(&error);
-    if (!error.isEmpty() && profiles.isEmpty()) {
+    m_allProfiles = m_profileStore.load(&error);
+    if (!error.isEmpty() && m_allProfiles.isEmpty()) {
         QMessageBox::warning(this, QStringLiteral("Load failed"), error);
         appendLog(QStringLiteral("Load failed: %1").arg(error));
         return;
     }
-    m_tableModel.setProfiles(profiles);
+
+    m_subscriptions = m_subscriptionStore.load(&error);
+    if (!error.isEmpty() && m_subscriptions.isEmpty()) {
+        appendLog(QStringLiteral("Subscription load warning: %1").arg(error));
+    }
+
+    refreshProfileFilterCombo();
+    refreshProfileView();
     appendLog(QStringLiteral("Loaded %1 profile(s) from %2")
-                  .arg(profiles.size())
+                  .arg(m_allProfiles.size())
                   .arg(m_profileStore.filePath()));
 }
 
@@ -350,16 +573,6 @@ void MainWindow::onSettings()
     appendLog(QStringLiteral("Settings updated. Xray path: %1")
                   .arg(AppSettings::instance().resolvedXrayPath()));
     updateStatusBar();
-}
-
-void MainWindow::loadProfilesOnStartup()
-{
-    QString error;
-    const QVector<Profile> profiles = m_profileStore.load(&error);
-    if (!error.isEmpty()) {
-        appendLog(QStringLiteral("Startup load warning: %1").arg(error));
-    }
-    m_tableModel.setProfiles(profiles);
 }
 
 ICoreAdapter* MainWindow::adapterFor(CoreType type)
@@ -407,7 +620,11 @@ void MainWindow::onStartCore()
         return;
     }
 
-    const Profile profile = m_tableModel.profileAt(row);
+    Profile* profilePtr = selectedProfileInStorage();
+    if (!profilePtr) {
+        return;
+    }
+    const Profile profile = *profilePtr;
     if (!profile.enabled) {
         QMessageBox::information(this, QStringLiteral("Start core"),
                                  QStringLiteral("Selected profile is disabled."));
@@ -558,8 +775,8 @@ void MainWindow::onAbout()
     QMessageBox::about(
         this, QStringLiteral("About Zarya"),
         QStringLiteral(
-            "Zarya 0.3\n\nNative proxy profile manager with Xray VLESS REALITY and Windows "
-            "system proxy support."));
+            "Zarya 0.4\n\nNative proxy profile manager with Xray VLESS REALITY, Windows system "
+            "proxy, and subscription import."));
 }
 
 } // namespace zarya

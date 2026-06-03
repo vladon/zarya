@@ -1,5 +1,6 @@
 #include "storage/ProfileStore.h"
 
+#include "domain/ProfileSourceType.h"
 #include "storage/AppPaths.h"
 
 #include <QDir>
@@ -52,6 +53,20 @@ QJsonObject profileToJson(const Profile& profile)
     if (profile.allowInsecure) {
         object.insert(QStringLiteral("allowInsecure"), true);
     }
+    if (profile.alterId != 0) {
+        object.insert(QStringLiteral("alterId"), profile.alterId);
+    }
+
+    object.insert(QStringLiteral("sourceType"), profileSourceTypeToString(profile.sourceType));
+    insertIfNotEmpty(object, QStringLiteral("subscriptionId"), profile.subscriptionId);
+    insertIfNotEmpty(object, QStringLiteral("subscriptionName"), profile.subscriptionName);
+    insertIfNotEmpty(object, QStringLiteral("sourceKey"), profile.sourceKey);
+    if (profile.lastSeenAt.isValid()) {
+        object.insert(QStringLiteral("lastSeenAt"), profile.lastSeenAt.toString(Qt::ISODate));
+    }
+    if (profile.deletedBySubscriptionUpdate) {
+        object.insert(QStringLiteral("deletedBySubscriptionUpdate"), true);
+    }
 
     return object;
 }
@@ -96,6 +111,16 @@ Profile profileFromJson(const QJsonObject& object)
     profile.spiderX = object.value(QStringLiteral("spiderX")).toString();
     profile.fingerprint = object.value(QStringLiteral("fingerprint")).toString();
     profile.allowInsecure = object.value(QStringLiteral("allowInsecure")).toBool(false);
+    profile.alterId = object.value(QStringLiteral("alterId")).toInt(0);
+
+    profile.sourceType = profileSourceTypeFromString(object.value(QStringLiteral("sourceType")).toString());
+    profile.subscriptionId = object.value(QStringLiteral("subscriptionId")).toString();
+    profile.subscriptionName = object.value(QStringLiteral("subscriptionName")).toString();
+    profile.sourceKey = object.value(QStringLiteral("sourceKey")).toString();
+    profile.lastSeenAt =
+        QDateTime::fromString(object.value(QStringLiteral("lastSeenAt")).toString(), Qt::ISODate);
+    profile.deletedBySubscriptionUpdate =
+        object.value(QStringLiteral("deletedBySubscriptionUpdate")).toBool(false);
 
     if (profile.id.isEmpty()) {
         profile.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
@@ -161,7 +186,7 @@ bool ProfileStore::save(const QVector<Profile>& profiles, QString* errorMessage)
     }
 
     QJsonObject root;
-    root.insert(QStringLiteral("version"), 2);
+    root.insert(QStringLiteral("version"), 3);
     root.insert(QStringLiteral("profiles"), array);
 
     QFile file(m_filePath);

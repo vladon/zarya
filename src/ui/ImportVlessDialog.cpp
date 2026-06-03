@@ -1,8 +1,9 @@
 #include "ui/ImportVlessDialog.h"
 
-#include "import/VlessUriParser.h"
+#include "subscription/ShareLinkParser.h"
 
 #include <QDialogButtonBox>
+#include <QRegularExpression>
 #include <QMessageBox>
 #include <QPlainTextEdit>
 #include <QVBoxLayout>
@@ -12,11 +13,11 @@ namespace zarya {
 ImportVlessDialog::ImportVlessDialog(QWidget* parent)
     : QDialog(parent)
 {
-    setWindowTitle(QStringLiteral("Import VLESS links"));
+    setWindowTitle(QStringLiteral("Import share links"));
 
     m_linksEdit = new QPlainTextEdit(this);
     m_linksEdit->setPlaceholderText(
-        QStringLiteral("Paste one vless:// link per line…"));
+        QStringLiteral("Paste one vless://, vmess://, trojan://, or ss:// link per line…"));
     m_linksEdit->setMinimumHeight(160);
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
@@ -36,19 +37,26 @@ QVector<Profile> ImportVlessDialog::importedProfiles() const
 
 void ImportVlessDialog::onImport()
 {
-    const QVector<VlessParseResult> results = VlessUriParser::parseMany(m_linksEdit->toPlainText());
-    if (results.isEmpty()) {
+    const QStringList lines =
+        m_linksEdit->toPlainText().split(QRegularExpression(QStringLiteral("[\\r\\n]+")),
+                                       Qt::SkipEmptyParts);
+    if (lines.isEmpty()) {
         QMessageBox::warning(this, QStringLiteral("Import"), QStringLiteral("No links to import."));
         return;
     }
 
     m_imported.clear();
     QStringList errors;
-    for (const VlessParseResult& result : results) {
-        if (result.success) {
+    for (const QString& rawLine : lines) {
+        const QString line = rawLine.trimmed();
+        if (line.isEmpty() || line.startsWith(QLatin1Char('#'))) {
+            continue;
+        }
+        const ShareLinkParseResult result = ShareLinkParser::parse(line);
+        if (result.ok) {
             m_imported.append(result.profile);
         } else {
-            errors.append(result.errorMessage);
+            errors.append(result.error);
         }
     }
 
