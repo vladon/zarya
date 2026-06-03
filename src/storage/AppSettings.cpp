@@ -152,4 +152,51 @@ void AppSettings::setSkipTcpBeforeRealDelay(bool skip)
     QSettings().setValue(QStringLiteral("testing/skipTcpBeforeRealDelay"), skip);
 }
 
+bool AppSettings::defaultMinimizeToTrayOnClose()
+{
+    return true;
+}
+
+bool AppSettings::minimizeToTrayOnClose() const
+{
+    return QSettings()
+        .value(QStringLiteral("desktop/minimizeToTrayOnClose"), defaultMinimizeToTrayOnClose())
+        .toBool();
+}
+
+void AppSettings::setMinimizeToTrayOnClose(bool enabled)
+{
+    QSettings().setValue(QStringLiteral("desktop/minimizeToTrayOnClose"), enabled);
+}
+
+bool AppSettings::minimizeToTrayOnMinimize() const
+{
+    return QSettings().value(QStringLiteral("desktop/minimizeToTrayOnMinimize"), false).toBool();
+}
+
+void AppSettings::setMinimizeToTrayOnMinimize(bool enabled)
+{
+    QSettings().setValue(QStringLiteral("desktop/minimizeToTrayOnMinimize"), enabled);
+}
+
+bool AppSettings::showTrayNotifications() const
+{
+    return QSettings().value(QStringLiteral("desktop/showTrayNotifications"), true).toBool();
+}
+
+void AppSettings::setShowTrayNotifications(bool enabled)
+{
+    QSettings().setValue(QStringLiteral("desktop/showTrayNotifications"), enabled);
+}
+
+bool AppSettings::confirmExitWhileRunning() const
+{
+    return QSettings().value(QStringLiteral("desktop/confirmExitWhileRunning"), true).toBool();
+}
+
+void AppSettings::setConfirmExitWhileRunning(bool enabled)
+{
+    QSettings().setValue(QStringLiteral("desktop/confirmExitWhileRunning"), enabled);
+}
+
 } // namespace zarya

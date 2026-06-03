@@ -34,6 +34,11 @@ private:
     QSpinBox* m_realDelayTimeoutSpin = nullptr;
     QSpinBox* m_maxConcurrentTestsSpin = nullptr;
     QCheckBox* m_skipTcpBeforeRealDelayCheck = nullptr;
+
+    QCheckBox* m_minimizeToTrayOnCloseCheck = nullptr;
+    QCheckBox* m_minimizeToTrayOnMinimizeCheck = nullptr;
+    QCheckBox* m_showTrayNotificationsCheck = nullptr;
+    QCheckBox* m_confirmExitWhileRunningCheck = nullptr;
 };
 
 } // namespace zarya

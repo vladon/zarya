@@ -43,7 +43,20 @@ public:
     bool skipTcpBeforeRealDelay() const;
     void setSkipTcpBeforeRealDelay(bool skip);
 
+    bool minimizeToTrayOnClose() const;
+    void setMinimizeToTrayOnClose(bool enabled);
+
+    bool minimizeToTrayOnMinimize() const;
+    void setMinimizeToTrayOnMinimize(bool enabled);
+
+    bool showTrayNotifications() const;
+    void setShowTrayNotifications(bool enabled);
+
+    bool confirmExitWhileRunning() const;
+    void setConfirmExitWhileRunning(bool enabled);
+
     static bool defaultAutoEnableSystemProxyOnStart();
+    static bool defaultMinimizeToTrayOnClose();
 
 private:
     AppSettings() = default;

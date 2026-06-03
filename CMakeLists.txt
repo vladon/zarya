@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(zarya VERSION 0.6.0 LANGUAGES CXX)
+project(zarya VERSION 0.7.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -81,7 +81,9 @@ endif()
 set(ZARYA_SOURCES
     src/app/main.cpp
     src/app/Application.cpp
+    src/app/AppController.cpp
     src/ui/MainWindow.cpp
+    src/ui/TrayController.cpp
     src/ui/ProfileDialog.cpp
     src/ui/SettingsDialog.cpp
     src/ui/ImportVlessDialog.cpp
@@ -103,7 +105,9 @@ set(ZARYA_SOURCES
 
 set(ZARYA_HEADERS
     src/app/Application.h
+    src/app/AppController.h
     src/ui/MainWindow.h
+    src/ui/TrayController.h
     src/ui/ProfileDialog.h
     src/ui/SettingsDialog.h
     src/ui/ImportVlessDialog.h

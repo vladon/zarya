@@ -1,5 +1,7 @@
 #include "app/Application.h"
 
+#include <QSystemTrayIcon>
+
 namespace zarya {
 
 Application::Application(int& argc, char** argv)
@@ -8,7 +10,11 @@ Application::Application(int& argc, char** argv)
     setOrganizationName(QStringLiteral("Zarya"));
     setOrganizationDomain(QStringLiteral("zarya.app"));
     setApplicationName(QStringLiteral("Zarya"));
-    setApplicationVersion(QStringLiteral("0.6.0"));
+    setApplicationVersion(QStringLiteral("0.7.0"));
+
+    if (QSystemTrayIcon::isSystemTrayAvailable()) {
+        setQuitOnLastWindowClosed(false);
+    }
 }
 
 Application* Application::instance()
