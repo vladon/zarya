@@ -144,7 +144,7 @@ Add subscription URLs under **Subscriptions → Manage**. Zarya downloads the li
 - Nodes removed from the remote list are marked `[missing]` (soft-delete), not erased
 - Failed updates keep existing profiles unchanged
 
-**Runnable today:** only **VLESS REALITY over TCP via Xray**. Other imported protocols appear in the table for reference until a later milestone.
+**Runnable through Xray** (when fields are complete): VLESS (REALITY/TLS/none), VMess (TCP/WS + TLS), Trojan (TCP/WS + TLS), Shadowsocks (no plugin). Profiles with unsupported features (e.g. SS plugin) stay in the table with an import note.
 
 **Local test server:**
 
@@ -204,13 +204,25 @@ The profile table shows **TCP**, **Delay**, **Test Status**, and **Last Tested**
 
 - **TCP test** checks server `host:port` reachability only; it does not validate the proxy protocol.
 - **Real delay** starts a separate temporary Xray process (not the running core) and measures HTTP time to the test URL (default `https://www.google.com/generate_204`).
-- **Real delay** currently supports **VLESS REALITY over TCP** only; other imported protocols show **Unsupported** until later milestones.
+- **Real delay** uses the same Xray config generation as **Start**; unsupported variants show **Unsupported** with a reason.
 - Change the test URL, timeouts, and max concurrent tests in **Settings → Testing**.
 - Batch tests respect **max concurrent tests** (default 3); several temporary Xray processes may run at once.
 
 Run `zarya_testing_test` for unit checks of TCP ping and port allocation.
 
-## Usage (0.5)
+## Supported runnable protocols (Xray)
+
+| Protocol | Transports | Security | Notes |
+|----------|------------|----------|--------|
+| VLESS | tcp | reality, tls, none | REALITY requires tcp + public key + SNI |
+| VMess | tcp, ws, grpc | none, tls | VMess may fail if system UTC time is wrong |
+| Trojan | tcp, ws | tls, none, reality (tcp) | Password required |
+| Shadowsocks | tcp | — | Method preserved as imported; **no plugin** |
+| SOCKS | — | — | Optional outbound |
+
+**Imported but not runnable yet:** Shadowsocks with `plugin=`, exotic transports (xhttp), Clash YAML providers.
+
+## Usage (0.6)
 
 1. Launch **zarya**.
 2. Configure **Xray** path in Settings if needed.
@@ -250,7 +262,7 @@ src/
   app/        Application entry, QApplication setup
   ui/         MainWindow, ProfileDialog, SettingsDialog, ImportVlessDialog
   domain/     Profile, validation, ProtocolType, CoreType
-  core/       ICoreAdapter, XrayVlessGenerator, CoreManager
+  core/       XrayAdapter, stream settings, CoreManager
   import/     VlessUriParser
   storage/    ProfileStore, AppSettings, AppPaths
   testing/    TcpPingTester, RealDelayTester, TestManager
@@ -259,7 +271,7 @@ src/
 
 ## Current limitations
 
-- **Xray**: VLESS with TLS or REALITY (TCP); `xtls-rprx-vision` flow supported.
+- **Xray**: VLESS, VMess, Trojan, Shadowsocks (see table above); sing-box still stub.
 - **sing-box**: adapter stub only; cannot start.
 - **System proxy**: Windows only; no PAC/TUN; macOS/Linux stub.
 - **Subscriptions**: no scheduled auto-update; no Clash/sing-box subscription formats.

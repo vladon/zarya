@@ -57,6 +57,11 @@ QJsonObject profileToJson(const Profile& profile)
     if (profile.alterId != 0) {
         object.insert(QStringLiteral("alterId"), profile.alterId);
     }
+    insertIfNotEmpty(object, QStringLiteral("password"), profile.password);
+    insertIfNotEmpty(object, QStringLiteral("method"), profile.method);
+    insertIfNotEmpty(object, QStringLiteral("securityCipher"), profile.securityCipher);
+    insertIfNotEmpty(object, QStringLiteral("serviceName"), profile.serviceName);
+    insertIfNotEmpty(object, QStringLiteral("unsupportedReason"), profile.unsupportedReason);
 
     object.insert(QStringLiteral("sourceType"), profileSourceTypeToString(profile.sourceType));
     insertIfNotEmpty(object, QStringLiteral("subscriptionId"), profile.subscriptionId);
@@ -127,6 +132,14 @@ Profile profileFromJson(const QJsonObject& object)
     profile.fingerprint = object.value(QStringLiteral("fingerprint")).toString();
     profile.allowInsecure = object.value(QStringLiteral("allowInsecure")).toBool(false);
     profile.alterId = object.value(QStringLiteral("alterId")).toInt(0);
+    profile.password = object.value(QStringLiteral("password")).toString();
+    profile.method = object.value(QStringLiteral("method")).toString();
+    profile.securityCipher = object.value(QStringLiteral("securityCipher")).toString();
+    if (profile.securityCipher.isEmpty()) {
+        profile.securityCipher = object.value(QStringLiteral("scy")).toString();
+    }
+    profile.serviceName = object.value(QStringLiteral("serviceName")).toString();
+    profile.unsupportedReason = object.value(QStringLiteral("unsupportedReason")).toString();
 
     profile.sourceType = profileSourceTypeFromString(object.value(QStringLiteral("sourceType")).toString());
     profile.subscriptionId = object.value(QStringLiteral("subscriptionId")).toString();

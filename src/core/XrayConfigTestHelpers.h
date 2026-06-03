@@ -8,6 +8,9 @@
 namespace zarya::testhelpers {
 
 Profile sampleVlessRealityProfile();
+Profile sampleVmessTcpTlsProfile();
+Profile sampleTrojanTlsProfile();
+Profile sampleShadowsocksProfile();
 QJsonObject sampleVlessRealityProxyOutbound();
 QString generateXrayConfigJson(const Profile& profile, QString* errorMessage = nullptr);
 bool proxyOutboundHasReality(const QJsonObject& proxyOutbound);

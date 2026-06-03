@@ -6,6 +6,7 @@
 
 class QCheckBox;
 class QComboBox;
+class QLabel;
 class QLineEdit;
 class QSpinBox;
 class QTabWidget;
@@ -26,12 +27,14 @@ public:
 
 private slots:
     void onSecurityChanged(int index);
+    void onProtocolChanged(int index);
 
 private:
     bool validateInput(QString* errorMessage) const;
     void populateFromProfile(const Profile& profile);
     Profile profileFromFields() const;
     void updateRealityTabVisibility();
+    void updateProtocolFieldsVisibility();
 
     QTabWidget* m_tabs = nullptr;
 
@@ -41,13 +44,18 @@ private:
     QLineEdit* m_addressEdit = nullptr;
     QSpinBox* m_portSpin = nullptr;
     QLineEdit* m_uuidEdit = nullptr;
+    QLineEdit* m_passwordEdit = nullptr;
     QLineEdit* m_encryptionEdit = nullptr;
+    QLineEdit* m_methodEdit = nullptr;
+    QLineEdit* m_securityCipherEdit = nullptr;
+    QSpinBox* m_alterIdSpin = nullptr;
     QCheckBox* m_enabledCheck = nullptr;
 
     QComboBox* m_networkCombo = nullptr;
     QLineEdit* m_pathEdit = nullptr;
     QLineEdit* m_hostEdit = nullptr;
     QLineEdit* m_headerTypeEdit = nullptr;
+    QLineEdit* m_serviceNameEdit = nullptr;
 
     QComboBox* m_securityCombo = nullptr;
     QLineEdit* m_serverNameEdit = nullptr;
@@ -60,8 +68,15 @@ private:
     QLineEdit* m_sniEdit = nullptr;
     QLineEdit* m_remarkEdit = nullptr;
     QCheckBox* m_allowInsecureCheck = nullptr;
+    QLabel* m_unsupportedReasonLabel = nullptr;
 
     QWidget* m_realityTab = nullptr;
+    QWidget* m_uuidRowWidget = nullptr;
+    QWidget* m_passwordRowWidget = nullptr;
+    QWidget* m_methodRowWidget = nullptr;
+    QWidget* m_alterIdRowWidget = nullptr;
+    QWidget* m_securityCipherRowWidget = nullptr;
+    QWidget* m_encryptionRowWidget = nullptr;
     QString m_profileId;
 };
 

@@ -1,5 +1,7 @@
+#include "core/XrayAdapter.h"
 #include "core/XrayConfigTestHelpers.h"
 #include "core/XrayVlessGenerator.h"
+#include "domain/ProtocolType.h"
 #include "import/VlessUriParser.h"
 #include "storage/ProfileStore.h"
 
@@ -165,6 +167,69 @@ int main(int argc, char* argv[])
         ok &= fail("VLESS import link parsed with unexpected profile fields");
     } else {
         ok &= pass("VLESS import link parses into REALITY profile");
+    }
+
+    zarya::XrayAdapter adapter;
+    const zarya::Profile vmessSample = zarya::testhelpers::sampleVmessTcpTlsProfile();
+    if (!adapter.supportsProfile(vmessSample)) {
+        ok &= fail("VMess TCP TLS profile should be supported");
+    } else {
+        ok &= pass("VMess TCP TLS profile is supported");
+        const auto vmessGenerated = adapter.generateConfig(vmessSample);
+        if (!vmessGenerated.success) {
+            ok &= fail(vmessGenerated.errorMessage.toUtf8().constData());
+        } else {
+            const QJsonObject vmessOutbound = firstProxyOutbound(vmessGenerated.config);
+            if (vmessOutbound.value(QStringLiteral("protocol")).toString()
+                != QStringLiteral("vmess")) {
+                ok &= fail("VMess outbound protocol mismatch");
+            } else {
+                ok &= pass("VMess TCP TLS generates vmess outbound");
+            }
+        }
+    }
+
+    const zarya::Profile trojanSample = zarya::testhelpers::sampleTrojanTlsProfile();
+    const auto trojanGenerated = adapter.generateConfig(trojanSample);
+    if (!trojanGenerated.success) {
+        ok &= fail(trojanGenerated.errorMessage.toUtf8().constData());
+    } else {
+        const QJsonObject trojanOutbound = firstProxyOutbound(trojanGenerated.config);
+        const QString password =
+            trojanOutbound.value(QStringLiteral("settings"))
+                .toObject()
+                .value(QStringLiteral("servers"))
+                .toArray()
+                .first()
+                .toObject()
+                .value(QStringLiteral("password"))
+                .toString();
+        if (password != QStringLiteral("secret")) {
+            ok &= fail("Trojan outbound password mismatch");
+        } else {
+            ok &= pass("Trojan TLS generates trojan outbound");
+        }
+    }
+
+    const zarya::Profile ssSample = zarya::testhelpers::sampleShadowsocksProfile();
+    const auto ssGenerated = adapter.generateConfig(ssSample);
+    if (!ssGenerated.success) {
+        ok &= fail(ssGenerated.errorMessage.toUtf8().constData());
+    } else {
+        const QJsonObject ssOutbound = firstProxyOutbound(ssGenerated.config);
+        const QJsonObject server =
+            ssOutbound.value(QStringLiteral("settings"))
+                .toObject()
+                .value(QStringLiteral("servers"))
+                .toArray()
+                .first()
+                .toObject();
+        if (server.value(QStringLiteral("method")).toString()
+            != QStringLiteral("2022-blake3-aes-128-gcm")) {
+            ok &= fail("Shadowsocks method not preserved");
+        } else {
+            ok &= pass("Shadowsocks outbound preserves method");
+        }
     }
 
     zarya::ProfileStore store(examplesDir + QStringLiteral("/profiles-vless-reality.sample.json"));

@@ -8,6 +8,7 @@
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QFormLayout>
+#include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QSpinBox>
@@ -43,18 +44,61 @@ ProfileDialog::ProfileDialog(QWidget* parent)
     m_portSpin->setRange(1, 65535);
     m_portSpin->setValue(443);
     m_uuidEdit = new QLineEdit(basicPage);
+    m_passwordEdit = new QLineEdit(basicPage);
+    m_passwordEdit->setEchoMode(QLineEdit::Password);
     m_encryptionEdit = new QLineEdit(basicPage);
     m_encryptionEdit->setPlaceholderText(QStringLiteral("none"));
+    m_methodEdit = new QLineEdit(basicPage);
+    m_methodEdit->setPlaceholderText(QStringLiteral("2022-blake3-aes-128-gcm"));
+    m_securityCipherEdit = new QLineEdit(basicPage);
+    m_securityCipherEdit->setPlaceholderText(QStringLiteral("auto"));
+    m_alterIdSpin = new QSpinBox(basicPage);
+    m_alterIdSpin->setRange(0, 65535);
     m_enabledCheck = new QCheckBox(QStringLiteral("Enabled"), basicPage);
     m_enabledCheck->setChecked(true);
+    m_unsupportedReasonLabel = new QLabel(basicPage);
+    m_unsupportedReasonLabel->setWordWrap(true);
+    m_unsupportedReasonLabel->setStyleSheet(QStringLiteral("color: #a63;"));
+
+    connect(m_protocolCombo, qOverload<int>(&QComboBox::currentIndexChanged), this,
+            &ProfileDialog::onProtocolChanged);
 
     basicForm->addRow(QStringLiteral("Name"), m_nameEdit);
     basicForm->addRow(QStringLiteral("Protocol"), m_protocolCombo);
     basicForm->addRow(QStringLiteral("Core"), m_coreCombo);
     basicForm->addRow(QStringLiteral("Address"), m_addressEdit);
     basicForm->addRow(QStringLiteral("Port"), m_portSpin);
-    basicForm->addRow(QStringLiteral("UUID"), m_uuidEdit);
-    basicForm->addRow(QStringLiteral("Encryption"), m_encryptionEdit);
+    m_uuidRowWidget = new QWidget(basicPage);
+    auto* uuidRowLayout = new QFormLayout(m_uuidRowWidget);
+    uuidRowLayout->setContentsMargins(0, 0, 0, 0);
+    uuidRowLayout->addRow(QStringLiteral("UUID"), m_uuidEdit);
+    basicForm->addRow(m_uuidRowWidget);
+    m_passwordRowWidget = new QWidget(basicPage);
+    auto* passwordRowLayout = new QFormLayout(m_passwordRowWidget);
+    passwordRowLayout->setContentsMargins(0, 0, 0, 0);
+    passwordRowLayout->addRow(QStringLiteral("Password"), m_passwordEdit);
+    basicForm->addRow(m_passwordRowWidget);
+    m_encryptionRowWidget = new QWidget(basicPage);
+    auto* encryptionRowLayout = new QFormLayout(m_encryptionRowWidget);
+    encryptionRowLayout->setContentsMargins(0, 0, 0, 0);
+    encryptionRowLayout->addRow(QStringLiteral("VLESS encryption"), m_encryptionEdit);
+    basicForm->addRow(m_encryptionRowWidget);
+    m_methodRowWidget = new QWidget(basicPage);
+    auto* methodRowLayout = new QFormLayout(m_methodRowWidget);
+    methodRowLayout->setContentsMargins(0, 0, 0, 0);
+    methodRowLayout->addRow(QStringLiteral("Method"), m_methodEdit);
+    basicForm->addRow(m_methodRowWidget);
+    m_alterIdRowWidget = new QWidget(basicPage);
+    auto* alterRowLayout = new QFormLayout(m_alterIdRowWidget);
+    alterRowLayout->setContentsMargins(0, 0, 0, 0);
+    alterRowLayout->addRow(QStringLiteral("Alter ID"), m_alterIdSpin);
+    basicForm->addRow(m_alterIdRowWidget);
+    m_securityCipherRowWidget = new QWidget(basicPage);
+    auto* cipherRowLayout = new QFormLayout(m_securityCipherRowWidget);
+    cipherRowLayout->setContentsMargins(0, 0, 0, 0);
+    cipherRowLayout->addRow(QStringLiteral("VMess security"), m_securityCipherEdit);
+    basicForm->addRow(m_securityCipherRowWidget);
+    basicForm->addRow(QStringLiteral("Import note"), m_unsupportedReasonLabel);
     basicForm->addRow(QString(), m_enabledCheck);
 
     auto* transportPage = new QWidget(this);
@@ -70,6 +114,8 @@ ProfileDialog::ProfileDialog(QWidget* parent)
     transportForm->addRow(QStringLiteral("Path"), m_pathEdit);
     transportForm->addRow(QStringLiteral("Host"), m_hostEdit);
     transportForm->addRow(QStringLiteral("Header type"), m_headerTypeEdit);
+    m_serviceNameEdit = new QLineEdit(transportPage);
+    transportForm->addRow(QStringLiteral("gRPC service"), m_serviceNameEdit);
 
     m_realityTab = new QWidget(this);
     auto* realityForm = new QFormLayout(m_realityTab);
@@ -126,7 +172,8 @@ ProfileDialog::ProfileDialog(QWidget* parent)
     auto* layout = new QVBoxLayout(this);
     layout->addWidget(m_tabs);
     layout->addWidget(buttons);
-    resize(520, 420);
+    resize(560, 480);
+    updateProtocolFieldsVisibility();
 }
 
 void ProfileDialog::setProfile(const Profile& profile)
@@ -176,9 +223,29 @@ void ProfileDialog::onSecurityChanged(int index)
 
 void ProfileDialog::updateRealityTabVisibility()
 {
-    const bool reality = m_securityCombo->currentData().toString() == QStringLiteral("reality");
     m_tabs->setTabEnabled(m_tabs->indexOf(m_realityTab), true);
-    Q_UNUSED(reality);
+}
+
+void ProfileDialog::onProtocolChanged(int index)
+{
+    Q_UNUSED(index);
+    updateProtocolFieldsVisibility();
+}
+
+void ProfileDialog::updateProtocolFieldsVisibility()
+{
+    const auto protocol =
+        static_cast<ProtocolType>(m_protocolCombo->currentData().toInt());
+
+    m_uuidRowWidget->setVisible(protocol == ProtocolType::Vless
+                                || protocol == ProtocolType::Vmess);
+    m_passwordRowWidget->setVisible(protocol == ProtocolType::Trojan
+                                    || protocol == ProtocolType::Shadowsocks
+                                    || protocol == ProtocolType::Socks);
+    m_encryptionRowWidget->setVisible(protocol == ProtocolType::Vless);
+    m_methodRowWidget->setVisible(protocol == ProtocolType::Shadowsocks);
+    m_alterIdRowWidget->setVisible(protocol == ProtocolType::Vmess);
+    m_securityCipherRowWidget->setVisible(protocol == ProtocolType::Vmess);
 }
 
 void ProfileDialog::populateFromProfile(const Profile& profile)
@@ -197,9 +264,19 @@ void ProfileDialog::populateFromProfile(const Profile& profile)
 
     m_addressEdit->setText(profile.address);
     m_portSpin->setValue(profile.port);
-    m_uuidEdit->setText(profile.uuidPassword);
+    m_uuidEdit->setText(profile.effectiveUuid());
+    m_passwordEdit->setText(profile.password.isEmpty() ? profile.uuidPassword : profile.password);
     m_encryptionEdit->setText(profile.encryption);
+    m_methodEdit->setText(profile.effectiveMethod());
+    m_securityCipherEdit->setText(profile.securityCipher.isEmpty() ? profile.effectiveVmessSecurity()
+                                                                     : profile.securityCipher);
+    m_alterIdSpin->setValue(profile.alterId);
     m_enabledCheck->setChecked(profile.enabled);
+    if (profile.unsupportedReason.isEmpty()) {
+        m_unsupportedReasonLabel->setText(QStringLiteral("—"));
+    } else {
+        m_unsupportedReasonLabel->setText(profile.unsupportedReason);
+    }
 
     const int networkIndex = m_networkCombo->findData(profile.network);
     if (networkIndex >= 0) {
@@ -210,6 +287,7 @@ void ProfileDialog::populateFromProfile(const Profile& profile)
     m_pathEdit->setText(profile.path);
     m_hostEdit->setText(profile.host);
     m_headerTypeEdit->setText(profile.headerType);
+    m_serviceNameEdit->setText(profile.serviceName);
 
     QString security = profile.security.trimmed().toLower();
     if (security.isEmpty()) {
@@ -230,6 +308,7 @@ void ProfileDialog::populateFromProfile(const Profile& profile)
     m_remarkEdit->setText(profile.remark);
     m_allowInsecureCheck->setChecked(profile.allowInsecure);
     updateRealityTabVisibility();
+    updateProtocolFieldsVisibility();
 }
 
 Profile ProfileDialog::profileFromFields() const
@@ -245,9 +324,13 @@ Profile ProfileDialog::profileFromFields() const
     profile.address = m_addressEdit->text().trimmed();
     profile.port = m_portSpin->value();
     profile.uuidPassword = m_uuidEdit->text().trimmed();
+    profile.password = m_passwordEdit->text().trimmed();
     profile.encryption = m_encryptionEdit->text().trimmed().isEmpty()
                              ? QStringLiteral("none")
                              : m_encryptionEdit->text().trimmed();
+    profile.method = m_methodEdit->text().trimmed();
+    profile.securityCipher = m_securityCipherEdit->text().trimmed();
+    profile.alterId = m_alterIdSpin->value();
     profile.enabled = m_enabledCheck->isChecked();
 
     profile.network = m_networkCombo->currentData().toString();
@@ -257,6 +340,7 @@ Profile ProfileDialog::profileFromFields() const
     profile.path = m_pathEdit->text().trimmed();
     profile.host = m_hostEdit->text().trimmed();
     profile.headerType = m_headerTypeEdit->text().trimmed();
+    profile.serviceName = m_serviceNameEdit->text().trimmed();
 
     profile.security = m_securityCombo->currentData().toString();
     profile.serverName = m_serverNameEdit->text().trimmed();

@@ -149,8 +149,15 @@ ShareLinkParseResult parseVmess(const QString& link)
     profile.fingerprint = object.value(QStringLiteral("fp")).toString();
 
     const QString scy = object.value(QStringLiteral("scy")).toString();
-    if (!scy.isEmpty()) {
-        profile.encryption = scy;
+    profile.securityCipher = scy.isEmpty() ? QStringLiteral("auto") : scy;
+
+    if (profile.serverName.isEmpty() && profile.isSecurityTls()) {
+        if (!profile.host.isEmpty()) {
+            profile.serverName = profile.host;
+        } else {
+            profile.serverName = profile.address;
+        }
+        profile.sni = profile.serverName;
     }
 
     if (profile.name.isEmpty()) {
@@ -176,24 +183,42 @@ ShareLinkParseResult parseTrojan(const QString& link)
     }
 
     Profile profile = baseImportedProfile(ProtocolType::Trojan);
-    profile.uuidPassword = decodeComponent(url.userName());
+    const QString trojanPassword = decodeComponent(url.userName());
+    profile.password = trojanPassword;
+    profile.uuidPassword = trojanPassword;
     profile.address = url.host(QUrl::FullyDecoded);
     profile.port = url.port(443);
 
-    if (profile.uuidPassword.isEmpty() || profile.address.isEmpty()) {
+    if (profile.password.isEmpty() || profile.address.isEmpty()) {
         result.error = QStringLiteral("Incomplete trojan link.");
         return result;
     }
 
     const QUrlQuery query(url);
     profile.security = query.queryItemValue(QStringLiteral("security"));
-    if (profile.security.isEmpty()) {
+    if (profile.security.isEmpty() && profile.port == 443) {
         profile.security = QStringLiteral("tls");
     }
     const QString sni = query.queryItemValue(QStringLiteral("sni"));
     if (!sni.isEmpty()) {
         profile.serverName = sni;
         profile.sni = sni;
+    }
+    const QString network = query.queryItemValue(QStringLiteral("type"));
+    if (!network.isEmpty()) {
+        profile.network = network;
+    }
+    const QString path = query.queryItemValue(QStringLiteral("path"));
+    if (!path.isEmpty()) {
+        profile.path = path;
+    }
+    const QString host = query.queryItemValue(QStringLiteral("host"));
+    if (!host.isEmpty()) {
+        profile.host = host;
+    }
+    const QString fp = query.queryItemValue(QStringLiteral("fp"));
+    if (!fp.isEmpty()) {
+        profile.fingerprint = fp;
     }
     profile.allowInsecure =
         query.queryItemValue(QStringLiteral("allowInsecure")).compare(QStringLiteral("1")) == 0
@@ -285,8 +310,24 @@ ShareLinkParseResult parseShadowsocks(const QString& link)
 
     profile.address = host;
     profile.port = port;
+    profile.password = password;
     profile.uuidPassword = password;
+    profile.method = method;
     profile.encryption = method;
+
+    QString hostPartForQuery = remainder;
+    if (remainder.contains(QLatin1Char('@'))) {
+        hostPartForQuery = remainder.mid(remainder.indexOf(QLatin1Char('@')) + 1);
+    }
+    const int queryIndex = hostPartForQuery.indexOf(QLatin1Char('?'));
+    if (queryIndex >= 0) {
+        const QUrlQuery pluginQuery(hostPartForQuery.mid(queryIndex + 1));
+        if (!pluginQuery.queryItemValue(QStringLiteral("plugin")).isEmpty()) {
+            profile.unsupportedReason =
+                QStringLiteral("Shadowsocks plugin options are not supported yet");
+        }
+    }
+
     profile.name = name.isEmpty() ? QStringLiteral("%1:%2").arg(host).arg(port) : name;
 
     result.profile = profile;
