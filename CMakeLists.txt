@@ -111,6 +111,7 @@ add_executable(zarya_xray_config_test
     src/storage/AppSettings.cpp
     src/storage/AppPaths.cpp
     src/platform/Platform.cpp
+    src/import/VlessUriParser.cpp
 )
 
 target_include_directories(zarya_xray_config_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
