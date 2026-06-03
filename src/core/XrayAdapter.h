@@ -11,8 +11,6 @@ public:
     ConfigGenerationResult generateConfig(const Profile& profile) const override;
     QStringList argumentsForConfig(const QString& configPath) const override;
 
-private:
-    ConfigGenerationResult generateVlessConfig(const Profile& profile) const;
 };
 
 } // namespace zarya

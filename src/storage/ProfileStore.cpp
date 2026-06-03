@@ -14,6 +14,13 @@ namespace zarya {
 
 namespace {
 
+void insertIfNotEmpty(QJsonObject& object, const QString& key, const QString& value)
+{
+    if (!value.isEmpty()) {
+        object.insert(key, value);
+    }
+}
+
 QJsonObject profileToJson(const Profile& profile)
 {
     QJsonObject object;
@@ -30,6 +37,13 @@ QJsonObject profileToJson(const Profile& profile)
     object.insert(QStringLiteral("remark"), profile.remark);
     object.insert(QStringLiteral("enabled"), profile.enabled);
     object.insert(QStringLiteral("coreType"), coreTypeToString(profile.coreType));
+
+    insertIfNotEmpty(object, QStringLiteral("serverName"), profile.serverName);
+    insertIfNotEmpty(object, QStringLiteral("publicKey"), profile.publicKey);
+    insertIfNotEmpty(object, QStringLiteral("shortId"), profile.shortId);
+    insertIfNotEmpty(object, QStringLiteral("spiderX"), profile.spiderX);
+    insertIfNotEmpty(object, QStringLiteral("fingerprint"), profile.fingerprint);
+
     return object;
 }
 
@@ -49,6 +63,13 @@ Profile profileFromJson(const QJsonObject& object)
     profile.remark = object.value(QStringLiteral("remark")).toString();
     profile.enabled = object.value(QStringLiteral("enabled")).toBool(true);
     profile.coreType = coreTypeFromString(object.value(QStringLiteral("coreType")).toString());
+
+    profile.serverName = object.value(QStringLiteral("serverName")).toString();
+    profile.publicKey = object.value(QStringLiteral("publicKey")).toString();
+    profile.shortId = object.value(QStringLiteral("shortId")).toString();
+    profile.spiderX = object.value(QStringLiteral("spiderX")).toString();
+    profile.fingerprint = object.value(QStringLiteral("fingerprint")).toString();
+
     if (profile.id.isEmpty()) {
         profile.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     }
