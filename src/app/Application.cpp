@@ -8,7 +8,7 @@ Application::Application(int& argc, char** argv)
     setOrganizationName(QStringLiteral("Zarya"));
     setOrganizationDomain(QStringLiteral("zarya.app"));
     setApplicationName(QStringLiteral("Zarya"));
-    setApplicationVersion(QStringLiteral("0.3.0"));
+    setApplicationVersion(QStringLiteral("0.4.0"));
 }
 
 Application* Application::instance()

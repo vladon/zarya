@@ -1,5 +1,7 @@
 #include "ui/models/ProfileTableModel.h"
 
+#include "domain/ProfileSourceType.h"
+
 namespace zarya {
 
 ProfileTableModel::ProfileTableModel(QObject* parent)
@@ -32,8 +34,13 @@ QVariant ProfileTableModel::data(const QModelIndex& index, int role) const
     const Profile& profile = m_profiles.at(index.row());
     if (role == Qt::DisplayRole) {
         switch (index.column()) {
-        case Name:
-            return profile.name;
+        case Name: {
+            QString name = profile.name;
+            if (profile.deletedBySubscriptionUpdate) {
+                name += QStringLiteral(" [missing]");
+            }
+            return name;
+        }
         case Protocol:
             return protocolTypeToString(profile.protocol);
         case Address:
@@ -42,6 +49,10 @@ QVariant ProfileTableModel::data(const QModelIndex& index, int role) const
             return profile.port;
         case Core:
             return coreTypeToString(profile.coreType);
+        case Source:
+            return profileSourceTypeToString(profile.sourceType);
+        case Subscription:
+            return profile.subscriptionName;
         case Enabled:
             return profile.enabled ? QStringLiteral("Yes") : QStringLiteral("No");
         default:
@@ -69,6 +80,10 @@ QVariant ProfileTableModel::headerData(int section, Qt::Orientation orientation,
         return QStringLiteral("Port");
     case Core:
         return QStringLiteral("Core");
+    case Source:
+        return QStringLiteral("Source");
+    case Subscription:
+        return QStringLiteral("Subscription");
     case Enabled:
         return QStringLiteral("Enabled");
     default:

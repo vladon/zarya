@@ -87,4 +87,22 @@ QString Profile::effectiveFingerprint() const
     return fingerprint.trimmed().isEmpty() ? QStringLiteral("chrome") : fingerprint.trimmed();
 }
 
+QString Profile::computeSourceKey() const
+{
+    return QStringLiteral("%1|%2|%3|%4|%5|%6")
+        .arg(protocolTypeToString(protocol), address.trimmed())
+        .arg(port)
+        .arg(uuidPassword.trimmed(), effectiveServerName(), security.trimmed());
+}
+
+bool Profile::isManual() const
+{
+    return sourceType == ProfileSourceType::Manual;
+}
+
+bool Profile::isFromSubscription(const QString& subId) const
+{
+    return sourceType == ProfileSourceType::Subscription && subscriptionId == subId;
+}
+
 } // namespace zarya

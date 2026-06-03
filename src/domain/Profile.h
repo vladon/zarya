@@ -1,8 +1,10 @@
 #pragma once
 
 #include "domain/CoreType.h"
+#include "domain/ProfileSourceType.h"
 #include "domain/ProtocolType.h"
 
+#include <QDateTime>
 #include <QString>
 
 namespace zarya {
@@ -34,6 +36,15 @@ struct Profile {
     QString spiderX;
     bool allowInsecure = false;
 
+    int alterId = 0;
+
+    ProfileSourceType sourceType = ProfileSourceType::Manual;
+    QString subscriptionId;
+    QString subscriptionName;
+    QString sourceKey;
+    QDateTime lastSeenAt;
+    bool deletedBySubscriptionUpdate = false;
+
     static Profile createDefault();
     static Profile createVlessRealityDefault();
 
@@ -43,6 +54,10 @@ struct Profile {
     QString effectiveServerName() const;
     QString effectiveEncryption() const;
     QString effectiveFingerprint() const;
+
+    QString computeSourceKey() const;
+    bool isManual() const;
+    bool isFromSubscription(const QString& subscriptionId) const;
 };
 
 } // namespace zarya
