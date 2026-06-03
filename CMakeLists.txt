@@ -78,6 +78,7 @@ add_executable(zarya_xray_config_test
     ${ZARYA_CORE_SOURCES}
     ${ZARYA_DOMAIN_SOURCES}
     src/storage/ProfileStore.cpp
+    src/storage/AppPaths.cpp
 )
 
 target_include_directories(zarya_xray_config_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
