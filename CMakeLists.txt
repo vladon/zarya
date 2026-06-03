@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(zarya VERSION 0.2.0 LANGUAGES CXX)
+project(zarya VERSION 0.3.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -45,6 +45,19 @@ set(ZARYA_CORE_SOURCES
     src/core/CoreManager.cpp
 )
 
+set(ZARYA_PLATFORM_SOURCES
+    src/platform/Platform.cpp
+    src/platform/SystemProxyManagerFactory.cpp
+    src/platform/SystemProxyController.cpp
+    src/platform/SystemProxyDebug.cpp
+)
+
+if(WIN32)
+    list(APPEND ZARYA_PLATFORM_SOURCES src/platform/windows/WindowsSystemProxyManager.cpp)
+else()
+    list(APPEND ZARYA_PLATFORM_SOURCES src/platform/stub/StubSystemProxyManager.cpp)
+endif()
+
 set(ZARYA_SOURCES
     src/app/main.cpp
     src/app/Application.cpp
@@ -57,7 +70,7 @@ set(ZARYA_SOURCES
     src/storage/ProfileStore.cpp
     src/storage/AppSettings.cpp
     src/import/VlessUriParser.cpp
-    src/platform/Platform.cpp
+    ${ZARYA_PLATFORM_SOURCES}
     src/storage/AppPaths.cpp
     ${ZARYA_DOMAIN_SOURCES}
 )
@@ -79,6 +92,11 @@ set(ZARYA_HEADERS
     src/storage/AppSettings.h
     src/import/VlessUriParser.h
     src/platform/Platform.h
+    src/platform/ISystemProxyManager.h
+    src/platform/SystemProxyState.h
+    src/platform/SystemProxyManagerFactory.h
+    src/platform/SystemProxyController.h
+    src/platform/SystemProxyDebug.h
     src/storage/AppPaths.h
     src/domain/Profile.h
     src/domain/CoreType.h
@@ -94,6 +112,7 @@ zarya_link_qt_widgets_app(zarya)
 
 if(WIN32)
     set_target_properties(zarya PROPERTIES WIN32_EXECUTABLE TRUE)
+    target_link_libraries(zarya PRIVATE wininet)
 endif()
 
 if(ZARYA_STATIC_QT AND WIN32)

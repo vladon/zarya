@@ -6,6 +6,7 @@
 #include "ui/ProfileDialog.h"
 #include "ui/SettingsDialog.h"
 
+#include <QCloseEvent>
 #include <QFile>
 #include <QFileInfo>
 #include <QHeaderView>
@@ -30,8 +31,11 @@ MainWindow::MainWindow(QWidget* parent)
     setupConnections();
     loadProfilesOnStartup();
     updateStatusBar();
-    appendLog(QStringLiteral("Zarya 0.2 started. Profiles: %1").arg(m_profileStore.filePath()));
+    appendLog(QStringLiteral("Zarya 0.3 started. Profiles: %1").arg(m_profileStore.filePath()));
     appendLog(QStringLiteral("Xray path: %1").arg(AppSettings::instance().resolvedXrayPath()));
+    if (!m_systemProxy.isSupported()) {
+        appendLog(QStringLiteral("System proxy unsupported on this platform."));
+    }
 }
 
 void MainWindow::setupUi()
@@ -83,6 +87,12 @@ void MainWindow::setupMenuBar()
     m_stopAction = coreMenu->addAction(QStringLiteral("S&top"));
     m_stopAction->setEnabled(false);
 
+    auto* toolsMenu = menuBar()->addMenu(QStringLiteral("&Tools"));
+    m_enableSystemProxyAction =
+        toolsMenu->addAction(QStringLiteral("Enable &System Proxy"));
+    m_restoreSystemProxyAction =
+        toolsMenu->addAction(QStringLiteral("&Restore Previous Proxy"));
+
     auto* helpMenu = menuBar()->addMenu(QStringLiteral("&Help"));
     helpMenu->addAction(QStringLiteral("&About"), this, &MainWindow::onAbout);
 }
@@ -99,6 +109,9 @@ void MainWindow::setupToolBar()
     m_toolBar->addAction(m_startAction);
     m_toolBar->addAction(m_stopAction);
     m_toolBar->addSeparator();
+    m_toolBar->addAction(m_enableSystemProxyAction);
+    m_toolBar->addAction(m_restoreSystemProxyAction);
+    m_toolBar->addSeparator();
     m_toolBar->addAction(m_saveAction);
     m_toolBar->addAction(m_loadAction);
 }
@@ -114,6 +127,10 @@ void MainWindow::setupConnections()
     connect(m_settingsAction, &QAction::triggered, this, &MainWindow::onSettings);
     connect(m_startAction, &QAction::triggered, this, &MainWindow::onStartCore);
     connect(m_stopAction, &QAction::triggered, this, &MainWindow::onStopCore);
+    connect(m_enableSystemProxyAction, &QAction::triggered, this,
+            &MainWindow::onEnableSystemProxy);
+    connect(m_restoreSystemProxyAction, &QAction::triggered, this,
+            &MainWindow::onRestoreSystemProxy);
 
     connect(&m_coreManager, &CoreManager::started, this, &MainWindow::onCoreStarted);
     connect(&m_coreManager, &CoreManager::stopped, this, &MainWindow::onCoreStopped);
@@ -126,22 +143,40 @@ void MainWindow::appendLog(const QString& line)
     m_logView->appendPlainText(line);
 }
 
+QString MainWindow::coreStatusText() const
+{
+    return m_coreManager.isRunning() ? QStringLiteral("running") : QStringLiteral("stopped");
+}
+
+QString MainWindow::systemProxyStatusText() const
+{
+    return m_systemProxy.uiStatusText();
+}
+
 void MainWindow::updateStatusBar()
 {
     const AppSettings& settings = AppSettings::instance();
+    QString message =
+        QStringLiteral("Core: %1 | System proxy: %2").arg(coreStatusText(), systemProxyStatusText());
+
     if (m_coreManager.isRunning()) {
-        statusBar()->showMessage(
-            QStringLiteral("Running: %1 | SOCKS 127.0.0.1:%2 | HTTP 127.0.0.1:%3")
-                .arg(m_coreManager.runningCoreName())
-                .arg(settings.socksPort())
-                .arg(settings.httpPort()));
+        message += QStringLiteral(" | SOCKS 127.0.0.1:%1 | HTTP 127.0.0.1:%2")
+                       .arg(settings.socksPort())
+                       .arg(settings.httpPort());
         m_startAction->setEnabled(false);
         m_stopAction->setEnabled(true);
     } else {
-        statusBar()->showMessage(QStringLiteral("Stopped"));
         m_startAction->setEnabled(true);
         m_stopAction->setEnabled(false);
     }
+
+    statusBar()->showMessage(message);
+
+    const bool coreRunning = m_coreManager.isRunning();
+    m_enableSystemProxyAction->setEnabled(coreRunning && m_systemProxy.isSupported()
+                                        && !m_systemProxy.enabledByZarya());
+    m_restoreSystemProxyAction->setEnabled(m_systemProxy.hasSavedState()
+                                           && m_systemProxy.isSupported());
 }
 
 int MainWindow::selectedRow() const
@@ -151,6 +186,72 @@ int MainWindow::selectedRow() const
         return -1;
     }
     return selected.first().row();
+}
+
+bool MainWindow::confirmSystemProxyChangeIfNeeded()
+{
+    if (!AppSettings::instance().confirmBeforeChangingSystemProxy()) {
+        return true;
+    }
+
+    return QMessageBox::question(
+               this, QStringLiteral("Change system proxy"),
+               QStringLiteral("Zarya will change Windows system proxy settings. Continue?"))
+           == QMessageBox::Yes;
+}
+
+void MainWindow::tryAutoEnableSystemProxy()
+{
+    const AppSettings& settings = AppSettings::instance();
+    if (!settings.autoEnableSystemProxyOnStart() || !m_systemProxy.isSupported()) {
+        return;
+    }
+
+    if (!confirmSystemProxyChangeIfNeeded()) {
+        appendLog(QStringLiteral("System proxy change cancelled by user."));
+        return;
+    }
+
+    QString error;
+    const auto logLine = [this](const QString& line) { appendLog(line); };
+    if (!m_systemProxy.enableLocalHttpProxy(settings.httpPort(), logLine, &error)) {
+        QMessageBox::warning(this, QStringLiteral("System proxy"),
+                             QStringLiteral("Failed to enable system proxy:\n%1").arg(error));
+    }
+    updateStatusBar();
+}
+
+void MainWindow::tryRestoreSystemProxy(SystemProxyRestoreMode mode, bool showFailureDialog)
+{
+    const bool wasEnabledByZarya = m_systemProxy.enabledByZarya();
+    QString error;
+    const auto logLine = [this](const QString& line) { appendLog(line); };
+    const bool restored = m_systemProxy.restorePreviousProxy(mode, logLine, &error);
+
+    if (!restored && showFailureDialog && !error.isEmpty()) {
+        if (mode == SystemProxyRestoreMode::Manual
+            || (mode == SystemProxyRestoreMode::Automatic && wasEnabledByZarya)) {
+            QMessageBox::warning(this, QStringLiteral("System proxy"),
+                                 QStringLiteral("Failed to restore system proxy:\n%1")
+                                     .arg(error));
+        }
+    }
+
+    updateStatusBar();
+}
+
+void MainWindow::closeEvent(QCloseEvent* event)
+{
+    if (AppSettings::instance().restoreProxyOnExit()) {
+        tryRestoreSystemProxy(SystemProxyRestoreMode::Automatic, true);
+    }
+
+    if (m_coreManager.isRunning()) {
+        appendLog(QStringLiteral("Stopping core on exit…"));
+        m_coreManager.stop();
+    }
+
+    QMainWindow::closeEvent(event);
 }
 
 void MainWindow::onAddProfile()
@@ -248,6 +349,7 @@ void MainWindow::onSettings()
     dialog.exec();
     appendLog(QStringLiteral("Settings updated. Xray path: %1")
                   .arg(AppSettings::instance().resolvedXrayPath()));
+    updateStatusBar();
 }
 
 void MainWindow::loadProfilesOnStartup()
@@ -370,7 +472,6 @@ void MainWindow::onStartCore()
     }
     appendLog(QStringLiteral("Validation OK"));
 
-    const AppSettings& settings = AppSettings::instance();
     appendLog(QStringLiteral("Starting Xray…"));
     m_coreManager.startCore(executablePath, configPath, adapter->displayName());
 }
@@ -378,7 +479,49 @@ void MainWindow::onStartCore()
 void MainWindow::onStopCore()
 {
     appendLog(QStringLiteral("Stopping core…"));
+    tryRestoreSystemProxy(SystemProxyRestoreMode::Automatic, true);
     m_coreManager.stop();
+}
+
+void MainWindow::onEnableSystemProxy()
+{
+    if (!m_coreManager.isRunning()) {
+        QMessageBox::information(
+            this, QStringLiteral("System proxy"),
+            QStringLiteral("Core is not running. Start a profile before enabling system proxy."));
+        return;
+    }
+
+    if (!m_systemProxy.isSupported()) {
+        QMessageBox::information(this, QStringLiteral("System proxy"),
+                                 QStringLiteral("System proxy is not supported on this platform."));
+        return;
+    }
+
+    if (!confirmSystemProxyChangeIfNeeded()) {
+        return;
+    }
+
+    const AppSettings& settings = AppSettings::instance();
+    QString error;
+    const auto logLine = [this](const QString& line) { appendLog(line); };
+    if (!m_systemProxy.enableLocalHttpProxy(settings.httpPort(), logLine, &error)) {
+        QMessageBox::warning(this, QStringLiteral("System proxy"),
+                             QStringLiteral("Failed to enable system proxy:\n%1").arg(error));
+    }
+    updateStatusBar();
+}
+
+void MainWindow::onRestoreSystemProxy()
+{
+    if (!m_systemProxy.hasSavedState()) {
+        QMessageBox::information(
+            this, QStringLiteral("System proxy"),
+            QStringLiteral("No saved previous proxy state. Nothing to restore."));
+        return;
+    }
+
+    tryRestoreSystemProxy(SystemProxyRestoreMode::Manual, true);
 }
 
 void MainWindow::onCoreStarted(const QString& coreName)
@@ -387,11 +530,13 @@ void MainWindow::onCoreStarted(const QString& coreName)
     appendLog(QStringLiteral("%1 started").arg(coreName));
     appendLog(QStringLiteral("SOCKS: 127.0.0.1:%1").arg(settings.socksPort()));
     appendLog(QStringLiteral("HTTP: 127.0.0.1:%1").arg(settings.httpPort()));
+    tryAutoEnableSystemProxy();
     updateStatusBar();
 }
 
 void MainWindow::onCoreStopped()
 {
+    tryRestoreSystemProxy(SystemProxyRestoreMode::Automatic, true);
     appendLog(QStringLiteral("Core stopped."));
     updateStatusBar();
 }
@@ -412,7 +557,9 @@ void MainWindow::onAbout()
 {
     QMessageBox::about(
         this, QStringLiteral("About Zarya"),
-        QStringLiteral("Zarya 0.2\n\nNative proxy profile manager with Xray VLESS REALITY support."));
+        QStringLiteral(
+            "Zarya 0.3\n\nNative proxy profile manager with Xray VLESS REALITY and Windows "
+            "system proxy support."));
 }
 
 } // namespace zarya

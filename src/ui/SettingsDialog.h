@@ -2,6 +2,8 @@
 
 #include <QDialog>
 
+class QCheckBox;
+class QLabel;
 class QLineEdit;
 class QSpinBox;
 
@@ -15,11 +17,15 @@ public:
 
 private slots:
     void onBrowseXray();
+    void updateHttpEndpointLabel();
 
 private:
     QLineEdit* m_xrayPathEdit = nullptr;
     QSpinBox* m_socksPortSpin = nullptr;
     QSpinBox* m_httpPortSpin = nullptr;
+    QCheckBox* m_autoEnableSystemProxyCheck = nullptr;
+    QCheckBox* m_restoreProxyOnExitCheck = nullptr;
+    QLabel* m_httpEndpointLabel = nullptr;
 };
 
 } // namespace zarya

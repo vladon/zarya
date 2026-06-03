@@ -3,12 +3,14 @@
 #include "core/CoreManager.h"
 #include "core/SingBoxAdapter.h"
 #include "core/XrayAdapter.h"
+#include "platform/SystemProxyController.h"
 #include "storage/ProfileStore.h"
 #include "ui/models/ProfileTableModel.h"
 
 #include <QMainWindow>
 
 class QAction;
+class QCloseEvent;
 class QPlainTextEdit;
 class QTableView;
 class QToolBar;
@@ -21,6 +23,9 @@ class MainWindow : public QMainWindow {
 public:
     explicit MainWindow(QWidget* parent = nullptr);
 
+protected:
+    void closeEvent(QCloseEvent* event) override;
+
 private slots:
     void onAddProfile();
     void onEditProfile();
@@ -31,6 +36,8 @@ private slots:
     void onSettings();
     void onStartCore();
     void onStopCore();
+    void onEnableSystemProxy();
+    void onRestoreSystemProxy();
     void onCoreStarted(const QString& coreName);
     void onCoreStopped();
     void onCoreLogLine(const QString& line);
@@ -50,11 +57,18 @@ private:
     QString configPathFor(CoreType type) const;
     void loadProfilesOnStartup();
 
+    bool confirmSystemProxyChangeIfNeeded();
+    void tryAutoEnableSystemProxy();
+    void tryRestoreSystemProxy(SystemProxyRestoreMode mode, bool showFailureDialog);
+    QString coreStatusText() const;
+    QString systemProxyStatusText() const;
+
     ProfileTableModel m_tableModel;
     ProfileStore m_profileStore;
     CoreManager m_coreManager;
     XrayAdapter m_xrayAdapter;
     SingBoxAdapter m_singBoxAdapter;
+    SystemProxyController m_systemProxy;
 
     QTableView* m_tableView = nullptr;
     QPlainTextEdit* m_logView = nullptr;
@@ -69,6 +83,8 @@ private:
     QAction* m_saveAction = nullptr;
     QAction* m_loadAction = nullptr;
     QAction* m_settingsAction = nullptr;
+    QAction* m_enableSystemProxyAction = nullptr;
+    QAction* m_restoreSystemProxyAction = nullptr;
 };
 
 } // namespace zarya
