@@ -16,6 +16,7 @@ set(ZARYA_SOURCES
     src/app/main.cpp
     src/app/Application.cpp
     src/ui/MainWindow.cpp
+    src/ui/models/ProfileTableModel.cpp
     src/domain/Profile.cpp
     src/domain/CoreType.cpp
     src/domain/ProtocolType.cpp
