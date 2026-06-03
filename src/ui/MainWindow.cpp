@@ -1,6 +1,7 @@
 #include "ui/MainWindow.h"
 
 #include "domain/Profile.h"
+#include "domain/ProtocolType.h"
 #include "domain/Subscription.h"
 #include "storage/AppPaths.h"
 #include "storage/AppSettings.h"
@@ -26,6 +27,18 @@
 
 namespace zarya {
 
+namespace {
+
+bool vmessFailureMayBeClockSkew(const QString& text)
+{
+    const QString lower = text.toLower();
+    return lower.contains(QStringLiteral("auth")) || lower.contains(QStringLiteral("rejected"))
+           || lower.contains(QStringLiteral("invalid user"))
+           || lower.contains(QStringLiteral("not found"));
+}
+
+} // namespace
+
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
 {
@@ -37,7 +50,7 @@ MainWindow::MainWindow(QWidget* parent)
 
     loadAllOnStartup();
     updateStatusBar();
-    appendLog(QStringLiteral("Zarya 0.5 started. Profiles: %1").arg(m_profileStore.filePath()));
+    appendLog(QStringLiteral("Zarya 0.6 started. Profiles: %1").arg(m_profileStore.filePath()));
     appendLog(QStringLiteral("Subscriptions: %1").arg(m_subscriptionStore.filePath()));
     appendLog(QStringLiteral("Xray path: %1").arg(AppSettings::instance().resolvedXrayPath()));
     if (!m_systemProxy.isSupported()) {
@@ -692,7 +705,21 @@ void MainWindow::onStartCore()
         return;
     }
 
-    appendLog(QStringLiteral("Generating config…"));
+    QString unsupportedReason;
+    if (!m_xrayAdapter.supportsProfile(profile, &unsupportedReason)) {
+        QMessageBox::warning(this, QStringLiteral("Unsupported profile"), unsupportedReason);
+        appendLog(QStringLiteral("Unsupported profile: %1").arg(unsupportedReason));
+        return;
+    }
+
+    appendLog(QStringLiteral("Generating Xray outbound: %1")
+                  .arg(protocolTypeToString(profile.protocol)));
+    if (!profile.network.trimmed().isEmpty()) {
+        appendLog(QStringLiteral("Network: %1").arg(profile.network));
+    }
+    if (!profile.security.trimmed().isEmpty()) {
+        appendLog(QStringLiteral("Security: %1").arg(profile.security));
+    }
 
     const ConfigGenerationResult generation = adapter->generateConfig(profile);
     if (!generation.success) {
@@ -729,6 +756,13 @@ void MainWindow::onStartCore()
         appendLog(validation.output);
     }
     if (!validation.success) {
+        if (profile.protocol == ProtocolType::Vmess) {
+            appendLog(QStringLiteral("Validation failed for VMess profile"));
+            if (vmessFailureMayBeClockSkew(validation.output + validation.errorMessage)) {
+                appendLog(QStringLiteral(
+                    "VMess note: check system UTC time synchronization."));
+            }
+        }
         QMessageBox::warning(this, QStringLiteral("Config validation failed"),
                              validation.errorMessage);
         appendLog(QStringLiteral("Validation failed."));
@@ -984,8 +1018,8 @@ void MainWindow::onAbout()
     QMessageBox::about(
         this, QStringLiteral("About Zarya"),
         QStringLiteral(
-            "Zarya 0.5\n\nNative proxy profile manager with Xray VLESS REALITY, Windows system "
-            "proxy, subscription import, and node connectivity testing."));
+            "Zarya 0.6\n\nNative proxy profile manager with Xray (VLESS, VMess, Trojan, "
+            "Shadowsocks), Windows system proxy, subscriptions, and node testing."));
 }
 
 } // namespace zarya

@@ -81,8 +81,28 @@ int main(int argc, char* argv[])
             "xzIjoidGxzIiwidHlwZSI6Im5vbmUiLCJ2IjoiMiJ9"));
     if (!vmess.ok || vmess.profile.protocol != zarya::ProtocolType::Vmess) {
         ok &= fail("vmess:// link should parse");
+    } else if (vmess.profile.securityCipher != QStringLiteral("auto")) {
+        ok &= fail("vmess:// should map scy to securityCipher");
     } else {
         ok &= pass("vmess:// link parses into profile");
+    }
+
+    const zarya::ShareLinkParseResult trojan = zarya::ShareLinkParser::parse(QStringLiteral(
+        "trojan://PASSWORD@example.com:443?security=tls&sni=example.com#Trojan%20Test"));
+    if (!trojan.ok || trojan.profile.protocol != zarya::ProtocolType::Trojan
+        || trojan.profile.password != QStringLiteral("PASSWORD")
+        || trojan.profile.security != QStringLiteral("tls")) {
+        ok &= fail("trojan:// link should parse with password and tls");
+    } else {
+        ok &= pass("trojan:// link parses into runnable profile fields");
+    }
+
+    const zarya::ShareLinkParseResult ssPlugin = zarya::ShareLinkParser::parse(QStringLiteral(
+        "ss://YWVzLTI1Ni1nY206dGVzdA==@127.0.0.1:8388/?plugin=obfs-local%3Bobfs%3Dhttp"));
+    if (!ssPlugin.ok || ssPlugin.profile.unsupportedReason.isEmpty()) {
+        ok &= fail("ss:// with plugin should set unsupportedReason");
+    } else {
+        ok &= pass("ss:// plugin link marks unsupported reason");
     }
 
     const QString tempPath = writeTempSubscriptionFile(plainBody);

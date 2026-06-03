@@ -18,7 +18,10 @@ struct Profile {
     QString address;
     int port = 443;
     QString uuidPassword;
+    QString password;
     QString encryption = QStringLiteral("none");
+    QString method;
+    QString securityCipher;
     QString flow;
     QString remark;
     bool enabled = true;
@@ -27,6 +30,7 @@ struct Profile {
     QString path;
     QString host;
     QString headerType;
+    QString serviceName;
 
     QString security;
     QString serverName;
@@ -45,6 +49,7 @@ struct Profile {
     QString sourceKey;
     QDateTime lastSeenAt;
     bool deletedBySubscriptionUpdate = false;
+    QString unsupportedReason;
 
     int lastTcpPingMs = -1;
     int lastRealDelayMs = -1;
@@ -61,6 +66,12 @@ struct Profile {
     QString effectiveServerName() const;
     QString effectiveEncryption() const;
     QString effectiveFingerprint() const;
+    QString effectiveUuid() const;
+    QString effectivePassword() const;
+    QString effectiveVmessSecurity() const;
+    QString effectiveMethod() const;
+    bool isSecurityNone() const;
+    bool hasUnsupportedFeature() const;
 
     QString computeSourceKey() const;
     bool isManual() const;

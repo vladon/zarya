@@ -1,6 +1,6 @@
 #include "core/XrayConfigTestHelpers.h"
 
-#include "core/XrayVlessGenerator.h"
+#include "core/XrayAdapter.h"
 
 #include <QJsonDocument>
 
@@ -29,15 +29,64 @@ Profile sampleVlessRealityProfile()
     return profile;
 }
 
+Profile sampleVmessTcpTlsProfile()
+{
+    Profile profile;
+    profile.protocol = ProtocolType::Vmess;
+    profile.coreType = CoreType::Xray;
+    profile.name = QStringLiteral("VMess TCP TLS");
+    profile.address = QStringLiteral("vmess.example.com");
+    profile.port = 443;
+    profile.uuidPassword = QStringLiteral("11111111-1111-1111-1111-111111111111");
+    profile.security = QStringLiteral("tls");
+    profile.serverName = QStringLiteral("vmess.example.com");
+    profile.network = QStringLiteral("tcp");
+    profile.securityCipher = QStringLiteral("auto");
+    profile.enabled = true;
+    return profile;
+}
+
+Profile sampleTrojanTlsProfile()
+{
+    Profile profile;
+    profile.protocol = ProtocolType::Trojan;
+    profile.coreType = CoreType::Xray;
+    profile.name = QStringLiteral("Trojan TLS");
+    profile.address = QStringLiteral("trojan.example.com");
+    profile.port = 443;
+    profile.password = QStringLiteral("secret");
+    profile.security = QStringLiteral("tls");
+    profile.serverName = QStringLiteral("trojan.example.com");
+    profile.network = QStringLiteral("tcp");
+    profile.enabled = true;
+    return profile;
+}
+
+Profile sampleShadowsocksProfile()
+{
+    Profile profile;
+    profile.protocol = ProtocolType::Shadowsocks;
+    profile.coreType = CoreType::Xray;
+    profile.name = QStringLiteral("Shadowsocks");
+    profile.address = QStringLiteral("ss.example.com");
+    profile.port = 8388;
+    profile.method = QStringLiteral("2022-blake3-aes-128-gcm");
+    profile.password = QStringLiteral("password");
+    profile.enabled = true;
+    return profile;
+}
+
 QJsonObject sampleVlessRealityProxyOutbound()
 {
     QString error;
-    return XrayVlessGenerator::buildProxyOutbound(sampleVlessRealityProfile(), &error);
+    XrayAdapter adapter;
+    return adapter.generateOutbound(sampleVlessRealityProfile(), &error);
 }
 
 QString generateXrayConfigJson(const Profile& profile, QString* errorMessage)
 {
-    const ConfigGenerationResult result = XrayVlessGenerator::generate(profile);
+    XrayAdapter adapter;
+    const ConfigGenerationResult result = adapter.generateConfig(profile);
     if (!result.success) {
         if (errorMessage) {
             *errorMessage = result.errorMessage;

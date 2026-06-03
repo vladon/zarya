@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(zarya VERSION 0.5.0 LANGUAGES CXX)
+project(zarya VERSION 0.6.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -58,6 +58,8 @@ set(ZARYA_SUBSCRIPTION_SOURCES
 set(ZARYA_CORE_SOURCES
     src/core/XrayAdapter.cpp
     src/core/XrayVlessGenerator.cpp
+    src/core/XrayStreamSettings.cpp
+    src/core/XrayConfigBuilder.cpp
     src/core/XrayConfigTestHelpers.cpp
     src/core/SingBoxAdapter.cpp
     src/core/CoreManager.cpp
@@ -112,6 +114,8 @@ set(ZARYA_HEADERS
     src/core/ICoreAdapter.h
     src/core/XrayAdapter.h
     src/core/XrayVlessGenerator.h
+    src/core/XrayStreamSettings.h
+    src/core/XrayConfigBuilder.h
     src/core/XrayConfigTestHelpers.h
     src/core/SingBoxAdapter.h
     src/core/CoreManager.h
@@ -168,6 +172,7 @@ add_executable(zarya_xray_config_test
     tests/xray_config_test.cpp
     ${ZARYA_CORE_SOURCES}
     ${ZARYA_DOMAIN_SOURCES}
+    src/testing/TestStatus.cpp
     src/storage/ProfileStore.cpp
     src/storage/AppSettings.cpp
     src/storage/AppPaths.cpp
@@ -203,6 +208,7 @@ add_executable(zarya_subscription_test
     tests/subscription_test.cpp
     ${ZARYA_SUBSCRIPTION_SOURCES}
     ${ZARYA_DOMAIN_SOURCES}
+    src/testing/TestStatus.cpp
     src/storage/ProfileStore.cpp
     src/storage/SubscriptionStore.cpp
     src/storage/AppPaths.cpp

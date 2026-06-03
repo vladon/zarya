@@ -66,6 +66,46 @@ bool Profile::isSecurityTls() const
     return equalsIgnoreCase(security, QStringLiteral("tls"));
 }
 
+bool Profile::isSecurityNone() const
+{
+    const QString value = security.trimmed();
+    return value.isEmpty() || equalsIgnoreCase(value, QStringLiteral("none"));
+}
+
+QString Profile::effectiveUuid() const
+{
+    return uuidPassword.trimmed();
+}
+
+QString Profile::effectivePassword() const
+{
+    if (!password.trimmed().isEmpty()) {
+        return password.trimmed();
+    }
+    return uuidPassword.trimmed();
+}
+
+QString Profile::effectiveVmessSecurity() const
+{
+    if (!securityCipher.trimmed().isEmpty()) {
+        return securityCipher.trimmed();
+    }
+    return QStringLiteral("auto");
+}
+
+QString Profile::effectiveMethod() const
+{
+    if (!method.trimmed().isEmpty()) {
+        return method.trimmed();
+    }
+    return encryption.trimmed();
+}
+
+bool Profile::hasUnsupportedFeature() const
+{
+    return !unsupportedReason.trimmed().isEmpty();
+}
+
 QString Profile::effectiveServerName() const
 {
     if (!serverName.trimmed().isEmpty()) {
