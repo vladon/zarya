@@ -24,8 +24,29 @@ Profile Profile::createDefault()
     profile.uuidPassword = QUuid::createUuid().toString(QUuid::WithoutBraces);
     profile.security = QStringLiteral("tls");
     profile.network = QStringLiteral("tcp");
-    profile.enabled = true;
+    profile.encryption = QStringLiteral("none");
     profile.coreType = CoreType::Xray;
+    profile.enabled = true;
+    return profile;
+}
+
+Profile Profile::createVlessRealityDefault()
+{
+    Profile profile;
+    profile.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    profile.name = QStringLiteral("VLESS REALITY");
+    profile.protocol = ProtocolType::Vless;
+    profile.coreType = CoreType::Xray;
+    profile.address = QStringLiteral("example.com");
+    profile.port = 443;
+    profile.uuidPassword = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    profile.encryption = QStringLiteral("none");
+    profile.network = QStringLiteral("tcp");
+    profile.security = QStringLiteral("reality");
+    profile.flow = QStringLiteral("xtls-rprx-vision");
+    profile.fingerprint = QStringLiteral("chrome");
+    profile.spiderX = QStringLiteral("/");
+    profile.enabled = true;
     return profile;
 }
 
@@ -54,6 +75,16 @@ QString Profile::effectiveServerName() const
         return sni.trimmed();
     }
     return {};
+}
+
+QString Profile::effectiveEncryption() const
+{
+    return encryption.trimmed().isEmpty() ? QStringLiteral("none") : encryption.trimmed();
+}
+
+QString Profile::effectiveFingerprint() const
+{
+    return fingerprint.trimmed().isEmpty() ? QStringLiteral("chrome") : fingerprint.trimmed();
 }
 
 } // namespace zarya

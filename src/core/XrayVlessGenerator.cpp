@@ -16,7 +16,8 @@ QString normalizedNetwork(const Profile& profile)
 
 } // namespace
 
-ConfigGenerationResult XrayVlessGenerator::generate(const Profile& profile)
+ConfigGenerationResult XrayVlessGenerator::generate(const Profile& profile,
+                                                     const XrayInboundPorts& ports)
 {
     const ProfileValidationResult validation = validateProfileForXray(profile);
     if (!validation.ok) {
@@ -29,7 +30,7 @@ ConfigGenerationResult XrayVlessGenerator::generate(const Profile& profile)
         return {false, {}, error};
     }
 
-    return {true, buildFullConfig(proxyOutbound), {}};
+    return {true, buildFullConfig(proxyOutbound, ports), {}};
 }
 
 QJsonObject XrayVlessGenerator::buildProxyOutbound(const Profile& profile, QString* errorMessage)
@@ -70,15 +71,20 @@ QJsonObject XrayVlessGenerator::buildProxyOutbound(const Profile& profile, QStri
     return proxyOutbound;
 }
 
-QJsonObject XrayVlessGenerator::buildFullConfig(const QJsonObject& proxyOutbound)
+QJsonObject XrayVlessGenerator::buildFullConfig(const QJsonObject& proxyOutbound,
+                                                const XrayInboundPorts& ports)
 {
     QJsonObject directOutbound;
     directOutbound.insert(QStringLiteral("tag"), QStringLiteral("direct"));
     directOutbound.insert(QStringLiteral("protocol"), QStringLiteral("freedom"));
 
+    QJsonObject blockOutbound;
+    blockOutbound.insert(QStringLiteral("tag"), QStringLiteral("block"));
+    blockOutbound.insert(QStringLiteral("protocol"), QStringLiteral("blackhole"));
+
     QJsonObject socksInbound;
     socksInbound.insert(QStringLiteral("listen"), QStringLiteral("127.0.0.1"));
-    socksInbound.insert(QStringLiteral("port"), 10808);
+    socksInbound.insert(QStringLiteral("port"), ports.socksPort);
     socksInbound.insert(QStringLiteral("protocol"), QStringLiteral("socks"));
     socksInbound.insert(QStringLiteral("tag"), QStringLiteral("socks-in"));
     socksInbound.insert(QStringLiteral("settings"), QJsonObject{
@@ -87,19 +93,25 @@ QJsonObject XrayVlessGenerator::buildFullConfig(const QJsonObject& proxyOutbound
 
     QJsonObject httpInbound;
     httpInbound.insert(QStringLiteral("listen"), QStringLiteral("127.0.0.1"));
-    httpInbound.insert(QStringLiteral("port"), 10809);
+    httpInbound.insert(QStringLiteral("port"), ports.httpPort);
     httpInbound.insert(QStringLiteral("protocol"), QStringLiteral("http"));
     httpInbound.insert(QStringLiteral("tag"), QStringLiteral("http-in"));
+
+    QJsonObject defaultRule;
+    defaultRule.insert(QStringLiteral("type"), QStringLiteral("field"));
+    defaultRule.insert(QStringLiteral("network"), QStringLiteral("tcp,udp"));
+    defaultRule.insert(QStringLiteral("outboundTag"), QStringLiteral("proxy"));
 
     QJsonObject config;
     config.insert(QStringLiteral("log"), QJsonObject{
         {QStringLiteral("loglevel"), QStringLiteral("warning")},
     });
     config.insert(QStringLiteral("inbounds"), QJsonArray{socksInbound, httpInbound});
-    config.insert(QStringLiteral("outbounds"), QJsonArray{proxyOutbound, directOutbound});
+    config.insert(QStringLiteral("outbounds"),
+                  QJsonArray{proxyOutbound, directOutbound, blockOutbound});
     config.insert(QStringLiteral("routing"), QJsonObject{
-        {QStringLiteral("domainStrategy"), QStringLiteral("AsIs")},
-        {QStringLiteral("rules"), QJsonArray{}},
+        {QStringLiteral("domainStrategy"), QStringLiteral("IPIfNonMatch")},
+        {QStringLiteral("rules"), QJsonArray{defaultRule}},
     });
     return config;
 }
@@ -108,12 +120,9 @@ QJsonObject XrayVlessGenerator::buildVlessUser(const Profile& profile)
 {
     QJsonObject user;
     user.insert(QStringLiteral("id"), profile.uuidPassword);
-    user.insert(QStringLiteral("encryption"), QStringLiteral("none"));
+    user.insert(QStringLiteral("encryption"), profile.effectiveEncryption());
 
     QString flow = profile.flow.trimmed();
-    if (profile.isSecurityReality() && flow.isEmpty()) {
-        flow = QStringLiteral("xtls-rprx-vision");
-    }
     if (!flow.isEmpty()) {
         user.insert(QStringLiteral("flow"), flow);
     }
@@ -124,10 +133,11 @@ QJsonObject XrayVlessGenerator::buildStreamSettings(const Profile& profile,
                                                       QString* errorMessage)
 {
     QJsonObject streamSettings;
-    streamSettings.insert(QStringLiteral("network"), normalizedNetwork(profile));
+    const QString network = normalizedNetwork(profile);
+    streamSettings.insert(QStringLiteral("network"), network);
 
     if (profile.isSecurityReality()) {
-        if (normalizedNetwork(profile).compare(QStringLiteral("tcp"), Qt::CaseInsensitive) != 0) {
+        if (network.compare(QStringLiteral("tcp"), Qt::CaseInsensitive) != 0) {
             if (errorMessage) {
                 *errorMessage =
                     QStringLiteral("REALITY outbound requires network tcp.");
@@ -141,7 +151,11 @@ QJsonObject XrayVlessGenerator::buildStreamSettings(const Profile& profile,
 
     if (profile.isSecurityTls()) {
         streamSettings.insert(QStringLiteral("security"), QStringLiteral("tls"));
-        streamSettings.insert(QStringLiteral("tlsSettings"), buildTlsSettings(profile));
+        QJsonObject tlsSettings = buildTlsSettings(profile);
+        if (profile.allowInsecure) {
+            tlsSettings.insert(QStringLiteral("allowInsecure"), true);
+        }
+        streamSettings.insert(QStringLiteral("tlsSettings"), tlsSettings);
         return streamSettings;
     }
 
@@ -161,15 +175,8 @@ QJsonObject XrayVlessGenerator::buildRealitySettings(const Profile& profile)
 {
     QJsonObject reality;
     reality.insert(QStringLiteral("show"), false);
-
-    QString fingerprint = profile.fingerprint.trimmed();
-    if (fingerprint.isEmpty()) {
-        fingerprint = QStringLiteral("chrome");
-    }
-    reality.insert(QStringLiteral("fingerprint"), fingerprint);
-
-    const QString serverName = profile.effectiveServerName();
-    reality.insert(QStringLiteral("serverName"), serverName);
+    reality.insert(QStringLiteral("fingerprint"), profile.effectiveFingerprint());
+    reality.insert(QStringLiteral("serverName"), profile.effectiveServerName());
     reality.insert(QStringLiteral("publicKey"), profile.publicKey.trimmed());
     reality.insert(QStringLiteral("shortId"), profile.shortId.trimmed());
 

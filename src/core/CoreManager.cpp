@@ -25,6 +25,74 @@ QString CoreManager::runningCoreName() const
     return m_runningCoreName;
 }
 
+int CoreManager::lastExitCode() const
+{
+    return m_lastExitCode;
+}
+
+QString CoreManager::runProcess(const QString& coreExecutablePath,
+                                const QStringList& arguments, int timeoutMs,
+                                int* exitCode) const
+{
+    QProcess process;
+    process.setProgram(coreExecutablePath);
+    process.setArguments(arguments);
+    process.start();
+
+    if (!process.waitForStarted(5000)) {
+        if (exitCode) {
+            *exitCode = -1;
+        }
+        return process.errorString();
+    }
+
+    if (!process.waitForFinished(timeoutMs)) {
+        process.kill();
+        process.waitForFinished(1000);
+        if (exitCode) {
+            *exitCode = -1;
+        }
+        return QStringLiteral("Process timed out.");
+    }
+
+    if (exitCode) {
+        *exitCode = process.exitCode();
+    }
+
+    const QByteArray stdoutBytes = process.readAllStandardOutput();
+    const QByteArray stderrBytes = process.readAllStandardError();
+    return QString::fromUtf8(stdoutBytes + stderrBytes).trimmed();
+}
+
+CoreValidationResult CoreManager::validateConfig(const QString& coreExecutablePath,
+                                                 const QString& configPath) const
+{
+    CoreValidationResult result;
+    const QStringList arguments =
+        {QStringLiteral("run"), QStringLiteral("-test"), QStringLiteral("-config"), configPath};
+
+    int exitCode = -1;
+    result.output = runProcess(coreExecutablePath, arguments, 30000, &exitCode);
+    result.exitCode = exitCode;
+    result.success = exitCode == 0;
+
+    if (!result.success) {
+        result.errorMessage =
+            exitCode < 0
+                ? result.output
+                : QStringLiteral("Xray config test failed (exit %1).").arg(exitCode);
+    }
+    return result;
+}
+
+void CoreManager::startCore(const QString& coreExecutablePath, const QString& configPath,
+                            const QString& coreDisplayName)
+{
+    const QStringList arguments =
+        {QStringLiteral("run"), QStringLiteral("-config"), configPath};
+    start(coreExecutablePath, coreDisplayName, arguments);
+}
+
 void CoreManager::start(const QString& coreExecutablePath, const QString& coreDisplayName,
                         const QStringList& arguments)
 {
@@ -36,6 +104,9 @@ void CoreManager::start(const QString& coreExecutablePath, const QString& coreDi
     m_runningCoreName = coreDisplayName;
     m_process.setProgram(coreExecutablePath);
     m_process.setArguments(arguments);
+
+    emit logLine(QStringLiteral("Command: %1 %2")
+                   .arg(coreExecutablePath, arguments.join(QLatin1Char(' '))));
 
     m_process.start();
     if (!m_process.waitForStarted(5000)) {
@@ -78,10 +149,10 @@ void CoreManager::appendProcessOutput(const QByteArray& data, bool isStdErr)
 
 void CoreManager::onProcessFinished(int exitCode, QProcess::ExitStatus status)
 {
-    Q_UNUSED(exitCode);
     Q_UNUSED(status);
+    m_lastExitCode = exitCode;
     if (!m_runningCoreName.isEmpty()) {
-        emit logLine(QStringLiteral("Core process exited."));
+        emit logLine(QStringLiteral("Core process exited (code %1).").arg(exitCode));
     }
     m_runningCoreName.clear();
     emit stopped();

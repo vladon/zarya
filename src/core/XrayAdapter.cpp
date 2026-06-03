@@ -1,6 +1,7 @@
 #include "core/XrayAdapter.h"
 
 #include "core/XrayVlessGenerator.h"
+#include "storage/AppSettings.h"
 
 namespace zarya {
 
@@ -16,9 +17,14 @@ QString XrayAdapter::displayName() const
 
 ConfigGenerationResult XrayAdapter::generateConfig(const Profile& profile) const
 {
+    XrayInboundPorts ports;
+    const AppSettings& settings = AppSettings::instance();
+    ports.socksPort = settings.socksPort();
+    ports.httpPort = settings.httpPort();
+
     switch (profile.protocol) {
     case ProtocolType::Vless:
-        return XrayVlessGenerator::generate(profile);
+        return XrayVlessGenerator::generate(profile, ports);
     case ProtocolType::Vmess:
     case ProtocolType::Trojan:
     case ProtocolType::Shadowsocks:
@@ -31,7 +37,7 @@ ConfigGenerationResult XrayAdapter::generateConfig(const Profile& profile) const
 
 QStringList XrayAdapter::argumentsForConfig(const QString& configPath) const
 {
-    return {QStringLiteral("run"), QStringLiteral("-c"), configPath};
+    return {QStringLiteral("run"), QStringLiteral("-config"), configPath};
 }
 
 } // namespace zarya
