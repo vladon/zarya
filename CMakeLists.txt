@@ -16,6 +16,7 @@ set(ZARYA_SOURCES
     src/app/main.cpp
     src/app/Application.cpp
     src/ui/MainWindow.cpp
+    src/ui/ProfileDialog.cpp
     src/ui/models/ProfileTableModel.cpp
     src/domain/Profile.cpp
     src/domain/CoreType.cpp
@@ -25,6 +26,7 @@ set(ZARYA_SOURCES
 set(ZARYA_HEADERS
     src/app/Application.h
     src/ui/MainWindow.h
+    src/ui/models/ProfileTableModel.h
     src/domain/Profile.h
     src/domain/CoreType.h
     src/domain/ProtocolType.h
