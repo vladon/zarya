@@ -7,6 +7,7 @@
 #include "platform/SystemProxyController.h"
 #include "storage/ProfileStore.h"
 #include "storage/SubscriptionStore.h"
+#include "routing/RoutingManager.h"
 #include "subscription/SubscriptionManager.h"
 #include "testing/TestManager.h"
 #include "ui/models/ProfileTableModel.h"
@@ -63,6 +64,7 @@ private slots:
     void onSaveProfiles();
     void onLoadProfiles();
     void onSettings();
+    void onRoutingProfiles();
     void onSubscriptions();
     void onUpdateSelectedSubscription();
     void onUpdateAllSubscriptions();
@@ -124,6 +126,7 @@ private:
     void tryRestoreSystemProxy(SystemProxyRestoreMode mode, bool showFailureDialog);
     QString coreStatusText() const;
     QString systemProxyStatusText() const;
+    QString routingStatusText() const;
     QString trayStatusText() const;
     void notifyTray(const QString& title, const QString& message);
 
@@ -135,6 +138,7 @@ private:
     ProfileStore m_profileStore;
     SubscriptionStore m_subscriptionStore;
     SubscriptionManager m_subscriptionManager;
+    RoutingManager m_routingManager;
     TestManager m_testManager;
     CoreManager m_coreManager;
     XrayAdapter m_xrayAdapter;
@@ -161,6 +165,7 @@ private:
     QAction* m_saveAction = nullptr;
     QAction* m_loadAction = nullptr;
     QAction* m_settingsAction = nullptr;
+    QAction* m_routingProfilesAction = nullptr;
     QAction* m_subscriptionsAction = nullptr;
     QAction* m_updateSubscriptionAction = nullptr;
     QAction* m_updateAllSubscriptionsAction = nullptr;

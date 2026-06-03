@@ -2,6 +2,7 @@
 
 #include "core/ICoreAdapter.h"
 #include "core/XrayVlessGenerator.h"
+#include "domain/RoutingProfile.h"
 
 #include <QJsonObject>
 
@@ -14,6 +15,8 @@ public:
     ConfigGenerationResult generateConfig(const Profile& profile) const override;
     ConfigGenerationResult generateConfig(const Profile& profile,
                                           const XrayInboundPorts& ports) const;
+    ConfigGenerationResult generateConfig(const Profile& profile, const XrayInboundPorts& ports,
+                                          const RoutingProfile& routingProfile) const;
     QStringList argumentsForConfig(const QString& configPath) const override;
 
     bool supportsProfile(const Profile& profile, QString* reason = nullptr) const;
@@ -21,7 +24,8 @@ public:
 
 private:
     ConfigGenerationResult generateConfigInternal(const Profile& profile,
-                                                  const XrayInboundPorts& ports) const;
+                                                  const XrayInboundPorts& ports,
+                                                  const RoutingProfile* routingProfile) const;
 
     QJsonObject generateVlessOutbound(const Profile& profile, QString* errorMessage) const;
     QJsonObject generateVmessOutbound(const Profile& profile, QString* errorMessage) const;

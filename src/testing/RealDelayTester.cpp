@@ -1,6 +1,7 @@
 #include "testing/RealDelayTester.h"
 
 #include "core/XrayAdapter.h"
+#include "domain/RoutingProfile.h"
 #include "storage/AppPaths.h"
 #include "storage/AppSettings.h"
 #include "testing/PortAllocator.h"
@@ -142,7 +143,8 @@ TestResult RealDelayTester::run(const Profile& profile, int timeoutMs, const QSt
     inboundPorts.socksPort = ports.socksPort;
     inboundPorts.httpPort = ports.httpPort;
 
-    const ConfigGenerationResult generation = adapter.generateConfig(profile, inboundPorts);
+    const ConfigGenerationResult generation =
+        adapter.generateConfig(profile, inboundPorts, RoutingProfile::builtInProxyAll());
     if (!generation.success) {
         result.status = TestStatus::Failed;
         result.errorMessage = generation.errorMessage;

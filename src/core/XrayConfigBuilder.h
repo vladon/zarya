@@ -9,6 +9,8 @@ namespace zarya {
 class XrayConfigBuilder {
 public:
     static QJsonObject buildFullConfig(const QJsonObject& proxyOutbound, const XrayInboundPorts& ports);
+    static QJsonObject buildFullConfig(const QJsonObject& proxyOutbound, const XrayInboundPorts& ports,
+                                       const QJsonObject& routing);
 };
 
 } // namespace zarya

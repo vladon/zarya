@@ -55,6 +55,9 @@ public:
     bool confirmExitWhileRunning() const;
     void setConfirmExitWhileRunning(bool enabled);
 
+    QString selectedRoutingProfileId() const;
+    void setSelectedRoutingProfileId(const QString& profileId);
+
     static bool defaultAutoEnableSystemProxyOnStart();
     static bool defaultMinimizeToTrayOnClose();
 

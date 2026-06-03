@@ -10,6 +10,7 @@ class QWidget;
 namespace zarya {
 
 class CoreManager;
+class RoutingManager;
 class SystemProxyController;
 class TestManager;
 class XrayAdapter;
@@ -20,7 +21,7 @@ class AppController : public QObject {
 public:
     explicit AppController(CoreManager* coreManager, SystemProxyController* systemProxy,
                            XrayAdapter* xrayAdapter, TestManager* testManager,
-                           QObject* parent = nullptr);
+                           RoutingManager* routingManager, QObject* parent = nullptr);
 
     void setDialogParent(QWidget* parent);
     void setAfterCoreStartedCallback(std::function<void()> callback);
@@ -56,6 +57,7 @@ private:
     SystemProxyController* m_systemProxy = nullptr;
     XrayAdapter* m_xrayAdapter = nullptr;
     TestManager* m_testManager = nullptr;
+    RoutingManager* m_routingManager = nullptr;
     QWidget* m_dialogParent = nullptr;
     std::function<void()> m_afterCoreStarted;
     std::function<bool(QString*)> m_saveApplicationState;

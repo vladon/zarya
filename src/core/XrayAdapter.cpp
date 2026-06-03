@@ -2,6 +2,7 @@
 
 #include "core/XrayConfigBuilder.h"
 #include "core/XrayStreamSettings.h"
+#include "routing/XrayRoutingGenerator.h"
 #include "storage/AppSettings.h"
 
 #include <QJsonArray>
@@ -171,17 +172,25 @@ ConfigGenerationResult XrayAdapter::generateConfig(const Profile& profile) const
     const AppSettings& settings = AppSettings::instance();
     ports.socksPort = settings.socksPort();
     ports.httpPort = settings.httpPort();
-    return generateConfigInternal(profile, ports);
+    return generateConfigInternal(profile, ports, nullptr);
 }
 
 ConfigGenerationResult XrayAdapter::generateConfig(const Profile& profile,
                                                    const XrayInboundPorts& ports) const
 {
-    return generateConfigInternal(profile, ports);
+    return generateConfigInternal(profile, ports, nullptr);
+}
+
+ConfigGenerationResult XrayAdapter::generateConfig(const Profile& profile,
+                                                   const XrayInboundPorts& ports,
+                                                   const RoutingProfile& routingProfile) const
+{
+    return generateConfigInternal(profile, ports, &routingProfile);
 }
 
 ConfigGenerationResult XrayAdapter::generateConfigInternal(const Profile& profile,
-                                                           const XrayInboundPorts& ports) const
+                                                           const XrayInboundPorts& ports,
+                                                           const RoutingProfile* routingProfile) const
 {
     QString reason;
     if (!supportsProfile(profile, &reason)) {
@@ -193,6 +202,12 @@ ConfigGenerationResult XrayAdapter::generateConfigInternal(const Profile& profil
     if (!error.isEmpty() || proxyOutbound.isEmpty()) {
         return {false, {}, error.isEmpty() ? QStringLiteral("Failed to generate outbound.")
                                            : error};
+    }
+
+    if (routingProfile) {
+        const XrayRoutingGenerator generator;
+        const QJsonObject routing = generator.generate(*routingProfile);
+        return {true, XrayConfigBuilder::buildFullConfig(proxyOutbound, ports, routing), {}};
     }
 
     return {true, XrayConfigBuilder::buildFullConfig(proxyOutbound, ports), {}};

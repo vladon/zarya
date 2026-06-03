@@ -9,6 +9,7 @@
 #include "storage/AppSettings.h"
 #include "ui/ImportVlessDialog.h"
 #include "ui/ProfileDialog.h"
+#include "ui/RoutingManagerDialog.h"
 #include "ui/SettingsDialog.h"
 #include "ui/SubscriptionManagerDialog.h"
 
@@ -34,7 +35,8 @@ namespace zarya {
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
-    , m_appController(&m_coreManager, &m_systemProxy, &m_xrayAdapter, &m_testManager, this)
+    , m_appController(&m_coreManager, &m_systemProxy, &m_xrayAdapter, &m_testManager,
+                      &m_routingManager, this)
 {
     setupUi();
     setupMenuBar();
@@ -47,7 +49,10 @@ MainWindow::MainWindow(QWidget* parent)
     restoreWindowState();
     loadAllOnStartup();
     updateStatusBar();
-    appendLog(QStringLiteral("Zarya 0.7 started. Profiles: %1").arg(m_profileStore.filePath()));
+    appendLog(QStringLiteral("Zarya 0.8 started. Profiles: %1").arg(m_profileStore.filePath()));
+    appendLog(QStringLiteral("Routing: %1").arg(m_routingManager.filePath()));
+    appendLog(QStringLiteral("Active routing profile: %1")
+                  .arg(m_routingManager.activeProfile().name));
     appendLog(QStringLiteral("Subscriptions: %1").arg(m_subscriptionStore.filePath()));
     appendLog(QStringLiteral("Xray path: %1").arg(AppSettings::instance().resolvedXrayPath()));
     if (!m_systemProxy.isSupported()) {
@@ -131,6 +136,9 @@ void MainWindow::setupMenuBar()
     m_stopAction->setEnabled(false);
 
     auto* toolsMenu = menuBar()->addMenu(QStringLiteral("&Tools"));
+    m_routingProfilesAction =
+        toolsMenu->addAction(QStringLiteral("Routing &Profiles…"));
+    toolsMenu->addSeparator();
     m_enableSystemProxyAction =
         toolsMenu->addAction(QStringLiteral("Enable &System Proxy"));
     m_restoreSystemProxyAction =
@@ -181,6 +189,7 @@ void MainWindow::setupConnections()
     connect(m_saveAction, &QAction::triggered, this, &MainWindow::onSaveProfiles);
     connect(m_loadAction, &QAction::triggered, this, &MainWindow::onLoadProfiles);
     connect(m_settingsAction, &QAction::triggered, this, &MainWindow::onSettings);
+    connect(m_routingProfilesAction, &QAction::triggered, this, &MainWindow::onRoutingProfiles);
     connect(m_subscriptionsAction, &QAction::triggered, this, &MainWindow::onSubscriptions);
     connect(m_updateSubscriptionAction, &QAction::triggered, this,
             &MainWindow::onUpdateSelectedSubscription);
@@ -239,6 +248,11 @@ QString MainWindow::coreStatusText() const
 QString MainWindow::systemProxyStatusText() const
 {
     return m_systemProxy.uiStatusText();
+}
+
+QString MainWindow::routingStatusText() const
+{
+    return m_routingManager.activeProfile().name;
 }
 
 void MainWindow::setupAppController()
@@ -416,17 +430,19 @@ void MainWindow::updateStatusBar()
 {
     if (m_testManager.isBusy()) {
         statusBar()->showMessage(
-            QStringLiteral("Testing: %1/%2 | Core: %3 | System proxy: %4")
+            QStringLiteral("Testing: %1/%2 | Core: %3 | System proxy: %4 | Routing: %5")
                 .arg(m_testProgressDone)
                 .arg(m_testProgressTotal)
                 .arg(coreStatusText())
-                .arg(systemProxyStatusText()));
+                .arg(systemProxyStatusText())
+                .arg(routingStatusText()));
         return;
     }
 
     const AppSettings& settings = AppSettings::instance();
-    QString message = QStringLiteral("Idle | Core: %1 | System proxy: %2 | Tray: %3")
-                            .arg(coreStatusText(), systemProxyStatusText(), trayStatusText());
+    QString message =
+        QStringLiteral("Idle | Core: %1 | System proxy: %2 | Routing: %3 | Tray: %4")
+            .arg(coreStatusText(), systemProxyStatusText(), routingStatusText(), trayStatusText());
 
     if (m_coreManager.isRunning()) {
         message += QStringLiteral(" | SOCKS 127.0.0.1:%1 | HTTP 127.0.0.1:%2")
@@ -545,6 +561,8 @@ void MainWindow::loadAllOnStartup()
         appendLog(QStringLiteral("Startup subscription load warning: %1").arg(error));
     }
 
+    m_routingManager.load();
+
     refreshProfileFilterCombo();
     refreshProfileView();
 }
@@ -559,6 +577,12 @@ bool MainWindow::saveAll(QString* errorMessage)
         return false;
     }
     if (!m_subscriptionStore.save(m_subscriptions, &error)) {
+        if (errorMessage) {
+            *errorMessage = error;
+        }
+        return false;
+    }
+    if (!m_routingManager.save(&error)) {
         if (errorMessage) {
             *errorMessage = error;
         }
@@ -826,10 +850,25 @@ void MainWindow::onLoadProfiles()
 
 void MainWindow::onSettings()
 {
-    SettingsDialog dialog(this);
+    SettingsDialog dialog(m_routingManager, this);
     dialog.exec();
     appendLog(QStringLiteral("Settings updated. Xray path: %1")
                   .arg(AppSettings::instance().resolvedXrayPath()));
+    updateStatusBar();
+}
+
+void MainWindow::onRoutingProfiles()
+{
+    RoutingManagerDialog dialog(m_routingManager, [this](const QString& line) { appendLog(line); },
+                              this);
+    connect(&dialog, &RoutingManagerDialog::activeProfileChanged, this,
+            [this](const QString& name) {
+                Q_UNUSED(name);
+                updateStatusBar();
+            });
+    dialog.exec();
+    QString error;
+    m_routingManager.save(&error);
     updateStatusBar();
 }
 

@@ -9,6 +9,7 @@ public:
     static QString appDataDir();
     static QString profilesFilePath();
     static QString subscriptionsFilePath();
+    static QString routingFilePath();
     static QString runtimeDir();
     static QString xrayConfigPath();
     static QString singBoxConfigPath();

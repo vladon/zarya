@@ -1,8 +1,11 @@
 #include "ui/SettingsDialog.h"
 
+#include "routing/RoutingManager.h"
 #include "storage/AppSettings.h"
+#include "ui/RoutingManagerDialog.h"
 
 #include <QCheckBox>
+#include <QComboBox>
 #include <QDialogButtonBox>
 #include <QFileDialog>
 #include <QFormLayout>
@@ -18,8 +21,9 @@
 
 namespace zarya {
 
-SettingsDialog::SettingsDialog(QWidget* parent)
+SettingsDialog::SettingsDialog(RoutingManager& routingManager, QWidget* parent)
     : QDialog(parent)
+    , m_routingManager(routingManager)
 {
     setWindowTitle(QStringLiteral("Settings"));
 
@@ -127,6 +131,22 @@ SettingsDialog::SettingsDialog(QWidget* parent)
     auto* desktopGroup = new QGroupBox(QStringLiteral("Desktop behavior"), this);
     desktopGroup->setLayout(desktopForm);
 
+    m_routingProfileCombo = new QComboBox(this);
+    refreshRoutingCombo();
+    auto* manageRoutingButton = new QPushButton(QStringLiteral("Manage Routing Profiles…"), this);
+    connect(manageRoutingButton, &QPushButton::clicked, this,
+            &SettingsDialog::onManageRoutingProfiles);
+
+    auto* routingRow = new QHBoxLayout;
+    routingRow->addWidget(m_routingProfileCombo, 1);
+    routingRow->addWidget(manageRoutingButton);
+
+    auto* routingForm = new QFormLayout;
+    routingForm->addRow(QStringLiteral("Active routing profile"), routingRow);
+
+    auto* routingGroup = new QGroupBox(QStringLiteral("Routing"), this);
+    routingGroup->setLayout(routingForm);
+
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel,
                                          this);
     connect(buttons, &QDialogButtonBox::accepted, this, [this]() {
@@ -140,9 +160,10 @@ SettingsDialog::SettingsDialog(QWidget* parent)
     layout->addWidget(coreGroup);
     layout->addWidget(proxyGroup);
     layout->addWidget(testingGroup);
+    layout->addWidget(routingGroup);
     layout->addWidget(desktopGroup);
     layout->addWidget(buttons);
-    resize(580, 540);
+    resize(580, 620);
 }
 
 void SettingsDialog::onBrowseXray()
@@ -159,6 +180,31 @@ void SettingsDialog::updateHttpEndpointLabel()
 {
     m_httpEndpointLabel->setText(
         QStringLiteral("127.0.0.1:%1").arg(m_httpPortSpin->value()));
+}
+
+void SettingsDialog::refreshRoutingCombo()
+{
+    m_routingProfileCombo->clear();
+    const QString activeId = m_routingManager.activeProfileId();
+    const QVector<RoutingProfile> profiles = m_routingManager.profiles();
+    int activeIndex = 0;
+    for (int i = 0; i < profiles.size(); ++i) {
+        const RoutingProfile& profile = profiles[i];
+        m_routingProfileCombo->addItem(profile.name, profile.id);
+        if (profile.id == activeId) {
+            activeIndex = i;
+        }
+    }
+    m_routingProfileCombo->setCurrentIndex(activeIndex);
+}
+
+void SettingsDialog::onManageRoutingProfiles()
+{
+    RoutingManagerDialog dialog(m_routingManager, {}, this);
+    dialog.exec();
+    QString error;
+    m_routingManager.save(&error);
+    refreshRoutingCombo();
 }
 
 bool SettingsDialog::validateAndSave()
@@ -186,6 +232,12 @@ bool SettingsDialog::validateAndSave()
     settings.setMinimizeToTrayOnMinimize(m_minimizeToTrayOnMinimizeCheck->isChecked());
     settings.setShowTrayNotifications(m_showTrayNotificationsCheck->isChecked());
     settings.setConfirmExitWhileRunning(m_confirmExitWhileRunningCheck->isChecked());
+
+    const QString selectedRoutingId = m_routingProfileCombo->currentData().toString();
+    if (!selectedRoutingId.isEmpty()) {
+        m_routingManager.setActiveProfileId(selectedRoutingId);
+        m_routingManager.save();
+    }
     return true;
 }
 

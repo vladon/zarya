@@ -199,4 +199,14 @@ void AppSettings::setConfirmExitWhileRunning(bool enabled)
     QSettings().setValue(QStringLiteral("desktop/confirmExitWhileRunning"), enabled);
 }
 
+QString AppSettings::selectedRoutingProfileId() const
+{
+    return QSettings().value(QStringLiteral("routing/selectedProfileId")).toString();
+}
+
+void AppSettings::setSelectedRoutingProfileId(const QString& profileId)
+{
+    QSettings().setValue(QStringLiteral("routing/selectedProfileId"), profileId.trimmed());
+}
+
 } // namespace zarya
