@@ -1,0 +1,32 @@
+---
+description: Trunk-based git workflow — branch, PR, merge; never push directly to main
+alwaysApply: true
+---
+
+# Trunk-based Git Workflow
+
+`main` is the trunk. Keep it buildable and always integrate through pull requests.
+
+## Required flow
+
+1. `git fetch origin` and branch from up-to-date `main`:
+   - `git checkout main && git pull origin main`
+   - `git checkout -b feat/short-name` (or `fix/`, `chore/`)
+2. Commit on the branch only.
+3. `git push -u origin <branch>` — **never** `git push origin main`.
+4. Open a PR: `gh pr create --base main --head <branch>`.
+5. Merge with `gh pr merge` (merge commit or squash per PR; default to merge when history matters).
+6. Delete the branch after merge; sync local trunk: `git checkout main && git pull origin main`.
+
+## Branch naming
+
+- `feat/` — features
+- `fix/` — bug fixes  
+- `chore/` — docs, tooling, CI, rules
+
+## Scope
+
+- One logical change per PR when practical.
+- Short-lived branches; do not accumulate long-running feature branches on the trunk.
+
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) for contributor-facing details.
