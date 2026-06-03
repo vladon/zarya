@@ -31,7 +31,20 @@ cmake --build build --config Release --target zarya
 .\scripts\run-xray-config-test.ps1
 ```
 
-Or use CMake presets (`windows-msvc2026-release`) after setting `QT_MSVC_DIR` to your Qt path, e.g. `C:/Qt/6.8.3/msvc2022_64`.
+### Static Release binary (no Qt DLLs)
+
+Build static Qt once, then link `zarya` against it:
+
+```powershell
+.\scripts\build-qt-static-msvc2026.ps1    # installs to C:\Qt\Static\6.8.3\msvc2022_64
+.\scripts\configure-msvc2026.ps1 -Static -Force
+cmake --build build --config Release --target zarya
+.\build\Release\zarya.exe                 # portable; Qt compiled in (/MT)
+```
+
+Or use preset `windows-msvc2026-static-release` with `QT_STATIC_DIR=C:/Qt/Static/6.8.3/msvc2022_64`.
+
+Shared Qt remains the default for faster iteration; the unit test target uses shared/static Qt Core matching your prefix.
 
 ### macOS
 
