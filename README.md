@@ -103,7 +103,8 @@ src/
 
 ## Current limitations
 
-- **Xray**: minimal VLESS outbound only; other protocols return a clear “not implemented” message.
+- **Xray**: VLESS with TLS or REALITY (TCP, `xtls-rprx-vision`); other protocols return a clear “not implemented” message.
+- See `examples/` and run `zarya_xray_config_test` to verify REALITY JSON shape.
 - **sing-box**: adapter stub only; config generation not implemented.
 - No system proxy, TUN, subscriptions, routing/DNS editors, delay tests, tray icon, or auto-update.
 - Core paths are fixed relative to the application directory (`./cores/…`).

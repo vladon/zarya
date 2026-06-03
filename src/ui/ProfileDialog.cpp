@@ -1,12 +1,14 @@
 #include "ui/ProfileDialog.h"
 
 #include "domain/CoreType.h"
+#include "domain/ProfileValidation.h"
 #include "domain/ProtocolType.h"
 
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QFormLayout>
+#include <QGroupBox>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QSpinBox>
@@ -39,13 +41,48 @@ ProfileDialog::ProfileDialog(QWidget* parent)
     m_portSpin->setValue(443);
 
     m_uuidEdit = new QLineEdit(this);
-    m_securityEdit = new QLineEdit(this);
+    m_securityCombo = new QComboBox(this);
+    m_securityCombo->addItem(QStringLiteral("none"), QStringLiteral("none"));
+    m_securityCombo->addItem(QStringLiteral("tls"), QStringLiteral("tls"));
+    m_securityCombo->addItem(QStringLiteral("reality"), QStringLiteral("reality"));
+
     m_networkEdit = new QLineEdit(this);
+    m_networkEdit->setPlaceholderText(QStringLiteral("tcp"));
+
+    m_serverNameEdit = new QLineEdit(this);
+    m_serverNameEdit->setPlaceholderText(QStringLiteral("REALITY / TLS server name"));
+
     m_sniEdit = new QLineEdit(this);
+    m_sniEdit->setPlaceholderText(QStringLiteral("Legacy alias for server name"));
+
     m_flowEdit = new QLineEdit(this);
+    m_flowEdit->setPlaceholderText(QStringLiteral("xtls-rprx-vision"));
+
+    m_publicKeyEdit = new QLineEdit(this);
+    m_publicKeyEdit->setPlaceholderText(QStringLiteral("REALITY public key (pbk)"));
+
+    m_shortIdEdit = new QLineEdit(this);
+    m_shortIdEdit->setPlaceholderText(QStringLiteral("Hex short ID (sid)"));
+
+    m_fingerprintEdit = new QLineEdit(this);
+    m_fingerprintEdit->setPlaceholderText(QStringLiteral("chrome"));
+
+    m_spiderXEdit = new QLineEdit(this);
+    m_spiderXEdit->setPlaceholderText(QStringLiteral("/"));
+
     m_remarkEdit = new QLineEdit(this);
     m_enabledCheck = new QCheckBox(QStringLiteral("Enabled"), this);
     m_enabledCheck->setChecked(true);
+
+    auto* realityLayout = new QFormLayout;
+    realityLayout->addRow(QStringLiteral("Public key"), m_publicKeyEdit);
+    realityLayout->addRow(QStringLiteral("Short ID"), m_shortIdEdit);
+    realityLayout->addRow(QStringLiteral("Fingerprint"), m_fingerprintEdit);
+    realityLayout->addRow(QStringLiteral("Spider X"), m_spiderXEdit);
+
+    auto* realityBox = new QGroupBox(QStringLiteral("REALITY"), this);
+    realityBox->setLayout(realityLayout);
+    m_realityGroup = realityBox;
 
     auto* form = new QFormLayout;
     form->addRow(QStringLiteral("Name"), m_nameEdit);
@@ -54,12 +91,17 @@ ProfileDialog::ProfileDialog(QWidget* parent)
     form->addRow(QStringLiteral("Address"), m_addressEdit);
     form->addRow(QStringLiteral("Port"), m_portSpin);
     form->addRow(QStringLiteral("UUID / Password"), m_uuidEdit);
-    form->addRow(QStringLiteral("Security"), m_securityEdit);
+    form->addRow(QStringLiteral("Security"), m_securityCombo);
     form->addRow(QStringLiteral("Network"), m_networkEdit);
-    form->addRow(QStringLiteral("SNI"), m_sniEdit);
+    form->addRow(QStringLiteral("Server name"), m_serverNameEdit);
+    form->addRow(QStringLiteral("SNI (legacy)"), m_sniEdit);
     form->addRow(QStringLiteral("Flow"), m_flowEdit);
+    form->addRow(QString(), m_realityGroup);
     form->addRow(QStringLiteral("Remark"), m_remarkEdit);
     form->addRow(QString(), m_enabledCheck);
+
+    connect(m_securityCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+            &ProfileDialog::onSecurityChanged);
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     connect(buttons, &QDialogButtonBox::accepted, this, [this]() {
@@ -75,7 +117,9 @@ ProfileDialog::ProfileDialog(QWidget* parent)
     auto* layout = new QVBoxLayout(this);
     layout->addLayout(form);
     layout->addWidget(buttons);
-    resize(480, 420);
+    resize(520, 560);
+
+    updateRealityFieldVisibility();
 }
 
 void ProfileDialog::setProfile(const Profile& profile)
@@ -101,19 +145,34 @@ bool ProfileDialog::editProfile(QWidget* parent, Profile& profile)
 
 bool ProfileDialog::validateInput(QString* errorMessage) const
 {
-    if (m_nameEdit->text().trimmed().isEmpty()) {
-        if (errorMessage) {
-            *errorMessage = QStringLiteral("Name cannot be empty.");
-        }
-        return false;
+    const Profile profile = profileFromFields();
+    const ProfileValidationResult result = validateProfileForDialog(profile);
+    if (!result.ok && errorMessage) {
+        *errorMessage = result.message;
     }
-    if (m_addressEdit->text().trimmed().isEmpty()) {
-        if (errorMessage) {
-            *errorMessage = QStringLiteral("Address cannot be empty.");
-        }
-        return false;
+    return result.ok;
+}
+
+void ProfileDialog::onSecurityChanged(int index)
+{
+    Q_UNUSED(index);
+    updateRealityFieldVisibility();
+
+    if (m_securityCombo->currentData().toString() == QStringLiteral("reality")
+        && m_flowEdit->text().trimmed().isEmpty()) {
+        m_flowEdit->setText(QStringLiteral("xtls-rprx-vision"));
     }
-    return true;
+    if (m_securityCombo->currentData().toString() == QStringLiteral("reality")
+        && m_networkEdit->text().trimmed().isEmpty()) {
+        m_networkEdit->setText(QStringLiteral("tcp"));
+    }
+}
+
+void ProfileDialog::updateRealityFieldVisibility()
+{
+    const bool reality =
+        m_securityCombo->currentData().toString() == QStringLiteral("reality");
+    m_realityGroup->setVisible(reality);
 }
 
 void ProfileDialog::populateFromProfile(const Profile& profile)
@@ -131,12 +190,29 @@ void ProfileDialog::populateFromProfile(const Profile& profile)
     m_addressEdit->setText(profile.address);
     m_portSpin->setValue(profile.port);
     m_uuidEdit->setText(profile.uuidPassword);
-    m_securityEdit->setText(profile.security);
+
+    QString security = profile.security.trimmed().toLower();
+    if (security.isEmpty()) {
+        security = QStringLiteral("none");
+    }
+    const int securityIndex = m_securityCombo->findData(security);
+    if (securityIndex >= 0) {
+        m_securityCombo->setCurrentIndex(securityIndex);
+    } else {
+        m_securityCombo->setCurrentIndex(0);
+    }
+
     m_networkEdit->setText(profile.network);
+    m_serverNameEdit->setText(profile.serverName);
     m_sniEdit->setText(profile.sni);
     m_flowEdit->setText(profile.flow);
+    m_publicKeyEdit->setText(profile.publicKey);
+    m_shortIdEdit->setText(profile.shortId);
+    m_fingerprintEdit->setText(profile.fingerprint);
+    m_spiderXEdit->setText(profile.spiderX);
     m_remarkEdit->setText(profile.remark);
     m_enabledCheck->setChecked(profile.enabled);
+    updateRealityFieldVisibility();
 }
 
 Profile ProfileDialog::profileFromFields() const
@@ -152,10 +228,15 @@ Profile ProfileDialog::profileFromFields() const
     profile.address = m_addressEdit->text().trimmed();
     profile.port = m_portSpin->value();
     profile.uuidPassword = m_uuidEdit->text().trimmed();
-    profile.security = m_securityEdit->text().trimmed();
+    profile.security = m_securityCombo->currentData().toString();
     profile.network = m_networkEdit->text().trimmed();
+    profile.serverName = m_serverNameEdit->text().trimmed();
     profile.sni = m_sniEdit->text().trimmed();
     profile.flow = m_flowEdit->text().trimmed();
+    profile.publicKey = m_publicKeyEdit->text().trimmed();
+    profile.shortId = m_shortIdEdit->text().trimmed();
+    profile.fingerprint = m_fingerprintEdit->text().trimmed();
+    profile.spiderX = m_spiderXEdit->text().trimmed();
     profile.remark = m_remarkEdit->text().trimmed();
     profile.enabled = m_enabledCheck->isChecked();
     return profile;

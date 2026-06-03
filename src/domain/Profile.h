@@ -22,8 +22,19 @@ struct Profile {
     bool enabled = true;
     CoreType coreType = CoreType::Xray;
 
+    // VLESS REALITY / TLS extras
+    QString serverName;
+    QString publicKey;
+    QString shortId;
+    QString spiderX;
+    QString fingerprint;
+
     static Profile createDefault();
     bool isValid() const;
+
+    bool isSecurityReality() const;
+    bool isSecurityTls() const;
+    QString effectiveServerName() const;
 };
 
 } // namespace zarya
