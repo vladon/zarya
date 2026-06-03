@@ -16,11 +16,17 @@ set(ZARYA_SOURCES
     src/app/main.cpp
     src/app/Application.cpp
     src/ui/MainWindow.cpp
+    src/domain/Profile.cpp
+    src/domain/CoreType.cpp
+    src/domain/ProtocolType.cpp
 )
 
 set(ZARYA_HEADERS
     src/app/Application.h
     src/ui/MainWindow.h
+    src/domain/Profile.h
+    src/domain/CoreType.h
+    src/domain/ProtocolType.h
 )
 
 add_executable(zarya ${ZARYA_SOURCES} ${ZARYA_HEADERS})
