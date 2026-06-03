@@ -37,7 +37,7 @@ MainWindow::MainWindow(QWidget* parent)
 
     loadAllOnStartup();
     updateStatusBar();
-    appendLog(QStringLiteral("Zarya 0.4 started. Profiles: %1").arg(m_profileStore.filePath()));
+    appendLog(QStringLiteral("Zarya 0.5 started. Profiles: %1").arg(m_profileStore.filePath()));
     appendLog(QStringLiteral("Subscriptions: %1").arg(m_subscriptionStore.filePath()));
     appendLog(QStringLiteral("Xray path: %1").arg(AppSettings::instance().resolvedXrayPath()));
     if (!m_systemProxy.isSupported()) {
@@ -53,7 +53,10 @@ void MainWindow::setupUi()
     m_tableView = new QTableView(this);
     m_tableView->setModel(&m_tableModel);
     m_tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
-    m_tableView->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_tableView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    m_tableView->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(m_tableView, &QTableView::customContextMenuRequested, this,
+            &MainWindow::showProfileContextMenu);
     m_tableView->horizontalHeader()->setStretchLastSection(true);
     m_tableView->setAlternatingRowColors(true);
 
@@ -96,6 +99,16 @@ void MainWindow::setupMenuBar()
     m_updateAllSubscriptionsAction =
         subscriptionsMenu->addAction(QStringLiteral("Update &All"));
 
+    auto* testMenu = menuBar()->addMenu(QStringLiteral("&Test"));
+    m_testSelectedAction = testMenu->addAction(QStringLiteral("Test &Selected"));
+    m_testAllAction = testMenu->addAction(QStringLiteral("Test &All"));
+    testMenu->addSeparator();
+    m_testTcpSelectedAction = testMenu->addAction(QStringLiteral("Test &TCP Selected"));
+    m_testDelaySelectedAction = testMenu->addAction(QStringLiteral("Test &Delay Selected"));
+    testMenu->addSeparator();
+    m_cancelTestsAction = testMenu->addAction(QStringLiteral("&Cancel Tests"));
+    m_cancelTestsAction->setEnabled(false);
+
     auto* coreMenu = menuBar()->addMenu(QStringLiteral("&Core"));
     m_startAction = coreMenu->addAction(QStringLiteral("&Start"));
     m_stopAction = coreMenu->addAction(QStringLiteral("S&top"));
@@ -126,6 +139,12 @@ void MainWindow::setupToolBar()
     m_profileFilterCombo = new QComboBox(this);
     m_profileFilterCombo->setMinimumWidth(180);
     m_toolBar->addWidget(m_profileFilterCombo);
+    m_toolBar->addSeparator();
+    m_toolBar->addAction(m_testSelectedAction);
+    m_toolBar->addAction(m_testAllAction);
+    m_toolBar->addAction(m_testTcpSelectedAction);
+    m_toolBar->addAction(m_testDelaySelectedAction);
+    m_toolBar->addAction(m_cancelTestsAction);
     m_toolBar->addSeparator();
     m_toolBar->addAction(m_startAction);
     m_toolBar->addAction(m_stopAction);
@@ -164,6 +183,19 @@ void MainWindow::setupConnections()
     connect(&m_coreManager, &CoreManager::stopped, this, &MainWindow::onCoreStopped);
     connect(&m_coreManager, &CoreManager::logLine, this, &MainWindow::onCoreLogLine);
     connect(&m_coreManager, &CoreManager::errorOccurred, this, &MainWindow::onCoreError);
+
+    connect(m_testSelectedAction, &QAction::triggered, this, &MainWindow::onTestSelected);
+    connect(m_testAllAction, &QAction::triggered, this, &MainWindow::onTestAll);
+    connect(m_testTcpSelectedAction, &QAction::triggered, this, &MainWindow::onTestTcpSelected);
+    connect(m_testDelaySelectedAction, &QAction::triggered, this, &MainWindow::onTestDelaySelected);
+    connect(m_cancelTestsAction, &QAction::triggered, this, &MainWindow::onCancelTests);
+
+    connect(&m_testManager, &TestManager::testStarted, this, &MainWindow::onTestStarted);
+    connect(&m_testManager, &TestManager::profileUpdated, this, &MainWindow::onProfileUpdated);
+    connect(&m_testManager, &TestManager::progressChanged, this,
+            &MainWindow::onTestProgressChanged);
+    connect(&m_testManager, &TestManager::allFinished, this, &MainWindow::onAllTestsFinished);
+    connect(&m_testManager, &TestManager::logLine, this, &MainWindow::appendLog);
 }
 
 void MainWindow::appendLog(const QString& line)
@@ -183,9 +215,20 @@ QString MainWindow::systemProxyStatusText() const
 
 void MainWindow::updateStatusBar()
 {
+    if (m_testManager.isBusy()) {
+        statusBar()->showMessage(
+            QStringLiteral("Testing: %1/%2 | Core: %3 | System proxy: %4")
+                .arg(m_testProgressDone)
+                .arg(m_testProgressTotal)
+                .arg(coreStatusText())
+                .arg(systemProxyStatusText()));
+        return;
+    }
+
     const AppSettings& settings = AppSettings::instance();
     QString message =
-        QStringLiteral("Core: %1 | System proxy: %2").arg(coreStatusText(), systemProxyStatusText());
+        QStringLiteral("Idle | Core: %1 | System proxy: %2")
+            .arg(coreStatusText(), systemProxyStatusText());
 
     if (m_coreManager.isRunning()) {
         message += QStringLiteral(" | SOCKS 127.0.0.1:%1 | HTTP 127.0.0.1:%2")
@@ -270,6 +313,10 @@ void MainWindow::tryRestoreSystemProxy(SystemProxyRestoreMode mode, bool showFai
 
 void MainWindow::closeEvent(QCloseEvent* event)
 {
+    if (m_testManager.isBusy()) {
+        m_testManager.cancel();
+    }
+
     if (AppSettings::instance().restoreProxyOnExit()) {
         tryRestoreSystemProxy(SystemProxyRestoreMode::Automatic, true);
     }
@@ -770,13 +817,175 @@ void MainWindow::onCoreError(const QString& message)
     updateStatusBar();
 }
 
+QVector<QString> MainWindow::collectSelectedProfileIds() const
+{
+    QVector<QString> ids;
+    const QModelIndexList selected = m_tableView->selectionModel()->selectedRows();
+    ids.reserve(selected.size());
+    for (const QModelIndex& index : selected) {
+        if (!index.isValid()) {
+            continue;
+        }
+        ids.append(m_tableModel.profileAt(index.row()).id);
+    }
+    return ids;
+}
+
+QVector<QString> MainWindow::collectAllTestableProfileIds() const
+{
+    QVector<QString> ids;
+    for (const Profile& profile : m_allProfiles) {
+        if (!profile.enabled || profile.deletedBySubscriptionUpdate) {
+            continue;
+        }
+        ids.append(profile.id);
+    }
+    return ids;
+}
+
+void MainWindow::startTestsForIds(const QVector<QString>& profileIds, TestMode mode)
+{
+    if (profileIds.isEmpty()) {
+        QMessageBox::information(this, QStringLiteral("Test"),
+                                 QStringLiteral("Select at least one profile to test."));
+        return;
+    }
+
+    QVector<Profile> profiles;
+    profiles.reserve(profileIds.size());
+    for (const QString& id : profileIds) {
+        const int index = indexOfProfileById(id);
+        if (index >= 0) {
+            profiles.append(m_allProfiles.at(index));
+        }
+    }
+
+    if (profiles.isEmpty()) {
+        QMessageBox::information(this, QStringLiteral("Test"),
+                                 QStringLiteral("No matching profiles found."));
+        return;
+    }
+
+    setTestingUiBusy(true);
+    m_testProgressDone = 0;
+    m_testProgressTotal = profiles.size();
+    updateStatusBar();
+    m_testManager.startTests(profiles, mode);
+}
+
+void MainWindow::setTestingUiBusy(bool busy)
+{
+    m_cancelTestsAction->setEnabled(busy);
+    m_testSelectedAction->setEnabled(!busy);
+    m_testAllAction->setEnabled(!busy);
+    m_testTcpSelectedAction->setEnabled(!busy);
+    m_testDelaySelectedAction->setEnabled(!busy);
+}
+
+void MainWindow::showProfileContextMenu(const QPoint& position)
+{
+    const QModelIndex index = m_tableView->indexAt(position);
+    if (!index.isValid()) {
+        return;
+    }
+    m_tableView->selectionModel()->select(
+        index, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+
+    QMenu menu(this);
+    menu.addAction(QStringLiteral("Test this profile"), this, &MainWindow::onTestProfileContext);
+    menu.addAction(QStringLiteral("Test TCP"), this, &MainWindow::onTestTcpContext);
+    menu.addAction(QStringLiteral("Test real delay"), this, &MainWindow::onTestDelayContext);
+    menu.exec(m_tableView->viewport()->mapToGlobal(position));
+}
+
+void MainWindow::onTestSelected()
+{
+    startTestsForIds(collectSelectedProfileIds(), TestMode::TcpThenRealDelay);
+}
+
+void MainWindow::onTestAll()
+{
+    startTestsForIds(collectAllTestableProfileIds(), TestMode::TcpThenRealDelay);
+}
+
+void MainWindow::onTestTcpSelected()
+{
+    startTestsForIds(collectSelectedProfileIds(), TestMode::TcpOnly);
+}
+
+void MainWindow::onTestDelaySelected()
+{
+    startTestsForIds(collectSelectedProfileIds(), TestMode::RealDelayOnly);
+}
+
+void MainWindow::onCancelTests()
+{
+    m_testManager.cancel();
+}
+
+void MainWindow::onTestProfileContext()
+{
+    startTestsForIds(collectSelectedProfileIds(), TestMode::TcpThenRealDelay);
+}
+
+void MainWindow::onTestTcpContext()
+{
+    startTestsForIds(collectSelectedProfileIds(), TestMode::TcpOnly);
+}
+
+void MainWindow::onTestDelayContext()
+{
+    startTestsForIds(collectSelectedProfileIds(), TestMode::RealDelayOnly);
+}
+
+void MainWindow::onTestStarted(const QString& profileId)
+{
+    const int index = indexOfProfileById(profileId);
+    if (index < 0) {
+        return;
+    }
+    Profile& profile = m_allProfiles[index];
+    profile.lastTestStatus = TestStatus::Testing;
+    profile.lastTestError.clear();
+    refreshProfileView();
+}
+
+void MainWindow::onProfileUpdated(const Profile& profile)
+{
+    const int index = indexOfProfileById(profile.id);
+    if (index < 0) {
+        return;
+    }
+    m_allProfiles[index] = profile;
+    refreshProfileView();
+    QString error;
+    if (!m_profileStore.save(m_allProfiles, &error) && !error.isEmpty()) {
+        appendLog(QStringLiteral("Failed to save test results: %1").arg(error));
+    }
+}
+
+void MainWindow::onTestProgressChanged(int done, int total)
+{
+    m_testProgressDone = done;
+    m_testProgressTotal = total;
+    updateStatusBar();
+}
+
+void MainWindow::onAllTestsFinished()
+{
+    setTestingUiBusy(false);
+    m_testProgressDone = m_testProgressTotal;
+    updateStatusBar();
+    appendLog(QStringLiteral("All tests finished."));
+}
+
 void MainWindow::onAbout()
 {
     QMessageBox::about(
         this, QStringLiteral("About Zarya"),
         QStringLiteral(
-            "Zarya 0.4\n\nNative proxy profile manager with Xray VLESS REALITY, Windows system "
-            "proxy, and subscription import."));
+            "Zarya 0.5\n\nNative proxy profile manager with Xray VLESS REALITY, Windows system "
+            "proxy, subscription import, and node connectivity testing."));
 }
 
 } // namespace zarya

@@ -12,6 +12,8 @@ public:
     static QString runtimeDir();
     static QString xrayConfigPath();
     static QString singBoxConfigPath();
+    static QString testRuntimeDir();
+    static QString testConfigPath(const QString& profileId);
 };
 
 } // namespace zarya

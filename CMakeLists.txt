@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(zarya VERSION 0.4.0 LANGUAGES CXX)
+project(zarya VERSION 0.5.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -38,6 +38,14 @@ set(ZARYA_DOMAIN_SOURCES
     src/domain/ProfileSourceType.cpp
     src/domain/Subscription.cpp
     src/domain/SubscriptionStatus.cpp
+)
+
+set(ZARYA_TESTING_SOURCES
+    src/testing/TestStatus.cpp
+    src/testing/PortAllocator.cpp
+    src/testing/TcpPingTester.cpp
+    src/testing/RealDelayTester.cpp
+    src/testing/TestManager.cpp
 )
 
 set(ZARYA_SUBSCRIPTION_SOURCES
@@ -81,6 +89,7 @@ set(ZARYA_SOURCES
     src/ui/models/SubscriptionTableModel.cpp
     ${ZARYA_CORE_SOURCES}
     ${ZARYA_SUBSCRIPTION_SOURCES}
+    ${ZARYA_TESTING_SOURCES}
     src/storage/ProfileStore.cpp
     src/storage/SubscriptionStore.cpp
     src/storage/AppSettings.cpp
@@ -114,6 +123,12 @@ set(ZARYA_HEADERS
     src/subscription/SubscriptionParser.h
     src/subscription/SubscriptionDownloader.h
     src/subscription/SubscriptionManager.h
+    src/testing/TestStatus.h
+    src/testing/TestResult.h
+    src/testing/PortAllocator.h
+    src/testing/TcpPingTester.h
+    src/testing/RealDelayTester.h
+    src/testing/TestManager.h
     src/domain/ProfileSourceType.h
     src/domain/Subscription.h
     src/domain/SubscriptionStatus.h
@@ -198,3 +213,18 @@ target_include_directories(zarya_subscription_test PRIVATE ${CMAKE_CURRENT_SOURC
 
 zarya_link_qt_core(zarya_subscription_test)
 target_link_libraries(zarya_subscription_test PRIVATE Qt6::Network)
+
+add_executable(zarya_testing_test
+    tests/testing_test.cpp
+    ${ZARYA_TESTING_SOURCES}
+    ${ZARYA_CORE_SOURCES}
+    ${ZARYA_DOMAIN_SOURCES}
+    src/storage/AppSettings.cpp
+    src/storage/AppPaths.cpp
+    src/platform/Platform.cpp
+)
+
+target_include_directories(zarya_testing_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+zarya_link_qt_core(zarya_testing_test)
+target_link_libraries(zarya_testing_test PRIVATE Qt6::Network)

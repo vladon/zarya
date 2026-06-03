@@ -20,12 +20,20 @@ private slots:
     void updateHttpEndpointLabel();
 
 private:
+    bool validateAndSave();
+
     QLineEdit* m_xrayPathEdit = nullptr;
     QSpinBox* m_socksPortSpin = nullptr;
     QSpinBox* m_httpPortSpin = nullptr;
     QCheckBox* m_autoEnableSystemProxyCheck = nullptr;
     QCheckBox* m_restoreProxyOnExitCheck = nullptr;
     QLabel* m_httpEndpointLabel = nullptr;
+
+    QLineEdit* m_testUrlEdit = nullptr;
+    QSpinBox* m_tcpTimeoutSpin = nullptr;
+    QSpinBox* m_realDelayTimeoutSpin = nullptr;
+    QSpinBox* m_maxConcurrentTestsSpin = nullptr;
+    QCheckBox* m_skipTcpBeforeRealDelayCheck = nullptr;
 };
 
 } // namespace zarya
