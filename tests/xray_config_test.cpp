@@ -1,5 +1,6 @@
 #include "core/XrayConfigTestHelpers.h"
 #include "core/XrayVlessGenerator.h"
+#include "import/VlessUriParser.h"
 #include "storage/ProfileStore.h"
 
 #include <QCoreApplication>
@@ -7,6 +8,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QFile>
 
 #include <cstdio>
 
@@ -58,6 +60,23 @@ QJsonObject firstProxyOutbound(const QJsonObject& config)
 int main(int argc, char* argv[])
 {
     QCoreApplication app(argc, argv);
+
+    if (argc >= 3 && QString::fromUtf8(argv[1]) == QStringLiteral("--write-config")) {
+        const zarya::Profile sample = zarya::testhelpers::sampleVlessRealityProfile();
+        const zarya::ConfigGenerationResult generated = zarya::XrayVlessGenerator::generate(sample);
+        if (!generated.success) {
+            std::fprintf(stderr, "FAIL: %s\n", generated.errorMessage.toUtf8().constData());
+            return 1;
+        }
+        QFile file(QString::fromUtf8(argv[2]));
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            std::fprintf(stderr, "FAIL: %s\n", file.errorString().toUtf8().constData());
+            return 1;
+        }
+        file.write(QJsonDocument(generated.config).toJson(QJsonDocument::Indented));
+        std::fprintf(stdout, "Wrote config to %s\n", argv[2]);
+        return 0;
+    }
 
     const QString examplesDir = QStringLiteral(ZARYA_EXAMPLES_DIR);
     bool ok = true;
@@ -130,6 +149,22 @@ int main(int argc, char* argv[])
         } else {
             ok &= pass("Generated REALITY settings match example publicKey and serverName");
         }
+    }
+
+    const QString vlessLink =
+        QStringLiteral("vless://11111111-1111-1111-1111-111111111111@host.example.com:443?type=tcp"
+                       "&security=reality&pbk=yWrHCV6C0UYNw6nzM0rhDlIUjfLlt28A9h8SkqR52V0&fp=chrome"
+                       "&sni=example.com&sid=a1b2c3d4&spx=%2F&flow=xtls-rprx-vision#Test%20Reality");
+    const zarya::VlessParseResult parsed = zarya::VlessUriParser::parseLink(vlessLink);
+    if (!parsed.success) {
+        ok &= fail(parsed.errorMessage.toUtf8().constData());
+    } else if (parsed.profile.name != QStringLiteral("Test Reality")
+               || parsed.profile.address != QStringLiteral("host.example.com")
+               || parsed.profile.port != 443
+               || !parsed.profile.isSecurityReality()) {
+        ok &= fail("VLESS import link parsed with unexpected profile fields");
+    } else {
+        ok &= pass("VLESS import link parses into REALITY profile");
     }
 
     zarya::ProfileStore store(examplesDir + QStringLiteral("/profiles-vless-reality.sample.json"));
