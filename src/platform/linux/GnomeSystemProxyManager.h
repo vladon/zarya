@@ -4,7 +4,7 @@
 
 namespace zarya {
 
-class WindowsSystemProxyManager : public ISystemProxyManager {
+class GnomeSystemProxyManager : public ISystemProxyManager {
 public:
     bool isSupported() const override;
     SystemProxyState readCurrentState(QString* errorMessage = nullptr) override;
@@ -16,7 +16,10 @@ public:
     QString limitations() const override;
 
 private:
-    static bool notifySettingsChanged(QString* errorMessage);
+    QString readGsettingsValue(const QString& schemaKey, QString* errorMessage) const;
+    bool setGsettingsValue(const QString& schemaKey, const QString& rawValue,
+                           QString* errorMessage) const;
+    bool setGsettingsValue(const QString& schemaKey, int value, QString* errorMessage) const;
 };
 
 } // namespace zarya

@@ -2,17 +2,43 @@
 
 namespace zarya {
 
+StubSystemProxyManager::StubSystemProxyManager(QString reason)
+    : m_reason(std::move(reason))
+{
+    if (m_reason.isEmpty()) {
+        m_reason = QStringLiteral("System proxy is not supported on this platform.");
+    }
+}
+
 bool StubSystemProxyManager::isSupported() const
 {
     return false;
 }
 
+QString StubSystemProxyManager::backendName() const
+{
+    return QStringLiteral("Unsupported");
+}
+
+QString StubSystemProxyManager::supportLevel() const
+{
+    return QStringLiteral("unsupported");
+}
+
+QString StubSystemProxyManager::limitations() const
+{
+    return m_reason;
+}
+
 SystemProxyState StubSystemProxyManager::readCurrentState(QString* errorMessage)
 {
     if (errorMessage) {
-        *errorMessage = QStringLiteral("System proxy is not supported on this platform.");
+        *errorMessage = m_reason;
     }
-    return {};
+    SystemProxyState state;
+    state.backend = backendName();
+    state.supportLevel = supportLevel();
+    return state;
 }
 
 bool StubSystemProxyManager::applyHttpProxy(const QString& host, int port, QString* errorMessage)
@@ -20,7 +46,7 @@ bool StubSystemProxyManager::applyHttpProxy(const QString& host, int port, QStri
     (void)host;
     (void)port;
     if (errorMessage) {
-        *errorMessage = QStringLiteral("System proxy is not supported on this platform.");
+        *errorMessage = m_reason;
     }
     return false;
 }
@@ -29,7 +55,7 @@ bool StubSystemProxyManager::restoreState(const SystemProxyState& state, QString
 {
     (void)state;
     if (errorMessage) {
-        *errorMessage = QStringLiteral("System proxy is not supported on this platform.");
+        *errorMessage = m_reason;
     }
     return false;
 }

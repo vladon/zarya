@@ -209,4 +209,24 @@ void AppSettings::setSelectedRoutingProfileId(const QString& profileId)
     QSettings().setValue(QStringLiteral("routing/selectedProfileId"), profileId.trimmed());
 }
 
+bool AppSettings::macApplyProxyToAllServices() const
+{
+    return QSettings().value(QStringLiteral("proxy/macApplyToAllServices"), false).toBool();
+}
+
+void AppSettings::setMacApplyProxyToAllServices(bool enabled)
+{
+    QSettings().setValue(QStringLiteral("proxy/macApplyToAllServices"), enabled);
+}
+
+QString AppSettings::macPreferredNetworkService() const
+{
+    return QSettings().value(QStringLiteral("proxy/macPreferredNetworkService")).toString();
+}
+
+void AppSettings::setMacPreferredNetworkService(const QString& service)
+{
+    QSettings().setValue(QStringLiteral("proxy/macPreferredNetworkService"), service.trimmed());
+}
+
 } // namespace zarya

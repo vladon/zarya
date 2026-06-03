@@ -49,7 +49,12 @@ MainWindow::MainWindow(QWidget* parent)
     restoreWindowState();
     loadAllOnStartup();
     updateStatusBar();
-    appendLog(QStringLiteral("Zarya 0.8 started. Profiles: %1").arg(m_profileStore.filePath()));
+    appendLog(QStringLiteral("Zarya 0.9 started. Profiles: %1").arg(m_profileStore.filePath()));
+    appendLog(QStringLiteral("System proxy backend: %1 (support: %2)")
+                  .arg(m_systemProxy.backendName(), m_systemProxy.supportLevel()));
+    if (!m_systemProxy.limitations().isEmpty()) {
+        appendLog(m_systemProxy.limitations());
+    }
     appendLog(QStringLiteral("Routing: %1").arg(m_routingManager.filePath()));
     appendLog(QStringLiteral("Active routing profile: %1")
                   .arg(m_routingManager.activeProfile().name));
@@ -488,7 +493,22 @@ bool MainWindow::confirmSystemProxyChangeIfNeeded()
 void MainWindow::tryAutoEnableSystemProxy()
 {
     const AppSettings& settings = AppSettings::instance();
-    if (!settings.autoEnableSystemProxyOnStart() || !m_systemProxy.isSupported()) {
+    if (!settings.autoEnableSystemProxyOnStart()) {
+        return;
+    }
+
+    if (m_systemProxy.supportLevel() == QStringLiteral("partial")) {
+        appendLog(QStringLiteral(
+            "Auto system proxy was requested, but this desktop is not supported yet."));
+        appendLog(m_systemProxy.limitations());
+        return;
+    }
+
+    if (!m_systemProxy.isSupported()) {
+        appendLog(QStringLiteral("Auto system proxy was requested, but system proxy is unsupported."));
+        if (!m_systemProxy.limitations().isEmpty()) {
+            appendLog(m_systemProxy.limitations());
+        }
         return;
     }
 
@@ -933,9 +953,13 @@ void MainWindow::onEnableSystemProxy()
         return;
     }
 
-    if (!m_systemProxy.isSupported()) {
-        QMessageBox::information(this, QStringLiteral("System proxy"),
-                                 QStringLiteral("System proxy is not supported on this platform."));
+    if (m_systemProxy.supportLevel() == QStringLiteral("partial")
+        || !m_systemProxy.isSupported()) {
+        QMessageBox::information(
+            this, QStringLiteral("System proxy"),
+            m_systemProxy.limitations().isEmpty()
+                ? QStringLiteral("System proxy is not supported on this platform.")
+                : m_systemProxy.limitations());
         return;
     }
 

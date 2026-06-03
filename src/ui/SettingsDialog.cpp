@@ -1,8 +1,14 @@
 #include "ui/SettingsDialog.h"
 
+#include "platform/ISystemProxyManager.h"
+#include "platform/SystemProxyManagerFactory.h"
 #include "routing/RoutingManager.h"
 #include "storage/AppSettings.h"
 #include "ui/RoutingManagerDialog.h"
+
+#if defined(Q_OS_LINUX)
+#include "platform/linux/LinuxSystemProxyManager.h"
+#endif
 
 #include <QCheckBox>
 #include <QComboBox>
@@ -51,15 +57,42 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, QWidget* parent)
     updateHttpEndpointLabel();
 
     m_autoEnableSystemProxyCheck =
-        new QCheckBox(QStringLiteral("Enable Windows system proxy when profile starts"), this);
+        new QCheckBox(QStringLiteral("Enable system proxy when profile starts"), this);
     m_autoEnableSystemProxyCheck->setChecked(settings.autoEnableSystemProxyOnStart());
-#ifndef Q_OS_WIN
-    m_autoEnableSystemProxyCheck->setEnabled(false);
-#endif
 
     m_restoreProxyOnExitCheck =
         new QCheckBox(QStringLiteral("Restore previous proxy settings on stop/exit"), this);
     m_restoreProxyOnExitCheck->setChecked(settings.restoreProxyOnExit());
+
+    const std::unique_ptr<ISystemProxyManager> proxyManager = SystemProxyManagerFactory::create();
+    m_proxyBackendLabel = new QLabel(proxyManager ? proxyManager->backendName() : QString(), this);
+    m_proxySupportLabel =
+        new QLabel(proxyManager ? proxyManager->supportLevel() : QStringLiteral("unsupported"),
+                   this);
+    m_proxyLimitationsLabel = new QLabel(proxyManager ? proxyManager->limitations() : QString(), this);
+    m_proxyLimitationsLabel->setWordWrap(true);
+
+    m_linuxDesktopLabel = new QLabel(this);
+#if defined(Q_OS_LINUX)
+    if (auto* linuxManager = dynamic_cast<LinuxSystemProxyManager*>(proxyManager.get())) {
+        m_linuxDesktopLabel->setText(
+            QStringLiteral("Detected desktop: %1").arg(linuxManager->detectedDesktopName()));
+    } else {
+        m_linuxDesktopLabel->setText(QStringLiteral("Detected desktop: (unknown)"));
+    }
+#else
+    m_linuxDesktopLabel->hide();
+#endif
+
+    m_macApplyAllServicesCheck =
+        new QCheckBox(QStringLiteral("Apply proxy to all network services"), this);
+    m_macApplyAllServicesCheck->setChecked(settings.macApplyProxyToAllServices());
+    m_macPreferredServiceEdit = new QLineEdit(settings.macPreferredNetworkService(), this);
+    m_macPreferredServiceEdit->setPlaceholderText(QStringLiteral("e.g. Wi-Fi (optional)"));
+#if !defined(Q_OS_MACOS)
+    m_macApplyAllServicesCheck->hide();
+    m_macPreferredServiceEdit->hide();
+#endif
 
     m_testUrlEdit = new QLineEdit(settings.testUrl(), this);
     m_tcpTimeoutSpin = new QSpinBox(this);
@@ -102,15 +135,22 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, QWidget* parent)
     coreGroup->setLayout(coreForm);
 
     auto* proxyForm = new QFormLayout;
+    proxyForm->addRow(QStringLiteral("Backend"), m_proxyBackendLabel);
+    proxyForm->addRow(QStringLiteral("Support level"), m_proxySupportLabel);
+    proxyForm->addRow(QStringLiteral("Limitations"), m_proxyLimitationsLabel);
     proxyForm->addRow(QStringLiteral("System proxy endpoint"), m_httpEndpointLabel);
+#if defined(Q_OS_LINUX)
+    proxyForm->addRow(QStringLiteral("Desktop"), m_linuxDesktopLabel);
+#endif
     proxyForm->addRow(QString(), m_autoEnableSystemProxyCheck);
     proxyForm->addRow(QString(), m_restoreProxyOnExitCheck);
-
-    auto* proxyGroup = new QGroupBox(QStringLiteral("Windows system proxy"), this);
-    proxyGroup->setLayout(proxyForm);
-#ifndef Q_OS_WIN
-    proxyGroup->setEnabled(false);
+#if defined(Q_OS_MACOS)
+    proxyForm->addRow(QString(), m_macApplyAllServicesCheck);
+    proxyForm->addRow(QStringLiteral("Preferred network service"), m_macPreferredServiceEdit);
 #endif
+
+    auto* proxyGroup = new QGroupBox(QStringLiteral("System proxy"), this);
+    proxyGroup->setLayout(proxyForm);
 
     auto* testingForm = new QFormLayout;
     testingForm->addRow(QStringLiteral("Test URL"), m_testUrlEdit);
@@ -163,7 +203,7 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, QWidget* parent)
     layout->addWidget(routingGroup);
     layout->addWidget(desktopGroup);
     layout->addWidget(buttons);
-    resize(580, 620);
+    resize(620, 720);
 }
 
 void SettingsDialog::onBrowseXray()
@@ -223,6 +263,10 @@ bool SettingsDialog::validateAndSave()
     settings.setHttpPort(m_httpPortSpin->value());
     settings.setAutoEnableSystemProxyOnStart(m_autoEnableSystemProxyCheck->isChecked());
     settings.setRestoreProxyOnExit(m_restoreProxyOnExitCheck->isChecked());
+#if defined(Q_OS_MACOS)
+    settings.setMacApplyProxyToAllServices(m_macApplyAllServicesCheck->isChecked());
+    settings.setMacPreferredNetworkService(m_macPreferredServiceEdit->text());
+#endif
     settings.setTestUrl(testUrl.toString());
     settings.setTcpTestTimeoutMs(m_tcpTimeoutSpin->value());
     settings.setRealDelayTimeoutMs(m_realDelayTimeoutSpin->value());

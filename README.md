@@ -240,6 +240,25 @@ Rules are translated into Xray `routing.rules` with `outboundTag` set to `proxy`
 
 Profiles are stored in `routing.json` under the app data directory. The active profile is remembered in settings (default: **Bypass LAN** on first run).
 
+## Cross-platform system proxy support
+
+Zarya can enable a **local HTTP proxy** as the OS/desktop system proxy. This is not TUN/VPN mode — only applications that respect system proxy settings are affected.
+
+| Platform | Backend | Support |
+|----------|---------|---------|
+| Windows | WinINet registry | Full |
+| macOS | `networksetup` | Full (may require admin on some systems) |
+| Linux GNOME | `gsettings` / `org.gnome.system.proxy` | Full when `gsettings` is available |
+| Linux KDE/Plasma | — | Partial / unsupported in this milestone |
+| Other Linux | — | Unsupported |
+
+- **macOS**: applies HTTP and HTTPS proxy to a selected network service (or all services if configured in Settings). Previous per-service proxy state is restored on stop/exit.
+- **Linux GNOME**: sets manual HTTP/HTTPS proxy to the local inbound port. Previous gsettings values are restored on stop/exit.
+- **Linux KDE**: reported as partial; Zarya does not modify KDE proxy settings yet. Core can still run; auto system proxy logs a clear message.
+- **CLI tools** on Linux may need `http_proxy` / `https_proxy` environment variables manually.
+
+TUN transparent proxy is planned separately.
+
 ## Supported runnable protocols (Xray)
 
 | Protocol | Transports | Security | Notes |
@@ -252,7 +271,7 @@ Profiles are stored in `routing.json` under the app data directory. The active p
 
 **Imported but not runnable yet:** Shadowsocks with `plugin=`, exotic transports (xhttp), Clash YAML providers.
 
-## Usage (0.8)
+## Usage (0.9)
 
 1. Launch **zarya**.
 2. Configure **Xray** path in Settings if needed.
@@ -305,7 +324,7 @@ src/
 
 - **Xray**: VLESS, VMess, Trojan, Shadowsocks (see table above); sing-box still stub.
 - **sing-box**: adapter stub only; cannot start.
-- **System proxy**: Windows only; no PAC/TUN; macOS/Linux stub.
+- **System proxy**: Windows (full), macOS `networksetup` (full), Linux GNOME `gsettings` (full); KDE partial; no TUN/PAC.
 - **Subscriptions**: no scheduled auto-update; no Clash/sing-box subscription formats.
 - No DNS editor, adblock rule providers, TUN mode, speedtest/download benchmark, or auto best-node selection.
 - No packaging/installer in this milestone.
