@@ -1,6 +1,8 @@
 #pragma once
 
+#include "domain/DnsProfile.h"
 #include "domain/Profile.h"
+#include "domain/RoutingProfile.h"
 
 #include <QObject>
 #include <functional>
@@ -10,6 +12,8 @@ class QWidget;
 namespace zarya {
 
 class CoreManager;
+class DnsManager;
+class GeoDataManager;
 class RoutingManager;
 class SystemProxyController;
 class TestManager;
@@ -21,11 +25,14 @@ class AppController : public QObject {
 public:
     explicit AppController(CoreManager* coreManager, SystemProxyController* systemProxy,
                            XrayAdapter* xrayAdapter, TestManager* testManager,
-                           RoutingManager* routingManager, QObject* parent = nullptr);
+                           RoutingManager* routingManager, GeoDataManager* geoDataManager,
+                           DnsManager* dnsManager, QObject* parent = nullptr);
 
     void setDialogParent(QWidget* parent);
     void setAfterCoreStartedCallback(std::function<void()> callback);
     void setSaveApplicationStateCallback(std::function<bool(QString*)> callback);
+    void setOpenGeoDataManagerCallback(std::function<void()> callback);
+    void setOpenDnsProfilesCallback(std::function<void()> callback);
 
     bool startProfile(const Profile& profile, bool fromAutostart = false);
     bool lastStartWasAutostart() const;
@@ -50,6 +57,11 @@ signals:
 
 private:
     bool confirmSystemProxyChangeIfNeeded() const;
+    bool confirmGeoDataIfNeeded(const RoutingProfile& routingProfile);
+    bool confirmDnsGeoDataIfNeeded(const DnsProfile& dnsProfile);
+    bool confirmDnsWarningsIfNeeded(const DnsProfile& dnsProfile,
+                                    const RoutingProfile& routingProfile);
+    void logGeoDataContext();
     bool writeConfigFile(const QString& path, const QJsonObject& config, QString* error) const;
     QString configPathFor(CoreType type) const;
     bool attemptProxyRestoreOnShutdown(QString* error);
@@ -59,9 +71,13 @@ private:
     XrayAdapter* m_xrayAdapter = nullptr;
     TestManager* m_testManager = nullptr;
     RoutingManager* m_routingManager = nullptr;
+    GeoDataManager* m_geoDataManager = nullptr;
+    DnsManager* m_dnsManager = nullptr;
     QWidget* m_dialogParent = nullptr;
     std::function<void()> m_afterCoreStarted;
     std::function<bool(QString*)> m_saveApplicationState;
+    std::function<void()> m_openGeoDataManager;
+    std::function<void()> m_openDnsProfiles;
     bool m_lastStartWasAutostart = false;
 };
 

@@ -11,6 +11,8 @@ public:
     static QJsonObject buildFullConfig(const QJsonObject& proxyOutbound, const XrayInboundPorts& ports);
     static QJsonObject buildFullConfig(const QJsonObject& proxyOutbound, const XrayInboundPorts& ports,
                                        const QJsonObject& routing);
+    static QJsonObject buildFullConfig(const QJsonObject& proxyOutbound, const XrayInboundPorts& ports,
+                                       const QJsonObject& routing, const QJsonObject& dns);
 };
 
 } // namespace zarya

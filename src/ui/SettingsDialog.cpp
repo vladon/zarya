@@ -4,8 +4,11 @@
 #include "platform/IAutostartManager.h"
 #include "platform/ISystemProxyManager.h"
 #include "platform/SystemProxyManagerFactory.h"
+#include "dns/DnsManager.h"
+#include "domain/DnsProfile.h"
 #include "routing/RoutingManager.h"
 #include "storage/AppSettings.h"
+#include "ui/DnsManagerDialog.h"
 #include "ui/RoutingManagerDialog.h"
 
 #if defined(Q_OS_LINUX)
@@ -29,9 +32,11 @@
 
 namespace zarya {
 
-SettingsDialog::SettingsDialog(RoutingManager& routingManager, QWidget* parent)
+SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsManager,
+                             QWidget* parent)
     : QDialog(parent)
     , m_routingManager(routingManager)
+    , m_dnsManager(dnsManager)
 {
     setWindowTitle(QStringLiteral("Settings"));
 
@@ -218,6 +223,21 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, QWidget* parent)
     auto* routingGroup = new QGroupBox(QStringLiteral("Routing"), this);
     routingGroup->setLayout(routingForm);
 
+    m_dnsProfileCombo = new QComboBox(this);
+    refreshDnsCombo();
+    auto* manageDnsButton = new QPushButton(QStringLiteral("Manage DNS Profiles…"), this);
+    connect(manageDnsButton, &QPushButton::clicked, this, &SettingsDialog::onManageDnsProfiles);
+
+    auto* dnsRow = new QHBoxLayout;
+    dnsRow->addWidget(m_dnsProfileCombo, 1);
+    dnsRow->addWidget(manageDnsButton);
+
+    auto* dnsForm = new QFormLayout;
+    dnsForm->addRow(QStringLiteral("Active DNS profile"), dnsRow);
+
+    auto* dnsGroup = new QGroupBox(QStringLiteral("DNS"), this);
+    dnsGroup->setLayout(dnsForm);
+
     auto* startupForm = new QFormLayout;
     startupForm->addRow(QStringLiteral("Autostart backend"), m_autostartBackendLabel);
     startupForm->addRow(QString(), m_startAtLoginCheck);
@@ -248,6 +268,7 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, QWidget* parent)
     layout->addWidget(proxyGroup);
     layout->addWidget(testingGroup);
     layout->addWidget(routingGroup);
+    layout->addWidget(dnsGroup);
     layout->addWidget(startupGroup);
     layout->addWidget(desktopGroup);
     layout->addWidget(buttons);
@@ -293,6 +314,31 @@ void SettingsDialog::onManageRoutingProfiles()
     QString error;
     m_routingManager.save(&error);
     refreshRoutingCombo();
+}
+
+void SettingsDialog::refreshDnsCombo()
+{
+    m_dnsProfileCombo->clear();
+    const QString activeId = m_dnsManager.activeProfileId();
+    const QVector<DnsProfile> profiles = m_dnsManager.profiles();
+    int activeIndex = 0;
+    for (int i = 0; i < profiles.size(); ++i) {
+        const DnsProfile& profile = profiles[i];
+        m_dnsProfileCombo->addItem(profile.name, profile.id);
+        if (profile.id == activeId) {
+            activeIndex = i;
+        }
+    }
+    m_dnsProfileCombo->setCurrentIndex(activeIndex);
+}
+
+void SettingsDialog::onManageDnsProfiles()
+{
+    DnsManagerDialog dialog(m_dnsManager, {}, this);
+    dialog.exec();
+    QString error;
+    m_dnsManager.save(&error);
+    refreshDnsCombo();
 }
 
 bool SettingsDialog::validateAndSave()
@@ -351,6 +397,12 @@ bool SettingsDialog::validateAndSave()
     if (!selectedRoutingId.isEmpty()) {
         m_routingManager.setActiveProfileId(selectedRoutingId);
         m_routingManager.save();
+    }
+
+    const QString selectedDnsId = m_dnsProfileCombo->currentData().toString();
+    if (!selectedDnsId.isEmpty()) {
+        m_dnsManager.setActiveProfileId(selectedDnsId);
+        m_dnsManager.save();
     }
     return true;
 }

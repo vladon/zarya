@@ -1,6 +1,6 @@
 # Zarya
 
-Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). Cross-platform Qt 6 desktop proxy client (milestones 0.1–0.10): profiles, subscriptions, Xray, routing, system proxy, tray, autostart, and packaging.
+Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). Cross-platform Qt 6 desktop proxy client (milestones 0.1–0.12): profiles, subscriptions, Xray, routing, geo data updates, system proxy, tray, autostart, and packaging.
 
 ## Requirements
 
@@ -240,6 +240,48 @@ Rules are translated into Xray `routing.rules` with `outboundTag` set to `proxy`
 
 Profiles are stored in `routing.json` under the app data directory. The active profile is remembered in settings (default: **Bypass LAN** on first run).
 
+## Geo data manager
+
+Xray routing can use `geoip:…` and `geosite:…` tags (for example `geoip:ru`, `geosite:ru`, `geosite:category-ads-all`) when matching `geoip.dat` and `geosite.dat` files are available next to the configured Xray executable.
+
+Open **Tools → Geo Data Manager…** to:
+
+- Check whether `geoip.dat` / `geosite.dat` exist beside your Xray binary
+- Download updates from a built-in source (**Loyalsoldier v2ray-rules-dat**, compatible with Xray/V2Ray-style routing)
+- Verify downloads using published `.sha256sum` files before replacing existing data
+- Open the Xray resource directory in your file manager
+
+**File placement:** Zarya places active geo files in the same directory as the Xray executable (for example `cores/xray/geoip.dat`). If that directory is not writable, use **Settings** to choose another Xray path.
+
+**On start:** If the active routing profile uses geo rules but required files are missing, Zarya can warn before validation (**Open Geo Data Manager**, **Continue**, or **Cancel Start**). Final authority remains Xray `run -test`.
+
+Options in the dialog:
+
+- **Check geo data status on startup** — log presence/missing in the main log (no automatic download)
+- **Warn if routing uses geo rules and files are missing**
+
+Releases do not bundle third-party `.dat` files; use **Update All** after first install.
+
+## DNS profiles
+
+Configure Xray's built-in DNS module in **Tools → DNS Profiles…** or **Settings → DNS**.
+
+Built-in profiles:
+
+- **System DNS** — Zarya omits the Xray `dns` object (default Xray/system behavior).
+- **Secure Remote DNS** — Cloudflare and Google DoH with `queryStrategy: UseIP`.
+- **China Direct / Global Remote** — template using `geosite:cn` / `geoip:cn` and remote DoH for other regions.
+- **Custom** — edit servers, hosts, and advanced flags.
+
+The active DNS profile is stored in `dns.json` and included in generated configs when you **Start** a profile.
+
+**Important limitations:**
+
+- DNS profiles control how **Xray resolves domains** for its routing logic. They do not hijack all OS DNS queries.
+- **System proxy mode** does not capture every application's DNS traffic. Full DNS capture requires TUN/local DNS inbound (planned separately).
+- Profiles using `geosite:` / `geoip:` need `geosite.dat` / `geoip.dat` next to Xray (see Geo Data Manager).
+- Zarya may warn when routing uses geo rules with **System DNS**, or when DNS/routing combinations look risky — you can continue; `xray run -test` remains the final check.
+
 ## Cross-platform system proxy support
 
 Zarya can enable a **local HTTP proxy** as the OS/desktop system proxy. This is not TUN/VPN mode — only applications that respect system proxy settings are affected.
@@ -292,11 +334,11 @@ Non-portable mode continues to use the OS app data directory.
 
 | Platform | Artifact | Script |
 |----------|----------|--------|
-| Windows | `Zarya-0.10.0-windows-x64-portable.zip` | `scripts/package-windows.ps1` |
+| Windows | `Zarya-0.12.0-windows-x64-portable.zip` | `scripts/package-windows.ps1` |
 | macOS | `Zarya.app` / zip | `scripts/package-macos.sh` |
-| Linux | `Zarya-0.10.0-linux-x64.tar.gz` | `scripts/package-linux.sh` |
+| Linux | `Zarya-0.12.0-linux-x64.tar.gz` | `scripts/package-linux.sh` |
 
-See `packaging/windows/portable-layout.md` for the portable ZIP layout. Signed installers, notarization, and in-app auto-update are not included in 0.10.
+See `packaging/windows/portable-layout.md` for the portable ZIP layout. Signed installers, notarization, and in-app auto-update are not included in 0.11.
 
 ## Supported runnable protocols (Xray)
 
@@ -310,7 +352,7 @@ See `packaging/windows/portable-layout.md` for the portable ZIP layout. Signed i
 
 **Imported but not runnable yet:** Shadowsocks with `plugin=`, exotic transports (xhttp), Clash YAML providers.
 
-## Usage (0.10)
+## Usage (0.12)
 
 1. Launch **zarya**.
 2. Configure **Xray** path in Settings if needed.
@@ -325,6 +367,8 @@ See `packaging/windows/portable-layout.md` for the portable ZIP layout. Signed i
 7. Core stdout/stderr appear in the log panel.
 8. Status bar shows **Core**, **System proxy**, and **Routing** profile name.
 9. Set routing in **Tools → Routing Profiles…** or **Settings → Routing**.
+10. For bypass profiles, open **Tools → Geo Data Manager…** and run **Update All** if `geoip.dat` / `geosite.dat` are missing.
+11. Choose a **DNS profile** in Settings or **Tools → DNS Profiles…** (default: **System DNS**).
 
 Local inbounds when Xray starts (from generated config, ports from Settings):
 
@@ -354,7 +398,9 @@ src/
   core/       XrayAdapter, stream settings, CoreManager
   import/     VlessUriParser
   storage/    ProfileStore, SubscriptionStore, RoutingStore, AppSettings, AppPaths
-  routing/    RoutingManager, XrayRoutingGenerator
+  routing/    RoutingManager, XrayRoutingGenerator, RoutingGeoUtils
+  geodata/    GeoDataManager, downloader, verifier
+  dns/        DnsManager, XrayDnsGenerator, DnsValidator
   testing/    TcpPingTester, RealDelayTester, TestManager
   platform/   Default core executable paths
 ```

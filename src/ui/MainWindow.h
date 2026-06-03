@@ -8,6 +8,8 @@
 #include "platform/SystemProxyController.h"
 #include "storage/ProfileStore.h"
 #include "storage/SubscriptionStore.h"
+#include "dns/DnsManager.h"
+#include "geodata/GeoDataManager.h"
 #include "routing/RoutingManager.h"
 #include "subscription/SubscriptionManager.h"
 #include "testing/TestManager.h"
@@ -69,6 +71,8 @@ private slots:
     void onLoadProfiles();
     void onSettings();
     void onRoutingProfiles();
+    void onGeoDataManager();
+    void onDnsProfiles();
     void onSubscriptions();
     void onUpdateSelectedSubscription();
     void onUpdateAllSubscriptions();
@@ -127,12 +131,14 @@ private:
 
     bool confirmSystemProxyChangeIfNeeded();
     void tryAutoEnableSystemProxy(bool fromAutostart = false);
+    void checkGeoDataOnStartup();
     bool startProfileById(const QString& profileId, bool fromAutostart);
     Profile* profileById(const QString& profileId);
     void tryRestoreSystemProxy(SystemProxyRestoreMode mode, bool showFailureDialog);
     QString coreStatusText() const;
     QString systemProxyStatusText() const;
     QString routingStatusText() const;
+    QString dnsStatusText() const;
     QString trayStatusText() const;
     void notifyTray(const QString& title, const QString& message);
 
@@ -145,6 +151,8 @@ private:
     SubscriptionStore m_subscriptionStore;
     SubscriptionManager m_subscriptionManager;
     RoutingManager m_routingManager;
+    DnsManager m_dnsManager;
+    GeoDataManager m_geoDataManager;
     TestManager m_testManager;
     CoreManager m_coreManager;
     XrayAdapter m_xrayAdapter;
@@ -172,6 +180,8 @@ private:
     QAction* m_loadAction = nullptr;
     QAction* m_settingsAction = nullptr;
     QAction* m_routingProfilesAction = nullptr;
+    QAction* m_geoDataManagerAction = nullptr;
+    QAction* m_dnsProfilesAction = nullptr;
     QAction* m_subscriptionsAction = nullptr;
     QAction* m_updateSubscriptionAction = nullptr;
     QAction* m_updateAllSubscriptionsAction = nullptr;

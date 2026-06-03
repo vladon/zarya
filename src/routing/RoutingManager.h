@@ -28,6 +28,10 @@ public:
 
     static RoutingProfile proxyAllProfile();
 
+    bool activeProfileUsesGeoData() const;
+    static bool profileUsesGeoData(const RoutingProfile& profile);
+    static QStringList geoTagsUsed(const RoutingProfile& profile);
+
 private:
     void ensureBuiltIns();
     void resolveActiveProfile();

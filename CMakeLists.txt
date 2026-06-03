@@ -43,12 +43,32 @@ set(ZARYA_DOMAIN_SOURCES
     src/domain/RoutingMode.cpp
     src/domain/RoutingRule.cpp
     src/domain/RoutingProfile.cpp
+    src/domain/DnsProfileMode.cpp
+    src/domain/DnsQueryStrategy.cpp
+    src/domain/DnsServer.cpp
+    src/domain/DnsProfile.cpp
 )
 
 set(ZARYA_ROUTING_SOURCES
     src/routing/RoutingManager.cpp
+    src/routing/RoutingGeoUtils.cpp
     src/routing/XrayRoutingGenerator.cpp
     src/routing/RoutingProfileValidator.cpp
+)
+
+set(ZARYA_DNS_SOURCES
+    src/dns/DnsManager.cpp
+    src/dns/DnsGeoUtils.cpp
+    src/dns/XrayDnsGenerator.cpp
+    src/dns/DnsValidator.cpp
+)
+
+set(ZARYA_GEODATA_SOURCES
+    src/geodata/GeoDataFileStatus.cpp
+    src/geodata/GeoDataSource.cpp
+    src/geodata/GeoDataVerifier.cpp
+    src/geodata/GeoDataDownloader.cpp
+    src/geodata/GeoDataManager.cpp
 )
 
 set(ZARYA_TESTING_SOURCES
@@ -123,6 +143,10 @@ set(ZARYA_SOURCES
     src/ui/RoutingProfileDialog.cpp
     src/ui/RoutingRuleEditorDialog.cpp
     src/ui/RoutingJsonPreviewDialog.cpp
+    src/ui/GeoDataManagerDialog.cpp
+    src/ui/DnsManagerDialog.cpp
+    src/ui/DnsProfileDialog.cpp
+    src/ui/DnsServerEditorDialog.cpp
     src/ui/models/ProfileTableModel.cpp
     src/ui/models/SubscriptionTableModel.cpp
     ${ZARYA_CORE_SOURCES}
@@ -132,7 +156,11 @@ set(ZARYA_SOURCES
     src/storage/SubscriptionStore.cpp
     src/storage/RoutingStore.cpp
     src/storage/AppSettings.cpp
+    src/storage/GeoDataSettingsStore.cpp
+    src/storage/DnsStore.cpp
     ${ZARYA_ROUTING_SOURCES}
+    ${ZARYA_DNS_SOURCES}
+    ${ZARYA_GEODATA_SOURCES}
     src/import/VlessUriParser.cpp
     ${ZARYA_PLATFORM_SOURCES}
     ${ZARYA_AUTOSTART_SOURCES}
@@ -223,8 +251,10 @@ add_executable(zarya_xray_config_test
     tests/xray_config_test.cpp
     ${ZARYA_CORE_SOURCES}
     ${ZARYA_ROUTING_SOURCES}
+    ${ZARYA_DNS_SOURCES}
     ${ZARYA_DOMAIN_SOURCES}
     src/storage/RoutingStore.cpp
+    src/storage/DnsStore.cpp
     src/testing/TestStatus.cpp
     src/storage/ProfileStore.cpp
     src/storage/AppSettings.cpp
@@ -278,8 +308,10 @@ add_executable(zarya_testing_test
     ${ZARYA_TESTING_SOURCES}
     ${ZARYA_CORE_SOURCES}
     ${ZARYA_ROUTING_SOURCES}
+    ${ZARYA_DNS_SOURCES}
     ${ZARYA_DOMAIN_SOURCES}
     src/storage/RoutingStore.cpp
+    src/storage/DnsStore.cpp
     src/storage/AppSettings.cpp
     src/storage/AppPaths.cpp
     src/platform/Platform.cpp
@@ -289,3 +321,13 @@ target_include_directories(zarya_testing_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR
 
 zarya_link_qt_core(zarya_testing_test)
 target_link_libraries(zarya_testing_test PRIVATE Qt6::Network)
+
+add_executable(zarya_geodata_verifier_test
+    tests/geodata_verifier_test.cpp
+    src/geodata/GeoDataVerifier.cpp
+    src/geodata/GeoDataFileStatus.cpp
+)
+
+target_include_directories(zarya_geodata_verifier_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+zarya_link_qt_core(zarya_geodata_verifier_test)

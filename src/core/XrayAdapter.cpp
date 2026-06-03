@@ -2,6 +2,7 @@
 
 #include "core/XrayConfigBuilder.h"
 #include "core/XrayStreamSettings.h"
+#include "dns/XrayDnsGenerator.h"
 #include "routing/XrayRoutingGenerator.h"
 #include "storage/AppSettings.h"
 
@@ -172,25 +173,34 @@ ConfigGenerationResult XrayAdapter::generateConfig(const Profile& profile) const
     const AppSettings& settings = AppSettings::instance();
     ports.socksPort = settings.socksPort();
     ports.httpPort = settings.httpPort();
-    return generateConfigInternal(profile, ports, nullptr);
+    return generateConfigInternal(profile, ports, nullptr, nullptr);
 }
 
 ConfigGenerationResult XrayAdapter::generateConfig(const Profile& profile,
                                                    const XrayInboundPorts& ports) const
 {
-    return generateConfigInternal(profile, ports, nullptr);
+    return generateConfigInternal(profile, ports, nullptr, nullptr);
 }
 
 ConfigGenerationResult XrayAdapter::generateConfig(const Profile& profile,
                                                    const XrayInboundPorts& ports,
                                                    const RoutingProfile& routingProfile) const
 {
-    return generateConfigInternal(profile, ports, &routingProfile);
+    return generateConfigInternal(profile, ports, &routingProfile, nullptr);
+}
+
+ConfigGenerationResult XrayAdapter::generateConfig(const Profile& profile,
+                                                   const XrayInboundPorts& ports,
+                                                   const RoutingProfile& routingProfile,
+                                                   const DnsProfile& dnsProfile) const
+{
+    return generateConfigInternal(profile, ports, &routingProfile, &dnsProfile);
 }
 
 ConfigGenerationResult XrayAdapter::generateConfigInternal(const Profile& profile,
                                                            const XrayInboundPorts& ports,
-                                                           const RoutingProfile* routingProfile) const
+                                                           const RoutingProfile* routingProfile,
+                                                           const DnsProfile* dnsProfile) const
 {
     QString reason;
     if (!supportsProfile(profile, &reason)) {
@@ -204,10 +214,22 @@ ConfigGenerationResult XrayAdapter::generateConfigInternal(const Profile& profil
                                            : error};
     }
 
+    QJsonObject routing;
     if (routingProfile) {
-        const XrayRoutingGenerator generator;
-        const QJsonObject routing = generator.generate(*routingProfile);
-        return {true, XrayConfigBuilder::buildFullConfig(proxyOutbound, ports, routing), {}};
+        const XrayRoutingGenerator routingGenerator;
+        routing = routingGenerator.generate(*routingProfile);
+    }
+
+    QJsonObject dns;
+    if (dnsProfile) {
+        const XrayDnsGenerator dnsGenerator;
+        if (dnsGenerator.shouldGenerateDnsObject(*dnsProfile)) {
+            dns = dnsGenerator.generate(*dnsProfile);
+        }
+    }
+
+    if (!routing.isEmpty() || !dns.isEmpty()) {
+        return {true, XrayConfigBuilder::buildFullConfig(proxyOutbound, ports, routing, dns), {}};
     }
 
     return {true, XrayConfigBuilder::buildFullConfig(proxyOutbound, ports), {}};

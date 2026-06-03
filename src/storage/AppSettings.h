@@ -62,6 +62,9 @@ public:
     QString selectedRoutingProfileId() const;
     void setSelectedRoutingProfileId(const QString& profileId);
 
+    QString selectedDnsProfileId() const;
+    void setSelectedDnsProfileId(const QString& profileId);
+
     bool macApplyProxyToAllServices() const;
     void setMacApplyProxyToAllServices(bool enabled);
 

@@ -4,12 +4,21 @@
 #include "core/XrayAdapter.h"
 #include "domain/ProtocolType.h"
 #include "domain/RoutingMode.h"
+#include "domain/RoutingProfile.h"
+#include "dns/DnsManager.h"
+#include "dns/DnsGeoUtils.h"
+#include "dns/DnsValidator.h"
+#include "dns/XrayDnsGenerator.h"
+#include "domain/DnsProfileMode.h"
+#include "geodata/GeoDataFileStatus.h"
+#include "geodata/GeoDataManager.h"
 #include "platform/SystemProxyController.h"
 #include "routing/RoutingManager.h"
 #include "routing/RoutingProfileValidator.h"
 #include "routing/XrayRoutingGenerator.h"
 #include "storage/AppPaths.h"
 #include "storage/AppSettings.h"
+#include "storage/GeoDataSettingsStore.h"
 #include "testing/TestManager.h"
 
 #include <QFile>
@@ -35,13 +44,16 @@ bool vmessFailureMayBeClockSkew(const QString& text)
 
 AppController::AppController(CoreManager* coreManager, SystemProxyController* systemProxy,
                              XrayAdapter* xrayAdapter, TestManager* testManager,
-                             RoutingManager* routingManager, QObject* parent)
+                             RoutingManager* routingManager, GeoDataManager* geoDataManager,
+                             DnsManager* dnsManager, QObject* parent)
     : QObject(parent)
     , m_coreManager(coreManager)
     , m_systemProxy(systemProxy)
     , m_xrayAdapter(xrayAdapter)
     , m_testManager(testManager)
     , m_routingManager(routingManager)
+    , m_geoDataManager(geoDataManager)
+    , m_dnsManager(dnsManager)
 {
     connect(m_coreManager, &CoreManager::started, this, [this](const QString& coreName) {
         Q_UNUSED(coreName);
@@ -70,6 +82,184 @@ void AppController::setAfterCoreStartedCallback(std::function<void()> callback)
 void AppController::setSaveApplicationStateCallback(std::function<bool(QString*)> callback)
 {
     m_saveApplicationState = std::move(callback);
+}
+
+void AppController::setOpenGeoDataManagerCallback(std::function<void()> callback)
+{
+    m_openGeoDataManager = std::move(callback);
+}
+
+void AppController::setOpenDnsProfilesCallback(std::function<void()> callback)
+{
+    m_openDnsProfiles = std::move(callback);
+}
+
+bool AppController::confirmDnsGeoDataIfNeeded(const DnsProfile& dnsProfile)
+{
+    if (!m_geoDataManager || !GeoDataSettingsStore::instance().warnIfMissing()) {
+        return true;
+    }
+    if (!DnsGeoUtils::profileUsesGeoData(dnsProfile)) {
+        return true;
+    }
+
+    const QStringList references = DnsGeoUtils::geoReferencesUsed(dnsProfile);
+    emit logLine(QStringLiteral("DNS profile uses geo references: %1")
+                     .arg(references.join(QStringLiteral(", "))));
+
+    if (m_geoDataManager->hasRequiredFilesForTags(references)) {
+        return true;
+    }
+
+    if (!m_dialogParent) {
+        return true;
+    }
+
+    const QString missingFiles = m_geoDataManager->missingFileNamesForTags(references).join(
+        QStringLiteral(", "));
+    QMessageBox box(m_dialogParent);
+    box.setIcon(QMessageBox::Warning);
+    box.setWindowTitle(QStringLiteral("Geo data missing"));
+    box.setText(QStringLiteral(
+        "DNS profile uses geo rules but geo data files are missing (%1).\n\nXray validation may "
+        "fail.")
+                    .arg(missingFiles));
+    QPushButton* openManagerButton =
+        box.addButton(QStringLiteral("Open Geo Data Manager"), QMessageBox::ActionRole);
+    QPushButton* continueButton = box.addButton(QStringLiteral("Continue"), QMessageBox::AcceptRole);
+    QPushButton* cancelButton = box.addButton(QStringLiteral("Cancel Start"), QMessageBox::RejectRole);
+    box.setDefaultButton(cancelButton);
+    box.exec();
+
+    if (box.clickedButton() == openManagerButton) {
+        if (m_openGeoDataManager) {
+            m_openGeoDataManager();
+        }
+        return false;
+    }
+    if (box.clickedButton() == continueButton) {
+        return true;
+    }
+    return false;
+}
+
+bool AppController::confirmDnsWarningsIfNeeded(const DnsProfile& dnsProfile,
+                                               const RoutingProfile& routingProfile)
+{
+    QStringList warnings = DnsValidator::warnings(dnsProfile);
+    warnings.append(DnsValidator::interactionWarnings(
+        dnsProfile, routingProfile.domainStrategy,
+        RoutingManager::profileUsesGeoData(routingProfile)));
+
+    if (warnings.isEmpty()) {
+        return true;
+    }
+
+    for (const QString& warning : warnings) {
+        emit logLine(QStringLiteral("DNS profile validation warning: %1").arg(warning));
+    }
+
+    if (!m_dialogParent) {
+        return true;
+    }
+
+    QMessageBox box(m_dialogParent);
+    box.setIcon(QMessageBox::Warning);
+    box.setWindowTitle(QStringLiteral("DNS warnings"));
+    box.setText(QStringLiteral("DNS profile has validation warnings:\n\n%1")
+                    .arg(warnings.join(QStringLiteral("\n"))));
+    QPushButton* openDnsButton =
+        box.addButton(QStringLiteral("Open DNS Profiles"), QMessageBox::ActionRole);
+    QPushButton* continueButton = box.addButton(QStringLiteral("Continue"), QMessageBox::AcceptRole);
+    QPushButton* cancelButton = box.addButton(QStringLiteral("Cancel Start"), QMessageBox::RejectRole);
+    box.setDefaultButton(cancelButton);
+    box.exec();
+
+    if (box.clickedButton() == openDnsButton) {
+        if (m_openDnsProfiles) {
+            m_openDnsProfiles();
+        }
+        return false;
+    }
+    if (box.clickedButton() == continueButton) {
+        return true;
+    }
+    return false;
+}
+
+void AppController::logGeoDataContext()
+{
+    const QString executablePath = AppSettings::instance().resolvedXrayPath();
+    emit logLine(QStringLiteral("Xray executable: %1").arg(executablePath));
+    emit logLine(QStringLiteral("Xray resource directory: %1").arg(AppPaths::xrayResourceDir()));
+
+    if (!m_geoDataManager) {
+        return;
+    }
+
+    const QVector<GeoDataFileStatus> statuses = m_geoDataManager->checkAllStatus();
+    for (const GeoDataFileStatus& status : statuses) {
+        if (status.status == GeoDataStatus::Missing) {
+            emit logLine(QStringLiteral("%1 missing").arg(status.fileName));
+        } else {
+            emit logLine(QStringLiteral("%1 present, size %2 bytes")
+                             .arg(status.fileName)
+                             .arg(status.sizeBytes));
+        }
+    }
+}
+
+bool AppController::confirmGeoDataIfNeeded(const RoutingProfile& routingProfile)
+{
+    if (!m_routingManager || !m_geoDataManager) {
+        return true;
+    }
+    if (!GeoDataSettingsStore::instance().warnIfMissing()) {
+        return true;
+    }
+    if (!RoutingManager::profileUsesGeoData(routingProfile)) {
+        return true;
+    }
+
+    const QStringList tags = RoutingManager::geoTagsUsed(routingProfile);
+    emit logLine(
+        QStringLiteral("Active routing profile uses geo tags: %1").arg(tags.join(QStringLiteral(", "))));
+
+    logGeoDataContext();
+
+    if (m_geoDataManager->hasRequiredFilesForTags(tags)) {
+        return true;
+    }
+
+    if (!m_dialogParent) {
+        return true;
+    }
+
+    const QString missingFiles = m_geoDataManager->missingFileNamesForTags(tags).join(QStringLiteral(", "));
+    QMessageBox box(m_dialogParent);
+    box.setIcon(QMessageBox::Warning);
+    box.setWindowTitle(QStringLiteral("Geo data missing"));
+    box.setText(QStringLiteral(
+        "The active routing profile uses geoip/geosite rules, but geo data files are missing "
+        "(%1).\n\nXray validation may fail.")
+                    .arg(missingFiles));
+    QPushButton* openManagerButton =
+        box.addButton(QStringLiteral("Open Geo Data Manager"), QMessageBox::ActionRole);
+    QPushButton* continueButton = box.addButton(QStringLiteral("Continue"), QMessageBox::AcceptRole);
+    QPushButton* cancelButton = box.addButton(QStringLiteral("Cancel Start"), QMessageBox::RejectRole);
+    box.setDefaultButton(cancelButton);
+    box.exec();
+
+    if (box.clickedButton() == openManagerButton) {
+        if (m_openGeoDataManager) {
+            m_openGeoDataManager();
+        }
+        return false;
+    }
+    if (box.clickedButton() == continueButton) {
+        return true;
+    }
+    return false;
 }
 
 bool AppController::isCoreRunning() const
@@ -179,6 +369,32 @@ bool AppController::startProfile(const Profile& profile, bool fromAutostart)
                 return false;
             }
         }
+
+        if (!confirmGeoDataIfNeeded(routingProfile)) {
+            return false;
+        }
+    }
+
+    DnsProfile dnsProfile = DnsProfile::builtInSystemDns();
+    if (m_dnsManager) {
+        dnsProfile = m_dnsManager->activeProfile();
+        emit logLine(QStringLiteral("Active DNS profile: %1").arg(dnsProfile.name));
+
+        const XrayDnsGenerator dnsGenerator;
+        if (dnsGenerator.shouldGenerateDnsObject(dnsProfile)) {
+            emit logLine(QStringLiteral("Generating DNS config"));
+            emit logLine(QStringLiteral("DNS servers generated: %1")
+                             .arg(dnsGenerator.enabledServerCount(dnsProfile)));
+        } else {
+            emit logLine(QStringLiteral("DNS config omitted: System DNS selected"));
+        }
+
+        if (!confirmDnsGeoDataIfNeeded(dnsProfile)) {
+            return false;
+        }
+        if (!confirmDnsWarningsIfNeeded(dnsProfile, routingProfile)) {
+            return false;
+        }
     }
 
     XrayInboundPorts ports;
@@ -187,7 +403,7 @@ bool AppController::startProfile(const Profile& profile, bool fromAutostart)
     ports.httpPort = settings.httpPort();
 
     const ConfigGenerationResult generation =
-        m_xrayAdapter->generateConfig(profile, ports, routingProfile);
+        m_xrayAdapter->generateConfig(profile, ports, routingProfile, dnsProfile);
     if (!generation.success) {
         emit logLine(QStringLiteral("Config generation failed: %1").arg(generation.errorMessage));
         if (m_dialogParent) {
@@ -210,6 +426,7 @@ bool AppController::startProfile(const Profile& profile, bool fromAutostart)
     emit logLine(QStringLiteral("Config path: %1").arg(configPath));
 
     const QString executablePath = AppSettings::instance().resolvedXrayPath();
+    logGeoDataContext();
     if (!QFileInfo::exists(executablePath)) {
         const QString message =
             QStringLiteral("Xray executable not found:\n%1\n\nConfigure the path in Settings.")

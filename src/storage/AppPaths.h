@@ -18,12 +18,16 @@ public:
     static QString profilesFilePath();
     static QString subscriptionsFilePath();
     static QString routingFilePath();
+    static QString dnsFilePath();
     static QString runtimeDir();
     static QString xrayConfigPath();
     static QString singBoxConfigPath();
     static QString testRuntimeDir();
     static QString testConfigPath(const QString& profileId);
     static QString portableFlagPath();
+    static QString geoDataDir();
+    static QString xrayResourceDir();
+    static QString xrayCoreDir();
 
 private:
     static void ensureDir(const QString& path);

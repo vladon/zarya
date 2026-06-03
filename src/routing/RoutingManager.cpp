@@ -1,5 +1,6 @@
 #include "routing/RoutingManager.h"
 
+#include "routing/RoutingGeoUtils.h"
 #include "storage/AppSettings.h"
 
 #include <QFile>
@@ -173,6 +174,21 @@ void RoutingManager::resolveActiveProfile()
     }
     m_activeProfileId = selected;
     AppSettings::instance().setSelectedRoutingProfileId(m_activeProfileId);
+}
+
+bool RoutingManager::activeProfileUsesGeoData() const
+{
+    return profileUsesGeoData(activeProfile());
+}
+
+bool RoutingManager::profileUsesGeoData(const RoutingProfile& profile)
+{
+    return RoutingGeoUtils::profileUsesGeoData(profile);
+}
+
+QStringList RoutingManager::geoTagsUsed(const RoutingProfile& profile)
+{
+    return RoutingGeoUtils::geoTagsUsed(profile);
 }
 
 } // namespace zarya

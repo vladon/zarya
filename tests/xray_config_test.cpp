@@ -3,7 +3,10 @@
 #include "core/XrayVlessGenerator.h"
 #include "domain/ProtocolType.h"
 #include "domain/RoutingMode.h"
+#include "domain/DnsProfile.h"
+#include "domain/DnsProfileMode.h"
 #include "domain/RoutingProfile.h"
+#include "dns/XrayDnsGenerator.h"
 #include "routing/XrayRoutingGenerator.h"
 #include "import/VlessUriParser.h"
 #include "storage/ProfileStore.h"
@@ -292,6 +295,49 @@ int main(int argc, char* argv[])
             } else {
                 ok &= pass("Routed config uses AsIs domain strategy");
             }
+        }
+    }
+
+    const QVector<zarya::DnsProfile> dnsBuiltIns = zarya::DnsProfile::createBuiltInProfiles();
+    zarya::DnsProfile secureRemoteDns;
+    for (const zarya::DnsProfile& profile : dnsBuiltIns) {
+        if (profile.id == zarya::DnsBuiltinIds::secureRemote()) {
+            secureRemoteDns = profile;
+            break;
+        }
+    }
+    if (secureRemoteDns.id.isEmpty()) {
+        ok &= fail("Built-in Secure Remote DNS profile missing");
+    } else {
+        const zarya::XrayDnsGenerator dnsGenerator;
+        if (dnsGenerator.shouldGenerateDnsObject(zarya::DnsProfile::builtInSystemDns())) {
+            ok &= fail("System DNS should not generate dns object");
+        } else {
+            ok &= pass("System DNS omits Xray dns object");
+        }
+
+        const QJsonObject secureDnsJson = dnsGenerator.generate(secureRemoteDns);
+        const QJsonArray secureServers = secureDnsJson.value(QStringLiteral("servers")).toArray();
+        if (secureServers.size() < 2) {
+            ok &= fail("Secure Remote DNS should include multiple servers");
+        } else if (secureDnsJson.value(QStringLiteral("queryStrategy")).toString()
+                   != QStringLiteral("UseIP")) {
+            ok &= fail("Secure Remote DNS queryStrategy should be UseIP");
+        } else {
+            ok &= pass("Secure Remote DNS generates valid dns JSON");
+        }
+
+        zarya::XrayInboundPorts ports;
+        ports.socksPort = 10808;
+        ports.httpPort = 10809;
+        const auto dnsConfig = adapter.generateConfig(
+            vmessSample, ports, zarya::RoutingProfile::builtInProxyAll(), secureRemoteDns);
+        if (!dnsConfig.success) {
+            ok &= fail("Config with DNS profile failed to generate");
+        } else if (!dnsConfig.config.contains(QStringLiteral("dns"))) {
+            ok &= fail("Full config should include dns section for Secure Remote DNS");
+        } else {
+            ok &= pass("Full Xray config includes dns object when DNS profile requires it");
         }
     }
 

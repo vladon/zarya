@@ -11,8 +11,12 @@
 #include "storage/AppSettings.h"
 #include "ui/ImportVlessDialog.h"
 #include "ui/ProfileDialog.h"
+#include "ui/DnsManagerDialog.h"
+#include "ui/GeoDataManagerDialog.h"
 #include "ui/RoutingManagerDialog.h"
 #include "ui/SettingsDialog.h"
+#include "geodata/GeoDataFileStatus.h"
+#include "storage/GeoDataSettingsStore.h"
 #include "ui/SubscriptionManagerDialog.h"
 
 #include <QApplication>
@@ -39,7 +43,7 @@ namespace zarya {
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
     , m_appController(&m_coreManager, &m_systemProxy, &m_xrayAdapter, &m_testManager,
-                      &m_routingManager, this)
+                      &m_routingManager, &m_geoDataManager, &m_dnsManager, this)
 {
     setupUi();
     setupMenuBar();
@@ -60,8 +64,10 @@ MainWindow::MainWindow(QWidget* parent)
         appendLog(m_systemProxy.limitations());
     }
     appendLog(QStringLiteral("Routing: %1").arg(m_routingManager.filePath()));
+    appendLog(QStringLiteral("DNS: %1").arg(m_dnsManager.filePath()));
     appendLog(QStringLiteral("Active routing profile: %1")
                   .arg(m_routingManager.activeProfile().name));
+    checkGeoDataOnStartup();
     appendLog(QStringLiteral("Subscriptions: %1").arg(m_subscriptionStore.filePath()));
     appendLog(QStringLiteral("Xray path: %1").arg(AppSettings::instance().resolvedXrayPath()));
     if (!m_systemProxy.isSupported()) {
@@ -147,6 +153,8 @@ void MainWindow::setupMenuBar()
     auto* toolsMenu = menuBar()->addMenu(QStringLiteral("&Tools"));
     m_routingProfilesAction =
         toolsMenu->addAction(QStringLiteral("Routing &Profiles…"));
+    m_geoDataManagerAction = toolsMenu->addAction(QStringLiteral("Geo Data &Manager…"));
+    m_dnsProfilesAction = toolsMenu->addAction(QStringLiteral("DNS &Profiles…"));
     toolsMenu->addSeparator();
     m_enableSystemProxyAction =
         toolsMenu->addAction(QStringLiteral("Enable &System Proxy"));
@@ -199,6 +207,8 @@ void MainWindow::setupConnections()
     connect(m_loadAction, &QAction::triggered, this, &MainWindow::onLoadProfiles);
     connect(m_settingsAction, &QAction::triggered, this, &MainWindow::onSettings);
     connect(m_routingProfilesAction, &QAction::triggered, this, &MainWindow::onRoutingProfiles);
+    connect(m_geoDataManagerAction, &QAction::triggered, this, &MainWindow::onGeoDataManager);
+    connect(m_dnsProfilesAction, &QAction::triggered, this, &MainWindow::onDnsProfiles);
     connect(m_subscriptionsAction, &QAction::triggered, this, &MainWindow::onSubscriptions);
     connect(m_updateSubscriptionAction, &QAction::triggered, this,
             &MainWindow::onUpdateSelectedSubscription);
@@ -264,6 +274,11 @@ QString MainWindow::routingStatusText() const
     return m_routingManager.activeProfile().name;
 }
 
+QString MainWindow::dnsStatusText() const
+{
+    return m_dnsManager.activeProfile().name;
+}
+
 void MainWindow::setupAppController()
 {
     m_appController.setDialogParent(this);
@@ -274,6 +289,8 @@ void MainWindow::setupAppController()
         saveWindowState();
         return saveAll(error);
     });
+    m_appController.setOpenGeoDataManagerCallback([this]() { onGeoDataManager(); });
+    m_appController.setOpenDnsProfilesCallback([this]() { onDnsProfiles(); });
 }
 
 void MainWindow::setupTray()
@@ -441,19 +458,21 @@ void MainWindow::updateStatusBar()
 {
     if (m_testManager.isBusy()) {
         statusBar()->showMessage(
-            QStringLiteral("Testing: %1/%2 | Core: %3 | System proxy: %4 | Routing: %5")
+            QStringLiteral("Testing: %1/%2 | Core: %3 | System proxy: %4 | Routing: %5 | DNS: %6")
                 .arg(m_testProgressDone)
                 .arg(m_testProgressTotal)
                 .arg(coreStatusText())
                 .arg(systemProxyStatusText())
-                .arg(routingStatusText()));
+                .arg(routingStatusText())
+                .arg(dnsStatusText()));
         return;
     }
 
     const AppSettings& settings = AppSettings::instance();
     QString message =
-        QStringLiteral("Idle | Core: %1 | System proxy: %2 | Routing: %3 | Tray: %4")
-            .arg(coreStatusText(), systemProxyStatusText(), routingStatusText(), trayStatusText());
+        QStringLiteral("Idle | Core: %1 | System proxy: %2 | Routing: %3 | DNS: %4 | Tray: %5")
+            .arg(coreStatusText(), systemProxyStatusText(), routingStatusText(), dnsStatusText(),
+                 trayStatusText());
 
     if (m_coreManager.isRunning()) {
         message += QStringLiteral(" | SOCKS 127.0.0.1:%1 | HTTP 127.0.0.1:%2")
@@ -672,6 +691,7 @@ void MainWindow::loadAllOnStartup()
     }
 
     m_routingManager.load();
+    m_dnsManager.load();
 
     refreshProfileFilterCombo();
     refreshProfileView();
@@ -693,6 +713,12 @@ bool MainWindow::saveAll(QString* errorMessage)
         return false;
     }
     if (!m_routingManager.save(&error)) {
+        if (errorMessage) {
+            *errorMessage = error;
+        }
+        return false;
+    }
+    if (!m_dnsManager.save(&error)) {
         if (errorMessage) {
             *errorMessage = error;
         }
@@ -960,11 +986,52 @@ void MainWindow::onLoadProfiles()
 
 void MainWindow::onSettings()
 {
-    SettingsDialog dialog(m_routingManager, this);
+    SettingsDialog dialog(m_routingManager, m_dnsManager, this);
     dialog.exec();
     appendLog(QStringLiteral("Settings updated. Xray path: %1")
                   .arg(AppSettings::instance().resolvedXrayPath()));
     updateStatusBar();
+}
+
+void MainWindow::onGeoDataManager()
+{
+    GeoDataManagerDialog dialog(m_geoDataManager, [this](const QString& line) { appendLog(line); },
+                                this);
+    dialog.exec();
+}
+
+void MainWindow::onDnsProfiles()
+{
+    DnsManagerDialog dialog(m_dnsManager, [this](const QString& line) { appendLog(line); }, this);
+    connect(&dialog, &DnsManagerDialog::activeProfileChanged, this,
+            [this](const QString& name) {
+                Q_UNUSED(name);
+                updateStatusBar();
+            });
+    dialog.exec();
+    QString error;
+    m_dnsManager.save(&error);
+    updateStatusBar();
+}
+
+void MainWindow::checkGeoDataOnStartup()
+{
+    if (!GeoDataSettingsStore::instance().autoCheckOnStartup()) {
+        return;
+    }
+    appendLog(QStringLiteral("Checking geo data status"));
+    const QVector<GeoDataFileStatus> statuses = m_geoDataManager.checkAllStatus();
+    for (const GeoDataFileStatus& status : statuses) {
+        if (status.status == GeoDataStatus::Missing) {
+            appendLog(QStringLiteral("%1 missing").arg(status.fileName));
+        } else if (status.status == GeoDataStatus::NotWritable) {
+            appendLog(QStringLiteral("%1: %2").arg(status.fileName, status.error));
+        } else {
+            appendLog(QStringLiteral("%1 present, size %2 bytes")
+                          .arg(status.fileName)
+                          .arg(status.sizeBytes));
+        }
+    }
 }
 
 void MainWindow::onRoutingProfiles()

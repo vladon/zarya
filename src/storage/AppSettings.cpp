@@ -220,6 +220,16 @@ void AppSettings::setSelectedRoutingProfileId(const QString& profileId)
     settings().setValue(QStringLiteral("routing/selectedProfileId"), profileId.trimmed());
 }
 
+QString AppSettings::selectedDnsProfileId() const
+{
+    return settings().value(QStringLiteral("dns/selectedProfileId")).toString();
+}
+
+void AppSettings::setSelectedDnsProfileId(const QString& profileId)
+{
+    settings().setValue(QStringLiteral("dns/selectedProfileId"), profileId.trimmed());
+}
+
 bool AppSettings::macApplyProxyToAllServices() const
 {
     return settings().value(QStringLiteral("proxy/macApplyToAllServices"), false).toBool();

@@ -53,9 +53,20 @@ QJsonObject XrayConfigBuilder::buildFullConfig(const QJsonObject& proxyOutbound,
                                                  const XrayInboundPorts& ports,
                                                  const QJsonObject& routing)
 {
+    return buildFullConfig(proxyOutbound, ports, routing, {});
+}
+
+QJsonObject XrayConfigBuilder::buildFullConfig(const QJsonObject& proxyOutbound,
+                                                 const XrayInboundPorts& ports,
+                                                 const QJsonObject& routing,
+                                                 const QJsonObject& dns)
+{
     QJsonObject config = buildFullConfig(proxyOutbound, ports);
     if (!routing.isEmpty()) {
         config.insert(QStringLiteral("routing"), routing);
+    }
+    if (!dns.isEmpty()) {
+        config.insert(QStringLiteral("dns"), dns);
     }
     return config;
 }

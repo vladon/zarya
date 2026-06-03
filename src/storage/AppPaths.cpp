@@ -1,8 +1,11 @@
 #include "storage/AppPaths.h"
 
+#include "storage/AppSettings.h"
+
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QStandardPaths>
 
 namespace zarya {
@@ -90,6 +93,11 @@ QString AppPaths::routingFilePath()
     return QDir(dataDir()).filePath(QStringLiteral("routing.json"));
 }
 
+QString AppPaths::dnsFilePath()
+{
+    return QDir(dataDir()).filePath(QStringLiteral("dns.json"));
+}
+
 QString AppPaths::runtimeDir()
 {
     const QString path = s_portableMode ? QDir(applicationDir()).filePath(QStringLiteral("runtime"))
@@ -119,6 +127,30 @@ QString AppPaths::testConfigPath(const QString& profileId)
 {
     const QString safeId = profileId.isEmpty() ? QStringLiteral("unknown") : profileId;
     return QDir(testRuntimeDir()).filePath(QStringLiteral("config-%1.json").arg(safeId));
+}
+
+QString AppPaths::xrayCoreDir()
+{
+    return QDir(coresDir()).filePath(QStringLiteral("xray"));
+}
+
+QString AppPaths::xrayResourceDir()
+{
+    const QString xrayPath = AppSettings::instance().resolvedXrayPath().trimmed();
+    if (!xrayPath.isEmpty()) {
+        return QFileInfo(xrayPath).absolutePath();
+    }
+    return xrayCoreDir();
+}
+
+QString AppPaths::geoDataDir()
+{
+    if (s_portableMode) {
+        return xrayResourceDir();
+    }
+    const QString path = QDir(dataDir()).filePath(QStringLiteral("geodata"));
+    ensureDir(path);
+    return path;
 }
 
 } // namespace zarya
