@@ -2,6 +2,7 @@
 
 #include "domain/ProfileSourceType.h"
 #include "storage/AppPaths.h"
+#include "testing/TestStatus.h"
 
 #include <QDir>
 #include <QFile>
@@ -68,6 +69,20 @@ QJsonObject profileToJson(const Profile& profile)
         object.insert(QStringLiteral("deletedBySubscriptionUpdate"), true);
     }
 
+    if (profile.lastTcpPingMs >= 0) {
+        object.insert(QStringLiteral("lastTcpPingMs"), profile.lastTcpPingMs);
+    }
+    if (profile.lastRealDelayMs >= 0) {
+        object.insert(QStringLiteral("lastRealDelayMs"), profile.lastRealDelayMs);
+    }
+    object.insert(QStringLiteral("lastTestStatus"), testStatusToString(profile.lastTestStatus));
+    if (!profile.lastTestError.isEmpty()) {
+        object.insert(QStringLiteral("lastTestError"), profile.lastTestError);
+    }
+    if (profile.lastTestedAt.isValid()) {
+        object.insert(QStringLiteral("lastTestedAt"), profile.lastTestedAt.toString(Qt::ISODate));
+    }
+
     return object;
 }
 
@@ -121,6 +136,14 @@ Profile profileFromJson(const QJsonObject& object)
         QDateTime::fromString(object.value(QStringLiteral("lastSeenAt")).toString(), Qt::ISODate);
     profile.deletedBySubscriptionUpdate =
         object.value(QStringLiteral("deletedBySubscriptionUpdate")).toBool(false);
+
+    profile.lastTcpPingMs = object.value(QStringLiteral("lastTcpPingMs")).toInt(-1);
+    profile.lastRealDelayMs = object.value(QStringLiteral("lastRealDelayMs")).toInt(-1);
+    profile.lastTestStatus =
+        testStatusFromString(object.value(QStringLiteral("lastTestStatus")).toString());
+    profile.lastTestError = object.value(QStringLiteral("lastTestError")).toString();
+    profile.lastTestedAt =
+        QDateTime::fromString(object.value(QStringLiteral("lastTestedAt")).toString(), Qt::ISODate);
 
     if (profile.id.isEmpty()) {
         profile.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
@@ -186,7 +209,7 @@ bool ProfileStore::save(const QVector<Profile>& profiles, QString* errorMessage)
     }
 
     QJsonObject root;
-    root.insert(QStringLiteral("version"), 3);
+    root.insert(QStringLiteral("version"), 4);
     root.insert(QStringLiteral("profiles"), array);
 
     QFile file(m_filePath);

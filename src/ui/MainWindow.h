@@ -7,6 +7,7 @@
 #include "storage/ProfileStore.h"
 #include "storage/SubscriptionStore.h"
 #include "subscription/SubscriptionManager.h"
+#include "testing/TestManager.h"
 #include "ui/models/ProfileTableModel.h"
 
 #include <QMainWindow>
@@ -45,6 +46,18 @@ private slots:
     void onUpdateSelectedSubscription();
     void onUpdateAllSubscriptions();
     void onProfileFilterChanged(int index);
+    void onTestSelected();
+    void onTestAll();
+    void onTestTcpSelected();
+    void onTestDelaySelected();
+    void onCancelTests();
+    void onTestProfileContext();
+    void onTestTcpContext();
+    void onTestDelayContext();
+    void onTestStarted(const QString& profileId);
+    void onProfileUpdated(const Profile& profile);
+    void onTestProgressChanged(int done, int total);
+    void onAllTestsFinished();
     void onStartCore();
     void onStopCore();
     void onEnableSystemProxy();
@@ -72,6 +85,11 @@ private:
     bool saveAll(QString* errorMessage = nullptr);
     void refreshProfileFilterCombo();
     void refreshProfileView();
+    QVector<QString> collectSelectedProfileIds() const;
+    QVector<QString> collectAllTestableProfileIds() const;
+    void startTestsForIds(const QVector<QString>& profileIds, TestMode mode);
+    void setTestingUiBusy(bool busy);
+    void showProfileContextMenu(const QPoint& position);
 
     bool confirmSystemProxyChangeIfNeeded();
     void tryAutoEnableSystemProxy();
@@ -87,6 +105,7 @@ private:
     ProfileStore m_profileStore;
     SubscriptionStore m_subscriptionStore;
     SubscriptionManager m_subscriptionManager;
+    TestManager m_testManager;
     CoreManager m_coreManager;
     XrayAdapter m_xrayAdapter;
     SingBoxAdapter m_singBoxAdapter;
@@ -111,6 +130,14 @@ private:
     QAction* m_updateAllSubscriptionsAction = nullptr;
     QAction* m_enableSystemProxyAction = nullptr;
     QAction* m_restoreSystemProxyAction = nullptr;
+    QAction* m_testSelectedAction = nullptr;
+    QAction* m_testAllAction = nullptr;
+    QAction* m_testTcpSelectedAction = nullptr;
+    QAction* m_testDelaySelectedAction = nullptr;
+    QAction* m_cancelTestsAction = nullptr;
+
+    int m_testProgressDone = 0;
+    int m_testProgressTotal = 0;
 };
 
 } // namespace zarya

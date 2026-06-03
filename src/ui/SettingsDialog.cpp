@@ -10,8 +10,10 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
+#include <QMessageBox>
 #include <QPushButton>
 #include <QSpinBox>
+#include <QUrl>
 #include <QVBoxLayout>
 
 namespace zarya {
@@ -49,13 +51,30 @@ SettingsDialog::SettingsDialog(QWidget* parent)
     m_autoEnableSystemProxyCheck->setChecked(settings.autoEnableSystemProxyOnStart());
 #ifndef Q_OS_WIN
     m_autoEnableSystemProxyCheck->setEnabled(false);
-    m_autoEnableSystemProxyCheck->setToolTip(
-        QStringLiteral("Windows system proxy is only available on Windows."));
 #endif
 
     m_restoreProxyOnExitCheck =
         new QCheckBox(QStringLiteral("Restore previous proxy settings on stop/exit"), this);
     m_restoreProxyOnExitCheck->setChecked(settings.restoreProxyOnExit());
+
+    m_testUrlEdit = new QLineEdit(settings.testUrl(), this);
+    m_tcpTimeoutSpin = new QSpinBox(this);
+    m_tcpTimeoutSpin->setRange(1000, 60000);
+    m_tcpTimeoutSpin->setSuffix(QStringLiteral(" ms"));
+    m_tcpTimeoutSpin->setValue(settings.tcpTestTimeoutMs());
+
+    m_realDelayTimeoutSpin = new QSpinBox(this);
+    m_realDelayTimeoutSpin->setRange(1000, 60000);
+    m_realDelayTimeoutSpin->setSuffix(QStringLiteral(" ms"));
+    m_realDelayTimeoutSpin->setValue(settings.realDelayTimeoutMs());
+
+    m_maxConcurrentTestsSpin = new QSpinBox(this);
+    m_maxConcurrentTestsSpin->setRange(1, 10);
+    m_maxConcurrentTestsSpin->setValue(settings.maxConcurrentTests());
+
+    m_skipTcpBeforeRealDelayCheck =
+        new QCheckBox(QStringLiteral("Skip TCP test before real delay"), this);
+    m_skipTcpBeforeRealDelayCheck->setChecked(settings.skipTcpBeforeRealDelay());
 
     auto* coreForm = new QFormLayout;
     coreForm->addRow(QStringLiteral("Xray executable"), pathRow);
@@ -76,24 +95,31 @@ SettingsDialog::SettingsDialog(QWidget* parent)
     proxyGroup->setEnabled(false);
 #endif
 
+    auto* testingForm = new QFormLayout;
+    testingForm->addRow(QStringLiteral("Test URL"), m_testUrlEdit);
+    testingForm->addRow(QStringLiteral("TCP timeout"), m_tcpTimeoutSpin);
+    testingForm->addRow(QStringLiteral("Real delay timeout"), m_realDelayTimeoutSpin);
+    testingForm->addRow(QStringLiteral("Max concurrent tests"), m_maxConcurrentTestsSpin);
+    testingForm->addRow(QString(), m_skipTcpBeforeRealDelayCheck);
+
+    auto* testingGroup = new QGroupBox(QStringLiteral("Testing"), this);
+    testingGroup->setLayout(testingForm);
+
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel,
                                          this);
     connect(buttons, &QDialogButtonBox::accepted, this, [this]() {
-        AppSettings& settings = AppSettings::instance();
-        settings.setXrayExecutablePath(m_xrayPathEdit->text().trimmed());
-        settings.setSocksPort(m_socksPortSpin->value());
-        settings.setHttpPort(m_httpPortSpin->value());
-        settings.setAutoEnableSystemProxyOnStart(m_autoEnableSystemProxyCheck->isChecked());
-        settings.setRestoreProxyOnExit(m_restoreProxyOnExitCheck->isChecked());
-        accept();
+        if (validateAndSave()) {
+            accept();
+        }
     });
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
     auto* layout = new QVBoxLayout(this);
     layout->addWidget(coreGroup);
     layout->addWidget(proxyGroup);
+    layout->addWidget(testingGroup);
     layout->addWidget(buttons);
-    resize(560, 320);
+    resize(580, 460);
 }
 
 void SettingsDialog::onBrowseXray()
@@ -110,6 +136,30 @@ void SettingsDialog::updateHttpEndpointLabel()
 {
     m_httpEndpointLabel->setText(
         QStringLiteral("127.0.0.1:%1").arg(m_httpPortSpin->value()));
+}
+
+bool SettingsDialog::validateAndSave()
+{
+    const QUrl testUrl(m_testUrlEdit->text().trimmed());
+    if (!testUrl.isValid()
+        || (testUrl.scheme() != QStringLiteral("http") && testUrl.scheme() != QStringLiteral("https"))) {
+        QMessageBox::warning(this, QStringLiteral("Settings"),
+                             QStringLiteral("Test URL must be a valid http or https URL."));
+        return false;
+    }
+
+    AppSettings& settings = AppSettings::instance();
+    settings.setXrayExecutablePath(m_xrayPathEdit->text().trimmed());
+    settings.setSocksPort(m_socksPortSpin->value());
+    settings.setHttpPort(m_httpPortSpin->value());
+    settings.setAutoEnableSystemProxyOnStart(m_autoEnableSystemProxyCheck->isChecked());
+    settings.setRestoreProxyOnExit(m_restoreProxyOnExitCheck->isChecked());
+    settings.setTestUrl(testUrl.toString());
+    settings.setTcpTestTimeoutMs(m_tcpTimeoutSpin->value());
+    settings.setRealDelayTimeoutMs(m_realDelayTimeoutSpin->value());
+    settings.setMaxConcurrentTests(m_maxConcurrentTestsSpin->value());
+    settings.setSkipTcpBeforeRealDelay(m_skipTcpBeforeRealDelayCheck->isChecked());
+    return true;
 }
 
 } // namespace zarya

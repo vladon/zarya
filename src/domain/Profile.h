@@ -3,6 +3,7 @@
 #include "domain/CoreType.h"
 #include "domain/ProfileSourceType.h"
 #include "domain/ProtocolType.h"
+#include "testing/TestStatus.h"
 
 #include <QDateTime>
 #include <QString>
@@ -44,6 +45,12 @@ struct Profile {
     QString sourceKey;
     QDateTime lastSeenAt;
     bool deletedBySubscriptionUpdate = false;
+
+    int lastTcpPingMs = -1;
+    int lastRealDelayMs = -1;
+    TestStatus lastTestStatus = TestStatus::NeverTested;
+    QString lastTestError;
+    QDateTime lastTestedAt;
 
     static Profile createDefault();
     static Profile createVlessRealityDefault();

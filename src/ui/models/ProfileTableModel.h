@@ -16,6 +16,10 @@ public:
         Protocol,
         Address,
         Port,
+        Tcp,
+        Delay,
+        TestStatus,
+        LastTested,
         Core,
         Source,
         Subscription,
@@ -41,6 +45,9 @@ public:
     bool removeProfile(int row);
 
 private:
+    static QString formatTcpColumn(const Profile& profile);
+    static QString formatDelayColumn(const Profile& profile);
+
     QVector<Profile> m_profiles;
 };
 

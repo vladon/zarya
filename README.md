@@ -191,7 +191,26 @@ ProxyServer = http=127.0.0.1:10809;https=127.0.0.1:10809
 ProxyOverride = <local>
 ```
 
-## Usage (0.4)
+## Node testing
+
+Test profiles from the **Test** menu or toolbar:
+
+- **Test Selected** / **Test All** — TCP reachability, then real HTTP delay (default).
+- **Test TCP Selected** — connect to `host:port` only (no Xray).
+- **Test Delay Selected** — temporary Xray on free local ports, HTTP request through the local proxy.
+- **Cancel Tests** — stop queued/running tests.
+
+The profile table shows **TCP**, **Delay**, **Test Status**, and **Last Tested**. Results are saved in `profiles.json`.
+
+- **TCP test** checks server `host:port` reachability only; it does not validate the proxy protocol.
+- **Real delay** starts a separate temporary Xray process (not the running core) and measures HTTP time to the test URL (default `https://www.google.com/generate_204`).
+- **Real delay** currently supports **VLESS REALITY over TCP** only; other imported protocols show **Unsupported** until later milestones.
+- Change the test URL, timeouts, and max concurrent tests in **Settings → Testing**.
+- Batch tests respect **max concurrent tests** (default 3); several temporary Xray processes may run at once.
+
+Run `zarya_testing_test` for unit checks of TCP ping and port allocation.
+
+## Usage (0.5)
 
 1. Launch **zarya**.
 2. Configure **Xray** path in Settings if needed.
@@ -234,6 +253,7 @@ src/
   core/       ICoreAdapter, XrayVlessGenerator, CoreManager
   import/     VlessUriParser
   storage/    ProfileStore, AppSettings, AppPaths
+  testing/    TcpPingTester, RealDelayTester, TestManager
   platform/   Default core executable paths
 ```
 
@@ -243,7 +263,7 @@ src/
 - **sing-box**: adapter stub only; cannot start.
 - **System proxy**: Windows only; no PAC/TUN; macOS/Linux stub.
 - **Subscriptions**: no scheduled auto-update; no Clash/sing-box subscription formats.
-- No routing/DNS editors, delay tests, tray icon, or packaging.
+- No routing/DNS editors, speedtest/download benchmark, auto best-node selection, tray icon, or packaging.
 - No packaging/installer in this milestone.
 - Milestone 0.1 `profiles.json` files still load; missing fields get safe defaults.
 

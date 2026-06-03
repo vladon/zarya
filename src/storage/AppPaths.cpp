@@ -45,4 +45,20 @@ QString AppPaths::singBoxConfigPath()
     return QDir(runtimeDir()).filePath(QStringLiteral("config-singbox.json"));
 }
 
+QString AppPaths::testRuntimeDir()
+{
+    const QString path = QDir(runtimeDir()).filePath(QStringLiteral("test"));
+    QDir dir(path);
+    if (!dir.exists()) {
+        dir.mkpath(QStringLiteral("."));
+    }
+    return path;
+}
+
+QString AppPaths::testConfigPath(const QString& profileId)
+{
+    const QString safeId = profileId.isEmpty() ? QStringLiteral("unknown") : profileId;
+    return QDir(testRuntimeDir()).filePath(QStringLiteral("config-%1.json").arg(safeId));
+}
+
 } // namespace zarya

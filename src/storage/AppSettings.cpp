@@ -96,4 +96,60 @@ void AppSettings::setConfirmBeforeChangingSystemProxy(bool enabled)
     QSettings().setValue(QStringLiteral("proxy/confirmBeforeChangingSystemProxy"), enabled);
 }
 
+QString AppSettings::testUrl() const
+{
+    return QSettings()
+        .value(QStringLiteral("testing/testUrl"), QStringLiteral("https://www.google.com/generate_204"))
+        .toString();
+}
+
+void AppSettings::setTestUrl(const QString& url)
+{
+    QSettings().setValue(QStringLiteral("testing/testUrl"), url.trimmed());
+}
+
+int AppSettings::tcpTestTimeoutMs() const
+{
+    const int timeout = QSettings().value(QStringLiteral("testing/tcpTimeoutMs"), 5000).toInt();
+    return qBound(1000, timeout, 60000);
+}
+
+void AppSettings::setTcpTestTimeoutMs(int timeoutMs)
+{
+    QSettings().setValue(QStringLiteral("testing/tcpTimeoutMs"), qBound(1000, timeoutMs, 60000));
+}
+
+int AppSettings::realDelayTimeoutMs() const
+{
+    const int timeout = QSettings().value(QStringLiteral("testing/realDelayTimeoutMs"), 10000).toInt();
+    return qBound(1000, timeout, 60000);
+}
+
+void AppSettings::setRealDelayTimeoutMs(int timeoutMs)
+{
+    QSettings().setValue(QStringLiteral("testing/realDelayTimeoutMs"),
+                         qBound(1000, timeoutMs, 60000));
+}
+
+int AppSettings::maxConcurrentTests() const
+{
+    const int count = QSettings().value(QStringLiteral("testing/maxConcurrentTests"), 3).toInt();
+    return qBound(1, count, 10);
+}
+
+void AppSettings::setMaxConcurrentTests(int count)
+{
+    QSettings().setValue(QStringLiteral("testing/maxConcurrentTests"), qBound(1, count, 10));
+}
+
+bool AppSettings::skipTcpBeforeRealDelay() const
+{
+    return QSettings().value(QStringLiteral("testing/skipTcpBeforeRealDelay"), false).toBool();
+}
+
+void AppSettings::setSkipTcpBeforeRealDelay(bool skip)
+{
+    QSettings().setValue(QStringLiteral("testing/skipTcpBeforeRealDelay"), skip);
+}
+
 } // namespace zarya

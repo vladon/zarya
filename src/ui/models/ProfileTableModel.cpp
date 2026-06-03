@@ -1,6 +1,7 @@
 #include "ui/models/ProfileTableModel.h"
 
 #include "domain/ProfileSourceType.h"
+#include "testing/TestStatus.h"
 
 namespace zarya {
 
@@ -25,6 +26,35 @@ int ProfileTableModel::columnCount(const QModelIndex& parent) const
     return ColumnCount;
 }
 
+QString ProfileTableModel::formatTcpColumn(const Profile& profile)
+{
+    if (profile.lastTestStatus == TestStatus::Testing) {
+        return QStringLiteral("…");
+    }
+    if (profile.lastTcpPingMs >= 0) {
+        return QStringLiteral("%1 ms").arg(profile.lastTcpPingMs);
+    }
+    if (profile.lastTestStatus == TestStatus::Timeout && profile.lastRealDelayMs < 0) {
+        return QStringLiteral("timeout");
+    }
+    if (profile.lastTestStatus == TestStatus::Failed && profile.lastTcpPingMs < 0
+        && profile.lastRealDelayMs < 0) {
+        return QStringLiteral("failed");
+    }
+    return {};
+}
+
+QString ProfileTableModel::formatDelayColumn(const Profile& profile)
+{
+    if (profile.lastTestStatus == TestStatus::Testing) {
+        return QStringLiteral("…");
+    }
+    if (profile.lastRealDelayMs >= 0) {
+        return QStringLiteral("%1 ms").arg(profile.lastRealDelayMs);
+    }
+    return {};
+}
+
 QVariant ProfileTableModel::data(const QModelIndex& index, int role) const
 {
     if (!index.isValid() || index.row() < 0 || index.row() >= m_profiles.size()) {
@@ -47,6 +77,16 @@ QVariant ProfileTableModel::data(const QModelIndex& index, int role) const
             return profile.address;
         case Port:
             return profile.port;
+        case Tcp:
+            return formatTcpColumn(profile);
+        case Delay:
+            return formatDelayColumn(profile);
+        case TestStatus:
+            return testStatusDisplayString(profile.lastTestStatus);
+        case LastTested:
+            return profile.lastTestedAt.isValid()
+                       ? profile.lastTestedAt.toLocalTime().toString(Qt::ISODate)
+                       : QString();
         case Core:
             return coreTypeToString(profile.coreType);
         case Source:
@@ -78,6 +118,14 @@ QVariant ProfileTableModel::headerData(int section, Qt::Orientation orientation,
         return QStringLiteral("Address");
     case Port:
         return QStringLiteral("Port");
+    case Tcp:
+        return QStringLiteral("TCP");
+    case Delay:
+        return QStringLiteral("Delay");
+    case TestStatus:
+        return QStringLiteral("Test Status");
+    case LastTested:
+        return QStringLiteral("Last Tested");
     case Core:
         return QStringLiteral("Core");
     case Source:
