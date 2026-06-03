@@ -3,7 +3,11 @@
 #include "core/CoreManager.h"
 #include "core/XrayAdapter.h"
 #include "domain/ProtocolType.h"
+#include "domain/RoutingMode.h"
 #include "platform/SystemProxyController.h"
+#include "routing/RoutingManager.h"
+#include "routing/RoutingProfileValidator.h"
+#include "routing/XrayRoutingGenerator.h"
 #include "storage/AppPaths.h"
 #include "storage/AppSettings.h"
 #include "testing/TestManager.h"
@@ -30,12 +34,14 @@ bool vmessFailureMayBeClockSkew(const QString& text)
 } // namespace
 
 AppController::AppController(CoreManager* coreManager, SystemProxyController* systemProxy,
-                             XrayAdapter* xrayAdapter, TestManager* testManager, QObject* parent)
+                             XrayAdapter* xrayAdapter, TestManager* testManager,
+                             RoutingManager* routingManager, QObject* parent)
     : QObject(parent)
     , m_coreManager(coreManager)
     , m_systemProxy(systemProxy)
     , m_xrayAdapter(xrayAdapter)
     , m_testManager(testManager)
+    , m_routingManager(routingManager)
 {
     connect(m_coreManager, &CoreManager::started, this, [this](const QString& coreName) {
         Q_UNUSED(coreName);
@@ -141,7 +147,41 @@ bool AppController::startProfile(const Profile& profile)
         emit logLine(QStringLiteral("Security: %1").arg(profile.security));
     }
 
-    const ConfigGenerationResult generation = m_xrayAdapter->generateConfig(profile);
+    RoutingProfile routingProfile = RoutingProfile::builtInProxyAll();
+    if (m_routingManager) {
+        routingProfile = m_routingManager->activeProfile();
+        emit logLine(QStringLiteral("Active routing profile: %1").arg(routingProfile.name));
+        emit logLine(QStringLiteral("Generating routing config: %1")
+                         .arg(routingModeDisplayString(routingProfile.mode)));
+
+        const XrayRoutingGenerator routingGenerator;
+        const int ruleCount = routingGenerator.enabledRuleCount(routingProfile);
+        emit logLine(QStringLiteral("Routing rules generated: %1").arg(ruleCount));
+
+        const QStringList warnings = RoutingProfileValidator::warnings(routingProfile);
+        for (const QString& warning : warnings) {
+            emit logLine(QStringLiteral("Routing validation warning: %1").arg(warning));
+        }
+        if (!warnings.isEmpty() && m_dialogParent) {
+            const auto answer = QMessageBox::question(
+                m_dialogParent, QStringLiteral("Routing warnings"),
+                QStringLiteral(
+                    "Routing profile has validation warnings:\n\n%1\n\nContinue?")
+                    .arg(warnings.join(QStringLiteral("\n"))),
+                QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+            if (answer != QMessageBox::Yes) {
+                return false;
+            }
+        }
+    }
+
+    XrayInboundPorts ports;
+    const AppSettings& settings = AppSettings::instance();
+    ports.socksPort = settings.socksPort();
+    ports.httpPort = settings.httpPort();
+
+    const ConfigGenerationResult generation =
+        m_xrayAdapter->generateConfig(profile, ports, routingProfile);
     if (!generation.success) {
         emit logLine(QStringLiteral("Config generation failed: %1").arg(generation.errorMessage));
         if (m_dialogParent) {

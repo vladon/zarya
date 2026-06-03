@@ -2,6 +2,9 @@
 #include "core/XrayConfigTestHelpers.h"
 #include "core/XrayVlessGenerator.h"
 #include "domain/ProtocolType.h"
+#include "domain/RoutingMode.h"
+#include "domain/RoutingProfile.h"
+#include "routing/XrayRoutingGenerator.h"
 #include "import/VlessUriParser.h"
 #include "storage/ProfileStore.h"
 
@@ -229,6 +232,66 @@ int main(int argc, char* argv[])
             ok &= fail("Shadowsocks method not preserved");
         } else {
             ok &= pass("Shadowsocks outbound preserves method");
+        }
+    }
+
+    const QVector<zarya::RoutingProfile> builtInProfiles =
+        zarya::RoutingProfile::createBuiltInProfiles();
+    zarya::RoutingProfile bypassLan;
+    for (const zarya::RoutingProfile& profile : builtInProfiles) {
+        if (profile.id == zarya::RoutingBuiltinIds::bypassLan()) {
+            bypassLan = profile;
+            break;
+        }
+    }
+    if (bypassLan.id.isEmpty()) {
+        ok &= fail("Built-in Bypass LAN routing profile missing");
+    } else {
+        const zarya::XrayRoutingGenerator routingGenerator;
+        const QJsonObject bypassRouting = routingGenerator.generate(bypassLan);
+        const QJsonArray rules = bypassRouting.value(QStringLiteral("rules")).toArray();
+        bool hasDomainPrivate = false;
+        bool hasIpPrivate = false;
+        for (const QJsonValue& value : rules) {
+            const QJsonObject rule = value.toObject();
+            if (rule.value(QStringLiteral("outboundTag")).toString()
+                != QStringLiteral("direct")) {
+                continue;
+            }
+            const QJsonArray domains = rule.value(QStringLiteral("domain")).toArray();
+            for (const QJsonValue& domain : domains) {
+                if (domain.toString() == QStringLiteral("geosite:private")) {
+                    hasDomainPrivate = true;
+                }
+            }
+            const QJsonArray ips = rule.value(QStringLiteral("ip")).toArray();
+            for (const QJsonValue& ip : ips) {
+                if (ip.toString() == QStringLiteral("geoip:private")) {
+                    hasIpPrivate = true;
+                }
+            }
+        }
+        if (!hasDomainPrivate || !hasIpPrivate) {
+            ok &= fail("Bypass LAN routing missing geosite/geoip private direct rules");
+        } else {
+            ok &= pass("Bypass LAN routing generates private direct rules");
+        }
+
+        zarya::XrayInboundPorts ports;
+        ports.socksPort = 10808;
+        ports.httpPort = 10809;
+        const auto routedConfig = adapter.generateConfig(vmessSample, ports, bypassLan);
+        if (!routedConfig.success) {
+            ok &= fail("Config with routing profile failed to generate");
+        } else {
+            const QJsonObject routing =
+                routedConfig.config.value(QStringLiteral("routing")).toObject();
+            if (routing.value(QStringLiteral("domainStrategy")).toString()
+                != QStringLiteral("AsIs")) {
+                ok &= fail("Routing domainStrategy should default to AsIs");
+            } else {
+                ok &= pass("Routed config uses AsIs domain strategy");
+            }
         }
     }
 

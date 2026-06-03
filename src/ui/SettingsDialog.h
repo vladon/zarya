@@ -3,21 +3,27 @@
 #include <QDialog>
 
 class QCheckBox;
+class QComboBox;
 class QLabel;
 class QLineEdit;
+class QPushButton;
 class QSpinBox;
 
 namespace zarya {
+
+class RoutingManager;
 
 class SettingsDialog : public QDialog {
     Q_OBJECT
 
 public:
-    explicit SettingsDialog(QWidget* parent = nullptr);
+    explicit SettingsDialog(RoutingManager& routingManager, QWidget* parent = nullptr);
 
 private slots:
     void onBrowseXray();
+    void onManageRoutingProfiles();
     void updateHttpEndpointLabel();
+    void refreshRoutingCombo();
 
 private:
     bool validateAndSave();
@@ -39,6 +45,9 @@ private:
     QCheckBox* m_minimizeToTrayOnMinimizeCheck = nullptr;
     QCheckBox* m_showTrayNotificationsCheck = nullptr;
     QCheckBox* m_confirmExitWhileRunningCheck = nullptr;
+
+    QComboBox* m_routingProfileCombo = nullptr;
+    RoutingManager& m_routingManager;
 };
 
 } // namespace zarya

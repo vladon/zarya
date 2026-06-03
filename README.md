@@ -219,6 +219,27 @@ The profile table shows **TCP**, **Delay**, **Test Status**, and **Last Tested**
 
 Run `zarya_testing_test` for unit checks of TCP ping and port allocation.
 
+## Routing profiles
+
+Choose how traffic is routed through Xray in **Tools → Routing Profiles…** or **Settings → Routing**.
+
+Built-in modes:
+
+- **Proxy All** — all traffic uses the proxy outbound (default catch-all rule).
+- **Bypass LAN** — `geosite:private` and `geoip:private` go **direct**.
+- **Bypass RU** — `geosite:ru` and `geoip:ru` go **direct**.
+- **Bypass LAN + RU** — combines private and RU bypass rules.
+- **Custom** — edit your own direct/proxy/block domain, IP, port, and protocol rules.
+
+Rules are translated into Xray `routing.rules` with `outboundTag` set to `proxy`, `direct`, or `block`. Block rules are ordered before direct, then proxy; a final catch-all sends remaining traffic to `proxy`.
+
+- `geosite:…` and `geoip:…` require compatible `geosite.dat` / `geoip.dat` next to your Xray binary.
+- **Domain strategy** defaults to **AsIs** (also supports IPIfNonMatch and IPOnDemand).
+- Built-in profiles cannot be deleted; duplicate them to customize.
+- **Real delay** tests always use **Proxy All** routing so bypass rules do not skew latency measurements.
+
+Profiles are stored in `routing.json` under the app data directory. The active profile is remembered in settings (default: **Bypass LAN** on first run).
+
 ## Supported runnable protocols (Xray)
 
 | Protocol | Transports | Security | Notes |
@@ -231,7 +252,7 @@ Run `zarya_testing_test` for unit checks of TCP ping and port allocation.
 
 **Imported but not runnable yet:** Shadowsocks with `plugin=`, exotic transports (xhttp), Clash YAML providers.
 
-## Usage (0.7)
+## Usage (0.8)
 
 1. Launch **zarya**.
 2. Configure **Xray** path in Settings if needed.
@@ -244,7 +265,8 @@ Run `zarya_testing_test` for unit checks of TCP ping and port allocation.
    - If **auto system proxy** is enabled (Windows), WinINet proxy is set to the local HTTP inbound.
 6. **Stop** restores system proxy (if Zarya changed it), then terminates Xray (terminate, wait 3s, then kill).
 7. Core stdout/stderr appear in the log panel.
-8. Status bar shows **Core** and **System proxy** state.
+8. Status bar shows **Core**, **System proxy**, and **Routing** profile name.
+9. Set routing in **Tools → Routing Profiles…** or **Settings → Routing**.
 
 Local inbounds when Xray starts (from generated config, ports from Settings):
 
@@ -273,7 +295,8 @@ src/
   domain/     Profile, validation, ProtocolType, CoreType
   core/       XrayAdapter, stream settings, CoreManager
   import/     VlessUriParser
-  storage/    ProfileStore, AppSettings, AppPaths
+  storage/    ProfileStore, SubscriptionStore, RoutingStore, AppSettings, AppPaths
+  routing/    RoutingManager, XrayRoutingGenerator
   testing/    TcpPingTester, RealDelayTester, TestManager
   platform/   Default core executable paths
 ```
@@ -284,7 +307,7 @@ src/
 - **sing-box**: adapter stub only; cannot start.
 - **System proxy**: Windows only; no PAC/TUN; macOS/Linux stub.
 - **Subscriptions**: no scheduled auto-update; no Clash/sing-box subscription formats.
-- No routing/DNS editors, speedtest/download benchmark, auto best-node selection, tray icon, or packaging.
+- No DNS editor, adblock rule providers, TUN mode, speedtest/download benchmark, or auto best-node selection.
 - No packaging/installer in this milestone.
 - Milestone 0.1 `profiles.json` files still load; missing fields get safe defaults.
 

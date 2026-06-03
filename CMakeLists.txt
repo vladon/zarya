@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(zarya VERSION 0.7.0 LANGUAGES CXX)
+project(zarya VERSION 0.8.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -38,6 +38,15 @@ set(ZARYA_DOMAIN_SOURCES
     src/domain/ProfileSourceType.cpp
     src/domain/Subscription.cpp
     src/domain/SubscriptionStatus.cpp
+    src/domain/RoutingMode.cpp
+    src/domain/RoutingRule.cpp
+    src/domain/RoutingProfile.cpp
+)
+
+set(ZARYA_ROUTING_SOURCES
+    src/routing/RoutingManager.cpp
+    src/routing/XrayRoutingGenerator.cpp
+    src/routing/RoutingProfileValidator.cpp
 )
 
 set(ZARYA_TESTING_SOURCES
@@ -89,6 +98,10 @@ set(ZARYA_SOURCES
     src/ui/ImportVlessDialog.cpp
     src/ui/SubscriptionDialog.cpp
     src/ui/SubscriptionManagerDialog.cpp
+    src/ui/RoutingManagerDialog.cpp
+    src/ui/RoutingProfileDialog.cpp
+    src/ui/RoutingRuleEditorDialog.cpp
+    src/ui/RoutingJsonPreviewDialog.cpp
     src/ui/models/ProfileTableModel.cpp
     src/ui/models/SubscriptionTableModel.cpp
     ${ZARYA_CORE_SOURCES}
@@ -96,7 +109,9 @@ set(ZARYA_SOURCES
     ${ZARYA_TESTING_SOURCES}
     src/storage/ProfileStore.cpp
     src/storage/SubscriptionStore.cpp
+    src/storage/RoutingStore.cpp
     src/storage/AppSettings.cpp
+    ${ZARYA_ROUTING_SOURCES}
     src/import/VlessUriParser.cpp
     ${ZARYA_PLATFORM_SOURCES}
     src/storage/AppPaths.cpp
@@ -175,7 +190,9 @@ install(TARGETS zarya RUNTIME DESTINATION bin)
 add_executable(zarya_xray_config_test
     tests/xray_config_test.cpp
     ${ZARYA_CORE_SOURCES}
+    ${ZARYA_ROUTING_SOURCES}
     ${ZARYA_DOMAIN_SOURCES}
+    src/storage/RoutingStore.cpp
     src/testing/TestStatus.cpp
     src/storage/ProfileStore.cpp
     src/storage/AppSettings.cpp
@@ -228,7 +245,9 @@ add_executable(zarya_testing_test
     tests/testing_test.cpp
     ${ZARYA_TESTING_SOURCES}
     ${ZARYA_CORE_SOURCES}
+    ${ZARYA_ROUTING_SOURCES}
     ${ZARYA_DOMAIN_SOURCES}
+    src/storage/RoutingStore.cpp
     src/storage/AppSettings.cpp
     src/storage/AppPaths.cpp
     src/platform/Platform.cpp

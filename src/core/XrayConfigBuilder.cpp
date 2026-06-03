@@ -43,9 +43,20 @@ QJsonObject XrayConfigBuilder::buildFullConfig(const QJsonObject& proxyOutbound,
     config.insert(QStringLiteral("outbounds"),
                   QJsonArray{proxyOutbound, directOutbound, blockOutbound});
     config.insert(QStringLiteral("routing"), QJsonObject{
-        {QStringLiteral("domainStrategy"), QStringLiteral("IPIfNonMatch")},
+        {QStringLiteral("domainStrategy"), QStringLiteral("AsIs")},
         {QStringLiteral("rules"), QJsonArray{defaultRule}},
     });
+    return config;
+}
+
+QJsonObject XrayConfigBuilder::buildFullConfig(const QJsonObject& proxyOutbound,
+                                                 const XrayInboundPorts& ports,
+                                                 const QJsonObject& routing)
+{
+    QJsonObject config = buildFullConfig(proxyOutbound, ports);
+    if (!routing.isEmpty()) {
+        config.insert(QStringLiteral("routing"), routing);
+    }
     return config;
 }
 

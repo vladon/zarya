@@ -25,6 +25,11 @@ QString AppPaths::subscriptionsFilePath()
     return QDir(appDataDir()).filePath(QStringLiteral("subscriptions.json"));
 }
 
+QString AppPaths::routingFilePath()
+{
+    return QDir(appDataDir()).filePath(QStringLiteral("routing.json"));
+}
+
 QString AppPaths::runtimeDir()
 {
     const QString path = QDir(appDataDir()).filePath(QStringLiteral("runtime"));
