@@ -14,12 +14,24 @@ No other third-party libraries are required for this milestone.
 
 ### Windows (primary)
 
+Requires **Visual Studio 2026** (or 2022+) with the **Desktop development with C++** workload, plus **Qt 6** built for MSVC (`msvc2022_64` kit — compatible with the VS 2026 toolset).
+
 ```powershell
-# Ensure Qt 6 is on PATH, or set CMAKE_PREFIX_PATH to your Qt installation
-cmake -S . -B build -DCMAKE_PREFIX_PATH="C:/Qt/6.8.0/msvc2022_64"
-cmake --build build --config Release
+# One-time: install Qt MSVC kit (if missing)
+python -m aqt install-qt windows desktop 6.8.3 win64_msvc2022_64 -O C:\Qt
+
+# Configure with VS 2026 generator
+.\scripts\configure-msvc2026.ps1
+
+# Build and run
+cmake --build build --config Release --target zarya
 .\build\Release\zarya.exe
+
+# Config test
+.\scripts\run-xray-config-test.ps1
 ```
+
+Or use CMake presets (`windows-msvc2026-release`) after setting `QT_MSVC_DIR` to your Qt path, e.g. `C:/Qt/6.8.3/msvc2022_64`.
 
 ### macOS
 

@@ -13,11 +13,11 @@ Reference artifacts for Xray VLESS REALITY config generation.
 
 Build the config check tool:
 
-```bash
-cmake -S . -B build -DCMAKE_PREFIX_PATH=<Qt6>
-cmake --build build --target zarya_xray_config_test
-./build/zarya_xray_config_test
+```powershell
+.\scripts\run-xray-config-test.ps1
 ```
+
+On Windows this uses **Visual Studio 2026** and Qt `msvc2022_64`.
 
 The tool uses `XrayConfigTestHelpers` to generate config from the sample profile and compares key structure against `xray-vless-reality.sample.json`.
 

@@ -1,0 +1,45 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "windows-base",
+      "hidden": true,
+      "generator": "Visual Studio 18 2026",
+      "binaryDir": "${sourceDir}/build"
+    },
+    {
+      "name": "windows-msvc2026",
+      "displayName": "Windows MSVC 2026 (Qt msvc2022_64)",
+      "inherits": "windows-base",
+      "cacheVariables": {
+        "CMAKE_PREFIX_PATH": {
+          "type": "PATH",
+          "value": "$env{QT_MSVC_DIR}"
+        }
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "windows-msvc2026-release",
+      "configurePreset": "windows-msvc2026",
+      "configuration": "Release"
+    },
+    {
+      "name": "windows-msvc2026-debug",
+      "configurePreset": "windows-msvc2026",
+      "configuration": "Debug"
+    },
+    {
+      "name": "zarya-xray-config-test",
+      "configurePreset": "windows-msvc2026",
+      "configuration": "Release",
+      "targets": ["zarya_xray_config_test"]
+    }
+  ]
+}
