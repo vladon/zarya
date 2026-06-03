@@ -1,0 +1,50 @@
+# Qt linking helpers for shared and static Windows builds.
+
+function(zarya_detect_static_qt out_var)
+    if(NOT TARGET Qt6::Core)
+        set(${out_var} OFF PARENT_SCOPE)
+        return()
+    endif()
+    get_target_property(_qt_core_type Qt6::Core TYPE)
+    if(_qt_core_type STREQUAL "STATIC_LIBRARY")
+        set(${out_var} ON PARENT_SCOPE)
+        return()
+    endif()
+    get_target_property(_qt_core_imported Qt6::Core IMPORTED)
+    if(_qt_core_imported)
+        get_target_property(_qt_loc Qt6::Core IMPORTED_LOCATION_RELEASE)
+        if(NOT _qt_loc)
+            get_target_property(_qt_loc Qt6::Core IMPORTED_LOCATION)
+        endif()
+        if(_qt_loc AND _qt_loc MATCHES "\\.lib$")
+            set(${out_var} ON PARENT_SCOPE)
+            return()
+        endif()
+    endif()
+    set(${out_var} OFF PARENT_SCOPE)
+endfunction()
+
+function(zarya_apply_static_qt_runtime target)
+    set_property(TARGET ${target} PROPERTY
+        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endfunction()
+
+function(zarya_link_qt_widgets_app target)
+    if(ZARYA_STATIC_QT)
+        target_compile_definitions(${target} PRIVATE QT_STATIC_BUILD)
+        zarya_apply_static_qt_runtime(${target})
+        qt_import_plugins(${target}
+            INCLUDE_BY_TYPE platforms Qt6::QWindowsIntegrationPlugin
+            INCLUDE_BY_TYPE styles Qt6::QModernWindowsStylePlugin
+        )
+    endif()
+    target_link_libraries(${target} PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)
+endfunction()
+
+function(zarya_link_qt_core target)
+    if(ZARYA_STATIC_QT)
+        target_compile_definitions(${target} PRIVATE QT_STATIC_BUILD)
+        zarya_apply_static_qt_runtime(${target})
+    endif()
+    target_link_libraries(${target} PRIVATE Qt6::Core)
+endfunction()

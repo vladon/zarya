@@ -10,7 +10,25 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
+option(ZARYA_STATIC_QT "Link Qt statically into zarya (requires a static Qt build)" OFF)
+
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+include(ZaryaQt)
+
+zarya_detect_static_qt(_zarya_qt_is_static)
+if(_zarya_qt_is_static AND NOT ZARYA_STATIC_QT)
+    message(STATUS "Static Qt detected at CMAKE_PREFIX_PATH; enabling ZARYA_STATIC_QT")
+    set(ZARYA_STATIC_QT ON)
+endif()
+
+if(ZARYA_STATIC_QT AND NOT _zarya_qt_is_static)
+    message(WARNING "ZARYA_STATIC_QT is ON but Qt6::Core does not appear to be static. "
+                    "Point CMAKE_PREFIX_PATH to a static qtbase install, e.g. C:/Qt/Static/6.8.3/msvc2022_64")
+endif()
+
+qt_standard_project_setup()
 
 set(ZARYA_DOMAIN_SOURCES
     src/domain/Profile.cpp
@@ -64,15 +82,19 @@ add_executable(zarya ${ZARYA_SOURCES} ${ZARYA_HEADERS})
 
 target_include_directories(zarya PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-target_link_libraries(zarya PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)
+zarya_link_qt_widgets_app(zarya)
 
 if(WIN32)
     set_target_properties(zarya PROPERTIES WIN32_EXECUTABLE TRUE)
 endif()
 
+if(ZARYA_STATIC_QT AND WIN32)
+    message(STATUS "zarya Release will be a single portable executable (Qt linked statically, /MT runtime)")
+endif()
+
 install(TARGETS zarya RUNTIME DESTINATION bin)
 
-# Config generation checks (unit-like; no Qt Test framework required)
+# Config generation checks (unit-like; uses shared or static Qt Core)
 add_executable(zarya_xray_config_test
     tests/xray_config_test.cpp
     ${ZARYA_CORE_SOURCES}
@@ -87,4 +109,4 @@ target_compile_definitions(zarya_xray_config_test PRIVATE
     ZARYA_EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/examples"
 )
 
-target_link_libraries(zarya_xray_config_test PRIVATE Qt6::Core)
+zarya_link_qt_core(zarya_xray_config_test)
