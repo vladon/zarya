@@ -1,6 +1,6 @@
 # Zarya
 
-Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). This repository contains milestone **0.2**: VLESS REALITY profiles, Xray config generation with validation, `vless://` import, and configurable local proxy ports.
+Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). This repository contains milestone **0.3**: VLESS REALITY profiles, Xray launch with config validation, `vless://` import, and **Windows system proxy** integration.
 
 ## Requirements
 
@@ -124,7 +124,37 @@ Generated runtime configs:
 
 - `…/Zarya/runtime/config-xray.json`
 
-## Usage (0.2)
+## Windows system proxy
+
+On **Windows**, Zarya can set the system HTTP/HTTPS proxy to the local Xray HTTP inbound (`127.0.0.1:<httpPort>`, default **10809**).
+
+- **Settings → Windows system proxy**: enable proxy automatically when a profile starts, and restore previous settings on stop/exit (both on by default on Windows).
+- **Tools → Enable System Proxy** / **Restore Previous Proxy** for manual control (enable requires a running core).
+- Before enabling, Zarya saves your current WinINet proxy settings (`ProxyEnable`, `ProxyServer`, `ProxyOverride`, `AutoDetect`, `AutoConfigURL`) and restores them on **Stop** or application exit.
+- Registry path: `HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings`
+
+**Notes:**
+
+- Many browsers respect Windows system proxy; some apps ignore it.
+- CLI tools often need explicit `HTTP_PROXY` / `HTTPS_PROXY` and are out of scope.
+- **macOS / Linux**: system proxy is not implemented yet (stub only; no registry changes).
+
+Verify proxy state in PowerShell:
+
+```powershell
+Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings' |
+  Select-Object ProxyEnable, ProxyServer, ProxyOverride, AutoDetect, AutoConfigURL
+```
+
+When Zarya enables proxy, expect roughly:
+
+```
+ProxyEnable = 1
+ProxyServer = http=127.0.0.1:10809;https=127.0.0.1:10809
+ProxyOverride = <local>
+```
+
+## Usage (0.3)
 
 1. Launch **zarya**.
 2. Configure **Xray** path in Settings if needed.
@@ -134,8 +164,10 @@ Generated runtime configs:
    - Config is generated and written to the runtime path.
    - `xray run -test -config …` runs; on failure, a dialog and log output appear.
    - On success, `xray run -config …` starts.
-6. **Stop** terminates the process (terminate, wait 3s, then kill).
+   - If **auto system proxy** is enabled (Windows), WinINet proxy is set to the local HTTP inbound.
+6. **Stop** restores system proxy (if Zarya changed it), then terminates Xray (terminate, wait 3s, then kill).
 7. Core stdout/stderr appear in the log panel.
+8. Status bar shows **Core** and **System proxy** state.
 
 Local inbounds when Xray starts (from generated config, ports from Settings):
 
@@ -171,10 +203,28 @@ src/
 ## Current limitations
 
 - **Xray**: VLESS with TLS or REALITY (TCP); `xtls-rprx-vision` flow supported.
-- **sing-box**: adapter stub only; cannot start in 0.2.
-- No system proxy, TUN, subscriptions, routing/DNS editors, delay tests, tray icon, or auto-update.
+- **sing-box**: adapter stub only; cannot start.
+- **System proxy**: Windows only; no PAC/TUN; macOS/Linux stub.
+- No subscriptions, routing/DNS editors, delay tests, tray icon, or auto-update.
 - No packaging/installer in this milestone.
 - Milestone 0.1 `profiles.json` files still load; missing fields get safe defaults.
+
+Expected log after **Start** (with auto system proxy on Windows):
+
+```
+Generating config…
+Config path: …
+Validating Xray config…
+Validation OK
+Starting Xray…
+Xray started
+SOCKS: 127.0.0.1:10808
+HTTP: 127.0.0.1:10809
+Reading current Windows proxy settings…
+Previous proxy state saved
+Applying system proxy: http=127.0.0.1:10809;https=127.0.0.1:10809
+Windows proxy settings changed notification sent.
+```
 
 Run `zarya_xray_config_test` (or `.\scripts\run-xray-config-test.ps1`) to verify REALITY JSON generation.
 

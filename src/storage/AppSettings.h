@@ -19,6 +19,17 @@ public:
 
     QString resolvedXrayPath() const;
 
+    bool autoEnableSystemProxyOnStart() const;
+    void setAutoEnableSystemProxyOnStart(bool enabled);
+
+    bool restoreProxyOnExit() const;
+    void setRestoreProxyOnExit(bool enabled);
+
+    bool confirmBeforeChangingSystemProxy() const;
+    void setConfirmBeforeChangingSystemProxy(bool enabled);
+
+    static bool defaultAutoEnableSystemProxyOnStart();
+
 private:
     AppSettings() = default;
 };

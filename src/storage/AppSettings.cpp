@@ -12,6 +12,15 @@ AppSettings& AppSettings::instance()
     return settings;
 }
 
+bool AppSettings::defaultAutoEnableSystemProxyOnStart()
+{
+#ifdef Q_OS_WIN
+    return true;
+#else
+    return false;
+#endif
+}
+
 QString AppSettings::xrayExecutablePath() const
 {
     return QSettings().value(QStringLiteral("cores/xrayPath")).toString();
@@ -51,6 +60,40 @@ QString AppSettings::resolvedXrayPath() const
         return configured;
     }
     return Platform::defaultXrayExecutablePath();
+}
+
+bool AppSettings::autoEnableSystemProxyOnStart() const
+{
+    return QSettings()
+        .value(QStringLiteral("proxy/autoEnableSystemProxyOnStart"),
+               defaultAutoEnableSystemProxyOnStart())
+        .toBool();
+}
+
+void AppSettings::setAutoEnableSystemProxyOnStart(bool enabled)
+{
+    QSettings().setValue(QStringLiteral("proxy/autoEnableSystemProxyOnStart"), enabled);
+}
+
+bool AppSettings::restoreProxyOnExit() const
+{
+    return QSettings().value(QStringLiteral("proxy/restoreProxyOnExit"), true).toBool();
+}
+
+void AppSettings::setRestoreProxyOnExit(bool enabled)
+{
+    QSettings().setValue(QStringLiteral("proxy/restoreProxyOnExit"), enabled);
+}
+
+bool AppSettings::confirmBeforeChangingSystemProxy() const
+{
+    return QSettings().value(QStringLiteral("proxy/confirmBeforeChangingSystemProxy"), false)
+        .toBool();
+}
+
+void AppSettings::setConfirmBeforeChangingSystemProxy(bool enabled)
+{
+    QSettings().setValue(QStringLiteral("proxy/confirmBeforeChangingSystemProxy"), enabled);
 }
 
 } // namespace zarya
