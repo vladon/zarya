@@ -1,6 +1,7 @@
 #include "platform/Platform.h"
 
-#include <QCoreApplication>
+#include "storage/AppPaths.h"
+
 #include <QDir>
 #include <QFileInfo>
 
@@ -10,7 +11,7 @@ namespace {
 
 QString coresBaseDir()
 {
-    return QDir(QCoreApplication::applicationDirPath()).filePath(QStringLiteral("cores"));
+    return AppPaths::coresDir();
 }
 
 QString withExecutableName(const QString& relativePath, const QString& windowsName,

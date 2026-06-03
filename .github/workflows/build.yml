@@ -1,0 +1,53 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.8.3"
+          host: windows
+          target: desktop
+          arch: win64_msvc2022_64
+          modules: qtbase
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release --target zarya zarya_xray_config_test
+      - name: Test
+        run: ./build/Release/zarya_xray_config_test.exe
+
+  build-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Qt
+        run: sudo apt-get update && sudo apt-get install -y qt6-base-dev cmake build-essential
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --target zarya zarya_xray_config_test
+      - name: Test
+        run: ./build/zarya_xray_config_test
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Qt
+        run: brew install qt@6 cmake
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6)"
+      - name: Build
+        run: cmake --build build --target zarya zarya_xray_config_test
+      - name: Test
+        run: ./build/zarya_xray_config_test

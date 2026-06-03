@@ -1,5 +1,7 @@
 #include "ui/SettingsDialog.h"
 
+#include "platform/AutostartManagerFactory.h"
+#include "platform/IAutostartManager.h"
 #include "platform/ISystemProxyManager.h"
 #include "platform/SystemProxyManagerFactory.h"
 #include "routing/RoutingManager.h"
@@ -126,6 +128,35 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, QWidget* parent)
         new QCheckBox(QStringLiteral("Confirm exit while core is running"), this);
     m_confirmExitWhileRunningCheck->setChecked(settings.confirmExitWhileRunning());
 
+    m_autostartManager = AutostartManagerFactory::create();
+    m_autostartBackendLabel =
+        new QLabel(m_autostartManager ? m_autostartManager->backendName() : QString(), this);
+
+    m_startAtLoginCheck = new QCheckBox(QStringLiteral("Start Zarya when I log in"), this);
+    const bool osAutostartEnabled =
+        m_autostartManager && m_autostartManager->isSupported()
+        && m_autostartManager->isEnabled();
+    m_startAtLoginCheck->setChecked(settings.startAtLogin() && osAutostartEnabled);
+    m_startAtLoginCheck->setEnabled(m_autostartManager && m_autostartManager->isSupported());
+
+    m_startMinimizedToTrayCheck =
+        new QCheckBox(QStringLiteral("Start minimized to tray"), this);
+    m_startMinimizedToTrayCheck->setChecked(settings.startMinimizedToTray());
+
+    m_autoStartLastProfileCheck =
+        new QCheckBox(QStringLiteral("Auto-start last used profile"), this);
+    m_autoStartLastProfileCheck->setChecked(settings.autoStartLastProfile());
+
+    m_autoEnableProxyAfterAutoStartCheck = new QCheckBox(
+        QStringLiteral("Enable system proxy after auto-starting profile"), this);
+    m_autoEnableProxyAfterAutoStartCheck->setChecked(
+        settings.autoEnableSystemProxyAfterAutoStart());
+
+    m_autoStartDelaySpin = new QSpinBox(this);
+    m_autoStartDelaySpin->setRange(0, 120);
+    m_autoStartDelaySpin->setSuffix(QStringLiteral(" s"));
+    m_autoStartDelaySpin->setValue(settings.autoStartDelaySeconds());
+
     auto* coreForm = new QFormLayout;
     coreForm->addRow(QStringLiteral("Xray executable"), pathRow);
     coreForm->addRow(QStringLiteral("Local SOCKS port"), m_socksPortSpin);
@@ -187,6 +218,22 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, QWidget* parent)
     auto* routingGroup = new QGroupBox(QStringLiteral("Routing"), this);
     routingGroup->setLayout(routingForm);
 
+    auto* startupForm = new QFormLayout;
+    startupForm->addRow(QStringLiteral("Autostart backend"), m_autostartBackendLabel);
+    startupForm->addRow(QString(), m_startAtLoginCheck);
+    startupForm->addRow(QString(), m_startMinimizedToTrayCheck);
+    startupForm->addRow(QString(), m_autoStartLastProfileCheck);
+    startupForm->addRow(QString(), m_autoEnableProxyAfterAutoStartCheck);
+    startupForm->addRow(QStringLiteral("Auto-start delay"), m_autoStartDelaySpin);
+    if (m_autostartManager && !m_autostartManager->limitations().isEmpty()) {
+        auto* autostartLimits = new QLabel(m_autostartManager->limitations(), this);
+        autostartLimits->setWordWrap(true);
+        startupForm->addRow(QStringLiteral("Autostart notes"), autostartLimits);
+    }
+
+    auto* startupGroup = new QGroupBox(QStringLiteral("Startup"), this);
+    startupGroup->setLayout(startupForm);
+
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel,
                                          this);
     connect(buttons, &QDialogButtonBox::accepted, this, [this]() {
@@ -201,9 +248,10 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, QWidget* parent)
     layout->addWidget(proxyGroup);
     layout->addWidget(testingGroup);
     layout->addWidget(routingGroup);
+    layout->addWidget(startupGroup);
     layout->addWidget(desktopGroup);
     layout->addWidget(buttons);
-    resize(620, 720);
+    resize(620, 820);
 }
 
 void SettingsDialog::onBrowseXray()
@@ -276,6 +324,28 @@ bool SettingsDialog::validateAndSave()
     settings.setMinimizeToTrayOnMinimize(m_minimizeToTrayOnMinimizeCheck->isChecked());
     settings.setShowTrayNotifications(m_showTrayNotificationsCheck->isChecked());
     settings.setConfirmExitWhileRunning(m_confirmExitWhileRunningCheck->isChecked());
+
+    settings.setStartMinimizedToTray(m_startMinimizedToTrayCheck->isChecked());
+    settings.setAutoStartLastProfile(m_autoStartLastProfileCheck->isChecked());
+    settings.setAutoEnableSystemProxyAfterAutoStart(
+        m_autoEnableProxyAfterAutoStartCheck->isChecked());
+    settings.setAutoStartDelaySeconds(m_autoStartDelaySpin->value());
+
+    if (m_autostartManager && m_autostartManager->isSupported()) {
+        const bool wantAutostart = m_startAtLoginCheck->isChecked();
+        QString autostartError;
+        if (wantAutostart) {
+            if (!m_autostartManager->enable({QStringLiteral("--minimized")}, &autostartError)) {
+                QMessageBox::warning(this, QStringLiteral("Autostart"), autostartError);
+                return false;
+            }
+        } else if (m_autostartManager->isEnabled()
+                   && !m_autostartManager->disable(&autostartError)) {
+            QMessageBox::warning(this, QStringLiteral("Autostart"), autostartError);
+            return false;
+        }
+        settings.setStartAtLogin(wantAutostart);
+    }
 
     const QString selectedRoutingId = m_routingProfileCombo->currentData().toString();
     if (!selectedRoutingId.isEmpty()) {

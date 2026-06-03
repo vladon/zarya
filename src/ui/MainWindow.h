@@ -1,6 +1,7 @@
 #pragma once
 
 #include "app/AppController.h"
+#include "app/StartupOptions.h"
 #include "core/CoreManager.h"
 #include "core/SingBoxAdapter.h"
 #include "core/XrayAdapter.h"
@@ -43,6 +44,9 @@ public:
     bool trayIsAvailable() const;
 
     AppController* appController();
+
+    void logStartupContext(const StartupOptions& options);
+    void finishStartup(const StartupOptions& options);
 
 public slots:
     void showFromTray();
@@ -122,7 +126,9 @@ private:
     bool shouldHideToTrayOnClose() const;
 
     bool confirmSystemProxyChangeIfNeeded();
-    void tryAutoEnableSystemProxy();
+    void tryAutoEnableSystemProxy(bool fromAutostart = false);
+    bool startProfileById(const QString& profileId, bool fromAutostart);
+    Profile* profileById(const QString& profileId);
     void tryRestoreSystemProxy(SystemProxyRestoreMode mode, bool showFailureDialog);
     QString coreStatusText() const;
     QString systemProxyStatusText() const;

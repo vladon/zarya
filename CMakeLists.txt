@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(zarya VERSION 0.9.0 LANGUAGES CXX)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ZaryaVersion.cmake)
+
+project(zarya VERSION ${ZARYA_VERSION_MAJOR}.${ZARYA_VERSION_MINOR}.${ZARYA_VERSION_PATCH} LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -83,10 +85,17 @@ set(ZARYA_PLATFORM_SOURCES
     src/platform/stub/StubSystemProxyManager.cpp
 )
 
+set(ZARYA_AUTOSTART_SOURCES
+    src/platform/AutostartManagerFactory.cpp
+    src/platform/stub/StubAutostartManager.cpp
+)
+
 if(WIN32)
     list(APPEND ZARYA_PLATFORM_SOURCES src/platform/windows/WindowsSystemProxyManager.cpp)
+    list(APPEND ZARYA_AUTOSTART_SOURCES src/platform/windows/WindowsAutostartManager.cpp)
 elseif(APPLE)
     list(APPEND ZARYA_PLATFORM_SOURCES src/platform/macos/MacSystemProxyManager.cpp)
+    list(APPEND ZARYA_AUTOSTART_SOURCES src/platform/macos/MacAutostartManager.cpp)
 elseif(UNIX)
     list(APPEND ZARYA_PLATFORM_SOURCES
         src/platform/linux/LinuxDesktopEnvironment.cpp
@@ -94,12 +103,15 @@ elseif(UNIX)
         src/platform/linux/KdeSystemProxyManager.cpp
         src/platform/linux/LinuxSystemProxyManager.cpp
     )
+    list(APPEND ZARYA_AUTOSTART_SOURCES src/platform/linux/LinuxAutostartManager.cpp)
 endif()
 
 set(ZARYA_SOURCES
     src/app/main.cpp
     src/app/Application.cpp
+    src/app/StartupOptions.cpp
     src/app/AppController.cpp
+    src/packaging/PackagingInfo.cpp
     src/ui/MainWindow.cpp
     src/ui/TrayController.cpp
     src/ui/ProfileDialog.cpp
@@ -123,6 +135,7 @@ set(ZARYA_SOURCES
     ${ZARYA_ROUTING_SOURCES}
     src/import/VlessUriParser.cpp
     ${ZARYA_PLATFORM_SOURCES}
+    ${ZARYA_AUTOSTART_SOURCES}
     src/storage/AppPaths.cpp
     ${ZARYA_DOMAIN_SOURCES}
 )
@@ -181,19 +194,29 @@ add_executable(zarya ${ZARYA_SOURCES} ${ZARYA_HEADERS})
 
 target_include_directories(zarya PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
+target_compile_definitions(zarya PRIVATE ZARYA_VERSION_STRING="${ZARYA_VERSION_STRING}")
+
 zarya_link_qt_widgets_app(zarya)
 target_link_libraries(zarya PRIVATE Qt6::Network)
 
 if(WIN32)
     set_target_properties(zarya PROPERTIES WIN32_EXECUTABLE TRUE)
     target_link_libraries(zarya PRIVATE wininet)
+elseif(APPLE)
+    set_target_properties(zarya PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_GUI_IDENTIFIER dev.vladon.zarya
+        MACOSX_BUNDLE_BUNDLE_NAME Zarya
+        MACOSX_BUNDLE_SHORT_VERSION_STRING ${ZARYA_VERSION_STRING}
+        MACOSX_BUNDLE_BUNDLE_VERSION ${ZARYA_VERSION_STRING}
+    )
 endif()
 
 if(ZARYA_STATIC_QT AND WIN32)
     message(STATUS "zarya Release will be a single portable executable (Qt linked statically, /MT runtime)")
 endif()
 
-install(TARGETS zarya RUNTIME DESTINATION bin)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ZaryaDeploy.cmake)
 
 # Config generation checks (unit-like; uses shared or static Qt Core)
 add_executable(zarya_xray_config_test
