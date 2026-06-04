@@ -7,6 +7,7 @@
 #include "dns/DnsManager.h"
 #include "domain/DnsProfile.h"
 #include "routing/RoutingManager.h"
+#include "runtime/RuntimeBackendType.h"
 #include "storage/AppSettings.h"
 #include "ui/DnsManagerDialog.h"
 #include "ui/RoutingManagerDialog.h"
@@ -26,6 +27,7 @@
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QRadioButton>
 #include <QSpinBox>
 #include <QUrl>
 #include <QVBoxLayout>
@@ -254,6 +256,54 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     auto* startupGroup = new QGroupBox(QStringLiteral("Startup"), this);
     startupGroup->setLayout(startupForm);
 
+    m_enableExperimentalTunCheck =
+        new QCheckBox(QStringLiteral("Enable experimental TUN mode"), this);
+    m_enableExperimentalTunCheck->setChecked(settings.enableExperimentalTun());
+
+    m_systemProxyRuntimeRadio =
+        new QRadioButton(QStringLiteral("System proxy via Xray"), this);
+    m_tunRuntimeRadio =
+        new QRadioButton(QStringLiteral("TUN via sing-box (experimental)"), this);
+    if (settings.runtimeMode() == RuntimeMode::TunSingBoxExperimental) {
+        m_tunRuntimeRadio->setChecked(true);
+    } else {
+        m_systemProxyRuntimeRadio->setChecked(true);
+    }
+
+    m_singBoxPathEdit = new QLineEdit(settings.singBoxExecutablePath(), this);
+    auto* browseSingBoxButton = new QPushButton(QStringLiteral("Browse…"), this);
+    connect(browseSingBoxButton, &QPushButton::clicked, this, &SettingsDialog::onBrowseSingBox);
+    auto* singBoxRow = new QHBoxLayout;
+    singBoxRow->addWidget(m_singBoxPathEdit);
+    singBoxRow->addWidget(browseSingBoxButton);
+
+    auto* tunWarnings = new QLabel(
+        QStringLiteral(
+            "TUN mode changes system routes and may require administrator/root permissions. "
+            "Kill switch is not implemented. TUN routing parity with Xray routing profiles is "
+            "limited."),
+        this);
+    tunWarnings->setWordWrap(true);
+
+    auto* experimentalForm = new QFormLayout;
+    experimentalForm->addRow(QString(), m_enableExperimentalTunCheck);
+    experimentalForm->addRow(QString(), m_systemProxyRuntimeRadio);
+    experimentalForm->addRow(QString(), m_tunRuntimeRadio);
+    experimentalForm->addRow(QStringLiteral("sing-box executable"), singBoxRow);
+    experimentalForm->addRow(QString(), tunWarnings);
+
+    auto* experimentalGroup = new QGroupBox(QStringLiteral("Experimental"), this);
+    experimentalGroup->setLayout(experimentalForm);
+
+    const auto updateRuntimeControls = [this]() {
+        const bool enabled = m_enableExperimentalTunCheck->isChecked();
+        m_systemProxyRuntimeRadio->setEnabled(enabled);
+        m_tunRuntimeRadio->setEnabled(enabled);
+        m_singBoxPathEdit->setEnabled(enabled);
+    };
+    updateRuntimeControls();
+    connect(m_enableExperimentalTunCheck, &QCheckBox::toggled, this, updateRuntimeControls);
+
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel,
                                          this);
     connect(buttons, &QDialogButtonBox::accepted, this, [this]() {
@@ -271,8 +321,44 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     layout->addWidget(dnsGroup);
     layout->addWidget(startupGroup);
     layout->addWidget(desktopGroup);
+    layout->addWidget(experimentalGroup);
     layout->addWidget(buttons);
-    resize(620, 820);
+    resize(620, 920);
+}
+
+void SettingsDialog::onBrowseSingBox()
+{
+    const QString path =
+        QFileDialog::getOpenFileName(this, QStringLiteral("Select sing-box executable"), {},
+                                   QStringLiteral("Executables (*.exe);;All files (*.*)"));
+    if (!path.isEmpty()) {
+        m_singBoxPathEdit->setText(path);
+    }
+}
+
+bool SettingsDialog::confirmTunWarningIfNeeded()
+{
+    if (AppSettings::instance().tunWarningAccepted()) {
+        return true;
+    }
+
+    QMessageBox box(this);
+    box.setIcon(QMessageBox::Warning);
+    box.setWindowTitle(QStringLiteral("Experimental TUN mode"));
+    box.setText(QStringLiteral(
+        "TUN mode is experimental. It may change network routes and DNS behavior.\n\n"
+        "If it fails, Zarya will attempt to stop sing-box and restore state, but this mode is "
+        "not production-ready yet.\n\n"
+        "Kill switch is not implemented."));
+    QPushButton* enableButton = box.addButton(QStringLiteral("Enable Experimental TUN"),
+                                              QMessageBox::AcceptRole);
+    box.addButton(QMessageBox::Cancel);
+    box.exec();
+    if (box.clickedButton() != enableButton) {
+        return false;
+    }
+    AppSettings::instance().setTunWarningAccepted(true);
+    return true;
 }
 
 void SettingsDialog::onBrowseXray()
@@ -404,6 +490,20 @@ bool SettingsDialog::validateAndSave()
         m_dnsManager.setActiveProfileId(selectedDnsId);
         m_dnsManager.save();
     }
+
+    const bool wantExperimentalTun = m_enableExperimentalTunCheck->isChecked();
+    const RuntimeMode selectedMode = m_tunRuntimeRadio->isChecked()
+                                         ? RuntimeMode::TunSingBoxExperimental
+                                         : RuntimeMode::SystemProxyXray;
+    if (wantExperimentalTun || selectedMode == RuntimeMode::TunSingBoxExperimental) {
+        if (!confirmTunWarningIfNeeded()) {
+            return false;
+        }
+    }
+
+    settings.setEnableExperimentalTun(wantExperimentalTun);
+    settings.setRuntimeMode(selectedMode);
+    settings.setSingBoxExecutablePath(m_singBoxPathEdit->text());
     return true;
 }
 

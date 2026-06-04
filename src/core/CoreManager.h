@@ -25,6 +25,8 @@ public:
 
     CoreValidationResult validateConfig(const QString& coreExecutablePath,
                                         const QString& configPath) const;
+    CoreValidationResult validateSingBoxConfig(const QString& coreExecutablePath,
+                                               const QString& configPath) const;
     void startCore(const QString& coreExecutablePath, const QString& configPath,
                    const QString& coreDisplayName);
     void stop();

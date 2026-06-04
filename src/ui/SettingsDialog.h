@@ -11,6 +11,7 @@ class QComboBox;
 class QLabel;
 class QLineEdit;
 class QPushButton;
+class QRadioButton;
 class QSpinBox;
 
 namespace zarya {
@@ -28,6 +29,8 @@ public:
 
 private slots:
     void onBrowseXray();
+    void onBrowseSingBox();
+    bool confirmTunWarningIfNeeded();
     void onManageRoutingProfiles();
     void onManageDnsProfiles();
     void updateHttpEndpointLabel();
@@ -63,6 +66,11 @@ private:
 
     QComboBox* m_routingProfileCombo = nullptr;
     QComboBox* m_dnsProfileCombo = nullptr;
+
+    QCheckBox* m_enableExperimentalTunCheck = nullptr;
+    QRadioButton* m_systemProxyRuntimeRadio = nullptr;
+    QRadioButton* m_tunRuntimeRadio = nullptr;
+    QLineEdit* m_singBoxPathEdit = nullptr;
 
     QCheckBox* m_startAtLoginCheck = nullptr;
     QCheckBox* m_startMinimizedToTrayCheck = nullptr;

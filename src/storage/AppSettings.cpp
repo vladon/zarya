@@ -73,6 +73,90 @@ QString AppSettings::resolvedXrayPath() const
     return Platform::defaultXrayExecutablePath();
 }
 
+QString AppSettings::singBoxExecutablePath() const
+{
+    return settings().value(QStringLiteral("cores/singBoxPath")).toString();
+}
+
+void AppSettings::setSingBoxExecutablePath(const QString& path)
+{
+    settings().setValue(QStringLiteral("cores/singBoxPath"), path.trimmed());
+}
+
+QString AppSettings::resolvedSingBoxPath() const
+{
+    const QString configured = singBoxExecutablePath().trimmed();
+    if (!configured.isEmpty()) {
+        return configured;
+    }
+    return Platform::defaultSingBoxExecutablePath();
+}
+
+bool AppSettings::enableExperimentalTun() const
+{
+    return settings().value(QStringLiteral("runtime/enableExperimentalTun"), false).toBool();
+}
+
+void AppSettings::setEnableExperimentalTun(bool enabled)
+{
+    settings().setValue(QStringLiteral("runtime/enableExperimentalTun"), enabled);
+}
+
+RuntimeMode AppSettings::runtimeMode() const
+{
+    return runtimeModeFromString(settings().value(QStringLiteral("runtime/mode")).toString());
+}
+
+void AppSettings::setRuntimeMode(RuntimeMode mode)
+{
+    settings().setValue(QStringLiteral("runtime/mode"), runtimeModeToString(mode));
+}
+
+RuntimeMode AppSettings::effectiveRuntimeMode() const
+{
+    if (!enableExperimentalTun()) {
+        return RuntimeMode::SystemProxyXray;
+    }
+    return runtimeMode();
+}
+
+bool AppSettings::tunWarningAccepted() const
+{
+    return settings().value(QStringLiteral("runtime/tunWarningAccepted"), false).toBool();
+}
+
+void AppSettings::setTunWarningAccepted(bool accepted)
+{
+    settings().setValue(QStringLiteral("runtime/tunWarningAccepted"), accepted);
+}
+
+void AppSettings::markTunSessionStarted()
+{
+    settings().setValue(QStringLiteral("runtime/lastShutdownClean"), false);
+    settings().setValue(QStringLiteral("runtime/lastRuntimeMode"),
+                       runtimeModeToString(RuntimeMode::TunSingBoxExperimental));
+    settings().setValue(QStringLiteral("runtime/tunWasRunning"), true);
+}
+
+void AppSettings::markCleanShutdown()
+{
+    settings().setValue(QStringLiteral("runtime/lastShutdownClean"), true);
+    settings().setValue(QStringLiteral("runtime/tunWasRunning"), false);
+    settings().setValue(QStringLiteral("runtime/lastRuntimeMode"),
+                       runtimeModeToString(RuntimeMode::SystemProxyXray));
+}
+
+bool AppSettings::shouldWarnUncleanTunShutdown() const
+{
+    return settings().value(QStringLiteral("runtime/tunWasRunning"), false).toBool()
+           && !settings().value(QStringLiteral("runtime/lastShutdownClean"), true).toBool();
+}
+
+RuntimeMode AppSettings::lastRuntimeMode() const
+{
+    return runtimeModeFromString(settings().value(QStringLiteral("runtime/lastRuntimeMode")).toString());
+}
+
 bool AppSettings::autoEnableSystemProxyOnStart() const
 {
     return settings()

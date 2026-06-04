@@ -19,6 +19,9 @@
 #include "storage/AppPaths.h"
 #include "storage/AppSettings.h"
 #include "storage/GeoDataSettingsStore.h"
+#include "runtime/RuntimeBackendFactory.h"
+#include "runtime/singbox/SingBoxTunRuntimeBackend.h"
+#include "runtime/xray/XraySystemProxyRuntimeBackend.h"
 #include "testing/TestManager.h"
 
 #include <QFile>
@@ -55,6 +58,9 @@ AppController::AppController(CoreManager* coreManager, SystemProxyController* sy
     , m_geoDataManager(geoDataManager)
     , m_dnsManager(dnsManager)
 {
+    m_runtimeFactory = std::make_unique<RuntimeBackendFactory>(coreManager);
+    setupRuntimeBackends();
+
     connect(m_coreManager, &CoreManager::started, this, [this](const QString& coreName) {
         Q_UNUSED(coreName);
         emit coreStateChanged(true);
@@ -72,6 +78,51 @@ AppController::AppController(CoreManager* coreManager, SystemProxyController* sy
 void AppController::setDialogParent(QWidget* parent)
 {
     m_dialogParent = parent;
+    if (m_runtimeFactory) {
+        m_runtimeFactory->singBoxTunBackend()->setDialogParent(parent);
+    }
+}
+
+void AppController::setupRuntimeBackends()
+{
+    if (!m_runtimeFactory) {
+        return;
+    }
+
+    XraySystemProxyRuntimeBackend* xrayBackend = m_runtimeFactory->xraySystemProxyBackend();
+    xrayBackend->setStartHandler([this](const Profile& profile, const RuntimeStartOptions& options) {
+        return startProfileSystemProxyXray(profile, options.fromAutostart);
+    });
+    xrayBackend->setStopHandler([this]() {
+        if (!isCoreRunning()) {
+            return true;
+        }
+        restoreSystemProxyAutomatic();
+        m_coreManager->stop();
+        m_activeRuntimeMode = RuntimeMode::SystemProxyXray;
+        AppSettings::instance().markCleanShutdown();
+        return true;
+    });
+    xrayBackend->setRunningHandler([this]() { return isCoreRunning(); });
+    connect(xrayBackend, &IRuntimeBackend::logLine, this, &AppController::logLine);
+    connect(xrayBackend, &IRuntimeBackend::errorOccurred, this, &AppController::logLine);
+
+    SingBoxTunRuntimeBackend* singBoxBackend = m_runtimeFactory->singBoxTunBackend();
+    singBoxBackend->setDialogParent(m_dialogParent);
+    connect(singBoxBackend, &IRuntimeBackend::logLine, this, &AppController::logLine);
+    connect(singBoxBackend, &IRuntimeBackend::errorOccurred, this, &AppController::logLine);
+    connect(singBoxBackend, &IRuntimeBackend::stateChanged, this, [this](RuntimeState state) {
+        if (state == RuntimeState::Running) {
+            emit coreStateChanged(true);
+        } else if (state == RuntimeState::Stopped || state == RuntimeState::Error) {
+            emit coreStateChanged(false);
+        }
+    });
+}
+
+RuntimeMode AppController::activeRuntimeMode() const
+{
+    return m_activeRuntimeMode;
 }
 
 void AppController::setAfterCoreStartedCallback(std::function<void()> callback)
@@ -324,6 +375,31 @@ bool AppController::startProfile(const Profile& profile, bool fromAutostart)
         return false;
     }
 
+    const AppSettings& settings = AppSettings::instance();
+    if (settings.effectiveRuntimeMode() == RuntimeMode::TunSingBoxExperimental) {
+        if (!settings.enableExperimentalTun()) {
+            emit logLine(QStringLiteral("Experimental TUN mode is not enabled in Settings."));
+            return false;
+        }
+        if (!m_runtimeFactory) {
+            return false;
+        }
+        RuntimeStartOptions options;
+        options.fromAutostart = fromAutostart;
+        const bool started =
+            m_runtimeFactory->singBoxTunBackend()->start(profile, options);
+        if (started) {
+            m_activeRuntimeMode = RuntimeMode::TunSingBoxExperimental;
+        }
+        return started;
+    }
+
+    return startProfileSystemProxyXray(profile, fromAutostart);
+}
+
+bool AppController::startProfileSystemProxyXray(const Profile& profile, bool fromAutostart)
+{
+    Q_UNUSED(fromAutostart);
     QString unsupportedReason;
     if (!m_xrayAdapter->supportsProfile(profile, &unsupportedReason)) {
         emit logLine(QStringLiteral("Unsupported profile: %1").arg(unsupportedReason));
@@ -464,6 +540,8 @@ bool AppController::startProfile(const Profile& profile, bool fromAutostart)
     emit logLine(QStringLiteral("Starting Xray…"));
     m_coreManager->startCore(executablePath, configPath, m_xrayAdapter->displayName());
     AppSettings::instance().setLastStartedProfileId(profile.id);
+    m_activeRuntimeMode = RuntimeMode::SystemProxyXray;
+    AppSettings::instance().markCleanShutdown();
     return true;
 }
 
@@ -473,8 +551,18 @@ bool AppController::stopCurrentProfile()
         return true;
     }
     emit logLine(QStringLiteral("Stopping core…"));
+
+    if (m_activeRuntimeMode == RuntimeMode::TunSingBoxExperimental && m_runtimeFactory) {
+        const bool stopped = m_runtimeFactory->singBoxTunBackend()->stop();
+        m_activeRuntimeMode = RuntimeMode::SystemProxyXray;
+        emit coreStateChanged(false);
+        return stopped;
+    }
+
     restoreSystemProxyAutomatic();
     m_coreManager->stop();
+    m_activeRuntimeMode = RuntimeMode::SystemProxyXray;
+    AppSettings::instance().markCleanShutdown();
     return true;
 }
 
@@ -555,12 +643,14 @@ bool AppController::safeShutdown(bool proxyExitAnyway)
 
     if (isCoreRunning()) {
         emit logLine(QStringLiteral("Stopping core"));
-        m_coreManager->stop();
+        stopCurrentProfile();
         emit coreStateChanged(false);
     }
 
     QString proxyError;
-    if (!attemptProxyRestoreOnShutdown(&proxyError) && !proxyExitAnyway) {
+    if (m_activeRuntimeMode == RuntimeMode::TunSingBoxExperimental) {
+        proxyError.clear();
+    } else if (!attemptProxyRestoreOnShutdown(&proxyError) && !proxyExitAnyway) {
         emit logLine(QStringLiteral("System proxy restore failed during shutdown"));
         return false;
     }
@@ -577,6 +667,7 @@ bool AppController::safeShutdown(bool proxyExitAnyway)
         }
     }
 
+    AppSettings::instance().markCleanShutdown();
     emit logLine(QStringLiteral("Safe shutdown completed"));
     return true;
 }
