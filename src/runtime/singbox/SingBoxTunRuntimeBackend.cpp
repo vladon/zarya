@@ -1,6 +1,7 @@
 #include "runtime/singbox/SingBoxTunRuntimeBackend.h"
 
 #include "core/CoreManager.h"
+#include "runtime/ConfigWarning.h"
 #include "runtime/singbox/SingBoxConfigGenerator.h"
 #include "runtime/singbox/SingBoxTunSupportChecker.h"
 #include "storage/AppPaths.h"
@@ -13,6 +14,20 @@
 #include <QWidget>
 
 namespace zarya {
+
+namespace {
+
+SingBoxConfigOptions configOptionsFromSettings()
+{
+    const AppSettings& settings = AppSettings::instance();
+    SingBoxConfigOptions options;
+    options.enableDnsHijack =
+        settings.tunEnableDnsHijack()
+        && settings.tunDnsHijackMode() != TunDnsHijackMode::Disabled;
+    return options;
+}
+
+} // namespace
 
 void SingBoxTunRuntimeBackend::setDialogParent(QWidget* parent)
 {
@@ -100,7 +115,6 @@ bool SingBoxTunRuntimeBackend::confirmPrivilegeWarnings(const RuntimeStartOption
 
 bool SingBoxTunRuntimeBackend::start(const Profile& profile, const RuntimeStartOptions& options)
 {
-    Q_UNUSED(options);
     if (!m_coreManager) {
         emit errorOccurred(QStringLiteral("Core manager is not available."));
         return false;
@@ -112,7 +126,6 @@ bool SingBoxTunRuntimeBackend::start(const Profile& profile, const RuntimeStartO
 
     emit logLine(QStringLiteral("Runtime mode: sing-box TUN experimental"));
     emit logLine(QStringLiteral("TUN mode is experimental; kill switch not implemented"));
-    emit logLine(QStringLiteral("TUN routing parity: limited"));
 
     QString supportReason;
     if (!isSupported(&supportReason)) {
@@ -146,12 +159,22 @@ bool SingBoxTunRuntimeBackend::start(const Profile& profile, const RuntimeStartO
     const QString executablePath = AppSettings::instance().resolvedSingBoxPath();
     emit logLine(QStringLiteral("sing-box executable: %1").arg(executablePath));
 
+    RoutingProfile routingProfile = options.routingProfile;
+    DnsProfile dnsProfile = options.dnsProfile;
+    emit logLine(QStringLiteral("TUN routing profile: %1").arg(routingProfile.name));
+    emit logLine(QStringLiteral("TUN DNS profile: %1").arg(dnsProfile.name));
+
     emit logLine(QStringLiteral("Generating sing-box TUN config"));
     const SingBoxConfigGenerator generator;
-    const SingBoxConfigGenerationResult generation = generator.generate(profile);
+    const SingBoxConfigGenerationResult generation =
+        generator.generate(profile, routingProfile, dnsProfile, configOptionsFromSettings());
     if (!generation.success) {
         emit errorOccurred(generation.errorMessage);
         return false;
+    }
+
+    for (const QString& warning : generation.warnings) {
+        emit logLine(QStringLiteral("Config warning: %1").arg(warning));
     }
 
     const QString configPath = AppPaths::singBoxTunConfigPath();
@@ -200,7 +223,7 @@ bool SingBoxTunRuntimeBackend::stop()
     emit stateChanged(m_state);
     m_coreManager->stop();
     emit logLine(
-        QStringLiteral("Route cleanup is delegated to sing-box process termination in 0.13."));
+        QStringLiteral("Route cleanup is delegated to sing-box process termination."));
     emit logLine(QStringLiteral("TUN mode stopped"));
     AppSettings::instance().markCleanShutdown();
     m_state = RuntimeState::Stopped;

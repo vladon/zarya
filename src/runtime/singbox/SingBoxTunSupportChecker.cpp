@@ -34,9 +34,9 @@ TunSupportResult SingBoxTunSupportChecker::check(const QString& singBoxExecutabl
     result.hasRequiredPrivileges = privileges.elevated;
     result.warnings.append(
         QStringLiteral("TUN mode is experimental; kill switch is not implemented."));
-    result.warnings.append(
-        QStringLiteral("TUN routing parity with Xray routing profiles is limited in this "
-                       "milestone."));
+    result.warnings.append(QStringLiteral(
+        "Some Xray routing/DNS features may not map exactly to sing-box; see warnings before "
+        "start."));
 
 #if defined(Q_OS_WIN)
     result.warnings.append(QStringLiteral("TUN may require administrator privileges."));

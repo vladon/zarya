@@ -64,11 +64,15 @@ set(ZARYA_DNS_SOURCES
 )
 
 set(ZARYA_RUNTIME_SOURCES
+    src/runtime/ConfigWarning.cpp
     src/runtime/IRuntimeBackend.cpp
     src/runtime/RuntimeBackendType.cpp
     src/runtime/RuntimeBackendFactory.cpp
     src/runtime/xray/XraySystemProxyRuntimeBackend.cpp
     src/runtime/singbox/SingBoxTunSupportChecker.cpp
+    src/runtime/singbox/SingBoxRouteGenerator.cpp
+    src/runtime/singbox/SingBoxDnsGenerator.cpp
+    src/runtime/singbox/SingBoxRuleSetManager.cpp
     src/runtime/singbox/SingBoxConfigGenerator.cpp
     src/runtime/singbox/SingBoxTunRuntimeBackend.cpp
 )
@@ -154,6 +158,7 @@ set(ZARYA_SOURCES
     src/ui/RoutingProfileDialog.cpp
     src/ui/RoutingRuleEditorDialog.cpp
     src/ui/RoutingJsonPreviewDialog.cpp
+    src/ui/SingBoxConfigPreviewDialog.cpp
     src/ui/GeoDataManagerDialog.cpp
     src/ui/DnsManagerDialog.cpp
     src/ui/DnsProfileDialog.cpp
@@ -271,6 +276,7 @@ add_executable(zarya_xray_config_test
     src/storage/ProfileStore.cpp
     src/storage/AppSettings.cpp
     src/storage/AppPaths.cpp
+    src/runtime/RuntimeBackendType.cpp
     src/platform/Platform.cpp
     src/import/VlessUriParser.cpp
     src/subscription/ShareLinkParser.cpp
@@ -284,6 +290,24 @@ target_compile_definitions(zarya_xray_config_test PRIVATE
 )
 
 zarya_link_qt_core(zarya_xray_config_test)
+
+add_executable(zarya_singbox_config_test
+    tests/singbox_config_test.cpp
+    src/runtime/ConfigWarning.cpp
+    src/runtime/singbox/SingBoxRouteGenerator.cpp
+    src/runtime/singbox/SingBoxDnsGenerator.cpp
+    src/runtime/singbox/SingBoxRuleSetManager.cpp
+    src/routing/RoutingGeoUtils.cpp
+    ${ZARYA_DOMAIN_SOURCES}
+    src/storage/AppPaths.cpp
+    src/storage/AppSettings.cpp
+    src/runtime/RuntimeBackendType.cpp
+    src/platform/Platform.cpp
+)
+
+target_include_directories(zarya_singbox_config_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+zarya_link_qt_core(zarya_singbox_config_test)
 
 if(WIN32)
     add_executable(zarya_system_proxy_test
@@ -306,7 +330,10 @@ add_executable(zarya_subscription_test
     src/testing/TestStatus.cpp
     src/storage/ProfileStore.cpp
     src/storage/SubscriptionStore.cpp
+    src/storage/AppSettings.cpp
     src/storage/AppPaths.cpp
+    src/runtime/RuntimeBackendType.cpp
+    src/platform/Platform.cpp
     src/import/VlessUriParser.cpp
 )
 
@@ -326,6 +353,7 @@ add_executable(zarya_testing_test
     src/storage/DnsStore.cpp
     src/storage/AppSettings.cpp
     src/storage/AppPaths.cpp
+    src/runtime/RuntimeBackendType.cpp
     src/platform/Platform.cpp
 )
 

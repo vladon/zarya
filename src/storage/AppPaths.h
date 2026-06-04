@@ -23,6 +23,7 @@ public:
     static QString xrayConfigPath();
     static QString singBoxConfigPath();
     static QString singBoxTunConfigPath();
+    static QString singBoxRuleSetDir();
     static QString singBoxCoreDir();
     static QString testRuntimeDir();
     static QString testConfigPath(const QString& profileId);

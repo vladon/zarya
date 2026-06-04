@@ -20,6 +20,8 @@
 #include "storage/AppSettings.h"
 #include "storage/GeoDataSettingsStore.h"
 #include "runtime/RuntimeBackendFactory.h"
+#include "runtime/ConfigWarning.h"
+#include "runtime/singbox/SingBoxConfigGenerator.h"
 #include "runtime/singbox/SingBoxTunRuntimeBackend.h"
 #include "runtime/xray/XraySystemProxyRuntimeBackend.h"
 #include "testing/TestManager.h"
@@ -377,24 +379,173 @@ bool AppController::startProfile(const Profile& profile, bool fromAutostart)
 
     const AppSettings& settings = AppSettings::instance();
     if (settings.effectiveRuntimeMode() == RuntimeMode::TunSingBoxExperimental) {
-        if (!settings.enableExperimentalTun()) {
-            emit logLine(QStringLiteral("Experimental TUN mode is not enabled in Settings."));
-            return false;
-        }
-        if (!m_runtimeFactory) {
-            return false;
-        }
-        RuntimeStartOptions options;
-        options.fromAutostart = fromAutostart;
-        const bool started =
-            m_runtimeFactory->singBoxTunBackend()->start(profile, options);
-        if (started) {
-            m_activeRuntimeMode = RuntimeMode::TunSingBoxExperimental;
-        }
-        return started;
+        return startProfileTunSingBox(profile, fromAutostart);
     }
 
     return startProfileSystemProxyXray(profile, fromAutostart);
+}
+
+SingBoxConfigGenerationResult AppController::generateSingBoxTunConfig(const Profile& profile) const
+{
+    const AppSettings& settings = AppSettings::instance();
+
+    RoutingProfile routingProfile = RoutingProfile::builtInProxyAll();
+    if (settings.tunUseActiveRoutingProfile() && m_routingManager) {
+        routingProfile = m_routingManager->activeProfile();
+    }
+
+    DnsProfile dnsProfile = DnsProfile::builtInSystemDns();
+    if (settings.tunUseActiveDnsProfile() && m_dnsManager) {
+        dnsProfile = m_dnsManager->activeProfile();
+    }
+
+    SingBoxConfigOptions options;
+    options.enableDnsHijack =
+        settings.tunEnableDnsHijack()
+        && settings.tunDnsHijackMode() != TunDnsHijackMode::Disabled;
+
+    const SingBoxConfigGenerator generator;
+    return generator.generate(profile, routingProfile, dnsProfile, options);
+}
+
+bool AppController::confirmSingBoxConfigWarningsIfNeeded(
+    const SingBoxConfigGenerationResult& result)
+{
+    if (hasBlockingWarnings(result.classifiedWarnings)) {
+        const QStringList blocking =
+            warningMessages(result.classifiedWarnings, ConfigWarningSeverity::Blocking);
+        emit logLine(QStringLiteral("sing-box config has blocking issues."));
+        if (m_dialogParent) {
+            QMessageBox::critical(
+                m_dialogParent, QStringLiteral("Cannot start TUN"),
+                QStringLiteral("Generated sing-box config has blocking issues:\n\n%1")
+                    .arg(blocking.join(QStringLiteral("\n"))));
+        }
+        return false;
+    }
+
+    const QStringList warnings =
+        warningMessages(result.classifiedWarnings, ConfigWarningSeverity::Warning);
+    if (warnings.isEmpty()) {
+        return true;
+    }
+
+    if (!m_dialogParent) {
+        return true;
+    }
+
+    QMessageBox box(m_dialogParent);
+    box.setIcon(QMessageBox::Warning);
+    box.setWindowTitle(QStringLiteral("sing-box config warnings"));
+    box.setText(QStringLiteral("Generated sing-box config has warnings:\n\n%1\n\nContinue?")
+                    .arg(warnings.join(QStringLiteral("\n"))));
+    auto* previewButton =
+        box.addButton(QStringLiteral("Preview Config"), QMessageBox::ActionRole);
+    box.addButton(QMessageBox::Cancel);
+    box.addButton(QMessageBox::Yes);
+    box.setDefaultButton(QMessageBox::Yes);
+
+    while (true) {
+        box.exec();
+        if (box.clickedButton() == previewButton) {
+            const QString json =
+                QString::fromUtf8(QJsonDocument(result.config).toJson(QJsonDocument::Indented));
+            QMessageBox preview(m_dialogParent);
+            preview.setWindowTitle(QStringLiteral("sing-box config preview"));
+            preview.setText(json);
+            preview.setStandardButtons(QMessageBox::Close);
+            preview.exec();
+            continue;
+        }
+        if (box.clickedButton() == box.button(QMessageBox::Cancel)) {
+            return false;
+        }
+        return true;
+    }
+}
+
+bool AppController::startProfileTunSingBox(const Profile& profile, bool fromAutostart)
+{
+    const AppSettings& settings = AppSettings::instance();
+    if (!settings.enableExperimentalTun()) {
+        emit logLine(QStringLiteral("Experimental TUN mode is not enabled in Settings."));
+        return false;
+    }
+    if (!m_runtimeFactory) {
+        return false;
+    }
+
+    QString unsupportedReason;
+    const SingBoxConfigGenerator generator;
+    if (!generator.supportsProfile(profile, &unsupportedReason)) {
+        emit logLine(QStringLiteral("Unsupported profile: %1").arg(unsupportedReason));
+        if (m_dialogParent) {
+            QMessageBox::warning(m_dialogParent, QStringLiteral("Unsupported profile"),
+                                 unsupportedReason);
+        }
+        return false;
+    }
+
+    RoutingProfile routingProfile = RoutingProfile::builtInProxyAll();
+    if (settings.tunUseActiveRoutingProfile() && m_routingManager) {
+        routingProfile = m_routingManager->activeProfile();
+        emit logLine(QStringLiteral("Active routing profile: %1").arg(routingProfile.name));
+        emit logLine(QStringLiteral("Generating TUN route: %1")
+                         .arg(routingModeDisplayString(routingProfile.mode)));
+
+        const QStringList routingWarnings = RoutingProfileValidator::warnings(routingProfile);
+        for (const QString& warning : routingWarnings) {
+            emit logLine(QStringLiteral("Routing validation warning: %1").arg(warning));
+        }
+        if (!confirmGeoDataIfNeeded(routingProfile)) {
+            return false;
+        }
+    }
+
+    DnsProfile dnsProfile = DnsProfile::builtInSystemDns();
+    if (settings.tunUseActiveDnsProfile() && m_dnsManager) {
+        dnsProfile = m_dnsManager->activeProfile();
+        emit logLine(QStringLiteral("Active DNS profile: %1").arg(dnsProfile.name));
+        if (!confirmDnsGeoDataIfNeeded(dnsProfile)) {
+            return false;
+        }
+        if (!confirmDnsWarningsIfNeeded(dnsProfile, routingProfile)) {
+            return false;
+        }
+    }
+
+    const SingBoxConfigGenerationResult generation = generateSingBoxTunConfig(profile);
+    if (!generation.success) {
+        emit logLine(QStringLiteral("Config generation failed: %1").arg(generation.errorMessage));
+        if (m_dialogParent) {
+            QMessageBox::warning(m_dialogParent, QStringLiteral("Config generation"),
+                                 generation.errorMessage);
+        }
+        return false;
+    }
+
+    for (const QString& warning : generation.warnings) {
+        emit logLine(QStringLiteral("sing-box config warning: %1").arg(warning));
+    }
+
+    if (!confirmSingBoxConfigWarningsIfNeeded(generation)) {
+        emit logLine(QStringLiteral("TUN start canceled due to config warnings."));
+        return false;
+    }
+
+    RuntimeStartOptions options;
+    options.fromAutostart = fromAutostart;
+    options.useActiveRoutingProfile = settings.tunUseActiveRoutingProfile();
+    options.useActiveDnsProfile = settings.tunUseActiveDnsProfile();
+    options.routingProfile = routingProfile;
+    options.dnsProfile = dnsProfile;
+    options.configWarningsAcknowledged = true;
+
+    const bool started = m_runtimeFactory->singBoxTunBackend()->start(profile, options);
+    if (started) {
+        m_activeRuntimeMode = RuntimeMode::TunSingBoxExperimental;
+    }
+    return started;
 }
 
 bool AppController::startProfileSystemProxyXray(const Profile& profile, bool fromAutostart)

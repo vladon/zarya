@@ -33,6 +33,26 @@ QString runtimeModeDisplayString(RuntimeMode mode)
     return QStringLiteral("Xray system proxy");
 }
 
+QString tunDnsHijackModeToString(TunDnsHijackMode mode)
+{
+    switch (mode) {
+    case TunDnsHijackMode::HijackToSingBoxDns:
+        return QStringLiteral("hijack-to-singbox-dns");
+    case TunDnsHijackMode::Disabled:
+        return QStringLiteral("disabled");
+    }
+    return QStringLiteral("hijack-to-singbox-dns");
+}
+
+TunDnsHijackMode tunDnsHijackModeFromString(const QString& value)
+{
+    const QString normalized = value.trimmed().toLower();
+    if (normalized == QStringLiteral("disabled")) {
+        return TunDnsHijackMode::Disabled;
+    }
+    return TunDnsHijackMode::HijackToSingBoxDns;
+}
+
 QString runtimeStateDisplayString(RuntimeState state)
 {
     switch (state) {

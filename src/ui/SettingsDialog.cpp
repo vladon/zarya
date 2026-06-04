@@ -277,11 +277,34 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     singBoxRow->addWidget(m_singBoxPathEdit);
     singBoxRow->addWidget(browseSingBoxButton);
 
+    m_tunUseActiveRoutingCheck =
+        new QCheckBox(QStringLiteral("Use active RoutingProfile for TUN"), this);
+    m_tunUseActiveRoutingCheck->setChecked(settings.tunUseActiveRoutingProfile());
+
+    m_tunUseActiveDnsCheck =
+        new QCheckBox(QStringLiteral("Use active DnsProfile for TUN"), this);
+    m_tunUseActiveDnsCheck->setChecked(settings.tunUseActiveDnsProfile());
+
+    m_tunEnableDnsHijackCheck =
+        new QCheckBox(QStringLiteral("Enable DNS hijack in TUN mode"), this);
+    m_tunEnableDnsHijackCheck->setChecked(settings.tunEnableDnsHijack());
+
+    m_tunDnsHijackModeCombo = new QComboBox(this);
+    m_tunDnsHijackModeCombo->addItem(QStringLiteral("Hijack to sing-box DNS"),
+                                     static_cast<int>(TunDnsHijackMode::HijackToSingBoxDns));
+    m_tunDnsHijackModeCombo->addItem(QStringLiteral("Disabled"),
+                                     static_cast<int>(TunDnsHijackMode::Disabled));
+    const int hijackIndex = m_tunDnsHijackModeCombo->findData(
+        static_cast<int>(settings.tunDnsHijackMode()));
+    if (hijackIndex >= 0) {
+        m_tunDnsHijackModeCombo->setCurrentIndex(hijackIndex);
+    }
+
     auto* tunWarnings = new QLabel(
         QStringLiteral(
             "TUN mode changes system routes and may require administrator/root permissions. "
-            "Kill switch is not implemented. TUN routing parity with Xray routing profiles is "
-            "limited."),
+            "Kill switch is not implemented. Some Xray routing/DNS features may not map exactly "
+            "to sing-box; sing-box check is the final authority."),
         this);
     tunWarnings->setWordWrap(true);
 
@@ -290,6 +313,10 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     experimentalForm->addRow(QString(), m_systemProxyRuntimeRadio);
     experimentalForm->addRow(QString(), m_tunRuntimeRadio);
     experimentalForm->addRow(QStringLiteral("sing-box executable"), singBoxRow);
+    experimentalForm->addRow(QString(), m_tunUseActiveRoutingCheck);
+    experimentalForm->addRow(QString(), m_tunUseActiveDnsCheck);
+    experimentalForm->addRow(QString(), m_tunEnableDnsHijackCheck);
+    experimentalForm->addRow(QStringLiteral("TUN DNS hijack mode"), m_tunDnsHijackModeCombo);
     experimentalForm->addRow(QString(), tunWarnings);
 
     auto* experimentalGroup = new QGroupBox(QStringLiteral("Experimental"), this);
@@ -300,7 +327,12 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
         m_systemProxyRuntimeRadio->setEnabled(enabled);
         m_tunRuntimeRadio->setEnabled(enabled);
         m_singBoxPathEdit->setEnabled(enabled);
+        m_tunUseActiveRoutingCheck->setEnabled(enabled);
+        m_tunUseActiveDnsCheck->setEnabled(enabled);
+        m_tunEnableDnsHijackCheck->setEnabled(enabled);
+        m_tunDnsHijackModeCombo->setEnabled(enabled && m_tunEnableDnsHijackCheck->isChecked());
     };
+    connect(m_tunEnableDnsHijackCheck, &QCheckBox::toggled, this, updateRuntimeControls);
     updateRuntimeControls();
     connect(m_enableExperimentalTunCheck, &QCheckBox::toggled, this, updateRuntimeControls);
 
@@ -504,6 +536,11 @@ bool SettingsDialog::validateAndSave()
     settings.setEnableExperimentalTun(wantExperimentalTun);
     settings.setRuntimeMode(selectedMode);
     settings.setSingBoxExecutablePath(m_singBoxPathEdit->text());
+    settings.setTunUseActiveRoutingProfile(m_tunUseActiveRoutingCheck->isChecked());
+    settings.setTunUseActiveDnsProfile(m_tunUseActiveDnsCheck->isChecked());
+    settings.setTunEnableDnsHijack(m_tunEnableDnsHijackCheck->isChecked());
+    settings.setTunDnsHijackMode(static_cast<TunDnsHijackMode>(
+        m_tunDnsHijackModeCombo->currentData().toInt()));
     return true;
 }
 

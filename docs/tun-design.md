@@ -54,11 +54,35 @@ Add optional transparent proxy (TUN) mode to Zarya without breaking the existing
 - Zarya **DNS profiles** (0.12) are **not** mapped into sing-box TUN configs yet.
 - No local DNS inbound on `127.0.0.1:53` in 0.13.
 
-## Routing behavior (PoC)
+## Routing behavior (0.14)
 
-- PoC route: `final: proxy`, `auto_detect_interface: true`, private DNS rule only.
-- Xray routing profiles (Bypass RU, custom rules) are **not** translated to sing-box route rules.
-- UI label: **TUN routing parity: limited**.
+- Active **RoutingProfile** is translated to sing-box `route` via `SingBoxRouteGenerator`.
+- Built-ins: Proxy All (`final: proxy`), Bypass LAN (`ip_is_private` + `geosite:private`), Bypass RU (`geosite`/`geoip`), Custom rules (domain/IP/port/protocol mapping).
+- Rule order: Block → Direct → Proxy → `final: proxy` (aligned with Xray generator ordering).
+- `geoip:private` maps to `ip_is_private: true` (does not depend on geo rule data).
+- Port ranges and some protocol rules may warn and be skipped; **sing-box check** is final authority.
+
+## DNS behavior (0.14)
+
+- Active **DnsProfile** is translated to sing-box `dns` via `SingBoxDnsGenerator`.
+- System DNS in TUN: `local` server + leak warning.
+- Secure Remote: DoH via `detour: proxy`.
+- China Direct / Global Remote: split DNS with geosite rules (warnings if rule-sets missing).
+- Optional **DNS hijack** route rule (`hijack-dns`) when enabled in Settings.
+
+## Geo data compatibility
+
+- Xray uses `geoip.dat` / `geosite.dat` next to the Xray executable (Geo Data Manager).
+- sing-box may require its own **rule-set** format (`.srs`) under `data/sing-box/rule-set/`.
+- 0.14 translates `geosite:` / `geoip:` matchers and warns when rule-sets are missing; no sing-box rule-set downloader yet.
+
+## Validation flow
+
+1. Generate sing-box TUN config from profile + active routing + active DNS.
+2. Show warnings (blocking issues prevent start).
+3. Write `runtime/sing-box-tun.json`.
+4. Run `sing-box check -c …` before `sing-box run`.
+5. On failure: show stderr/stdout; offer preview.
 
 ## Safe shutdown
 
@@ -93,7 +117,7 @@ Add optional transparent proxy (TUN) mode to Zarya without breaking the existing
 | Milestone | Scope |
 |-----------|--------|
 | **0.13** | Design doc, runtime backend abstraction, sing-box TUN PoC, experimental settings |
-| 0.14 | sing-box route parity (built-in bypass templates) |
-| 0.15 | DNS hijack / mapping from DNS profiles |
+| **0.14** | sing-box routing/DNS parity from RoutingProfile + DnsProfile, config preview, warnings |
+| 0.15 | sing-box rule-set manager / downloader |
 | 0.16 | Privilege helper or documented elevation workflow |
 | 0.17 | Kill switch (platform-specific) |

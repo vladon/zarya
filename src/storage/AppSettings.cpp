@@ -386,6 +386,47 @@ void AppSettings::setLastStartedProfileId(const QString& profileId)
     settings().setValue(QStringLiteral("startup/lastStartedProfileId"), profileId.trimmed());
 }
 
+bool AppSettings::tunUseActiveRoutingProfile() const
+{
+    return settings().value(QStringLiteral("runtime/tunUseActiveRoutingProfile"), true).toBool();
+}
+
+void AppSettings::setTunUseActiveRoutingProfile(bool enabled)
+{
+    settings().setValue(QStringLiteral("runtime/tunUseActiveRoutingProfile"), enabled);
+}
+
+bool AppSettings::tunUseActiveDnsProfile() const
+{
+    return settings().value(QStringLiteral("runtime/tunUseActiveDnsProfile"), true).toBool();
+}
+
+void AppSettings::setTunUseActiveDnsProfile(bool enabled)
+{
+    settings().setValue(QStringLiteral("runtime/tunUseActiveDnsProfile"), enabled);
+}
+
+bool AppSettings::tunEnableDnsHijack() const
+{
+    return settings().value(QStringLiteral("runtime/tunEnableDnsHijack"), true).toBool();
+}
+
+void AppSettings::setTunEnableDnsHijack(bool enabled)
+{
+    settings().setValue(QStringLiteral("runtime/tunEnableDnsHijack"), enabled);
+}
+
+TunDnsHijackMode AppSettings::tunDnsHijackMode() const
+{
+    return tunDnsHijackModeFromString(
+        settings().value(QStringLiteral("runtime/tunDnsHijackMode")).toString());
+}
+
+void AppSettings::setTunDnsHijackMode(TunDnsHijackMode mode)
+{
+    settings().setValue(QStringLiteral("runtime/tunDnsHijackMode"), tunDnsHijackModeToString(mode));
+}
+
 bool AppSettings::startAtLogin() const
 {
     return settings().value(QStringLiteral("startup/startAtLogin"), false).toBool();

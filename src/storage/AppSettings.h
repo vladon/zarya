@@ -107,6 +107,18 @@ public:
     QString lastStartedProfileId() const;
     void setLastStartedProfileId(const QString& profileId);
 
+    bool tunUseActiveRoutingProfile() const;
+    void setTunUseActiveRoutingProfile(bool enabled);
+
+    bool tunUseActiveDnsProfile() const;
+    void setTunUseActiveDnsProfile(bool enabled);
+
+    bool tunEnableDnsHijack() const;
+    void setTunEnableDnsHijack(bool enabled);
+
+    TunDnsHijackMode tunDnsHijackMode() const;
+    void setTunDnsHijackMode(TunDnsHijackMode mode);
+
     bool startAtLogin() const;
     void setStartAtLogin(bool enabled);
 
