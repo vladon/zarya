@@ -23,6 +23,8 @@ public:
     static QString xrayConfigPath();
     static QString singBoxConfigPath();
     static QString singBoxTunConfigPath();
+    static QString helperTokenPath();
+    static QString resolvedHelperPath();
     static QString singBoxRuleSetDir();
     static QString singBoxCoreDir();
     static QString testRuntimeDir();

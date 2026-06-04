@@ -22,6 +22,7 @@
 #include "runtime/RuntimeBackendFactory.h"
 #include "runtime/ConfigWarning.h"
 #include "runtime/singbox/SingBoxConfigGenerator.h"
+#include "helperclient/HelperProcessManager.h"
 #include "runtime/singbox/SingBoxTunRuntimeBackend.h"
 #include "runtime/xray/XraySystemProxyRuntimeBackend.h"
 #include "testing/TestManager.h"
@@ -125,6 +126,14 @@ void AppController::setupRuntimeBackends()
 RuntimeMode AppController::activeRuntimeMode() const
 {
     return m_activeRuntimeMode;
+}
+
+HelperProcessManager* AppController::helperProcessManager() const
+{
+    if (!m_runtimeFactory) {
+        return nullptr;
+    }
+    return m_runtimeFactory->singBoxTunBackend()->helperManager();
 }
 
 void AppController::setAfterCoreStartedCallback(std::function<void()> callback)
@@ -317,7 +326,13 @@ bool AppController::confirmGeoDataIfNeeded(const RoutingProfile& routingProfile)
 
 bool AppController::isCoreRunning() const
 {
-    return m_coreManager && m_coreManager->isRunning();
+    if (m_coreManager && m_coreManager->isRunning()) {
+        return true;
+    }
+    if (m_runtimeFactory && m_runtimeFactory->singBoxTunBackend()->isRunning()) {
+        return true;
+    }
+    return false;
 }
 
 bool AppController::confirmSystemProxyChangeIfNeeded() const

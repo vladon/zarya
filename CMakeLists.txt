@@ -63,6 +63,18 @@ set(ZARYA_DNS_SOURCES
     src/dns/DnsValidator.cpp
 )
 
+set(ZARYA_IPC_SOURCES
+    src/ipc/IpcMessage.cpp
+    src/ipc/IpcTransport.cpp
+    src/ipc/IpcServer.cpp
+    src/ipc/IpcClient.cpp
+)
+
+set(ZARYA_HELPERCLIENT_SOURCES
+    src/helperclient/HelperProcessManager.cpp
+    src/storage/HelperSession.cpp
+)
+
 set(ZARYA_RUNTIME_SOURCES
     src/runtime/ConfigWarning.cpp
     src/runtime/IRuntimeBackend.cpp
@@ -177,6 +189,8 @@ set(ZARYA_SOURCES
     ${ZARYA_ROUTING_SOURCES}
     ${ZARYA_DNS_SOURCES}
     ${ZARYA_RUNTIME_SOURCES}
+    ${ZARYA_IPC_SOURCES}
+    ${ZARYA_HELPERCLIENT_SOURCES}
     ${ZARYA_GEODATA_SOURCES}
     src/import/VlessUriParser.cpp
     ${ZARYA_PLATFORM_SOURCES}
@@ -262,6 +276,29 @@ if(ZARYA_STATIC_QT AND WIN32)
 endif()
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ZaryaDeploy.cmake)
+
+set(ZARYA_HELPER_SOURCES
+    src/helper/main.cpp
+    src/helper/HelperApplication.cpp
+    src/helper/HelperCommandServer.cpp
+    src/helper/HelperRuntimeManager.cpp
+    src/helper/HelperAuth.cpp
+    src/helper/HelperPathPolicy.cpp
+    ${ZARYA_IPC_SOURCES}
+    src/runtime/singbox/SingBoxTunSupportChecker.cpp
+    src/platform/PlatformPrivilege.cpp
+    src/platform/Platform.cpp
+    src/storage/AppPaths.cpp
+    src/storage/AppSettings.cpp
+    src/runtime/RuntimeBackendType.cpp
+    src/packaging/PackagingInfo.cpp
+)
+
+add_executable(zarya-helper ${ZARYA_HELPER_SOURCES})
+target_include_directories(zarya-helper PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_definitions(zarya-helper PRIVATE ZARYA_VERSION_STRING="${ZARYA_VERSION_STRING}")
+zarya_link_qt_core(zarya-helper)
+target_link_libraries(zarya-helper PRIVATE Qt6::Network)
 
 # Config generation checks (unit-like; uses shared or static Qt Core)
 add_executable(zarya_xray_config_test

@@ -53,6 +53,26 @@ TunDnsHijackMode tunDnsHijackModeFromString(const QString& value)
     return TunDnsHijackMode::HijackToSingBoxDns;
 }
 
+QString tunPrivilegeModeToString(TunPrivilegeMode mode)
+{
+    switch (mode) {
+    case TunPrivilegeMode::HelperExperimental:
+        return QStringLiteral("helper-experimental");
+    case TunPrivilegeMode::DirectFromGui:
+        return QStringLiteral("direct-gui");
+    }
+    return QStringLiteral("direct-gui");
+}
+
+TunPrivilegeMode tunPrivilegeModeFromString(const QString& value)
+{
+    const QString normalized = value.trimmed().toLower();
+    if (normalized == QStringLiteral("helper-experimental")) {
+        return TunPrivilegeMode::HelperExperimental;
+    }
+    return TunPrivilegeMode::DirectFromGui;
+}
+
 QString runtimeStateDisplayString(RuntimeState state)
 {
     switch (state) {

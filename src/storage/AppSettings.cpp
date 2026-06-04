@@ -427,6 +427,17 @@ void AppSettings::setTunDnsHijackMode(TunDnsHijackMode mode)
     settings().setValue(QStringLiteral("runtime/tunDnsHijackMode"), tunDnsHijackModeToString(mode));
 }
 
+TunPrivilegeMode AppSettings::tunPrivilegeMode() const
+{
+    return tunPrivilegeModeFromString(
+        settings().value(QStringLiteral("runtime/tunPrivilegeMode")).toString());
+}
+
+void AppSettings::setTunPrivilegeMode(TunPrivilegeMode mode)
+{
+    settings().setValue(QStringLiteral("runtime/tunPrivilegeMode"), tunPrivilegeModeToString(mode));
+}
+
 bool AppSettings::startAtLogin() const
 {
     return settings().value(QStringLiteral("startup/startAtLogin"), false).toBool();

@@ -1,5 +1,6 @@
 #include "ui/SettingsDialog.h"
 
+#include "helperclient/HelperProcessManager.h"
 #include "platform/AutostartManagerFactory.h"
 #include "platform/IAutostartManager.h"
 #include "platform/ISystemProxyManager.h"
@@ -29,16 +30,19 @@
 #include <QPushButton>
 #include <QRadioButton>
 #include <QSpinBox>
+#include <QJsonObject>
+#include <QMessageBox>
 #include <QUrl>
 #include <QVBoxLayout>
 
 namespace zarya {
 
 SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsManager,
-                             QWidget* parent)
+                             HelperProcessManager* helperManager, QWidget* parent)
     : QDialog(parent)
     , m_routingManager(routingManager)
     , m_dnsManager(dnsManager)
+    , m_helperManager(helperManager)
 {
     setWindowTitle(QStringLiteral("Settings"));
 
@@ -300,11 +304,41 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
         m_tunDnsHijackModeCombo->setCurrentIndex(hijackIndex);
     }
 
+    m_tunDirectGuiRadio =
+        new QRadioButton(QStringLiteral("Run sing-box directly from GUI"), this);
+    m_tunHelperRadio =
+        new QRadioButton(QStringLiteral("Use zarya-helper experimental"), this);
+    if (settings.tunPrivilegeMode() == TunPrivilegeMode::HelperExperimental) {
+        m_tunHelperRadio->setChecked(true);
+    } else {
+        m_tunDirectGuiRadio->setChecked(true);
+    }
+
+    m_helperStatusLabel = new QLabel(m_helperManager ? m_helperManager->statusText()
+                                                     : QStringLiteral("Helper unavailable"),
+                                     this);
+    m_startHelperButton = new QPushButton(QStringLiteral("Start Helper"), this);
+    m_connectHelperButton = new QPushButton(QStringLiteral("Connect"), this);
+    m_checkHelperStatusButton = new QPushButton(QStringLiteral("Check Status"), this);
+    connect(m_startHelperButton, &QPushButton::clicked, this, &SettingsDialog::onStartHelper);
+    connect(m_connectHelperButton, &QPushButton::clicked, this, &SettingsDialog::onConnectHelper);
+    connect(m_checkHelperStatusButton, &QPushButton::clicked, this,
+            &SettingsDialog::onCheckHelperStatus);
+    if (m_helperManager) {
+        connect(m_helperManager, &HelperProcessManager::connectionStateChanged, this,
+                [this]() { m_helperStatusLabel->setText(m_helperManager->statusText()); });
+    }
+
+    auto* helperButtonsRow = new QHBoxLayout;
+    helperButtonsRow->addWidget(m_startHelperButton);
+    helperButtonsRow->addWidget(m_connectHelperButton);
+    helperButtonsRow->addWidget(m_checkHelperStatusButton);
+
     auto* tunWarnings = new QLabel(
         QStringLiteral(
             "TUN mode changes system routes and may require administrator/root permissions. "
-            "Kill switch is not implemented. Some Xray routing/DNS features may not map exactly "
-            "to sing-box; sing-box check is the final authority."),
+            "Kill switch is not implemented. zarya-helper is experimental and is not installed "
+            "as a privileged service in this milestone."),
         this);
     tunWarnings->setWordWrap(true);
 
@@ -317,6 +351,10 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     experimentalForm->addRow(QString(), m_tunUseActiveDnsCheck);
     experimentalForm->addRow(QString(), m_tunEnableDnsHijackCheck);
     experimentalForm->addRow(QStringLiteral("TUN DNS hijack mode"), m_tunDnsHijackModeCombo);
+    experimentalForm->addRow(QStringLiteral("TUN privilege mode"), m_tunDirectGuiRadio);
+    experimentalForm->addRow(QString(), m_tunHelperRadio);
+    experimentalForm->addRow(QStringLiteral("Helper status"), m_helperStatusLabel);
+    experimentalForm->addRow(QString(), helperButtonsRow);
     experimentalForm->addRow(QString(), tunWarnings);
 
     auto* experimentalGroup = new QGroupBox(QStringLiteral("Experimental"), this);
@@ -331,6 +369,12 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
         m_tunUseActiveDnsCheck->setEnabled(enabled);
         m_tunEnableDnsHijackCheck->setEnabled(enabled);
         m_tunDnsHijackModeCombo->setEnabled(enabled && m_tunEnableDnsHijackCheck->isChecked());
+        m_tunDirectGuiRadio->setEnabled(enabled);
+        m_tunHelperRadio->setEnabled(enabled);
+        const bool helperUi = enabled && m_helperManager != nullptr;
+        m_startHelperButton->setEnabled(helperUi);
+        m_connectHelperButton->setEnabled(helperUi);
+        m_checkHelperStatusButton->setEnabled(helperUi);
     };
     connect(m_tunEnableDnsHijackCheck, &QCheckBox::toggled, this, updateRuntimeControls);
     updateRuntimeControls();
@@ -541,7 +585,52 @@ bool SettingsDialog::validateAndSave()
     settings.setTunEnableDnsHijack(m_tunEnableDnsHijackCheck->isChecked());
     settings.setTunDnsHijackMode(static_cast<TunDnsHijackMode>(
         m_tunDnsHijackModeCombo->currentData().toInt()));
+    settings.setTunPrivilegeMode(m_tunHelperRadio->isChecked()
+                                     ? TunPrivilegeMode::HelperExperimental
+                                     : TunPrivilegeMode::DirectFromGui);
     return true;
+}
+
+void SettingsDialog::onStartHelper()
+{
+    if (!m_helperManager) {
+        return;
+    }
+    QString error;
+    if (!m_helperManager->startHelperDevMode(&error)) {
+        QMessageBox::warning(this, QStringLiteral("Helper"), error);
+    }
+    m_helperStatusLabel->setText(m_helperManager->statusText());
+}
+
+void SettingsDialog::onConnectHelper()
+{
+    if (!m_helperManager) {
+        return;
+    }
+    QString error;
+    if (!m_helperManager->connectToHelper(&error)) {
+        QMessageBox::warning(this, QStringLiteral("Helper"), error);
+    }
+    m_helperStatusLabel->setText(m_helperManager->statusText());
+}
+
+void SettingsDialog::onCheckHelperStatus()
+{
+    if (!m_helperManager) {
+        return;
+    }
+    QJsonObject payload;
+    QString error;
+    if (!m_helperManager->status(&payload, &error)) {
+        QMessageBox::warning(this, QStringLiteral("Helper"), error);
+        return;
+    }
+    m_helperStatusLabel->setText(
+        QStringLiteral("running=%1, pid=%2")
+            .arg(payload.value(QStringLiteral("running")).toBool() ? QStringLiteral("yes")
+                                                                   : QStringLiteral("no"))
+            .arg(payload.value(QStringLiteral("pid")).toInt()));
 }
 
 } // namespace zarya

@@ -118,6 +118,7 @@ Add optional transparent proxy (TUN) mode to Zarya without breaking the existing
 |-----------|--------|
 | **0.13** | Design doc, runtime backend abstraction, sing-box TUN PoC, experimental settings |
 | **0.14** | sing-box routing/DNS parity from RoutingProfile + DnsProfile, config preview, warnings |
-| 0.15 | sing-box rule-set manager / downloader |
+| **0.15** | Privileged `zarya-helper` PoC (local IPC, token auth, TUN start/stop); not a production service |
+| 0.16 | sing-box rule-set manager / downloader |
 | 0.16 | Privilege helper or documented elevation workflow |
 | 0.17 | Kill switch (platform-specific) |

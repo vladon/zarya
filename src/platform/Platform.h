@@ -8,6 +8,7 @@ class Platform {
 public:
     static QString defaultXrayExecutablePath();
     static QString defaultSingBoxExecutablePath();
+    static QString defaultHelperExecutablePath();
 };
 
 } // namespace zarya
