@@ -121,6 +121,25 @@ QString AppPaths::singBoxTunConfigPath()
     return QDir(runtimeDir()).filePath(QStringLiteral("sing-box-tun.json"));
 }
 
+QString AppPaths::helperTokenPath()
+{
+    return QDir(runtimeDir()).filePath(QStringLiteral("helper.token"));
+}
+
+QString AppPaths::resolvedHelperPath()
+{
+#ifdef Q_OS_WIN
+    const QString name = QStringLiteral("zarya-helper.exe");
+#else
+    const QString name = QStringLiteral("zarya-helper");
+#endif
+    const QString bundled = QDir(applicationDir()).filePath(name);
+    if (QFile::exists(bundled)) {
+        return bundled;
+    }
+    return bundled;
+}
+
 QString AppPaths::singBoxRuleSetDir()
 {
     const QString path = QDir(dataDir()).filePath(QStringLiteral("sing-box/rule-set"));

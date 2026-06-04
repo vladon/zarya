@@ -14,6 +14,11 @@ enum class TunDnsHijackMode {
     Disabled,
 };
 
+enum class TunPrivilegeMode {
+    DirectFromGui,
+    HelperExperimental,
+};
+
 enum class RuntimeBackendType {
     XraySystemProxy,
     SingBoxTunExperimental,
@@ -34,5 +39,8 @@ QString runtimeStateDisplayString(RuntimeState state);
 
 QString tunDnsHijackModeToString(TunDnsHijackMode mode);
 TunDnsHijackMode tunDnsHijackModeFromString(const QString& value);
+
+QString tunPrivilegeModeToString(TunPrivilegeMode mode);
+TunPrivilegeMode tunPrivilegeModeFromString(const QString& value);
 
 } // namespace zarya

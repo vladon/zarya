@@ -119,6 +119,9 @@ public:
     TunDnsHijackMode tunDnsHijackMode() const;
     void setTunDnsHijackMode(TunDnsHijackMode mode);
 
+    TunPrivilegeMode tunPrivilegeMode() const;
+    void setTunPrivilegeMode(TunPrivilegeMode mode);
+
     bool startAtLogin() const;
     void setStartAtLogin(bool enabled);
 

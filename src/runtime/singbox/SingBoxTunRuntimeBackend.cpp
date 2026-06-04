@@ -1,6 +1,7 @@
 #include "runtime/singbox/SingBoxTunRuntimeBackend.h"
 
 #include "core/CoreManager.h"
+#include "helperclient/HelperProcessManager.h"
 #include "runtime/ConfigWarning.h"
 #include "runtime/singbox/SingBoxConfigGenerator.h"
 #include "runtime/singbox/SingBoxTunSupportChecker.h"
@@ -29,29 +30,44 @@ SingBoxConfigOptions configOptionsFromSettings()
 
 } // namespace
 
-void SingBoxTunRuntimeBackend::setDialogParent(QWidget* parent)
-{
-    m_dialogParent = parent;
-}
-
 SingBoxTunRuntimeBackend::SingBoxTunRuntimeBackend(CoreManager* coreManager, QObject* parent)
     : IRuntimeBackend(parent)
     , m_coreManager(coreManager)
+    , m_helperManager(std::make_unique<HelperProcessManager>(this))
 {
+    connect(m_helperManager.get(), &HelperProcessManager::helperLogLine, this,
+            &IRuntimeBackend::logLine);
+
     if (m_coreManager) {
         connect(m_coreManager, &CoreManager::started, this, [this](const QString& name) {
             Q_UNUSED(name);
-            m_state = RuntimeState::Running;
-            emit stateChanged(m_state);
+            if (!m_runningViaHelper) {
+                m_state = RuntimeState::Running;
+                emit stateChanged(m_state);
+            }
         });
         connect(m_coreManager, &CoreManager::stopped, this, [this]() {
-            m_state = RuntimeState::Stopped;
-            emit stateChanged(m_state);
+            if (!m_runningViaHelper) {
+                m_state = RuntimeState::Stopped;
+                emit stateChanged(m_state);
+            }
         });
         connect(m_coreManager, &CoreManager::logLine, this, &IRuntimeBackend::logLine);
         connect(m_coreManager, &CoreManager::errorOccurred, this,
                 &IRuntimeBackend::errorOccurred);
     }
+}
+
+SingBoxTunRuntimeBackend::~SingBoxTunRuntimeBackend() = default;
+
+void SingBoxTunRuntimeBackend::setDialogParent(QWidget* parent)
+{
+    m_dialogParent = parent;
+}
+
+HelperProcessManager* SingBoxTunRuntimeBackend::helperManager()
+{
+    return m_helperManager.get();
 }
 
 QString SingBoxTunRuntimeBackend::displayName() const
@@ -86,9 +102,243 @@ bool SingBoxTunRuntimeBackend::validateProfile(const Profile& profile, QString* 
     return generator.supportsProfile(profile, reason);
 }
 
+bool SingBoxTunRuntimeBackend::writeTunConfig(const Profile& profile,
+                                             const RuntimeStartOptions& options,
+                                             QString* configPath, QString* errorMessage)
+{
+    emit logLine(QStringLiteral("TUN routing profile: %1").arg(options.routingProfile.name));
+    emit logLine(QStringLiteral("TUN DNS profile: %1").arg(options.dnsProfile.name));
+    emit logLine(QStringLiteral("Generating sing-box TUN config"));
+
+    const SingBoxConfigGenerator generator;
+    const SingBoxConfigGenerationResult generation = generator.generate(
+        profile, options.routingProfile, options.dnsProfile, configOptionsFromSettings());
+    if (!generation.success) {
+        if (errorMessage) {
+            *errorMessage = generation.errorMessage;
+        }
+        return false;
+    }
+
+    for (const QString& warning : generation.warnings) {
+        emit logLine(QStringLiteral("Config warning: %1").arg(warning));
+    }
+
+    const QString path = AppPaths::singBoxTunConfigPath();
+    QFile configFile(path);
+    if (!configFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        if (errorMessage) {
+            *errorMessage = configFile.errorString();
+        }
+        return false;
+    }
+    configFile.write(QJsonDocument(generation.config).toJson(QJsonDocument::Indented));
+    if (configPath) {
+        *configPath = path;
+    }
+    return true;
+}
+
+bool SingBoxTunRuntimeBackend::start(const Profile& profile, const RuntimeStartOptions& options)
+{
+    if (isRunning()) {
+        emit errorOccurred(QStringLiteral("TUN runtime is already active."));
+        return false;
+    }
+
+    emit logLine(QStringLiteral("Runtime mode: sing-box TUN experimental"));
+    emit logLine(QStringLiteral("TUN mode is experimental; kill switch not implemented"));
+
+    QString supportReason;
+    if (!isSupported(&supportReason)) {
+        emit errorOccurred(supportReason);
+        return false;
+    }
+
+    const TunSupportResult support =
+        SingBoxTunSupportChecker::check(AppSettings::instance().resolvedSingBoxPath());
+    emit logLine(QStringLiteral("Checking TUN support"));
+    emit logLine(QStringLiteral("Platform: %1").arg(support.platform));
+    for (const QString& warning : support.warnings) {
+        emit logLine(QStringLiteral("TUN warning: %1").arg(warning));
+    }
+
+    if (!confirmPrivilegeWarnings(options)) {
+        emit logLine(QStringLiteral("TUN start canceled by user."));
+        return false;
+    }
+
+    QString profileReason;
+    if (!validateProfile(profile, &profileReason)) {
+        emit errorOccurred(profileReason);
+        return false;
+    }
+
+    QString configPath;
+    QString configError;
+    if (!writeTunConfig(profile, options, &configPath, &configError)) {
+        emit errorOccurred(configError);
+        return false;
+    }
+
+    m_state = RuntimeState::Starting;
+    emit stateChanged(m_state);
+
+    const bool useHelper =
+        AppSettings::instance().tunPrivilegeMode() == TunPrivilegeMode::HelperExperimental;
+    const bool started = useHelper ? startViaHelper(profile, configPath) : startDirect(profile, configPath);
+    if (started) {
+        AppSettings::instance().markTunSessionStarted();
+        AppSettings::instance().setLastStartedProfileId(profile.id);
+        m_state = RuntimeState::Running;
+        emit stateChanged(m_state);
+        emit logLine(useHelper ? QStringLiteral("TUN mode started via helper")
+                               : QStringLiteral("TUN mode started"));
+    } else {
+        m_state = RuntimeState::Error;
+        emit stateChanged(m_state);
+    }
+    return started;
+}
+
+bool SingBoxTunRuntimeBackend::startDirect(const Profile& profile, const QString& configPath)
+{
+    Q_UNUSED(profile);
+    if (!m_coreManager) {
+        emit errorOccurred(QStringLiteral("Core manager is not available."));
+        return false;
+    }
+    if (m_coreManager->isRunning()) {
+        emit errorOccurred(QStringLiteral("A core process is already running."));
+        return false;
+    }
+
+    const QString executablePath = AppSettings::instance().resolvedSingBoxPath();
+    emit logLine(QStringLiteral("sing-box executable: %1").arg(executablePath));
+    emit logLine(QStringLiteral("Validating sing-box config"));
+    const CoreValidationResult validation =
+        m_coreManager->validateSingBoxConfig(executablePath, configPath);
+    if (!validation.output.isEmpty()) {
+        emit logLine(validation.output);
+    }
+    if (!validation.success) {
+        emit errorOccurred(validation.errorMessage);
+        return false;
+    }
+    emit logLine(QStringLiteral("sing-box config validation OK"));
+    emit logLine(QStringLiteral("Starting sing-box TUN"));
+    m_runningViaHelper = false;
+    m_coreManager->startCore(executablePath, configPath, QStringLiteral("sing-box"));
+    return true;
+}
+
+bool SingBoxTunRuntimeBackend::startViaHelper(const Profile& profile, const QString& configPath)
+{
+    Q_UNUSED(profile);
+    emit logLine(QStringLiteral("Connecting to zarya-helper"));
+    QString error;
+    if (m_helperManager->connectionState() != HelperConnectionState::Connected) {
+        if (!m_helperManager->startHelperDevMode(&error)) {
+            emit errorOccurred(error);
+            return false;
+        }
+    }
+
+    const QString singBoxPath = AppSettings::instance().resolvedSingBoxPath();
+    emit logLine(QStringLiteral("Sending validateConfig"));
+    if (!m_helperManager->validateConfig(singBoxPath, configPath, &error)) {
+        emit errorOccurred(error);
+        return false;
+    }
+
+    emit logLine(QStringLiteral("Sending startTun"));
+    if (!m_helperManager->startTun(singBoxPath, configPath, &error)) {
+        emit errorOccurred(error);
+        return false;
+    }
+
+    m_runningViaHelper = true;
+    return true;
+}
+
+bool SingBoxTunRuntimeBackend::stop()
+{
+    if (m_runningViaHelper) {
+        return stopViaHelper();
+    }
+    return stopDirect();
+}
+
+bool SingBoxTunRuntimeBackend::stopDirect()
+{
+    if (!m_coreManager || !m_coreManager->isRunning()) {
+        m_state = RuntimeState::Stopped;
+        emit stateChanged(m_state);
+        return true;
+    }
+
+    emit logLine(QStringLiteral("Stopping sing-box TUN"));
+    m_state = RuntimeState::Stopping;
+    emit stateChanged(m_state);
+    m_coreManager->stop();
+    emit logLine(QStringLiteral("TUN mode stopped"));
+    AppSettings::instance().markCleanShutdown();
+    m_state = RuntimeState::Stopped;
+    m_runningViaHelper = false;
+    emit stateChanged(m_state);
+    return true;
+}
+
+bool SingBoxTunRuntimeBackend::stopViaHelper()
+{
+    emit logLine(QStringLiteral("Stopping TUN via helper"));
+    QString error;
+    if (m_helperManager->connectionState() == HelperConnectionState::Connected) {
+        emit logLine(QStringLiteral("Sending stopTun"));
+        if (!m_helperManager->stopTun(&error)) {
+            if (m_dialogParent) {
+                QMessageBox::warning(
+                    m_dialogParent, QStringLiteral("Helper stop"),
+                    QStringLiteral(
+                        "Zarya could not contact helper to stop TUN.\n\n%1\n\nNetworking "
+                        "may remain affected.")
+                        .arg(error));
+            }
+            emit errorOccurred(error);
+            return false;
+        }
+    } else if (m_dialogParent) {
+        QMessageBox::warning(
+            m_dialogParent, QStringLiteral("Helper unavailable"),
+            QStringLiteral(
+                "Zarya could not contact helper to stop TUN. Networking may remain affected."));
+        return false;
+    }
+
+    m_runningViaHelper = false;
+    AppSettings::instance().markCleanShutdown();
+    m_state = RuntimeState::Stopped;
+    emit stateChanged(m_state);
+    emit logLine(QStringLiteral("TUN mode stopped"));
+    return true;
+}
+
+bool SingBoxTunRuntimeBackend::isRunning() const
+{
+    if (m_runningViaHelper) {
+        return m_state == RuntimeState::Running;
+    }
+    return m_coreManager && m_coreManager->isRunning();
+}
+
 bool SingBoxTunRuntimeBackend::confirmPrivilegeWarnings(const RuntimeStartOptions& options)
 {
     if (options.allowMissingPrivileges) {
+        return true;
+    }
+
+    if (AppSettings::instance().tunPrivilegeMode() == TunPrivilegeMode::HelperExperimental) {
+        emit logLine(QStringLiteral("TUN privilege mode: zarya-helper experimental"));
         return true;
     }
 
@@ -111,129 +361,6 @@ bool SingBoxTunRuntimeBackend::confirmPrivilegeWarnings(const RuntimeStartOption
     box.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
     box.setDefaultButton(QMessageBox::No);
     return box.exec() == QMessageBox::Yes;
-}
-
-bool SingBoxTunRuntimeBackend::start(const Profile& profile, const RuntimeStartOptions& options)
-{
-    if (!m_coreManager) {
-        emit errorOccurred(QStringLiteral("Core manager is not available."));
-        return false;
-    }
-    if (m_coreManager->isRunning()) {
-        emit errorOccurred(QStringLiteral("A core process is already running."));
-        return false;
-    }
-
-    emit logLine(QStringLiteral("Runtime mode: sing-box TUN experimental"));
-    emit logLine(QStringLiteral("TUN mode is experimental; kill switch not implemented"));
-
-    QString supportReason;
-    if (!isSupported(&supportReason)) {
-        emit errorOccurred(supportReason);
-        return false;
-    }
-
-    const TunSupportResult support =
-        SingBoxTunSupportChecker::check(AppSettings::instance().resolvedSingBoxPath());
-    emit logLine(QStringLiteral("Checking TUN support"));
-    emit logLine(QStringLiteral("Platform: %1").arg(support.platform));
-    emit logLine(QStringLiteral("Privilege check: %1")
-                     .arg(support.hasRequiredPrivileges
-                              ? QStringLiteral("elevated/privileged")
-                              : QStringLiteral("not elevated")));
-    for (const QString& warning : support.warnings) {
-        emit logLine(QStringLiteral("TUN warning: %1").arg(warning));
-    }
-
-    if (!confirmPrivilegeWarnings(options)) {
-        emit logLine(QStringLiteral("TUN start canceled by user."));
-        return false;
-    }
-
-    QString profileReason;
-    if (!validateProfile(profile, &profileReason)) {
-        emit errorOccurred(profileReason);
-        return false;
-    }
-
-    const QString executablePath = AppSettings::instance().resolvedSingBoxPath();
-    emit logLine(QStringLiteral("sing-box executable: %1").arg(executablePath));
-
-    RoutingProfile routingProfile = options.routingProfile;
-    DnsProfile dnsProfile = options.dnsProfile;
-    emit logLine(QStringLiteral("TUN routing profile: %1").arg(routingProfile.name));
-    emit logLine(QStringLiteral("TUN DNS profile: %1").arg(dnsProfile.name));
-
-    emit logLine(QStringLiteral("Generating sing-box TUN config"));
-    const SingBoxConfigGenerator generator;
-    const SingBoxConfigGenerationResult generation =
-        generator.generate(profile, routingProfile, dnsProfile, configOptionsFromSettings());
-    if (!generation.success) {
-        emit errorOccurred(generation.errorMessage);
-        return false;
-    }
-
-    for (const QString& warning : generation.warnings) {
-        emit logLine(QStringLiteral("Config warning: %1").arg(warning));
-    }
-
-    const QString configPath = AppPaths::singBoxTunConfigPath();
-    QFile configFile(configPath);
-    if (!configFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        emit errorOccurred(configFile.errorString());
-        return false;
-    }
-    configFile.write(QJsonDocument(generation.config).toJson(QJsonDocument::Indented));
-
-    emit logLine(QStringLiteral("Validating sing-box config"));
-    const CoreValidationResult validation =
-        m_coreManager->validateSingBoxConfig(executablePath, configPath);
-    if (!validation.output.isEmpty()) {
-        emit logLine(validation.output);
-    }
-    if (!validation.success) {
-        emit errorOccurred(validation.errorMessage);
-        m_state = RuntimeState::Error;
-        emit stateChanged(m_state);
-        return false;
-    }
-    emit logLine(QStringLiteral("sing-box config validation OK"));
-
-    m_state = RuntimeState::Starting;
-    emit stateChanged(m_state);
-    emit logLine(QStringLiteral("Starting sing-box TUN"));
-    m_coreManager->startCore(executablePath, configPath, QStringLiteral("sing-box"));
-
-    AppSettings::instance().markTunSessionStarted();
-    AppSettings::instance().setLastStartedProfileId(profile.id);
-    emit logLine(QStringLiteral("TUN mode started"));
-    return true;
-}
-
-bool SingBoxTunRuntimeBackend::stop()
-{
-    if (!m_coreManager || !m_coreManager->isRunning()) {
-        m_state = RuntimeState::Stopped;
-        emit stateChanged(m_state);
-        return true;
-    }
-
-    emit logLine(QStringLiteral("Stopping sing-box TUN"));
-    m_state = RuntimeState::Stopping;
-    emit stateChanged(m_state);
-    m_coreManager->stop();
-    emit logLine(
-        QStringLiteral("Route cleanup is delegated to sing-box process termination."));
-    emit logLine(QStringLiteral("TUN mode stopped"));
-    AppSettings::instance().markCleanShutdown();
-    m_state = RuntimeState::Stopped;
-    emit stateChanged(m_state);
-    return true;
-}
-
-bool SingBoxTunRuntimeBackend::isRunning() const
-{
-    return m_coreManager && m_coreManager->isRunning();
 }
 
 } // namespace zarya

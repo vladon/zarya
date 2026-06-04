@@ -17,6 +17,7 @@ class QSpinBox;
 namespace zarya {
 
 class DnsManager;
+class HelperProcessManager;
 class ISystemProxyManager;
 class RoutingManager;
 
@@ -25,11 +26,15 @@ class SettingsDialog : public QDialog {
 
 public:
     explicit SettingsDialog(RoutingManager& routingManager, DnsManager& dnsManager,
+                            HelperProcessManager* helperManager = nullptr,
                             QWidget* parent = nullptr);
 
 private slots:
     void onBrowseXray();
     void onBrowseSingBox();
+    void onStartHelper();
+    void onConnectHelper();
+    void onCheckHelperStatus();
     bool confirmTunWarningIfNeeded();
     void onManageRoutingProfiles();
     void onManageDnsProfiles();
@@ -75,6 +80,12 @@ private:
     QCheckBox* m_tunUseActiveDnsCheck = nullptr;
     QCheckBox* m_tunEnableDnsHijackCheck = nullptr;
     QComboBox* m_tunDnsHijackModeCombo = nullptr;
+    QRadioButton* m_tunDirectGuiRadio = nullptr;
+    QRadioButton* m_tunHelperRadio = nullptr;
+    QLabel* m_helperStatusLabel = nullptr;
+    QPushButton* m_startHelperButton = nullptr;
+    QPushButton* m_connectHelperButton = nullptr;
+    QPushButton* m_checkHelperStatusButton = nullptr;
 
     QCheckBox* m_startAtLoginCheck = nullptr;
     QCheckBox* m_startMinimizedToTrayCheck = nullptr;
@@ -85,6 +96,7 @@ private:
 
     RoutingManager& m_routingManager;
     DnsManager& m_dnsManager;
+    HelperProcessManager* m_helperManager = nullptr;
     std::unique_ptr<IAutostartManager> m_autostartManager;
 };
 

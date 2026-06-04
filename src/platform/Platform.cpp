@@ -40,4 +40,9 @@ QString Platform::defaultSingBoxExecutablePath()
                               QStringLiteral("sing-box"));
 }
 
+QString Platform::defaultHelperExecutablePath()
+{
+    return AppPaths::resolvedHelperPath();
+}
+
 } // namespace zarya

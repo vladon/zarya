@@ -6,12 +6,12 @@ param(
 
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
-$Version = "0.13.0"
+$Version = "0.15.0"
 $Staging = Join-Path $Root "dist\Zarya-$Version-windows-x64-portable"
 $BuildOutput = Join-Path $Root "$BuildDir\$Config"
 
 Write-Host "Building zarya ($Config)..."
-cmake --build (Join-Path $Root $BuildDir) --config $Config --target zarya
+cmake --build (Join-Path $Root $BuildDir) --config $Config --target zarya zarya-helper
 
 $ExeName = "zarya.exe"
 $ExePath = Join-Path $BuildOutput $ExeName
@@ -25,6 +25,10 @@ if (Test-Path $Staging) {
 New-Item -ItemType Directory -Path $Staging | Out-Null
 
 Copy-Item $ExePath (Join-Path $Staging "Zarya.exe")
+$HelperExePath = Join-Path $BuildOutput "zarya-helper.exe"
+if (Test-Path $HelperExePath) {
+    Copy-Item $HelperExePath (Join-Path $Staging "zarya-helper.exe")
+}
 New-Item -ItemType File -Path (Join-Path $Staging "portable.flag") | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $Staging "data") | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $Staging "runtime") | Out-Null

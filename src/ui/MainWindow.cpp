@@ -1024,7 +1024,8 @@ void MainWindow::onLoadProfiles()
 
 void MainWindow::onSettings()
 {
-    SettingsDialog dialog(m_routingManager, m_dnsManager, this);
+    SettingsDialog dialog(m_routingManager, m_dnsManager, m_appController.helperProcessManager(),
+                        this);
     dialog.exec();
     appendLog(QStringLiteral("Settings updated. Xray path: %1")
                   .arg(AppSettings::instance().resolvedXrayPath()));

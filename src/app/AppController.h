@@ -18,6 +18,7 @@ namespace zarya {
 class CoreManager;
 class DnsManager;
 class GeoDataManager;
+class HelperProcessManager;
 class RoutingManager;
 class SystemProxyController;
 class TestManager;
@@ -44,6 +45,7 @@ public:
     bool stopCurrentProfile();
     bool isCoreRunning() const;
     RuntimeMode activeRuntimeMode() const;
+    HelperProcessManager* helperProcessManager() const;
 
     bool enableSystemProxyManual();
     bool restoreSystemProxyManual();

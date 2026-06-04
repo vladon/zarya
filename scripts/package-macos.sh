@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-VERSION="0.13.0"
+VERSION="0.15.0"
 BUILD_DIR="${BUILD_DIR:-$ROOT/build}"
 cmake -S "$ROOT" -B "$BUILD_DIR"
-cmake --build "$BUILD_DIR" --config Release --target zarya
+cmake --build "$BUILD_DIR" --config Release --target zarya zarya-helper
 APP_PATH="$BUILD_DIR/zarya.app"
 if [[ ! -d "$APP_PATH" ]]; then
   APP_PATH="$BUILD_DIR/Release/zarya.app"
