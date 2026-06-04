@@ -121,6 +121,13 @@ QString AppPaths::singBoxTunConfigPath()
     return QDir(runtimeDir()).filePath(QStringLiteral("sing-box-tun.json"));
 }
 
+QString AppPaths::singBoxRuleSetDir()
+{
+    const QString path = QDir(dataDir()).filePath(QStringLiteral("sing-box/rule-set"));
+    ensureDir(path);
+    return path;
+}
+
 QString AppPaths::singBoxCoreDir()
 {
     return QDir(coresDir()).filePath(QStringLiteral("sing-box"));

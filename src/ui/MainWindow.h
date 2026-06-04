@@ -73,6 +73,7 @@ private slots:
     void onRoutingProfiles();
     void onGeoDataManager();
     void onDnsProfiles();
+    void onPreviewSingBoxTunConfig();
     void onSubscriptions();
     void onUpdateSelectedSubscription();
     void onUpdateAllSubscriptions();
@@ -184,6 +185,7 @@ private:
     QAction* m_routingProfilesAction = nullptr;
     QAction* m_geoDataManagerAction = nullptr;
     QAction* m_dnsProfilesAction = nullptr;
+    QAction* m_previewSingBoxTunConfigAction = nullptr;
     QAction* m_subscriptionsAction = nullptr;
     QAction* m_updateSubscriptionAction = nullptr;
     QAction* m_updateAllSubscriptionsAction = nullptr;

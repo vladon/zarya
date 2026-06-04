@@ -5,6 +5,7 @@
 #include "domain/RoutingProfile.h"
 #include "runtime/RuntimeBackendType.h"
 #include "runtime/RuntimeBackendFactory.h"
+#include "runtime/singbox/SingBoxConfigGenerator.h"
 
 #include <QObject>
 #include <functional>
@@ -38,6 +39,7 @@ public:
     void setOpenDnsProfilesCallback(std::function<void()> callback);
 
     bool startProfile(const Profile& profile, bool fromAutostart = false);
+    SingBoxConfigGenerationResult generateSingBoxTunConfig(const Profile& profile) const;
     bool lastStartWasAutostart() const;
     bool stopCurrentProfile();
     bool isCoreRunning() const;
@@ -70,6 +72,8 @@ private:
     QString configPathFor(CoreType type) const;
     bool attemptProxyRestoreOnShutdown(QString* error);
     bool startProfileSystemProxyXray(const Profile& profile, bool fromAutostart);
+    bool startProfileTunSingBox(const Profile& profile, bool fromAutostart);
+    bool confirmSingBoxConfigWarningsIfNeeded(const SingBoxConfigGenerationResult& result);
     void setupRuntimeBackends();
 
     std::unique_ptr<RuntimeBackendFactory> m_runtimeFactory;

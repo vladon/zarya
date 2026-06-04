@@ -19,8 +19,10 @@
 #include "runtime/RuntimeBackendType.h"
 #include "storage/GeoDataSettingsStore.h"
 #include "ui/SubscriptionManagerDialog.h"
+#include "ui/SingBoxConfigPreviewDialog.h"
 
 #include <QApplication>
+#include <QJsonDocument>
 #include <QCloseEvent>
 #include <QComboBox>
 #include <QEvent>
@@ -157,6 +159,8 @@ void MainWindow::setupMenuBar()
         toolsMenu->addAction(QStringLiteral("Routing &Profiles…"));
     m_geoDataManagerAction = toolsMenu->addAction(QStringLiteral("Geo Data &Manager…"));
     m_dnsProfilesAction = toolsMenu->addAction(QStringLiteral("DNS &Profiles…"));
+    m_previewSingBoxTunConfigAction =
+        toolsMenu->addAction(QStringLiteral("Preview sing-box TUN config…"));
     toolsMenu->addSeparator();
     m_enableSystemProxyAction =
         toolsMenu->addAction(QStringLiteral("Enable &System Proxy"));
@@ -211,6 +215,8 @@ void MainWindow::setupConnections()
     connect(m_routingProfilesAction, &QAction::triggered, this, &MainWindow::onRoutingProfiles);
     connect(m_geoDataManagerAction, &QAction::triggered, this, &MainWindow::onGeoDataManager);
     connect(m_dnsProfilesAction, &QAction::triggered, this, &MainWindow::onDnsProfiles);
+    connect(m_previewSingBoxTunConfigAction, &QAction::triggered, this,
+            &MainWindow::onPreviewSingBoxTunConfig);
     connect(m_subscriptionsAction, &QAction::triggered, this, &MainWindow::onSubscriptions);
     connect(m_updateSubscriptionAction, &QAction::triggered, this,
             &MainWindow::onUpdateSelectedSubscription);
@@ -1044,6 +1050,28 @@ void MainWindow::onDnsProfiles()
     QString error;
     m_dnsManager.save(&error);
     updateStatusBar();
+}
+
+void MainWindow::onPreviewSingBoxTunConfig()
+{
+    Profile* profile = selectedProfileInStorage();
+    if (!profile) {
+        QMessageBox::information(this, QStringLiteral("Preview sing-box config"),
+                                 QStringLiteral("Select a profile first."));
+        return;
+    }
+
+    const SingBoxConfigGenerationResult generation = m_appController.generateSingBoxTunConfig(*profile);
+    if (!generation.success) {
+        QMessageBox::warning(this, QStringLiteral("Preview sing-box config"),
+                             generation.errorMessage);
+        return;
+    }
+
+    const QString json =
+        QString::fromUtf8(QJsonDocument(generation.config).toJson(QJsonDocument::Indented));
+    SingBoxConfigPreviewDialog dialog(json, generation.warnings, &m_coreManager, this);
+    dialog.exec();
 }
 
 void MainWindow::checkGeoDataOnStartup()

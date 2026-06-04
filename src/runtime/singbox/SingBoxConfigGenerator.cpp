@@ -1,35 +1,48 @@
 #include "runtime/singbox/SingBoxConfigGenerator.h"
 
+#include "runtime/singbox/SingBoxDnsGenerator.h"
+#include "runtime/singbox/SingBoxRouteGenerator.h"
+
 #include <QJsonArray>
 
 namespace zarya {
 
 namespace {
 
-QJsonObject buildBaseTunConfig(const QJsonObject& proxyOutbound)
+void mergeWarnings(SingBoxConfigGenerationResult& result, const QStringList& warnings)
 {
-    QJsonObject config;
-    config.insert(QStringLiteral("log"), QJsonObject{{QStringLiteral("level"), QStringLiteral("info")}});
+    for (const QString& warning : warnings) {
+        if (!result.warnings.contains(warning)) {
+            result.warnings.append(warning);
+        }
+    }
+}
 
-    QJsonObject remoteDns;
-    remoteDns.insert(QStringLiteral("tag"), QStringLiteral("remote"));
-    remoteDns.insert(QStringLiteral("address"), QStringLiteral("https://cloudflare-dns.com/dns-query"));
-    remoteDns.insert(QStringLiteral("detour"), QStringLiteral("proxy"));
+} // namespace
 
-    QJsonObject localDns;
-    localDns.insert(QStringLiteral("tag"), QStringLiteral("local"));
-    localDns.insert(QStringLiteral("address"), QStringLiteral("local"));
+QList<ConfigWarning> SingBoxConfigGenerator::classifyWarnings(const QStringList& warnings) const
+{
+    QList<ConfigWarning> classified;
+    for (const QString& warning : warnings) {
+        const QString lower = warning.toLower();
+        if (lower.contains(QStringLiteral("not supported by experimental tun"))
+            || lower.contains(QStringLiteral("cannot be represented"))) {
+            classified.append(ConfigWarning::blocking(warning));
+        } else if (lower.contains(QStringLiteral("dns leak"))
+                   || lower.contains(QStringLiteral("rule-set"))
+                   || lower.contains(QStringLiteral("dns hijack"))
+                   || lower.contains(QStringLiteral("not supported in tun"))
+                   || lower.contains(QStringLiteral("may not be supported"))) {
+            classified.append(ConfigWarning::warning(warning));
+        } else {
+            classified.append(ConfigWarning::info(warning));
+        }
+    }
+    return classified;
+}
 
-    QJsonObject privateDnsRule;
-    privateDnsRule.insert(QStringLiteral("geosite"), QStringLiteral("private"));
-    privateDnsRule.insert(QStringLiteral("server"), QStringLiteral("local"));
-
-    QJsonObject dns;
-    dns.insert(QStringLiteral("servers"), QJsonArray{remoteDns, localDns});
-    dns.insert(QStringLiteral("rules"), QJsonArray{privateDnsRule});
-    dns.insert(QStringLiteral("final"), QStringLiteral("remote"));
-    config.insert(QStringLiteral("dns"), dns);
-
+QJsonObject SingBoxConfigGenerator::buildTunInbound() const
+{
     QJsonObject tunInbound;
     tunInbound.insert(QStringLiteral("type"), QStringLiteral("tun"));
     tunInbound.insert(QStringLiteral("tag"), QStringLiteral("tun-in"));
@@ -39,7 +52,71 @@ QJsonObject buildBaseTunConfig(const QJsonObject& proxyOutbound)
     tunInbound.insert(QStringLiteral("auto_route"), true);
     tunInbound.insert(QStringLiteral("strict_route"), true);
     tunInbound.insert(QStringLiteral("sniff"), true);
-    config.insert(QStringLiteral("inbounds"), QJsonArray{tunInbound});
+    return tunInbound;
+}
+
+QJsonObject SingBoxConfigGenerator::appendDnsHijackRoute(QJsonObject route,
+                                                       QStringList* warnings) const
+{
+    QJsonArray rules = route.value(QStringLiteral("rules")).toArray();
+    QJsonObject hijackRule;
+    hijackRule.insert(QStringLiteral("protocol"), QStringLiteral("dns"));
+    hijackRule.insert(QStringLiteral("action"), QStringLiteral("hijack-dns"));
+    rules.prepend(hijackRule);
+    route.insert(QStringLiteral("rules"), rules);
+    if (warnings) {
+        warnings->append(QStringLiteral(
+            "DNS hijack is experimental and depends on your sing-box version."));
+    }
+    return route;
+}
+
+SingBoxConfigGenerationResult SingBoxConfigGenerator::generate(
+    const Profile& profile, const RoutingProfile& routingProfile, const DnsProfile& dnsProfile,
+    const SingBoxConfigOptions& options) const
+{
+    SingBoxConfigGenerationResult result;
+    QStringList warnings;
+
+    QString reason;
+    if (!supportsProfile(profile, &reason)) {
+        result.errorMessage = reason;
+        result.classifiedWarnings.append(ConfigWarning::blocking(reason));
+        return result;
+    }
+
+    QString outboundError;
+    const QJsonObject proxyOutbound = buildProxyOutbound(profile, &outboundError);
+    if (proxyOutbound.isEmpty()) {
+        result.errorMessage = outboundError.isEmpty()
+                                  ? QStringLiteral("Failed to build sing-box outbound.")
+                                  : outboundError;
+        result.classifiedWarnings.append(ConfigWarning::blocking(result.errorMessage));
+        return result;
+    }
+
+    SingBoxRouteGenerationOptions routeOptions;
+    routeOptions.tunMode = options.tunMode;
+    routeOptions.enableAutoDetectInterface = options.enableAutoDetectInterface;
+    routeOptions.enableRuleSets = options.enableRuleSets;
+    routeOptions.finalOutbound = options.finalOutbound;
+
+    const SingBoxRouteGenerator routeGenerator;
+    QJsonObject route = routeGenerator.generateRoute(routingProfile, routeOptions, &warnings);
+
+    if (options.enableDnsHijack) {
+        route = appendDnsHijackRoute(route, &warnings);
+    }
+
+    SingBoxDnsGenerationOptions dnsOptions;
+    dnsOptions.tunMode = options.tunMode;
+    dnsOptions.enableDnsHijack = options.enableDnsHijack;
+
+    const SingBoxDnsGenerator dnsGenerator;
+    const QJsonObject dns = dnsGenerator.generateDns(dnsProfile, dnsOptions, &warnings);
+    if (dns.isEmpty() && dnsProfile.mode != DnsProfileMode::System) {
+        warnings.append(QStringLiteral("DNS section is empty; sing-box check is the final authority."));
+    }
 
     QJsonObject directOutbound;
     directOutbound.insert(QStringLiteral("type"), QStringLiteral("direct"));
@@ -49,18 +126,28 @@ QJsonObject buildBaseTunConfig(const QJsonObject& proxyOutbound)
     blockOutbound.insert(QStringLiteral("type"), QStringLiteral("block"));
     blockOutbound.insert(QStringLiteral("tag"), QStringLiteral("block"));
 
+    QJsonObject config;
+    config.insert(QStringLiteral("log"), QJsonObject{{QStringLiteral("level"), QStringLiteral("info")}});
+    if (!dns.isEmpty()) {
+        config.insert(QStringLiteral("dns"), dns);
+    }
+    config.insert(QStringLiteral("inbounds"), QJsonArray{buildTunInbound()});
     config.insert(QStringLiteral("outbounds"),
                   QJsonArray{proxyOutbound, directOutbound, blockOutbound});
-
-    QJsonObject route;
-    route.insert(QStringLiteral("auto_detect_interface"), true);
-    route.insert(QStringLiteral("final"), QStringLiteral("proxy"));
     config.insert(QStringLiteral("route"), route);
 
-    return config;
+    result.success = true;
+    result.config = config;
+    mergeWarnings(result, warnings);
+    result.classifiedWarnings = classifyWarnings(result.warnings);
+    return result;
 }
 
-} // namespace
+SingBoxConfigGenerationResult SingBoxConfigGenerator::generate(const Profile& profile) const
+{
+    return generate(profile, RoutingProfile::builtInProxyAll(), DnsProfile::builtInSystemDns(),
+                  SingBoxConfigOptions{});
+}
 
 bool SingBoxConfigGenerator::supportsProfile(const Profile& profile, QString* reason) const
 {
@@ -68,13 +155,13 @@ bool SingBoxConfigGenerator::supportsProfile(const Profile& profile, QString* re
     case ProtocolType::Vless:
         if (!profile.isSecurityReality()) {
             if (reason) {
-                *reason = QStringLiteral("TUN PoC supports VLESS with REALITY only.");
+                *reason = QStringLiteral("TUN mode supports VLESS with REALITY only.");
             }
             return false;
         }
         if (profile.network.trimmed().compare(QStringLiteral("tcp"), Qt::CaseInsensitive) != 0) {
             if (reason) {
-                *reason = QStringLiteral("TUN PoC supports VLESS REALITY over TCP only.");
+                *reason = QStringLiteral("TUN mode supports VLESS REALITY over TCP only.");
             }
             return false;
         }
@@ -89,7 +176,7 @@ bool SingBoxConfigGenerator::supportsProfile(const Profile& profile, QString* re
     case ProtocolType::Trojan:
         if (!profile.isSecurityTls()) {
             if (reason) {
-                *reason = QStringLiteral("TUN PoC supports Trojan with TLS only.");
+                *reason = QStringLiteral("TUN mode supports Trojan with TLS only.");
             }
             return false;
         }
@@ -111,7 +198,7 @@ bool SingBoxConfigGenerator::supportsProfile(const Profile& profile, QString* re
     case ProtocolType::Vmess:
         if (profile.isSecurityReality()) {
             if (reason) {
-                *reason = QStringLiteral("TUN PoC does not support VMess REALITY.");
+                *reason = QStringLiteral("TUN mode does not support VMess REALITY.");
             }
             return false;
         }
@@ -124,33 +211,11 @@ bool SingBoxConfigGenerator::supportsProfile(const Profile& profile, QString* re
         return true;
     default:
         if (reason) {
-            *reason = QStringLiteral("Protocol is not supported by experimental TUN mode.");
+            *reason =
+                QStringLiteral("Selected profile cannot be represented as sing-box outbound.");
         }
         return false;
     }
-}
-
-SingBoxConfigGenerationResult SingBoxConfigGenerator::generate(const Profile& profile) const
-{
-    SingBoxConfigGenerationResult result;
-    QString reason;
-    if (!supportsProfile(profile, &reason)) {
-        result.errorMessage = reason;
-        return result;
-    }
-
-    QString outboundError;
-    const QJsonObject proxyOutbound = buildProxyOutbound(profile, &outboundError);
-    if (proxyOutbound.isEmpty()) {
-        result.errorMessage = outboundError.isEmpty()
-                                  ? QStringLiteral("Failed to build sing-box outbound.")
-                                  : outboundError;
-        return result;
-    }
-
-    result.success = true;
-    result.config = buildBaseTunConfig(proxyOutbound);
-    return result;
 }
 
 QJsonObject SingBoxConfigGenerator::buildProxyOutbound(const Profile& profile,
@@ -204,7 +269,7 @@ QJsonObject SingBoxConfigGenerator::buildVlessOutbound(const Profile& profile,
 }
 
 QJsonObject SingBoxConfigGenerator::buildVmessOutbound(const Profile& profile,
-                                                         QString* errorMessage) const
+                                                       QString* errorMessage) const
 {
     QJsonObject outbound;
     outbound.insert(QStringLiteral("type"), QStringLiteral("vmess"));
@@ -249,7 +314,7 @@ QJsonObject SingBoxConfigGenerator::buildTrojanOutbound(const Profile& profile,
 }
 
 QJsonObject SingBoxConfigGenerator::buildShadowsocksOutbound(const Profile& profile,
-                                                               QString* errorMessage) const
+                                                             QString* errorMessage) const
 {
     QJsonObject outbound;
     outbound.insert(QStringLiteral("type"), QStringLiteral("shadowsocks"));

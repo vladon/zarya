@@ -1,6 +1,6 @@
 # Zarya
 
-Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). Cross-platform Qt 6 desktop proxy client (milestones 0.1–0.13): profiles, subscriptions, Xray, routing, geo data updates, system proxy, tray, autostart, and packaging.
+Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). Cross-platform Qt 6 desktop proxy client (milestones 0.1–0.14): profiles, subscriptions, Xray, routing, geo data updates, DNS profiles, system proxy, experimental TUN, tray, autostart, and packaging.
 
 ## Requirements
 
@@ -262,14 +262,15 @@ Options in the dialog:
 
 Releases do not bundle third-party `.dat` files; use **Update All** after first install.
 
-## Experimental TUN mode (0.13 spike)
+## Experimental TUN mode (0.14)
 
 Zarya’s default mode remains **system proxy via Xray**. An opt-in **experimental TUN mode** uses **sing-box** as the TUN backend (see `docs/tun-design.md`).
 
-- **Settings → Experimental** — enable TUN, choose runtime mode, set sing-box path (`cores/sing-box/` by default).
-- TUN mode does **not** enable OS system proxy.
-- Kill switch is **not** implemented in 0.13.
-- Routing/DNS profile parity in TUN mode is **limited** (PoC config only).
+- **Settings → Experimental** — enable TUN, runtime mode, sing-box path, use active Routing/DNS profiles, DNS hijack options.
+- **Tools → Preview sing-box TUN config…** — generated JSON, warnings, Copy/Save, `sing-box check`.
+- TUN config uses the same **RoutingProfile** and **DnsProfile** as Xray mode where possible; some Xray features may not map exactly (warnings + `sing-box check`).
+- TUN mode does **not** enable OS system proxy. Kill switch is **not** implemented.
+- Xray `geoip.dat`/`geosite.dat` ≠ sing-box rule-sets; geo rules may require separate `.srs` files (see docs).
 - May require administrator/root privileges; crash recovery is best-effort.
 
 ## DNS profiles

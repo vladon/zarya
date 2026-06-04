@@ -71,6 +71,10 @@ private:
     QRadioButton* m_systemProxyRuntimeRadio = nullptr;
     QRadioButton* m_tunRuntimeRadio = nullptr;
     QLineEdit* m_singBoxPathEdit = nullptr;
+    QCheckBox* m_tunUseActiveRoutingCheck = nullptr;
+    QCheckBox* m_tunUseActiveDnsCheck = nullptr;
+    QCheckBox* m_tunEnableDnsHijackCheck = nullptr;
+    QComboBox* m_tunDnsHijackModeCombo = nullptr;
 
     QCheckBox* m_startAtLoginCheck = nullptr;
     QCheckBox* m_startMinimizedToTrayCheck = nullptr;
