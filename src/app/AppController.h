@@ -3,9 +3,12 @@
 #include "domain/DnsProfile.h"
 #include "domain/Profile.h"
 #include "domain/RoutingProfile.h"
+#include "runtime/RuntimeBackendType.h"
+#include "runtime/RuntimeBackendFactory.h"
 
 #include <QObject>
 #include <functional>
+#include <memory>
 
 class QWidget;
 
@@ -38,6 +41,7 @@ public:
     bool lastStartWasAutostart() const;
     bool stopCurrentProfile();
     bool isCoreRunning() const;
+    RuntimeMode activeRuntimeMode() const;
 
     bool enableSystemProxyManual();
     bool restoreSystemProxyManual();
@@ -65,7 +69,11 @@ private:
     bool writeConfigFile(const QString& path, const QJsonObject& config, QString* error) const;
     QString configPathFor(CoreType type) const;
     bool attemptProxyRestoreOnShutdown(QString* error);
+    bool startProfileSystemProxyXray(const Profile& profile, bool fromAutostart);
+    void setupRuntimeBackends();
 
+    std::unique_ptr<RuntimeBackendFactory> m_runtimeFactory;
+    RuntimeMode m_activeRuntimeMode = RuntimeMode::SystemProxyXray;
     CoreManager* m_coreManager = nullptr;
     SystemProxyController* m_systemProxy = nullptr;
     XrayAdapter* m_xrayAdapter = nullptr;

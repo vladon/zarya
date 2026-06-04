@@ -139,6 +139,8 @@ private:
     QString systemProxyStatusText() const;
     QString routingStatusText() const;
     QString dnsStatusText() const;
+    QString runtimeStatusText() const;
+    void checkUncleanTunShutdownWarning();
     QString trayStatusText() const;
     void notifyTray(const QString& title, const QString& message);
 

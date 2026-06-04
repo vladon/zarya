@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-VERSION="0.12.0"
+VERSION="0.13.0"
 BUILD_DIR="${BUILD_DIR:-$ROOT/build}"
 cmake -S "$ROOT" -B "$BUILD_DIR"
 cmake --build "$BUILD_DIR" --target zarya

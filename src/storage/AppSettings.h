@@ -1,5 +1,7 @@
 #pragma once
 
+#include "runtime/RuntimeBackendType.h"
+
 #include <QString>
 
 class QSettings;
@@ -22,6 +24,25 @@ public:
     void setHttpPort(int port);
 
     QString resolvedXrayPath() const;
+
+    QString singBoxExecutablePath() const;
+    void setSingBoxExecutablePath(const QString& path);
+    QString resolvedSingBoxPath() const;
+
+    bool enableExperimentalTun() const;
+    void setEnableExperimentalTun(bool enabled);
+
+    RuntimeMode runtimeMode() const;
+    void setRuntimeMode(RuntimeMode mode);
+    RuntimeMode effectiveRuntimeMode() const;
+
+    bool tunWarningAccepted() const;
+    void setTunWarningAccepted(bool accepted);
+
+    void markTunSessionStarted();
+    void markCleanShutdown();
+    bool shouldWarnUncleanTunShutdown() const;
+    RuntimeMode lastRuntimeMode() const;
 
     bool autoEnableSystemProxyOnStart() const;
     void setAutoEnableSystemProxyOnStart(bool enabled);

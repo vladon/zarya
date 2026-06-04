@@ -85,6 +85,35 @@ CoreValidationResult CoreManager::validateConfig(const QString& coreExecutablePa
     return result;
 }
 
+CoreValidationResult CoreManager::validateSingBoxConfig(const QString& coreExecutablePath,
+                                                        const QString& configPath) const
+{
+    CoreValidationResult result;
+    const QStringList checkArguments = {QStringLiteral("check"), QStringLiteral("-c"), configPath};
+    const QStringList testArguments = {QStringLiteral("run"), QStringLiteral("-test"),
+                                       QStringLiteral("-c"), configPath};
+    const QList<QStringList> argumentSets = {checkArguments, testArguments};
+
+    for (const QStringList& arguments : argumentSets) {
+        int exitCode = -1;
+        result.output = runProcess(coreExecutablePath, arguments, 30000, &exitCode);
+        result.exitCode = exitCode;
+        result.success = exitCode == 0;
+        if (result.success) {
+            return result;
+        }
+    }
+
+    if (!result.success) {
+        result.errorMessage =
+            result.exitCode < 0
+                ? result.output
+                : QStringLiteral("sing-box config validation failed (exit %1).")
+                      .arg(result.exitCode);
+    }
+    return result;
+}
+
 void CoreManager::startCore(const QString& coreExecutablePath, const QString& configPath,
                             const QString& coreDisplayName)
 {

@@ -16,6 +16,7 @@
 #include "ui/RoutingManagerDialog.h"
 #include "ui/SettingsDialog.h"
 #include "geodata/GeoDataFileStatus.h"
+#include "runtime/RuntimeBackendType.h"
 #include "storage/GeoDataSettingsStore.h"
 #include "ui/SubscriptionManagerDialog.h"
 
@@ -68,6 +69,7 @@ MainWindow::MainWindow(QWidget* parent)
     appendLog(QStringLiteral("Active routing profile: %1")
                   .arg(m_routingManager.activeProfile().name));
     checkGeoDataOnStartup();
+    checkUncleanTunShutdownWarning();
     appendLog(QStringLiteral("Subscriptions: %1").arg(m_subscriptionStore.filePath()));
     appendLog(QStringLiteral("Xray path: %1").arg(AppSettings::instance().resolvedXrayPath()));
     if (!m_systemProxy.isSupported()) {
@@ -279,6 +281,29 @@ QString MainWindow::dnsStatusText() const
     return m_dnsManager.activeProfile().name;
 }
 
+QString MainWindow::runtimeStatusText() const
+{
+    if (m_coreManager.isRunning()) {
+        return runtimeModeDisplayString(m_appController.activeRuntimeMode());
+    }
+    return runtimeModeDisplayString(AppSettings::instance().effectiveRuntimeMode());
+}
+
+void MainWindow::checkUncleanTunShutdownWarning()
+{
+    if (!AppSettings::instance().shouldWarnUncleanTunShutdown()) {
+        return;
+    }
+    appendLog(QStringLiteral(
+        "Previous session may have exited while experimental TUN mode was active."));
+    QMessageBox::warning(
+        this, QStringLiteral("TUN recovery"),
+        QStringLiteral(
+            "Zarya may have exited unexpectedly while TUN mode was active.\n\n"
+            "If networking is broken, stop remaining sing-box processes or reboot.\n\n"
+            "Automatic route recovery is not implemented yet."));
+}
+
 void MainWindow::setupAppController()
 {
     m_appController.setDialogParent(this);
@@ -458,10 +483,13 @@ void MainWindow::updateStatusBar()
 {
     if (m_testManager.isBusy()) {
         statusBar()->showMessage(
-            QStringLiteral("Testing: %1/%2 | Core: %3 | System proxy: %4 | Routing: %5 | DNS: %6")
+            QStringLiteral(
+                "Testing: %1/%2 | Core: %3 | Runtime: %4 | System proxy: %5 | Routing: %6 | DNS: "
+                "%7")
                 .arg(m_testProgressDone)
                 .arg(m_testProgressTotal)
                 .arg(coreStatusText())
+                .arg(runtimeStatusText())
                 .arg(systemProxyStatusText())
                 .arg(routingStatusText())
                 .arg(dnsStatusText()));
@@ -470,9 +498,10 @@ void MainWindow::updateStatusBar()
 
     const AppSettings& settings = AppSettings::instance();
     QString message =
-        QStringLiteral("Idle | Core: %1 | System proxy: %2 | Routing: %3 | DNS: %4 | Tray: %5")
-            .arg(coreStatusText(), systemProxyStatusText(), routingStatusText(), dnsStatusText(),
-                 trayStatusText());
+        QStringLiteral(
+            "Idle | Core: %1 | Runtime: %2 | System proxy: %3 | Routing: %4 | DNS: %5 | Tray: %6")
+            .arg(coreStatusText(), runtimeStatusText(), systemProxyStatusText(),
+                 routingStatusText(), dnsStatusText(), trayStatusText());
 
     if (m_coreManager.isRunning()) {
         message += QStringLiteral(" | SOCKS 127.0.0.1:%1 | HTTP 127.0.0.1:%2")
@@ -599,6 +628,9 @@ Profile* MainWindow::profileById(const QString& profileId)
 
 void MainWindow::tryAutoEnableSystemProxy(bool fromAutostart)
 {
+    if (AppSettings::instance().effectiveRuntimeMode() == RuntimeMode::TunSingBoxExperimental) {
+        return;
+    }
     const AppSettings& settings = AppSettings::instance();
     const bool shouldEnable = fromAutostart ? settings.autoEnableSystemProxyAfterAutoStart()
                                             : settings.autoEnableSystemProxyOnStart();

@@ -6,7 +6,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
-$Version = "0.12.0"
+$Version = "0.13.0"
 $Staging = Join-Path $Root "dist\Zarya-$Version-windows-x64-portable"
 $BuildOutput = Join-Path $Root "$BuildDir\$Config"
 
@@ -31,6 +31,9 @@ New-Item -ItemType Directory -Path (Join-Path $Staging "runtime") | Out-Null
 $coresDir = Join-Path $Staging "cores\xray"
 New-Item -ItemType Directory -Path $coresDir -Force | Out-Null
 Copy-Item (Join-Path $Root "packaging\windows\cores-xray-README.txt") (Join-Path $coresDir "README.txt")
+$singBoxDir = Join-Path $Staging "cores\sing-box"
+New-Item -ItemType Directory -Path $singBoxDir -Force | Out-Null
+Copy-Item (Join-Path $Root "packaging\windows\cores-sing-box-README.txt") (Join-Path $singBoxDir "README.txt")
 
 $WinDeployQt = Get-Command windeployqt -ErrorAction SilentlyContinue
 if ($WinDeployQt) {

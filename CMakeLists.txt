@@ -63,6 +63,16 @@ set(ZARYA_DNS_SOURCES
     src/dns/DnsValidator.cpp
 )
 
+set(ZARYA_RUNTIME_SOURCES
+    src/runtime/IRuntimeBackend.cpp
+    src/runtime/RuntimeBackendType.cpp
+    src/runtime/RuntimeBackendFactory.cpp
+    src/runtime/xray/XraySystemProxyRuntimeBackend.cpp
+    src/runtime/singbox/SingBoxTunSupportChecker.cpp
+    src/runtime/singbox/SingBoxConfigGenerator.cpp
+    src/runtime/singbox/SingBoxTunRuntimeBackend.cpp
+)
+
 set(ZARYA_GEODATA_SOURCES
     src/geodata/GeoDataFileStatus.cpp
     src/geodata/GeoDataSource.cpp
@@ -98,6 +108,7 @@ set(ZARYA_CORE_SOURCES
 
 set(ZARYA_PLATFORM_SOURCES
     src/platform/Platform.cpp
+    src/platform/PlatformPrivilege.cpp
     src/platform/PlatformProcessUtils.cpp
     src/platform/SystemProxyManagerFactory.cpp
     src/platform/SystemProxyController.cpp
@@ -160,6 +171,7 @@ set(ZARYA_SOURCES
     src/storage/DnsStore.cpp
     ${ZARYA_ROUTING_SOURCES}
     ${ZARYA_DNS_SOURCES}
+    ${ZARYA_RUNTIME_SOURCES}
     ${ZARYA_GEODATA_SOURCES}
     src/import/VlessUriParser.cpp
     ${ZARYA_PLATFORM_SOURCES}
