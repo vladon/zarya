@@ -142,6 +142,8 @@ private:
     QString dnsStatusText() const;
     QString runtimeStatusText() const;
     void checkUncleanTunShutdownWarning();
+    void checkKillSwitchRecoveryOnStartup();
+    QString killSwitchStatusText() const;
     QString trayStatusText() const;
     void notifyTray(const QString& title, const QString& message);
 

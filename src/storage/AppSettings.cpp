@@ -438,6 +438,68 @@ void AppSettings::setTunPrivilegeMode(TunPrivilegeMode mode)
     settings().setValue(QStringLiteral("runtime/tunPrivilegeMode"), tunPrivilegeModeToString(mode));
 }
 
+bool AppSettings::enableExperimentalKillSwitch() const
+{
+    return settings().value(QStringLiteral("runtime/enableExperimentalKillSwitch"), false).toBool();
+}
+
+void AppSettings::setEnableExperimentalKillSwitch(bool enabled)
+{
+    settings().setValue(QStringLiteral("runtime/enableExperimentalKillSwitch"), enabled);
+}
+
+KillSwitchMode AppSettings::killSwitchMode() const
+{
+    return killSwitchModeFromString(
+        settings().value(QStringLiteral("runtime/killSwitchMode")).toString());
+}
+
+void AppSettings::setKillSwitchMode(KillSwitchMode mode)
+{
+    settings().setValue(QStringLiteral("runtime/killSwitchMode"), killSwitchModeToString(mode));
+}
+
+bool AppSettings::killSwitchAllowLan() const
+{
+    return settings().value(QStringLiteral("runtime/killSwitchAllowLan"), true).toBool();
+}
+
+void AppSettings::setKillSwitchAllowLan(bool enabled)
+{
+    settings().setValue(QStringLiteral("runtime/killSwitchAllowLan"), enabled);
+}
+
+bool AppSettings::killSwitchAllowLoopback() const
+{
+    return settings().value(QStringLiteral("runtime/killSwitchAllowLoopback"), true).toBool();
+}
+
+void AppSettings::setKillSwitchAllowLoopback(bool enabled)
+{
+    settings().setValue(QStringLiteral("runtime/killSwitchAllowLoopback"), enabled);
+}
+
+bool AppSettings::killSwitchBlockWhenTunStopped() const
+{
+    return settings().value(QStringLiteral("runtime/killSwitchBlockWhenTunStopped"), true).toBool();
+}
+
+void AppSettings::setKillSwitchBlockWhenTunStopped(bool enabled)
+{
+    settings().setValue(QStringLiteral("runtime/killSwitchBlockWhenTunStopped"), enabled);
+}
+
+bool AppSettings::killSwitchAutoDisableOnCleanStop() const
+{
+    return settings().value(QStringLiteral("runtime/killSwitchAutoDisableOnCleanStop"), true)
+        .toBool();
+}
+
+void AppSettings::setKillSwitchAutoDisableOnCleanStop(bool enabled)
+{
+    settings().setValue(QStringLiteral("runtime/killSwitchAutoDisableOnCleanStop"), enabled);
+}
+
 bool AppSettings::startAtLogin() const
 {
     return settings().value(QStringLiteral("startup/startAtLogin"), false).toBool();

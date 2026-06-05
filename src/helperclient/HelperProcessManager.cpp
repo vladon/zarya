@@ -2,11 +2,14 @@
 
 #include "ipc/IpcMessage.h"
 #include "ipc/IpcTransport.h"
+#include "killswitch/KillSwitchManager.h"
+#include "killswitch/KillSwitchMode.h"
 #include "packaging/PackagingInfo.h"
 #include "storage/AppPaths.h"
 #include "storage/HelperSession.h"
 
 #include <QFileInfo>
+#include <QJsonObject>
 
 namespace zarya {
 
@@ -29,8 +32,56 @@ HelperProcessManager::HelperProcessManager(QObject* parent)
         if (event.event == ipcEventRuntimeExited()) {
             emit helperLogLine(QStringLiteral("helper: sing-box exited (code %1)")
                                    .arg(event.payload.value(QStringLiteral("exitCode")).toInt()));
+            if (m_killSwitchState.status == KillSwitchStatus::Enabled) {
+                emit tunExitedWithKillSwitchActive();
+            }
+        }
+        if (event.event == ipcEventKillSwitchState()) {
+            updateKillSwitchState(event.payload);
         }
     });
+}
+
+void HelperProcessManager::updateKillSwitchState(const QJsonObject& payload)
+{
+    QJsonObject stateObject = payload.value(QStringLiteral("killSwitch")).toObject();
+    if (stateObject.isEmpty() && payload.contains(QStringLiteral("status"))) {
+        stateObject = payload;
+    }
+    if (stateObject.isEmpty()) {
+        return;
+    }
+    const QString statusText = stateObject.value(QStringLiteral("status")).toString();
+    if (statusText == QStringLiteral("enabled")) {
+        m_killSwitchState.status = KillSwitchStatus::Enabled;
+    } else if (statusText == QStringLiteral("disabled")) {
+        m_killSwitchState.status = KillSwitchStatus::Disabled;
+    } else if (statusText == QStringLiteral("failed")) {
+        m_killSwitchState.status = KillSwitchStatus::Failed;
+    } else if (statusText == QStringLiteral("needs-recovery")) {
+        m_killSwitchState.status = KillSwitchStatus::NeedsRecovery;
+    } else if (statusText == QStringLiteral("unsupported")) {
+        m_killSwitchState.status = KillSwitchStatus::Unsupported;
+    }
+    m_killSwitchState.backend = stateObject.value(QStringLiteral("backend")).toString();
+    m_killSwitchState.lastError = stateObject.value(QStringLiteral("lastError")).toString();
+    m_killSwitchState.recoveryMarkerPresent =
+        stateObject.value(QStringLiteral("recoveryMarkerPresent")).toBool();
+    m_killSwitchState.privileged = stateObject.value(QStringLiteral("privileged")).toBool();
+    m_killSwitchState.supported = stateObject.value(QStringLiteral("supported")).toBool();
+    m_killSwitchState.mode =
+        killSwitchModeFromString(stateObject.value(QStringLiteral("mode")).toString());
+    emit killSwitchStateChanged(m_killSwitchState);
+}
+
+KillSwitchState HelperProcessManager::killSwitchState() const
+{
+    return m_killSwitchState;
+}
+
+QString HelperProcessManager::recoveryInstructionsText()
+{
+    return KillSwitchManager::recoveryInstructionsForPlatform();
 }
 
 HelperConnectionState HelperProcessManager::connectionState() const
@@ -233,7 +284,7 @@ bool HelperProcessManager::validateConfig(const QString& singBoxPath, const QStr
 }
 
 bool HelperProcessManager::startTun(const QString& singBoxPath, const QString& configPath,
-                                    QString* errorMessage)
+                                    bool autoDisableKillSwitchOnFailure, QString* errorMessage)
 {
     IpcEnvelope request;
     request.command = ipcCommandStartTun();
@@ -241,17 +292,89 @@ bool HelperProcessManager::startTun(const QString& singBoxPath, const QString& c
         {QStringLiteral("singBoxPath"), singBoxPath},
         {QStringLiteral("configPath"), configPath},
         {QStringLiteral("workingDirectory"), QFileInfo(singBoxPath).absolutePath()},
-        {QStringLiteral("checkBeforeStart"), true}};
+        {QStringLiteral("checkBeforeStart"), true},
+        {QStringLiteral("autoDisableKillSwitchOnFailure"), autoDisableKillSwitchOnFailure}};
     IpcEnvelope response;
     return m_client.sendRequest(request, &response, errorMessage, 120000);
 }
 
-bool HelperProcessManager::stopTun(QString* errorMessage)
+bool HelperProcessManager::stopTun(bool autoDisableKillSwitch, QString* errorMessage)
 {
     IpcEnvelope request;
     request.command = ipcCommandStopTun();
+    request.payload =
+        QJsonObject{{QStringLiteral("autoDisableKillSwitch"), autoDisableKillSwitch}};
     IpcEnvelope response;
-    return m_client.sendRequest(request, &response, errorMessage, 30000);
+    if (!m_client.sendRequest(request, &response, errorMessage, 30000)) {
+        return false;
+    }
+    updateKillSwitchState(response.payload);
+    return true;
+}
+
+bool HelperProcessManager::killSwitchStatus(QString* errorMessage)
+{
+    IpcEnvelope request;
+    request.command = ipcCommandKillSwitchStatus();
+    IpcEnvelope response;
+    if (!m_client.sendRequest(request, &response, errorMessage)) {
+        return false;
+    }
+    updateKillSwitchState(response.payload);
+    return true;
+}
+
+bool HelperProcessManager::killSwitchCheckSupport(QJsonObject* payload, QString* errorMessage)
+{
+    IpcEnvelope request;
+    request.command = ipcCommandKillSwitchCheckSupport();
+    IpcEnvelope response;
+    if (!m_client.sendRequest(request, &response, errorMessage)) {
+        return false;
+    }
+    updateKillSwitchState(response.payload);
+    if (payload) {
+        *payload = response.payload;
+    }
+    return true;
+}
+
+bool HelperProcessManager::killSwitchEnable(const QJsonObject& payload, QString* errorMessage)
+{
+    IpcEnvelope request;
+    request.command = ipcCommandKillSwitchEnable();
+    request.payload = payload;
+    IpcEnvelope response;
+    if (!m_client.sendRequest(request, &response, errorMessage, 60000)) {
+        return false;
+    }
+    updateKillSwitchState(response.payload);
+    return true;
+}
+
+bool HelperProcessManager::killSwitchDisable(QString* errorMessage)
+{
+    IpcEnvelope request;
+    request.command = ipcCommandKillSwitchDisable();
+    IpcEnvelope response;
+    if (!m_client.sendRequest(request, &response, errorMessage, 60000)) {
+        return false;
+    }
+    updateKillSwitchState(response.payload);
+    return true;
+}
+
+bool HelperProcessManager::killSwitchRecover(bool force, QString* errorMessage)
+{
+    IpcEnvelope request;
+    request.command = ipcCommandKillSwitchRecover();
+    request.payload = QJsonObject{{QStringLiteral("force"), force}};
+    IpcEnvelope response;
+    if (!m_client.sendRequest(request, &response, errorMessage, 60000)) {
+        return false;
+    }
+    updateKillSwitchState(response.payload);
+    return true;
 }
 
 } // namespace zarya

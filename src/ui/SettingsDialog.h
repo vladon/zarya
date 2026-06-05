@@ -35,7 +35,12 @@ private slots:
     void onStartHelper();
     void onConnectHelper();
     void onCheckHelperStatus();
+    void onTestKillSwitchSupport();
+    void onEnableKillSwitchNow();
+    void onDisableKillSwitchNow();
+    void onShowKillSwitchRecovery();
     bool confirmTunWarningIfNeeded();
+    void updateKillSwitchControls();
     void onManageRoutingProfiles();
     void onManageDnsProfiles();
     void updateHttpEndpointLabel();
@@ -86,6 +91,20 @@ private:
     QPushButton* m_startHelperButton = nullptr;
     QPushButton* m_connectHelperButton = nullptr;
     QPushButton* m_checkHelperStatusButton = nullptr;
+
+    QCheckBox* m_enableKillSwitchCheck = nullptr;
+    QLabel* m_killSwitchModeLabel = nullptr;
+    QCheckBox* m_killSwitchAllowLanCheck = nullptr;
+    QCheckBox* m_killSwitchAllowLoopbackCheck = nullptr;
+    QCheckBox* m_killSwitchAllowProxyCheck = nullptr;
+    QCheckBox* m_killSwitchAutoDisableOnStopCheck = nullptr;
+    QCheckBox* m_killSwitchKeepActiveAfterStopCheck = nullptr;
+    QLabel* m_killSwitchBackendLabel = nullptr;
+    QLabel* m_killSwitchWarningLabel = nullptr;
+    QPushButton* m_testKillSwitchButton = nullptr;
+    QPushButton* m_enableKillSwitchButton = nullptr;
+    QPushButton* m_disableKillSwitchButton = nullptr;
+    QPushButton* m_killSwitchRecoveryButton = nullptr;
 
     QCheckBox* m_startAtLoginCheck = nullptr;
     QCheckBox* m_startMinimizedToTrayCheck = nullptr;

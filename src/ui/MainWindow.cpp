@@ -7,6 +7,8 @@
 #include "domain/Subscription.h"
 #include "app/StartupOptions.h"
 #include "packaging/PackagingInfo.h"
+#include "helperclient/HelperProcessManager.h"
+#include "killswitch/KillSwitchState.h"
 #include "storage/AppPaths.h"
 #include "storage/AppSettings.h"
 #include "ui/ImportVlessDialog.h"
@@ -35,6 +37,7 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QPushButton>
 #include <QPlainTextEdit>
 #include <QSplitter>
 #include <QStatusBar>
@@ -234,6 +237,12 @@ void MainWindow::setupConnections()
     connect(&m_coreManager, &CoreManager::started, this, &MainWindow::onCoreStarted);
     connect(&m_coreManager, &CoreManager::stopped, this, &MainWindow::onCoreStopped);
     connect(&m_appController, &AppController::logLine, this, &MainWindow::appendLog);
+    if (HelperProcessManager* helper = m_appController.helperProcessManager()) {
+        connect(helper, &HelperProcessManager::killSwitchStateChanged, this,
+                [this](const KillSwitchState&) { updateStatusBar(); });
+        connect(helper, &HelperProcessManager::tunExitedWithKillSwitchActive, this,
+                [this]() { updateStatusBar(); });
+    }
     connect(&m_appController, &AppController::coreStateChanged, this, [this]() {
         updateStatusBar();
         if (m_trayController) {
@@ -293,6 +302,97 @@ QString MainWindow::runtimeStatusText() const
         return runtimeModeDisplayString(m_appController.activeRuntimeMode());
     }
     return runtimeModeDisplayString(AppSettings::instance().effectiveRuntimeMode());
+}
+
+QString MainWindow::killSwitchStatusText() const
+{
+    HelperProcessManager* helper = m_appController.helperProcessManager();
+    if (!helper) {
+        return QStringLiteral("off");
+    }
+    const KillSwitchState state = helper->killSwitchState();
+    switch (state.status) {
+    case KillSwitchStatus::Enabled:
+        return QStringLiteral("on");
+    case KillSwitchStatus::Failed:
+        return QStringLiteral("failed");
+    case KillSwitchStatus::NeedsRecovery:
+        return QStringLiteral("needs recovery");
+    case KillSwitchStatus::Unsupported:
+        return QStringLiteral("unsupported");
+    case KillSwitchStatus::Enabling:
+    case KillSwitchStatus::Disabling:
+        return killSwitchStatusToString(state.status);
+    case KillSwitchStatus::Disabled:
+        break;
+    }
+    return QStringLiteral("off");
+}
+
+void MainWindow::checkKillSwitchRecoveryOnStartup()
+{
+    if (QFile::exists(AppPaths::killSwitchMarkerPath())) {
+        appendLog(QStringLiteral("Kill switch recovery marker detected at startup."));
+    }
+
+    HelperProcessManager* helper = m_appController.helperProcessManager();
+    if (!helper) {
+        return;
+    }
+
+    QString error;
+    if (!helper->connectToHelper(&error)) {
+        if (QFile::exists(AppPaths::killSwitchMarkerPath())) {
+            QMessageBox box(this);
+            box.setIcon(QMessageBox::Warning);
+            box.setWindowTitle(QStringLiteral("Kill switch recovery"));
+            box.setText(QStringLiteral(
+                "Zarya detected a previous kill switch state. Network access may be restricted.\n\n"
+                "Helper is not running. Start helper manually (elevated on Linux) and use "
+                "Disable Kill Switch, or follow recovery instructions."));
+            QPushButton* recoveryButton =
+                box.addButton(QStringLiteral("Show Recovery Instructions"),
+                              QMessageBox::ActionRole);
+            box.addButton(QStringLiteral("Ignore"), QMessageBox::RejectRole);
+            box.exec();
+            if (box.clickedButton() == recoveryButton) {
+                QMessageBox::information(this, QStringLiteral("Kill switch recovery"),
+                                         HelperProcessManager::recoveryInstructionsText());
+            }
+        }
+        return;
+    }
+
+    helper->killSwitchStatus(&error);
+    if (helper->killSwitchState().status != KillSwitchStatus::NeedsRecovery
+        && !QFile::exists(AppPaths::killSwitchMarkerPath())) {
+        return;
+    }
+
+    QMessageBox box(this);
+    box.setIcon(QMessageBox::Warning);
+    box.setWindowTitle(QStringLiteral("Kill switch recovery"));
+    box.setText(QStringLiteral(
+        "Zarya detected a previous kill switch state. Network access may be restricted."));
+    QPushButton* disableButton =
+        box.addButton(QStringLiteral("Disable Kill Switch"), QMessageBox::AcceptRole);
+    QPushButton* recoveryButton =
+        box.addButton(QStringLiteral("Show Recovery Instructions"), QMessageBox::ActionRole);
+    box.addButton(QStringLiteral("Ignore"), QMessageBox::RejectRole);
+    box.setDefaultButton(disableButton);
+    box.exec();
+
+    if (box.clickedButton() == disableButton) {
+        QString disableError;
+        if (!helper->killSwitchDisable(&disableError)) {
+            QMessageBox::warning(this, QStringLiteral("Kill switch"), disableError);
+        } else {
+            appendLog(QStringLiteral("Kill switch disabled during startup recovery."));
+        }
+    } else if (box.clickedButton() == recoveryButton) {
+        QMessageBox::information(this, QStringLiteral("Kill switch recovery"),
+                                 HelperProcessManager::recoveryInstructionsText());
+    }
 }
 
 void MainWindow::checkUncleanTunShutdownWarning()
@@ -490,12 +590,13 @@ void MainWindow::updateStatusBar()
     if (m_testManager.isBusy()) {
         statusBar()->showMessage(
             QStringLiteral(
-                "Testing: %1/%2 | Core: %3 | Runtime: %4 | System proxy: %5 | Routing: %6 | DNS: "
-                "%7")
+                "Testing: %1/%2 | Core: %3 | Runtime: %4 | Kill switch: %5 | System proxy: %6 | "
+                "Routing: %7 | DNS: %8")
                 .arg(m_testProgressDone)
                 .arg(m_testProgressTotal)
                 .arg(coreStatusText())
                 .arg(runtimeStatusText())
+                .arg(killSwitchStatusText())
                 .arg(systemProxyStatusText())
                 .arg(routingStatusText())
                 .arg(dnsStatusText()));
@@ -505,9 +606,10 @@ void MainWindow::updateStatusBar()
     const AppSettings& settings = AppSettings::instance();
     QString message =
         QStringLiteral(
-            "Idle | Core: %1 | Runtime: %2 | System proxy: %3 | Routing: %4 | DNS: %5 | Tray: %6")
-            .arg(coreStatusText(), runtimeStatusText(), systemProxyStatusText(),
-                 routingStatusText(), dnsStatusText(), trayStatusText());
+            "Idle | Core: %1 | Runtime: %2 | Kill switch: %3 | System proxy: %4 | Routing: %5 | "
+            "DNS: %6 | Tray: %7")
+            .arg(coreStatusText(), runtimeStatusText(), killSwitchStatusText(),
+                 systemProxyStatusText(), routingStatusText(), dnsStatusText(), trayStatusText());
 
     if (m_coreManager.isRunning()) {
         message += QStringLiteral(" | SOCKS 127.0.0.1:%1 | HTTP 127.0.0.1:%2")
@@ -565,6 +667,8 @@ void MainWindow::logStartupContext(const StartupOptions& options)
 
 void MainWindow::finishStartup(const StartupOptions& options)
 {
+    checkKillSwitchRecoveryOnStartup();
+
     const AppSettings& settings = AppSettings::instance();
     const bool startMinimized =
         options.startMinimizedEffective(settings.startMinimizedToTray());

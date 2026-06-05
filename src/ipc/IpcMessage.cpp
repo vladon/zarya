@@ -54,6 +54,11 @@ QString ipcCommandStartTun() { return QStringLiteral("startTun"); }
 QString ipcCommandStopTun() { return QStringLiteral("stopTun"); }
 QString ipcCommandGetLogs() { return QStringLiteral("getLogs"); }
 QString ipcCommandShutdownHelper() { return QStringLiteral("shutdownHelper"); }
+QString ipcCommandKillSwitchStatus() { return QStringLiteral("killSwitchStatus"); }
+QString ipcCommandKillSwitchCheckSupport() { return QStringLiteral("killSwitchCheckSupport"); }
+QString ipcCommandKillSwitchEnable() { return QStringLiteral("killSwitchEnable"); }
+QString ipcCommandKillSwitchDisable() { return QStringLiteral("killSwitchDisable"); }
+QString ipcCommandKillSwitchRecover() { return QStringLiteral("killSwitchRecover"); }
 
 QString ipcTypeRequest() { return QStringLiteral("request"); }
 QString ipcTypeResponse() { return QStringLiteral("response"); }
@@ -61,5 +66,6 @@ QString ipcTypeEvent() { return QStringLiteral("event"); }
 
 QString ipcEventLog() { return QStringLiteral("log"); }
 QString ipcEventRuntimeExited() { return QStringLiteral("runtimeExited"); }
+QString ipcEventKillSwitchState() { return QStringLiteral("killSwitchState"); }
 
 } // namespace zarya

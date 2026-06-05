@@ -1,5 +1,6 @@
 #pragma once
 
+#include "killswitch/KillSwitchMode.h"
 #include "runtime/RuntimeBackendType.h"
 
 #include <QString>
@@ -121,6 +122,24 @@ public:
 
     TunPrivilegeMode tunPrivilegeMode() const;
     void setTunPrivilegeMode(TunPrivilegeMode mode);
+
+    bool enableExperimentalKillSwitch() const;
+    void setEnableExperimentalKillSwitch(bool enabled);
+
+    KillSwitchMode killSwitchMode() const;
+    void setKillSwitchMode(KillSwitchMode mode);
+
+    bool killSwitchAllowLan() const;
+    void setKillSwitchAllowLan(bool enabled);
+
+    bool killSwitchAllowLoopback() const;
+    void setKillSwitchAllowLoopback(bool enabled);
+
+    bool killSwitchBlockWhenTunStopped() const;
+    void setKillSwitchBlockWhenTunStopped(bool enabled);
+
+    bool killSwitchAutoDisableOnCleanStop() const;
+    void setKillSwitchAutoDisableOnCleanStop(bool enabled);
 
     bool startAtLogin() const;
     void setStartAtLogin(bool enabled);

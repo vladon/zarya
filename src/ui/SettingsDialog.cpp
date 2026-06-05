@@ -1,6 +1,10 @@
 #include "ui/SettingsDialog.h"
 
 #include "helperclient/HelperProcessManager.h"
+#include "killswitch/KillSwitchMode.h"
+#include "killswitch/KillSwitchState.h"
+
+#include <QJsonObject>
 #include "platform/AutostartManagerFactory.h"
 #include "platform/IAutostartManager.h"
 #include "platform/ISystemProxyManager.h"
@@ -337,8 +341,8 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     auto* tunWarnings = new QLabel(
         QStringLiteral(
             "TUN mode changes system routes and may require administrator/root permissions. "
-            "Kill switch is not implemented. zarya-helper is experimental and is not installed "
-            "as a privileged service in this milestone."),
+            "zarya-helper is experimental and is not installed as a privileged service in this "
+            "milestone."),
         this);
     tunWarnings->setWordWrap(true);
 
@@ -360,6 +364,112 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     auto* experimentalGroup = new QGroupBox(QStringLiteral("Experimental"), this);
     experimentalGroup->setLayout(experimentalForm);
 
+    m_enableKillSwitchCheck =
+        new QCheckBox(QStringLiteral("Enable experimental kill switch"), this);
+    m_enableKillSwitchCheck->setChecked(settings.enableExperimentalKillSwitch());
+
+    m_killSwitchModeLabel =
+        new QLabel(QStringLiteral("Mode: TUN only experimental"), this);
+
+    m_killSwitchAllowLanCheck =
+        new QCheckBox(QStringLiteral("Allow LAN/private networks"), this);
+    m_killSwitchAllowLanCheck->setChecked(settings.killSwitchAllowLan());
+
+    m_killSwitchAllowLoopbackCheck =
+        new QCheckBox(QStringLiteral("Allow loopback"), this);
+    m_killSwitchAllowLoopbackCheck->setChecked(settings.killSwitchAllowLoopback());
+
+    m_killSwitchAllowProxyCheck =
+        new QCheckBox(QStringLiteral("Allow traffic to selected proxy server"), this);
+    m_killSwitchAllowProxyCheck->setChecked(true);
+    m_killSwitchAllowProxyCheck->setEnabled(false);
+
+    m_killSwitchAutoDisableOnStopCheck =
+        new QCheckBox(QStringLiteral("Disable kill switch on clean Stop"), this);
+    m_killSwitchAutoDisableOnStopCheck->setChecked(settings.killSwitchAutoDisableOnCleanStop());
+
+    m_killSwitchKeepActiveAfterStopCheck =
+        new QCheckBox(QStringLiteral("Keep kill switch active after Stop"), this);
+    m_killSwitchKeepActiveAfterStopCheck->setChecked(
+        !settings.killSwitchAutoDisableOnCleanStop());
+
+    connect(m_killSwitchAutoDisableOnStopCheck, &QCheckBox::toggled, this,
+            [this](bool checked) {
+                if (checked) {
+                    m_killSwitchKeepActiveAfterStopCheck->setChecked(false);
+                }
+            });
+    connect(m_killSwitchKeepActiveAfterStopCheck, &QCheckBox::toggled, this,
+            [this](bool checked) {
+                if (checked) {
+                    m_killSwitchAutoDisableOnStopCheck->setChecked(false);
+                }
+            });
+
+#if defined(Q_OS_LINUX)
+    m_killSwitchBackendLabel = new QLabel(
+        QStringLiteral("Kill switch backend: nftables PoC (table inet zarya)"), this);
+#elif defined(Q_OS_WIN)
+    m_killSwitchBackendLabel = new QLabel(
+        QStringLiteral(
+            "Kill switch backend: design stub — production should use Windows Filtering "
+            "Platform (WFP)."),
+        this);
+#elif defined(Q_OS_MACOS)
+    m_killSwitchBackendLabel = new QLabel(
+        QStringLiteral(
+            "Kill switch backend: unsupported in 0.16 — PF is not a stable public API for "
+            "third-party apps."),
+        this);
+#else
+    m_killSwitchBackendLabel = new QLabel(QStringLiteral("Kill switch backend: unsupported"),
+                                          this);
+#endif
+    m_killSwitchBackendLabel->setWordWrap(true);
+
+    m_killSwitchWarningLabel = new QLabel(
+        QStringLiteral(
+            "Experimental kill switch changes firewall/routing rules. A bug may block network "
+            "access until rules are removed manually. Requires zarya-helper mode. Use only if you "
+            "understand the recovery procedure."),
+        this);
+    m_killSwitchWarningLabel->setWordWrap(true);
+
+    m_testKillSwitchButton = new QPushButton(QStringLiteral("Test Support"), this);
+    m_enableKillSwitchButton = new QPushButton(QStringLiteral("Enable Now"), this);
+    m_disableKillSwitchButton = new QPushButton(QStringLiteral("Disable Now"), this);
+    m_killSwitchRecoveryButton =
+        new QPushButton(QStringLiteral("Show Recovery Instructions"), this);
+    connect(m_testKillSwitchButton, &QPushButton::clicked, this,
+            &SettingsDialog::onTestKillSwitchSupport);
+    connect(m_enableKillSwitchButton, &QPushButton::clicked, this,
+            &SettingsDialog::onEnableKillSwitchNow);
+    connect(m_disableKillSwitchButton, &QPushButton::clicked, this,
+            &SettingsDialog::onDisableKillSwitchNow);
+    connect(m_killSwitchRecoveryButton, &QPushButton::clicked, this,
+            &SettingsDialog::onShowKillSwitchRecovery);
+
+    auto* killSwitchButtonsRow = new QHBoxLayout;
+    killSwitchButtonsRow->addWidget(m_testKillSwitchButton);
+    killSwitchButtonsRow->addWidget(m_enableKillSwitchButton);
+    killSwitchButtonsRow->addWidget(m_disableKillSwitchButton);
+    killSwitchButtonsRow->addWidget(m_killSwitchRecoveryButton);
+
+    auto* killSwitchForm = new QFormLayout;
+    killSwitchForm->addRow(QString(), m_enableKillSwitchCheck);
+    killSwitchForm->addRow(QString(), m_killSwitchModeLabel);
+    killSwitchForm->addRow(QString(), m_killSwitchAllowLanCheck);
+    killSwitchForm->addRow(QString(), m_killSwitchAllowLoopbackCheck);
+    killSwitchForm->addRow(QString(), m_killSwitchAllowProxyCheck);
+    killSwitchForm->addRow(QString(), m_killSwitchAutoDisableOnStopCheck);
+    killSwitchForm->addRow(QString(), m_killSwitchKeepActiveAfterStopCheck);
+    killSwitchForm->addRow(QString(), m_killSwitchBackendLabel);
+    killSwitchForm->addRow(QString(), m_killSwitchWarningLabel);
+    killSwitchForm->addRow(QString(), killSwitchButtonsRow);
+
+    auto* killSwitchGroup = new QGroupBox(QStringLiteral("Kill Switch (experimental)"), this);
+    killSwitchGroup->setLayout(killSwitchForm);
+
     const auto updateRuntimeControls = [this]() {
         const bool enabled = m_enableExperimentalTunCheck->isChecked();
         m_systemProxyRuntimeRadio->setEnabled(enabled);
@@ -375,10 +485,15 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
         m_startHelperButton->setEnabled(helperUi);
         m_connectHelperButton->setEnabled(helperUi);
         m_checkHelperStatusButton->setEnabled(helperUi);
+        updateKillSwitchControls();
     };
     connect(m_tunEnableDnsHijackCheck, &QCheckBox::toggled, this, updateRuntimeControls);
     updateRuntimeControls();
     connect(m_enableExperimentalTunCheck, &QCheckBox::toggled, this, updateRuntimeControls);
+    connect(m_enableKillSwitchCheck, &QCheckBox::toggled, this,
+            &SettingsDialog::updateKillSwitchControls);
+    connect(m_tunHelperRadio, &QRadioButton::toggled, this, &SettingsDialog::updateKillSwitchControls);
+    updateKillSwitchControls();
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel,
                                          this);
@@ -398,8 +513,9 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     layout->addWidget(startupGroup);
     layout->addWidget(desktopGroup);
     layout->addWidget(experimentalGroup);
+    layout->addWidget(killSwitchGroup);
     layout->addWidget(buttons);
-    resize(620, 920);
+    resize(620, 1080);
 }
 
 void SettingsDialog::onBrowseSingBox()
@@ -425,7 +541,7 @@ bool SettingsDialog::confirmTunWarningIfNeeded()
         "TUN mode is experimental. It may change network routes and DNS behavior.\n\n"
         "If it fails, Zarya will attempt to stop sing-box and restore state, but this mode is "
         "not production-ready yet.\n\n"
-        "Kill switch is not implemented."));
+        "Kill switch is experimental and requires zarya-helper mode."));
     QPushButton* enableButton = box.addButton(QStringLiteral("Enable Experimental TUN"),
                                               QMessageBox::AcceptRole);
     box.addButton(QMessageBox::Cancel);
@@ -588,7 +704,96 @@ bool SettingsDialog::validateAndSave()
     settings.setTunPrivilegeMode(m_tunHelperRadio->isChecked()
                                      ? TunPrivilegeMode::HelperExperimental
                                      : TunPrivilegeMode::DirectFromGui);
+
+    const bool killSwitchEnabled = m_enableKillSwitchCheck->isChecked();
+    settings.setEnableExperimentalKillSwitch(killSwitchEnabled);
+    settings.setKillSwitchMode(killSwitchEnabled ? KillSwitchMode::TunOnlyExperimental
+                                                 : KillSwitchMode::Disabled);
+    settings.setKillSwitchAllowLan(m_killSwitchAllowLanCheck->isChecked());
+    settings.setKillSwitchAllowLoopback(m_killSwitchAllowLoopbackCheck->isChecked());
+    settings.setKillSwitchBlockWhenTunStopped(true);
+    settings.setKillSwitchAutoDisableOnCleanStop(
+        m_killSwitchAutoDisableOnStopCheck->isChecked());
+
     return true;
+}
+
+void SettingsDialog::updateKillSwitchControls()
+{
+    const bool enabled = m_enableKillSwitchCheck->isChecked();
+    const bool helperMode = m_tunHelperRadio->isChecked();
+    m_killSwitchModeLabel->setEnabled(enabled);
+    m_killSwitchAllowLanCheck->setEnabled(enabled);
+    m_killSwitchAllowLoopbackCheck->setEnabled(enabled);
+    m_killSwitchAutoDisableOnStopCheck->setEnabled(enabled);
+    m_killSwitchKeepActiveAfterStopCheck->setEnabled(enabled);
+    const bool helperUi = enabled && helperMode && m_helperManager != nullptr;
+    m_testKillSwitchButton->setEnabled(helperUi);
+    m_enableKillSwitchButton->setEnabled(helperUi);
+    m_disableKillSwitchButton->setEnabled(helperUi);
+    m_killSwitchRecoveryButton->setEnabled(true);
+}
+
+void SettingsDialog::onTestKillSwitchSupport()
+{
+    if (!m_helperManager) {
+        return;
+    }
+    QString error;
+    if (!m_helperManager->connectToHelper(&error)) {
+        QMessageBox::warning(this, QStringLiteral("Kill switch"), error);
+        return;
+    }
+    QJsonObject payload;
+    if (!m_helperManager->killSwitchCheckSupport(&payload, &error)) {
+        QMessageBox::warning(this, QStringLiteral("Kill switch"), error);
+        return;
+    }
+    QMessageBox::information(
+        this, QStringLiteral("Kill switch support"),
+        QStringLiteral("Backend: %1\nPrivileged: %2\nSupported: %3\n\n%4")
+            .arg(payload.value(QStringLiteral("backend")).toString(),
+                 payload.value(QStringLiteral("privileged")).toBool() ? QStringLiteral("yes")
+                                                                      : QStringLiteral("no"),
+                 payload.value(QStringLiteral("supported")).toBool() ? QStringLiteral("yes")
+                                                                     : QStringLiteral("no"),
+                 payload.value(QStringLiteral("lastError")).toString()));
+}
+
+void SettingsDialog::onEnableKillSwitchNow()
+{
+    QMessageBox::information(
+        this, QStringLiteral("Kill switch"),
+        QStringLiteral(
+            "Kill switch is enabled automatically when you start TUN mode with kill switch "
+            "enabled.\n\nSelect a profile and press Start, or use a running TUN session."));
+}
+
+void SettingsDialog::onDisableKillSwitchNow()
+{
+    if (!m_helperManager) {
+        return;
+    }
+    QString error;
+    if (!m_helperManager->connectToHelper(&error)) {
+        QMessageBox::warning(this, QStringLiteral("Kill switch"), error);
+        return;
+    }
+    if (!m_helperManager->killSwitchDisable(&error)) {
+        QMessageBox::warning(this, QStringLiteral("Kill switch"), error);
+        return;
+    }
+    QMessageBox::information(this, QStringLiteral("Kill switch"),
+                             QStringLiteral("Kill switch disabled."));
+}
+
+void SettingsDialog::onShowKillSwitchRecovery()
+{
+    QMessageBox box(this);
+    box.setWindowTitle(QStringLiteral("Kill switch recovery"));
+    box.setText(HelperProcessManager::recoveryInstructionsText());
+    box.setStandardButtons(QMessageBox::Close);
+    box.exec();
 }
 
 void SettingsDialog::onStartHelper()

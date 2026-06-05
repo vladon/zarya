@@ -75,6 +75,29 @@ set(ZARYA_HELPERCLIENT_SOURCES
     src/storage/HelperSession.cpp
 )
 
+set(ZARYA_KILLSWITCH_COMMON
+    src/killswitch/KillSwitchMode.cpp
+    src/killswitch/KillSwitchState.cpp
+    src/killswitch/KillSwitchMarker.cpp
+    src/killswitch/KillSwitchManager.cpp
+)
+
+if(UNIX AND NOT APPLE)
+    set(ZARYA_KILLSWITCH_PLATFORM src/killswitch/linux/LinuxNftKillSwitchManager.cpp)
+elseif(WIN32)
+    set(ZARYA_KILLSWITCH_PLATFORM src/killswitch/windows/WindowsKillSwitchManager.cpp)
+elseif(APPLE)
+    set(ZARYA_KILLSWITCH_PLATFORM src/killswitch/macos/MacKillSwitchManager.cpp)
+else()
+    set(ZARYA_KILLSWITCH_PLATFORM src/killswitch/stub/StubKillSwitchManager.cpp)
+endif()
+
+set(ZARYA_KILLSWITCH_SOURCES ${ZARYA_KILLSWITCH_COMMON} ${ZARYA_KILLSWITCH_PLATFORM})
+
+set(ZARYA_KILLSWITCH_GUI_SOURCES
+    src/killswitch/KillSwitchPayloadBuilder.cpp
+)
+
 set(ZARYA_RUNTIME_SOURCES
     src/runtime/ConfigWarning.cpp
     src/runtime/IRuntimeBackend.cpp
@@ -191,6 +214,9 @@ set(ZARYA_SOURCES
     ${ZARYA_RUNTIME_SOURCES}
     ${ZARYA_IPC_SOURCES}
     ${ZARYA_HELPERCLIENT_SOURCES}
+    ${ZARYA_KILLSWITCH_COMMON}
+    ${ZARYA_KILLSWITCH_PLATFORM}
+    ${ZARYA_KILLSWITCH_GUI_SOURCES}
     ${ZARYA_GEODATA_SOURCES}
     src/import/VlessUriParser.cpp
     ${ZARYA_PLATFORM_SOURCES}
@@ -292,6 +318,7 @@ set(ZARYA_HELPER_SOURCES
     src/storage/AppSettings.cpp
     src/runtime/RuntimeBackendType.cpp
     src/packaging/PackagingInfo.cpp
+    ${ZARYA_KILLSWITCH_SOURCES}
 )
 
 add_executable(zarya-helper ${ZARYA_HELPER_SOURCES})

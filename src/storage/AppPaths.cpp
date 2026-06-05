@@ -126,6 +126,27 @@ QString AppPaths::helperTokenPath()
     return QDir(runtimeDir()).filePath(QStringLiteral("helper.token"));
 }
 
+QString AppPaths::killSwitchDir()
+{
+    return QDir(runtimeDir()).filePath(QStringLiteral("killswitch"));
+}
+
+void AppPaths::ensureKillSwitchDir()
+{
+    ensureDir(killSwitchDir());
+}
+
+QString AppPaths::killSwitchMarkerPath()
+{
+    return QDir(runtimeDir()).filePath(QStringLiteral("killswitch-active.json"));
+}
+
+QString AppPaths::killSwitchRulesFilePath()
+{
+    ensureKillSwitchDir();
+    return QDir(killSwitchDir()).filePath(QStringLiteral("zarya-nft.conf"));
+}
+
 QString AppPaths::resolvedHelperPath()
 {
 #ifdef Q_OS_WIN

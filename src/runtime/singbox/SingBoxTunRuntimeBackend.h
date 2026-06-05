@@ -41,11 +41,17 @@ private:
     bool stopDirect();
     bool stopViaHelper();
 
+    bool wantsKillSwitch() const;
+    bool ensureHelperConnected(QString* errorMessage);
+    bool enableKillSwitchViaHelper(const Profile& profile, QString* errorMessage);
+    bool disableKillSwitchViaHelper(QString* errorMessage);
+
     CoreManager* m_coreManager = nullptr;
     QWidget* m_dialogParent = nullptr;
     std::unique_ptr<HelperProcessManager> m_helperManager;
     RuntimeState m_state = RuntimeState::Stopped;
     bool m_runningViaHelper = false;
+    bool m_killSwitchSessionActive = false;
 };
 
 } // namespace zarya
