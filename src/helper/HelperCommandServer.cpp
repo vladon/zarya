@@ -26,7 +26,33 @@ HelperCommandServer::HelperCommandServer(QObject* parent)
         event.event = ipcEventRuntimeExited();
         event.payload = QJsonObject{{QStringLiteral("exitCode"), exitCode}};
         m_server.sendEvent(m_activeClient, event);
+
+        const KillSwitchState killSwitch = m_killSwitch.state();
+        if (killSwitch.status == KillSwitchStatus::Enabled) {
+            emit logLine(QStringLiteral(
+                "helper: sing-box exited unexpectedly; kill switch remains active"));
+            IpcEnvelope killSwitchEvent;
+            killSwitchEvent.event = ipcEventKillSwitchState();
+            killSwitchEvent.payload =
+                QJsonObject{{QStringLiteral("killSwitch"),
+                             KillSwitchManager::stateToJson(killSwitch)},
+                            {QStringLiteral("unexpectedExit"), true}};
+            m_server.sendEvent(m_activeClient, killSwitchEvent);
+        }
     });
+    connect(&m_killSwitch, &KillSwitchManager::logLine, this, &HelperCommandServer::logLine);
+    connect(&m_killSwitch, &KillSwitchManager::logLine, this, &HelperCommandServer::broadcastLog);
+    connect(&m_killSwitch, &KillSwitchManager::stateChanged, this,
+            [this](const KillSwitchState& state) {
+                if (!m_activeClient) {
+                    return;
+                }
+                IpcEnvelope event;
+                event.event = ipcEventKillSwitchState();
+                event.payload =
+                    QJsonObject{{QStringLiteral("killSwitch"), KillSwitchManager::stateToJson(state)}};
+                m_server.sendEvent(m_activeClient, event);
+            });
 }
 
 bool HelperCommandServer::start(const QString& serverName, const QString& authToken,
@@ -41,6 +67,10 @@ bool HelperCommandServer::start(const QString& serverName, const QString& authTo
     if (!m_server.listen(serverName, errorMessage)) {
         return false;
     }
+
+    const PrivilegeCheckResult privileges = PlatformPrivilege::currentProcessPrivileges();
+    m_killSwitch.refreshStartupState(privileges.elevated);
+
     emit logLine(QStringLiteral("helper: listening on %1").arg(serverName));
     return true;
 }
@@ -48,6 +78,7 @@ bool HelperCommandServer::start(const QString& serverName, const QString& authTo
 void HelperCommandServer::shutdown()
 {
     m_runtime.stopTun();
+    m_killSwitch.disable(nullptr);
     m_server.close();
 }
 
@@ -78,7 +109,62 @@ void HelperCommandServer::handleRequest(const IpcEnvelope& request, QLocalSocket
                            {QStringLiteral("pid"), m_runtime.isRunning() ? m_runtime.processId() : 0},
                            {QStringLiteral("configPath"), m_runtime.configPath()},
                            {QStringLiteral("startedAt"),
-                            m_runtime.startedAt().toString(Qt::ISODate)}});
+                            m_runtime.startedAt().toString(Qt::ISODate)},
+                           {QStringLiteral("killSwitch"),
+                            KillSwitchManager::stateToJson(m_killSwitch.state())}});
+        return;
+    }
+
+    if (request.command == ipcCommandKillSwitchStatus()) {
+        sendOk(client, request,
+               QJsonObject{
+                   {QStringLiteral("killSwitch"), KillSwitchManager::stateToJson(m_killSwitch.state())}});
+        return;
+    }
+
+    if (request.command == ipcCommandKillSwitchCheckSupport()) {
+        const PrivilegeCheckResult privileges = PlatformPrivilege::currentProcessPrivileges();
+        const KillSwitchState support = m_killSwitch.checkSupport(privileges.elevated);
+        sendOk(client, request, KillSwitchManager::stateToJson(support));
+        return;
+    }
+
+    if (request.command == ipcCommandKillSwitchEnable()) {
+        const PrivilegeCheckResult privileges = PlatformPrivilege::currentProcessPrivileges();
+        const KillSwitchRuleSet rules = KillSwitchManager::ruleSetFromJson(request.payload);
+        QString error;
+        if (!m_killSwitch.enable(rules, privileges.elevated, &error)) {
+            sendError(client, request, error);
+            return;
+        }
+        sendOk(client, request,
+               QJsonObject{
+                   {QStringLiteral("killSwitch"), KillSwitchManager::stateToJson(m_killSwitch.state())}});
+        return;
+    }
+
+    if (request.command == ipcCommandKillSwitchDisable()) {
+        QString error;
+        if (!m_killSwitch.disable(&error)) {
+            sendError(client, request, error);
+            return;
+        }
+        sendOk(client, request,
+               QJsonObject{
+                   {QStringLiteral("killSwitch"), KillSwitchManager::stateToJson(m_killSwitch.state())}});
+        return;
+    }
+
+    if (request.command == ipcCommandKillSwitchRecover()) {
+        const bool force = request.payload.value(QStringLiteral("force")).toBool(true);
+        QString error;
+        if (!m_killSwitch.recover(force, &error)) {
+            sendError(client, request, error);
+            return;
+        }
+        sendOk(client, request,
+               QJsonObject{
+                   {QStringLiteral("killSwitch"), KillSwitchManager::stateToJson(m_killSwitch.state())}});
         return;
     }
 
@@ -121,6 +207,11 @@ void HelperCommandServer::handleRequest(const IpcEnvelope& request, QLocalSocket
         QString error;
         if (!m_runtime.startTun(singBoxPath, configPath, workingDirectory, checkBeforeStart,
                                 &error)) {
+            const bool autoDisableKillSwitch =
+                request.payload.value(QStringLiteral("autoDisableKillSwitchOnFailure")).toBool(true);
+            if (autoDisableKillSwitch) {
+                m_killSwitch.disable(nullptr);
+            }
             sendError(client, request, error);
             return;
         }
@@ -134,7 +225,14 @@ void HelperCommandServer::handleRequest(const IpcEnvelope& request, QLocalSocket
             sendError(client, request, error);
             return;
         }
-        sendOk(client, request, {});
+        const bool autoDisableKillSwitch =
+            request.payload.value(QStringLiteral("autoDisableKillSwitch")).toBool(true);
+        if (autoDisableKillSwitch) {
+            m_killSwitch.disable(nullptr);
+        }
+        sendOk(client, request,
+               QJsonObject{
+                   {QStringLiteral("killSwitch"), KillSwitchManager::stateToJson(m_killSwitch.state())}});
         return;
     }
 

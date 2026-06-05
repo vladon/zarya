@@ -102,7 +102,7 @@ Add optional transparent proxy (TUN) mode to Zarya without breaking the existing
 | macOS | pf rules or Network Extension policies |
 | Linux | nftables/iptables |
 
-**0.13:** no kill switch UI or implementation. A bad kill switch is worse than none.
+**0.16:** experimental kill switch in `zarya-helper` (Linux nft PoC). **0.13–0.15:** no kill switch. A bad kill switch is worse than none on unsupported platforms.
 
 ## Open questions
 
@@ -119,6 +119,6 @@ Add optional transparent proxy (TUN) mode to Zarya without breaking the existing
 | **0.13** | Design doc, runtime backend abstraction, sing-box TUN PoC, experimental settings |
 | **0.14** | sing-box routing/DNS parity from RoutingProfile + DnsProfile, config preview, warnings |
 | **0.15** | Privileged `zarya-helper` PoC (local IPC, token auth, TUN start/stop); not a production service |
-| 0.16 | sing-box rule-set manager / downloader |
-| 0.16 | Privilege helper or documented elevation workflow |
-| 0.17 | Kill switch (platform-specific) |
+| **0.16** | Experimental kill switch in helper (Linux nftables PoC; Windows WFP / macOS NE documented as future) |
+| 0.17+ | sing-box rule-set manager / downloader improvements |
+| 0.17+ | Production Windows WFP kill switch, macOS Network Extension |

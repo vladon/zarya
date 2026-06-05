@@ -3,6 +3,7 @@
 #include "helper/HelperPathPolicy.h"
 #include "helper/HelperRuntimeManager.h"
 #include "ipc/IpcServer.h"
+#include "killswitch/KillSwitchManager.h"
 
 #include <QObject>
 
@@ -31,6 +32,7 @@ private:
 
     IpcServer m_server;
     HelperRuntimeManager m_runtime;
+    KillSwitchManager m_killSwitch;
     HelperPathPolicy m_pathPolicy;
     QLocalSocket* m_activeClient = nullptr;
 };

@@ -2,6 +2,8 @@
 
 #include "core/CoreManager.h"
 #include "helperclient/HelperProcessManager.h"
+#include "killswitch/KillSwitchMode.h"
+#include "killswitch/KillSwitchPayloadBuilder.h"
 #include "runtime/ConfigWarning.h"
 #include "runtime/singbox/SingBoxConfigGenerator.h"
 #include "runtime/singbox/SingBoxTunSupportChecker.h"
@@ -12,6 +14,7 @@
 #include <QFileInfo>
 #include <QJsonDocument>
 #include <QMessageBox>
+#include <QPushButton>
 #include <QWidget>
 
 namespace zarya {
@@ -37,6 +40,20 @@ SingBoxTunRuntimeBackend::SingBoxTunRuntimeBackend(CoreManager* coreManager, QOb
 {
     connect(m_helperManager.get(), &HelperProcessManager::helperLogLine, this,
             &IRuntimeBackend::logLine);
+    connect(m_helperManager.get(), &HelperProcessManager::tunExitedWithKillSwitchActive, this,
+            [this]() {
+                emit logLine(QStringLiteral(
+                    "TUN exited unexpectedly while kill switch is active. Network may remain "
+                    "blocked until you disable kill switch."));
+                if (m_dialogParent) {
+                    QMessageBox::warning(
+                        m_dialogParent, QStringLiteral("Kill switch"),
+                        QStringLiteral(
+                            "sing-box exited unexpectedly while kill switch is active.\n\n"
+                            "Direct traffic may remain blocked. Use Settings → Kill Switch → "
+                            "Disable Now or recovery instructions."));
+                }
+            });
 
     if (m_coreManager) {
         connect(m_coreManager, &CoreManager::started, this, [this](const QString& name) {
@@ -147,7 +164,20 @@ bool SingBoxTunRuntimeBackend::start(const Profile& profile, const RuntimeStartO
     }
 
     emit logLine(QStringLiteral("Runtime mode: sing-box TUN experimental"));
-    emit logLine(QStringLiteral("TUN mode is experimental; kill switch not implemented"));
+    if (wantsKillSwitch()) {
+        emit logLine(QStringLiteral("Experimental kill switch requested"));
+        if (AppSettings::instance().tunPrivilegeMode() != TunPrivilegeMode::HelperExperimental) {
+            emit errorOccurred(
+                QStringLiteral("Kill switch requires zarya-helper mode in Settings."));
+            return false;
+        }
+        if (!AppSettings::instance().tunEnableDnsHijack()
+            || AppSettings::instance().tunDnsHijackMode() == TunDnsHijackMode::Disabled) {
+            emit logLine(QStringLiteral(
+                "Kill switch warning: DNS hijack disabled may block or leak DNS depending on OS "
+                "behavior."));
+        }
+    }
 
     QString supportReason;
     if (!isSupported(&supportReason)) {
@@ -232,13 +262,117 @@ bool SingBoxTunRuntimeBackend::startDirect(const Profile& profile, const QString
     return true;
 }
 
-bool SingBoxTunRuntimeBackend::startViaHelper(const Profile& profile, const QString& configPath)
+bool SingBoxTunRuntimeBackend::wantsKillSwitch() const
 {
-    Q_UNUSED(profile);
+    const AppSettings& settings = AppSettings::instance();
+    return settings.enableExperimentalKillSwitch()
+           && settings.killSwitchMode() == KillSwitchMode::TunOnlyExperimental;
+}
+
+bool SingBoxTunRuntimeBackend::ensureHelperConnected(QString* errorMessage)
+{
+    if (m_helperManager->connectionState() == HelperConnectionState::Connected) {
+        return true;
+    }
     emit logLine(QStringLiteral("Connecting to zarya-helper"));
+    return m_helperManager->startHelperDevMode(errorMessage);
+}
+
+bool SingBoxTunRuntimeBackend::enableKillSwitchViaHelper(const Profile& profile,
+                                                         QString* errorMessage)
+{
+    if (!wantsKillSwitch()) {
+        return true;
+    }
+
+    const AppSettings& settings = AppSettings::instance();
+    const bool blockDirectDns =
+        settings.tunEnableDnsHijack()
+        && settings.tunDnsHijackMode() != TunDnsHijackMode::Disabled;
+    const KillSwitchPayloadResult built =
+        KillSwitchPayloadBuilder::build(profile, settings.killSwitchAllowLan(),
+                                        settings.killSwitchAllowLoopback(), blockDirectDns);
+    if (built.resolutionFailed) {
+        emit logLine(QStringLiteral("Kill switch: %1").arg(built.resolveWarning));
+        if (!m_dialogParent) {
+            if (errorMessage) {
+                *errorMessage = built.resolveWarning;
+            }
+            return false;
+        }
+        QMessageBox box(m_dialogParent);
+        box.setIcon(QMessageBox::Warning);
+        box.setWindowTitle(QStringLiteral("Kill switch"));
+        box.setText(QStringLiteral("%1\n\nEnable kill switch without resolved proxy IPs?")
+                        .arg(built.resolveWarning));
+        QPushButton* continueButton =
+            box.addButton(QStringLiteral("Continue anyway"), QMessageBox::AcceptRole);
+        box.addButton(QMessageBox::Cancel);
+        box.setDefaultButton(QMessageBox::Cancel);
+        box.exec();
+        if (box.clickedButton() != continueButton) {
+            if (errorMessage) {
+                *errorMessage = QStringLiteral("Kill switch enable canceled.");
+            }
+            return false;
+        }
+    }
+
+    emit logLine(QStringLiteral("Enabling kill switch via helper"));
+    QString error;
+    if (!m_helperManager->killSwitchEnable(KillSwitchPayloadBuilder::toJson(built.rules), &error)) {
+        if (errorMessage) {
+            *errorMessage = error;
+        }
+        return false;
+    }
+    m_killSwitchSessionActive = true;
+    emit logLine(QStringLiteral("Kill switch enabled"));
+    return true;
+}
+
+bool SingBoxTunRuntimeBackend::disableKillSwitchViaHelper(QString* errorMessage)
+{
+    if (!m_killSwitchSessionActive) {
+        return true;
+    }
+    emit logLine(QStringLiteral("Disabling kill switch via helper"));
     QString error;
     if (m_helperManager->connectionState() != HelperConnectionState::Connected) {
-        if (!m_helperManager->startHelperDevMode(&error)) {
+        if (m_dialogParent) {
+            QMessageBox::warning(
+                m_dialogParent, QStringLiteral("Kill switch"),
+                QStringLiteral(
+                    "Zarya could not contact helper to disable kill switch. Networking may "
+                    "remain blocked.\n\n%1")
+                    .arg(errorMessage ? *errorMessage : QString()));
+        }
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("Helper unavailable for kill switch disable.");
+        }
+        return false;
+    }
+    if (!m_helperManager->killSwitchDisable(&error)) {
+        if (errorMessage) {
+            *errorMessage = error;
+        }
+        return false;
+    }
+    m_killSwitchSessionActive = false;
+    emit logLine(QStringLiteral("Kill switch disabled"));
+    return true;
+}
+
+bool SingBoxTunRuntimeBackend::startViaHelper(const Profile& profile, const QString& configPath)
+{
+    QString error;
+    if (!ensureHelperConnected(&error)) {
+        emit errorOccurred(error);
+        return false;
+    }
+
+    if (wantsKillSwitch()) {
+        if (!enableKillSwitchViaHelper(profile, &error)) {
             emit errorOccurred(error);
             return false;
         }
@@ -247,12 +381,17 @@ bool SingBoxTunRuntimeBackend::startViaHelper(const Profile& profile, const QStr
     const QString singBoxPath = AppSettings::instance().resolvedSingBoxPath();
     emit logLine(QStringLiteral("Sending validateConfig"));
     if (!m_helperManager->validateConfig(singBoxPath, configPath, &error)) {
+        if (wantsKillSwitch() && AppSettings::instance().killSwitchAutoDisableOnCleanStop()) {
+            disableKillSwitchViaHelper(nullptr);
+        }
         emit errorOccurred(error);
         return false;
     }
 
     emit logLine(QStringLiteral("Sending startTun"));
-    if (!m_helperManager->startTun(singBoxPath, configPath, &error)) {
+    if (!m_helperManager->startTun(singBoxPath, configPath,
+                                   AppSettings::instance().killSwitchAutoDisableOnCleanStop(),
+                                   &error)) {
         emit errorOccurred(error);
         return false;
     }
@@ -293,9 +432,11 @@ bool SingBoxTunRuntimeBackend::stopViaHelper()
 {
     emit logLine(QStringLiteral("Stopping TUN via helper"));
     QString error;
+    const bool autoDisableKillSwitch =
+        AppSettings::instance().killSwitchAutoDisableOnCleanStop();
     if (m_helperManager->connectionState() == HelperConnectionState::Connected) {
         emit logLine(QStringLiteral("Sending stopTun"));
-        if (!m_helperManager->stopTun(&error)) {
+        if (!m_helperManager->stopTun(autoDisableKillSwitch, &error)) {
             if (m_dialogParent) {
                 QMessageBox::warning(
                     m_dialogParent, QStringLiteral("Helper stop"),
@@ -316,6 +457,15 @@ bool SingBoxTunRuntimeBackend::stopViaHelper()
     }
 
     m_runningViaHelper = false;
+    if (autoDisableKillSwitch) {
+        m_killSwitchSessionActive = false;
+    } else if (m_killSwitchSessionActive && m_dialogParent) {
+        QMessageBox::warning(
+            m_dialogParent, QStringLiteral("Kill switch"),
+            QStringLiteral(
+                "Kill switch remains active after Stop. Network may stay restricted until you "
+                "disable it in Settings."));
+    }
     AppSettings::instance().markCleanShutdown();
     m_state = RuntimeState::Stopped;
     emit stateChanged(m_state);

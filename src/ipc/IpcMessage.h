@@ -27,6 +27,11 @@ QString ipcCommandStartTun();
 QString ipcCommandStopTun();
 QString ipcCommandGetLogs();
 QString ipcCommandShutdownHelper();
+QString ipcCommandKillSwitchStatus();
+QString ipcCommandKillSwitchCheckSupport();
+QString ipcCommandKillSwitchEnable();
+QString ipcCommandKillSwitchDisable();
+QString ipcCommandKillSwitchRecover();
 
 QString ipcTypeRequest();
 QString ipcTypeResponse();
@@ -34,5 +39,6 @@ QString ipcTypeEvent();
 
 QString ipcEventLog();
 QString ipcEventRuntimeExited();
+QString ipcEventKillSwitchState();
 
 } // namespace zarya

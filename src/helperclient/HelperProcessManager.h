@@ -1,7 +1,9 @@
 #pragma once
 
 #include "ipc/IpcClient.h"
+#include "killswitch/KillSwitchState.h"
 
+#include <QJsonObject>
 #include <QObject>
 #include <QProcess>
 
@@ -36,12 +38,22 @@ public:
     bool validateConfig(const QString& singBoxPath, const QString& configPath,
                         QString* errorMessage = nullptr);
     bool startTun(const QString& singBoxPath, const QString& configPath,
-                  QString* errorMessage = nullptr);
-    bool stopTun(QString* errorMessage = nullptr);
+                  bool autoDisableKillSwitchOnFailure = true, QString* errorMessage = nullptr);
+    bool stopTun(bool autoDisableKillSwitch = true, QString* errorMessage = nullptr);
+
+    KillSwitchState killSwitchState() const;
+    bool killSwitchStatus(QString* errorMessage = nullptr);
+    bool killSwitchCheckSupport(QJsonObject* payload = nullptr, QString* errorMessage = nullptr);
+    bool killSwitchEnable(const QJsonObject& payload, QString* errorMessage = nullptr);
+    bool killSwitchDisable(QString* errorMessage = nullptr);
+    bool killSwitchRecover(bool force = true, QString* errorMessage = nullptr);
+    static QString recoveryInstructionsText();
 
 signals:
     void connectionStateChanged();
     void helperLogLine(const QString& line);
+    void killSwitchStateChanged(const KillSwitchState& state);
+    void tunExitedWithKillSwitchActive();
 
 private:
     bool ensureToken(QString* errorMessage);
@@ -55,6 +67,9 @@ private:
     QString m_lastError;
     QString m_helperVersion;
     bool m_privileged = false;
+    KillSwitchState m_killSwitchState;
+
+    void updateKillSwitchState(const QJsonObject& payload);
 };
 
 } // namespace zarya

@@ -1,6 +1,6 @@
 # Zarya
 
-Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). Cross-platform Qt 6 desktop proxy client (milestones 0.1–0.15): profiles, subscriptions, Xray, routing, geo data updates, DNS profiles, system proxy, experimental TUN, tray, autostart, and packaging.
+Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). Cross-platform Qt 6 desktop proxy client (milestones 0.1–0.16): profiles, subscriptions, Xray, routing, geo data updates, DNS profiles, system proxy, experimental TUN, privileged helper, experimental kill switch (Linux nft PoC), tray, autostart, and packaging.
 
 ## Requirements
 
@@ -262,7 +262,7 @@ Options in the dialog:
 
 Releases do not bundle third-party `.dat` files; use **Update All** after first install.
 
-## Experimental TUN mode (0.15)
+## Experimental TUN mode (0.15+)
 
 Zarya’s default mode remains **system proxy via Xray**. An opt-in **experimental TUN mode** uses **sing-box** as the TUN backend (see `docs/tun-design.md` and `docs/privileged-helper-design.md`).
 
@@ -270,7 +270,14 @@ Zarya’s default mode remains **system proxy via Xray**. An opt-in **experiment
 - **`zarya-helper`** — separate executable for privileged TUN start/stop over local IPC (token auth, path restrictions). Not installed as an OS service in 0.15.
 - **Tools → Preview sing-box TUN config…** — generated JSON, warnings, Copy/Save, `sing-box check`.
 - TUN config uses the same **RoutingProfile** and **DnsProfile** as Xray mode where possible.
-- TUN mode does **not** enable OS system proxy. Kill switch is **not** implemented.
+- TUN mode does **not** enable OS system proxy.
+
+## Experimental kill switch (0.16)
+
+- Implemented in **`zarya-helper`** (requires helper mode, not direct GUI sing-box).
+- **Linux:** nftables PoC (`table inet zarya` only; never flushes global ruleset).
+- **Windows / macOS:** design stub / unsupported in 0.16 — see `docs/kill-switch-design.md`.
+- Recovery: `docs/recovery.md` and Settings → Kill Switch → Show Recovery Instructions.
 - For elevated TUN on Windows/macOS/Linux, run `zarya-helper` elevated manually or use dev mode and accept platform limits.
 
 ## DNS profiles

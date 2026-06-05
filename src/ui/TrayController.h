@@ -44,6 +44,7 @@ private:
     QAction* m_updateAllAction = nullptr;
     QAction* m_testSelectedAction = nullptr;
     QAction* m_exitAction = nullptr;
+    QAction* m_disableKillSwitchAction = nullptr;
 };
 
 } // namespace zarya

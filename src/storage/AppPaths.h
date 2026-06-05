@@ -24,6 +24,10 @@ public:
     static QString singBoxConfigPath();
     static QString singBoxTunConfigPath();
     static QString helperTokenPath();
+    static QString killSwitchDir();
+    static QString killSwitchMarkerPath();
+    static QString killSwitchRulesFilePath();
+    static void ensureKillSwitchDir();
     static QString resolvedHelperPath();
     static QString singBoxRuleSetDir();
     static QString singBoxCoreDir();

@@ -1,6 +1,8 @@
 #include "ui/TrayController.h"
 
 #include "app/AppController.h"
+#include "helperclient/HelperProcessManager.h"
+#include "killswitch/KillSwitchState.h"
 #include "storage/AppSettings.h"
 #include "ui/MainWindow.h"
 
@@ -81,6 +83,8 @@ void TrayController::setupTray()
     m_updateAllAction = m_trayMenu->addAction(QStringLiteral("Update All Subscriptions"));
     m_testSelectedAction = m_trayMenu->addAction(QStringLiteral("Test Selected Profile"));
     m_trayMenu->addSeparator();
+    m_disableKillSwitchAction = m_trayMenu->addAction(QStringLiteral("Kill Switch: Disable"));
+    m_trayMenu->addSeparator();
     m_exitAction = m_trayMenu->addAction(QStringLiteral("Exit"));
 
     connect(m_showAction, &QAction::triggered, m_mainWindow, &MainWindow::showFromTray);
@@ -94,6 +98,22 @@ void TrayController::setupTray()
     connect(m_updateAllAction, &QAction::triggered, m_mainWindow,
             &MainWindow::updateAllSubscriptions);
     connect(m_testSelectedAction, &QAction::triggered, m_mainWindow, &MainWindow::testSelected);
+    connect(m_disableKillSwitchAction, &QAction::triggered, this, [this]() {
+        HelperProcessManager* helper = m_appController ? m_appController->helperProcessManager()
+                                                       : nullptr;
+        if (!helper) {
+            return;
+        }
+        QString error;
+        if (!helper->connectToHelper(&error)) {
+            if (m_mainWindow) {
+                m_mainWindow->appController()->logLine(
+                    QStringLiteral("Kill switch disable failed: %1").arg(error));
+            }
+            return;
+        }
+        helper->killSwitchDisable(&error);
+    });
     connect(m_exitAction, &QAction::triggered, m_appController, &AppController::requestQuit);
 
     m_trayIcon->setContextMenu(m_trayMenu);
@@ -152,6 +172,18 @@ void TrayController::updateMenuState()
     m_restoreProxyAction->setEnabled(m_mainWindow->canRestoreSystemProxy());
     m_updateAllAction->setEnabled(!updating);
     m_testSelectedAction->setEnabled(hasSelection && !testsRunning);
+
+    bool showKillSwitchAction = false;
+    if (HelperProcessManager* helper = m_appController->helperProcessManager()) {
+        const KillSwitchStatus status = helper->killSwitchState().status;
+        showKillSwitchAction = status == KillSwitchStatus::Enabled
+                               || status == KillSwitchStatus::Failed
+                               || status == KillSwitchStatus::NeedsRecovery;
+    }
+    if (m_disableKillSwitchAction) {
+        m_disableKillSwitchAction->setVisible(showKillSwitchAction);
+        m_disableKillSwitchAction->setEnabled(showKillSwitchAction);
+    }
 }
 
 } // namespace zarya

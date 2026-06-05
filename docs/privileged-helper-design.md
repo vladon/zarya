@@ -107,9 +107,13 @@ Automatic elevation is **not** implemented in 0.15.
 - One primary client connection is assumed for log streaming.
 - Geo/rule-set parity is unchanged from 0.14.
 
+## Kill switch (0.16+)
+
+Kill switch firewall rules are owned by the helper (see `docs/kill-switch-design.md`). GUI sends `killSwitchEnable` / `killSwitchDisable` over the same IPC channel.
+
 ## Future milestones
 
 - Platform service installers
-- Kill switch (WFP / pf / nftables)
+- Windows WFP kill switch backend (Linux nft PoC in 0.16)
 - Firewall and route recovery
 - Optional config generation inside helper
