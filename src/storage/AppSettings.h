@@ -141,6 +141,9 @@ public:
     bool killSwitchAutoDisableOnCleanStop() const;
     void setKillSwitchAutoDisableOnCleanStop(bool enabled);
 
+    bool tunRequireLocalRuleSets() const;
+    void setTunRequireLocalRuleSets(bool enabled);
+
     bool startAtLogin() const;
     void setStartAtLogin(bool enabled);
 

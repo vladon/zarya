@@ -1,6 +1,7 @@
 #include "ui/SettingsDialog.h"
 
 #include "helperclient/HelperProcessManager.h"
+#include "storage/AppPaths.h"
 #include "killswitch/KillSwitchMode.h"
 #include "killswitch/KillSwitchState.h"
 
@@ -359,6 +360,24 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     experimentalForm->addRow(QString(), m_tunHelperRadio);
     experimentalForm->addRow(QStringLiteral("Helper status"), m_helperStatusLabel);
     experimentalForm->addRow(QString(), helperButtonsRow);
+
+    m_tunRequireLocalRuleSetsCheck =
+        new QCheckBox(QStringLiteral("Require local .srs rule sets before starting TUN"), this);
+    m_tunRequireLocalRuleSetsCheck->setChecked(settings.tunRequireLocalRuleSets());
+
+    m_ruleSetDirLabel = new QLabel(AppPaths::singBoxRuleSetDir(), this);
+    m_ruleSetDirLabel->setWordWrap(true);
+    m_ruleSetDirLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+
+    auto* ruleSetNote = new QLabel(
+        QStringLiteral("Manage rule sets from Tools → sing-box Rule Sets. Xray geoip.dat/geosite.dat "
+                       "are separate from sing-box .srs files."),
+        this);
+    ruleSetNote->setWordWrap(true);
+
+    experimentalForm->addRow(QStringLiteral("Rule sets"), m_tunRequireLocalRuleSetsCheck);
+    experimentalForm->addRow(QStringLiteral("Rule-set directory"), m_ruleSetDirLabel);
+    experimentalForm->addRow(QString(), ruleSetNote);
     experimentalForm->addRow(QString(), tunWarnings);
 
     auto* experimentalGroup = new QGroupBox(QStringLiteral("Experimental"), this);
@@ -481,6 +500,7 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
         m_tunDnsHijackModeCombo->setEnabled(enabled && m_tunEnableDnsHijackCheck->isChecked());
         m_tunDirectGuiRadio->setEnabled(enabled);
         m_tunHelperRadio->setEnabled(enabled);
+        m_tunRequireLocalRuleSetsCheck->setEnabled(enabled);
         const bool helperUi = enabled && m_helperManager != nullptr;
         m_startHelperButton->setEnabled(helperUi);
         m_connectHelperButton->setEnabled(helperUi);
@@ -704,6 +724,7 @@ bool SettingsDialog::validateAndSave()
     settings.setTunPrivilegeMode(m_tunHelperRadio->isChecked()
                                      ? TunPrivilegeMode::HelperExperimental
                                      : TunPrivilegeMode::DirectFromGui);
+    settings.setTunRequireLocalRuleSets(m_tunRequireLocalRuleSetsCheck->isChecked());
 
     const bool killSwitchEnabled = m_enableKillSwitchCheck->isChecked();
     settings.setEnableExperimentalKillSwitch(killSwitchEnabled);

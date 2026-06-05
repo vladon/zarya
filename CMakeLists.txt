@@ -98,6 +98,20 @@ set(ZARYA_KILLSWITCH_GUI_SOURCES
     src/killswitch/KillSwitchPayloadBuilder.cpp
 )
 
+set(ZARYA_RULESET_SOURCES
+    src/rulesets/RuleSetKind.cpp
+    src/rulesets/RuleSetStatus.cpp
+    src/rulesets/RuleSetNormalizer.cpp
+    src/rulesets/RuleSetCatalog.cpp
+    src/rulesets/RuleSetVerifier.cpp
+    src/rulesets/RuleSetCompiler.cpp
+    src/rulesets/RuleSetDownloader.cpp
+    src/rulesets/RequiredRuleSetDetector.cpp
+    src/rulesets/RuleSetManager.cpp
+    src/storage/RuleSetStore.cpp
+    src/runtime/singbox/SingBoxRuleSetContext.cpp
+)
+
 set(ZARYA_RUNTIME_SOURCES
     src/runtime/ConfigWarning.cpp
     src/runtime/IRuntimeBackend.cpp
@@ -110,6 +124,7 @@ set(ZARYA_RUNTIME_SOURCES
     src/runtime/singbox/SingBoxRuleSetManager.cpp
     src/runtime/singbox/SingBoxConfigGenerator.cpp
     src/runtime/singbox/SingBoxTunRuntimeBackend.cpp
+    ${ZARYA_RULESET_SOURCES}
 )
 
 set(ZARYA_GEODATA_SOURCES
@@ -194,6 +209,7 @@ set(ZARYA_SOURCES
     src/ui/RoutingRuleEditorDialog.cpp
     src/ui/RoutingJsonPreviewDialog.cpp
     src/ui/SingBoxConfigPreviewDialog.cpp
+    src/ui/RuleSetManagerDialog.cpp
     src/ui/GeoDataManagerDialog.cpp
     src/ui/DnsManagerDialog.cpp
     src/ui/DnsProfileDialog.cpp
@@ -361,17 +377,28 @@ add_executable(zarya_singbox_config_test
     src/runtime/singbox/SingBoxRouteGenerator.cpp
     src/runtime/singbox/SingBoxDnsGenerator.cpp
     src/runtime/singbox/SingBoxRuleSetManager.cpp
+    src/runtime/singbox/SingBoxConfigGenerator.cpp
     src/routing/RoutingGeoUtils.cpp
+    src/dns/DnsGeoUtils.cpp
     ${ZARYA_DOMAIN_SOURCES}
     src/storage/AppPaths.cpp
     src/storage/AppSettings.cpp
     src/runtime/RuntimeBackendType.cpp
     src/platform/Platform.cpp
+    src/killswitch/KillSwitchMode.cpp
+    src/geodata/GeoDataDownloader.cpp
+    src/packaging/PackagingInfo.cpp
+    ${ZARYA_RULESET_SOURCES}
 )
 
 target_include_directories(zarya_singbox_config_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
+target_compile_definitions(zarya_singbox_config_test PRIVATE
+    ZARYA_VERSION_STRING="${ZARYA_VERSION_STRING}"
+)
+
 zarya_link_qt_core(zarya_singbox_config_test)
+target_link_libraries(zarya_singbox_config_test PRIVATE Qt6::Network)
 
 if(WIN32)
     add_executable(zarya_system_proxy_test

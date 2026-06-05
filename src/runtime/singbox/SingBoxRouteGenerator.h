@@ -1,8 +1,10 @@
 #pragma once
 
 #include "domain/RoutingProfile.h"
+#include "runtime/singbox/SingBoxRuleSetContext.h"
 
 #include <QJsonObject>
+#include <QSet>
 #include <QStringList>
 
 namespace zarya {
@@ -12,6 +14,8 @@ struct SingBoxRouteGenerationOptions {
     bool enableAutoDetectInterface = true;
     bool enableRuleSets = true;
     QString finalOutbound = QStringLiteral("proxy");
+    SingBoxRuleSetContext ruleSetContext;
+    QSet<QString>* usedRuleSetTagsOut = nullptr;
 };
 
 class SingBoxRouteGenerator {

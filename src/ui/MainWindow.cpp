@@ -15,6 +15,7 @@
 #include "ui/ProfileDialog.h"
 #include "ui/DnsManagerDialog.h"
 #include "ui/GeoDataManagerDialog.h"
+#include "ui/RuleSetManagerDialog.h"
 #include "ui/RoutingManagerDialog.h"
 #include "ui/SettingsDialog.h"
 #include "geodata/GeoDataFileStatus.h"
@@ -49,7 +50,8 @@ namespace zarya {
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
     , m_appController(&m_coreManager, &m_systemProxy, &m_xrayAdapter, &m_testManager,
-                      &m_routingManager, &m_geoDataManager, &m_dnsManager, this)
+                      &m_routingManager, &m_geoDataManager, &m_dnsManager, &m_ruleSetManager,
+                      this)
 {
     setupUi();
     setupMenuBar();
@@ -161,6 +163,7 @@ void MainWindow::setupMenuBar()
     m_routingProfilesAction =
         toolsMenu->addAction(QStringLiteral("Routing &Profiles…"));
     m_geoDataManagerAction = toolsMenu->addAction(QStringLiteral("Geo Data &Manager…"));
+    m_ruleSetManagerAction = toolsMenu->addAction(QStringLiteral("sing-box Rule &Sets…"));
     m_dnsProfilesAction = toolsMenu->addAction(QStringLiteral("DNS &Profiles…"));
     m_previewSingBoxTunConfigAction =
         toolsMenu->addAction(QStringLiteral("Preview sing-box TUN config…"));
@@ -217,6 +220,7 @@ void MainWindow::setupConnections()
     connect(m_settingsAction, &QAction::triggered, this, &MainWindow::onSettings);
     connect(m_routingProfilesAction, &QAction::triggered, this, &MainWindow::onRoutingProfiles);
     connect(m_geoDataManagerAction, &QAction::triggered, this, &MainWindow::onGeoDataManager);
+    connect(m_ruleSetManagerAction, &QAction::triggered, this, &MainWindow::onRuleSetManager);
     connect(m_dnsProfilesAction, &QAction::triggered, this, &MainWindow::onDnsProfiles);
     connect(m_previewSingBoxTunConfigAction, &QAction::triggered, this,
             &MainWindow::onPreviewSingBoxTunConfig);
@@ -422,6 +426,7 @@ void MainWindow::setupAppController()
     });
     m_appController.setOpenGeoDataManagerCallback([this]() { onGeoDataManager(); });
     m_appController.setOpenDnsProfilesCallback([this]() { onDnsProfiles(); });
+    m_appController.setOpenRuleSetManagerCallback([this]() { onRuleSetManager(); });
 }
 
 void MainWindow::setupTray()
@@ -1134,6 +1139,13 @@ void MainWindow::onSettings()
     appendLog(QStringLiteral("Settings updated. Xray path: %1")
                   .arg(AppSettings::instance().resolvedXrayPath()));
     updateStatusBar();
+}
+
+void MainWindow::onRuleSetManager()
+{
+    RuleSetManagerDialog dialog(m_ruleSetManager, m_routingManager, m_dnsManager,
+                                [this](const QString& line) { appendLog(line); }, this);
+    dialog.exec();
 }
 
 void MainWindow::onGeoDataManager()

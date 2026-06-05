@@ -92,6 +92,9 @@ private:
     QPushButton* m_connectHelperButton = nullptr;
     QPushButton* m_checkHelperStatusButton = nullptr;
 
+    QCheckBox* m_tunRequireLocalRuleSetsCheck = nullptr;
+    QLabel* m_ruleSetDirLabel = nullptr;
+
     QCheckBox* m_enableKillSwitchCheck = nullptr;
     QLabel* m_killSwitchModeLabel = nullptr;
     QCheckBox* m_killSwitchAllowLanCheck = nullptr;

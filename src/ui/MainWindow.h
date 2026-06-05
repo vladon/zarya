@@ -10,6 +10,7 @@
 #include "storage/SubscriptionStore.h"
 #include "dns/DnsManager.h"
 #include "geodata/GeoDataManager.h"
+#include "rulesets/RuleSetManager.h"
 #include "routing/RoutingManager.h"
 #include "subscription/SubscriptionManager.h"
 #include "testing/TestManager.h"
@@ -72,6 +73,7 @@ private slots:
     void onSettings();
     void onRoutingProfiles();
     void onGeoDataManager();
+    void onRuleSetManager();
     void onDnsProfiles();
     void onPreviewSingBoxTunConfig();
     void onSubscriptions();
@@ -158,6 +160,7 @@ private:
     RoutingManager m_routingManager;
     DnsManager m_dnsManager;
     GeoDataManager m_geoDataManager;
+    RuleSetManager m_ruleSetManager;
     TestManager m_testManager;
     CoreManager m_coreManager;
     XrayAdapter m_xrayAdapter;
@@ -186,6 +189,7 @@ private:
     QAction* m_settingsAction = nullptr;
     QAction* m_routingProfilesAction = nullptr;
     QAction* m_geoDataManagerAction = nullptr;
+    QAction* m_ruleSetManagerAction = nullptr;
     QAction* m_dnsProfilesAction = nullptr;
     QAction* m_previewSingBoxTunConfigAction = nullptr;
     QAction* m_subscriptionsAction = nullptr;

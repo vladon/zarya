@@ -500,6 +500,16 @@ void AppSettings::setKillSwitchAutoDisableOnCleanStop(bool enabled)
     settings().setValue(QStringLiteral("runtime/killSwitchAutoDisableOnCleanStop"), enabled);
 }
 
+bool AppSettings::tunRequireLocalRuleSets() const
+{
+    return settings().value(QStringLiteral("runtime/tunRequireLocalRuleSets"), false).toBool();
+}
+
+void AppSettings::setTunRequireLocalRuleSets(bool enabled)
+{
+    settings().setValue(QStringLiteral("runtime/tunRequireLocalRuleSets"), enabled);
+}
+
 bool AppSettings::startAtLogin() const
 {
     return settings().value(QStringLiteral("startup/startAtLogin"), false).toBool();

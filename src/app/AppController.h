@@ -19,6 +19,7 @@ class CoreManager;
 class DnsManager;
 class GeoDataManager;
 class HelperProcessManager;
+class RuleSetManager;
 class RoutingManager;
 class SystemProxyController;
 class TestManager;
@@ -31,13 +32,15 @@ public:
     explicit AppController(CoreManager* coreManager, SystemProxyController* systemProxy,
                            XrayAdapter* xrayAdapter, TestManager* testManager,
                            RoutingManager* routingManager, GeoDataManager* geoDataManager,
-                           DnsManager* dnsManager, QObject* parent = nullptr);
+                           DnsManager* dnsManager, RuleSetManager* ruleSetManager,
+                           QObject* parent = nullptr);
 
     void setDialogParent(QWidget* parent);
     void setAfterCoreStartedCallback(std::function<void()> callback);
     void setSaveApplicationStateCallback(std::function<bool(QString*)> callback);
     void setOpenGeoDataManagerCallback(std::function<void()> callback);
     void setOpenDnsProfilesCallback(std::function<void()> callback);
+    void setOpenRuleSetManagerCallback(std::function<void()> callback);
 
     bool startProfile(const Profile& profile, bool fromAutostart = false);
     SingBoxConfigGenerationResult generateSingBoxTunConfig(const Profile& profile) const;
@@ -76,6 +79,8 @@ private:
     bool startProfileSystemProxyXray(const Profile& profile, bool fromAutostart);
     bool startProfileTunSingBox(const Profile& profile, bool fromAutostart);
     bool confirmSingBoxConfigWarningsIfNeeded(const SingBoxConfigGenerationResult& result);
+    bool confirmRuleSetsIfNeeded(const RoutingProfile& routingProfile,
+                                 const DnsProfile& dnsProfile);
     void setupRuntimeBackends();
 
     std::unique_ptr<RuntimeBackendFactory> m_runtimeFactory;
@@ -87,11 +92,13 @@ private:
     RoutingManager* m_routingManager = nullptr;
     GeoDataManager* m_geoDataManager = nullptr;
     DnsManager* m_dnsManager = nullptr;
+    RuleSetManager* m_ruleSetManager = nullptr;
     QWidget* m_dialogParent = nullptr;
     std::function<void()> m_afterCoreStarted;
     std::function<bool(QString*)> m_saveApplicationState;
     std::function<void()> m_openGeoDataManager;
     std::function<void()> m_openDnsProfiles;
+    std::function<void()> m_openRuleSetManager;
     bool m_lastStartWasAutostart = false;
 };
 

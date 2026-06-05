@@ -30,6 +30,10 @@ public:
     static void ensureKillSwitchDir();
     static QString resolvedHelperPath();
     static QString singBoxRuleSetDir();
+    static QString singBoxRuleSetSourceDir();
+    static QString localRuleSetSrsPath(const QString& tag);
+    static QString localRuleSetJsonPath(const QString& tag);
+    static QString ruleSetStorePath();
     static QString singBoxCoreDir();
     static QString testRuntimeDir();
     static QString testConfigPath(const QString& profileId);

@@ -1,9 +1,11 @@
 #include "runtime/singbox/SingBoxRouteGenerator.h"
 
 #include "routing/RoutingGeoUtils.h"
+#include "rulesets/RuleSetNormalizer.h"
 #include "runtime/singbox/SingBoxRuleSetManager.h"
 
 #include <QJsonArray>
+#include <QSet>
 #include <algorithm>
 
 namespace zarya {
@@ -175,17 +177,84 @@ bool translateProtocolValue(const QString& rawValue, RouteMatchers& matchers, QS
     return true;
 }
 
-QJsonObject matchersToRule(const RouteMatchers& matchers, const QString& outbound)
+bool appendRuleSetTag(QJsonArray& ruleSetTags, const QString& tag,
+                      const SingBoxRuleSetContext& context, QSet<QString>* usedTags)
+{
+    if (!context.hasLocalRuleSet(tag)) {
+        return false;
+    }
+    for (const QJsonValue& existing : ruleSetTags) {
+        if (existing.toString() == tag) {
+            return true;
+        }
+    }
+    ruleSetTags.append(tag);
+    if (usedTags) {
+        usedTags->insert(tag);
+    }
+    return true;
+}
+
+QJsonObject matchersToRule(const RouteMatchers& matchers, const QString& outbound,
+                           const SingBoxRouteGenerationOptions& options, QSet<QString>* usedTags,
+                           QStringList* warnings)
 {
     QJsonObject rule;
     bool hasMatcher = false;
+    QJsonArray ruleSetTags;
 
-    if (!matchers.geosite.isEmpty()) {
-        rule.insert(QStringLiteral("geosite"), matchers.geosite);
+    const bool useRuleSets =
+        options.enableRuleSets && options.ruleSetContext.useRuleSetReferences;
+
+    QJsonArray fallbackGeosite;
+    QJsonArray fallbackGeoip;
+    if (useRuleSets) {
+        for (const QJsonValue& value : matchers.geosite) {
+            const QString tag = RuleSetNormalizer::geositeTagFromValue(value.toString());
+            if (appendRuleSetTag(ruleSetTags, tag, options.ruleSetContext, usedTags)) {
+                continue;
+            }
+            fallbackGeosite.append(value.toString());
+            if (options.ruleSetContext.requireLocalRuleSets) {
+                appendWarning(warnings,
+                              QStringLiteral("Required rule set %1 is missing.").arg(tag));
+            } else {
+                appendWarning(warnings,
+                              QStringLiteral(
+                                  "Rule set %1 missing; falling back to native geosite tag.")
+                                  .arg(tag));
+            }
+        }
+        for (const QJsonValue& value : matchers.geoip) {
+            const QString tag = RuleSetNormalizer::geoipTagFromValue(value.toString());
+            if (appendRuleSetTag(ruleSetTags, tag, options.ruleSetContext, usedTags)) {
+                continue;
+            }
+            fallbackGeoip.append(value.toString());
+            if (options.ruleSetContext.requireLocalRuleSets) {
+                appendWarning(warnings,
+                              QStringLiteral("Required rule set %1 is missing.").arg(tag));
+            } else {
+                appendWarning(warnings,
+                              QStringLiteral(
+                                  "Rule set %1 missing; falling back to native geoip tag.")
+                                  .arg(tag));
+            }
+        }
+        if (!ruleSetTags.isEmpty()) {
+            rule.insert(QStringLiteral("rule_set"), ruleSetTags);
+            hasMatcher = true;
+        }
+    }
+
+    const QJsonArray geositeToUse = useRuleSets ? fallbackGeosite : matchers.geosite;
+    const QJsonArray geoipToUse = useRuleSets ? fallbackGeoip : matchers.geoip;
+    if (!geositeToUse.isEmpty()) {
+        rule.insert(QStringLiteral("geosite"), geositeToUse);
         hasMatcher = true;
     }
-    if (!matchers.geoip.isEmpty()) {
-        rule.insert(QStringLiteral("geoip"), matchers.geoip);
+    if (!geoipToUse.isEmpty()) {
+        rule.insert(QStringLiteral("geoip"), geoipToUse);
         hasMatcher = true;
     }
     if (matchers.ipIsPrivate) {
@@ -229,7 +298,9 @@ QJsonObject matchersToRule(const RouteMatchers& matchers, const QString& outboun
     return rule;
 }
 
-QJsonObject ruleFromRoutingRule(const RoutingRule& routingRule, QStringList* warnings)
+QJsonObject ruleFromRoutingRule(const RoutingRule& routingRule,
+                                const SingBoxRouteGenerationOptions& options,
+                                QSet<QString>* usedTags, QStringList* warnings)
 {
     RouteMatchers matchers;
     const QString outbound = outboundForAction(routingRule.action);
@@ -255,7 +326,7 @@ QJsonObject ruleFromRoutingRule(const RoutingRule& routingRule, QStringList* war
     if (!any) {
         return {};
     }
-    return matchersToRule(matchers, outbound);
+    return matchersToRule(matchers, outbound, options, usedTags, warnings);
 }
 
 } // namespace
@@ -270,6 +341,7 @@ QJsonObject SingBoxRouteGenerator::generateRoute(const RoutingProfile& routingPr
     }
 
     QJsonArray rules;
+    QSet<QString> usedRuleSetTags;
 
     if (routingProfile.mode == RoutingMode::ProxyAll) {
         route.insert(QStringLiteral("rules"), rules);
@@ -287,32 +359,39 @@ QJsonObject SingBoxRouteGenerator::generateRoute(const RoutingProfile& routingPr
         if (!routingRule.enabled) {
             continue;
         }
-        const QJsonObject singBoxRule = ruleFromRoutingRule(routingRule, warnings);
+        const QJsonObject singBoxRule =
+            ruleFromRoutingRule(routingRule, options, &usedRuleSetTags, warnings);
         if (!singBoxRule.isEmpty()) {
             rules.append(singBoxRule);
         }
     }
 
-    const QStringList geoValues = RoutingGeoUtils::geoTagsUsed(routingProfile);
-    QStringList geoTagsOnly;
-    for (const QString& value : geoValues) {
-        const QString trimmed = value.trimmed();
-        if (trimmed.startsWith(QStringLiteral("geosite:"), Qt::CaseInsensitive)) {
-            geoTagsOnly.append(trimmed.mid(8).trimmed());
-        } else if (trimmed.startsWith(QStringLiteral("geoip:"), Qt::CaseInsensitive)) {
-            const QString tag = trimmed.mid(6).trimmed();
-            if (tag.compare(QStringLiteral("private"), Qt::CaseInsensitive) != 0) {
-                geoTagsOnly.append(tag);
+    if (options.enableRuleSets && usedRuleSetTags.isEmpty()) {
+        const QStringList geoValues = RoutingGeoUtils::geoTagsUsed(routingProfile);
+        QStringList geoTagsOnly;
+        for (const QString& value : geoValues) {
+            const QString trimmed = value.trimmed();
+            if (trimmed.startsWith(QStringLiteral("geosite:"), Qt::CaseInsensitive)) {
+                geoTagsOnly.append(trimmed.mid(8).trimmed());
+            } else if (trimmed.startsWith(QStringLiteral("geoip:"), Qt::CaseInsensitive)) {
+                const QString tag = trimmed.mid(6).trimmed();
+                if (tag.compare(QStringLiteral("private"), Qt::CaseInsensitive) != 0) {
+                    geoTagsOnly.append(tag);
+                }
             }
         }
-    }
-    geoTagsOnly.removeDuplicates();
-    if (options.enableRuleSets && !geoTagsOnly.isEmpty()) {
-        SingBoxRuleSetManager::appendGeoCompatibilityWarnings(geoTagsOnly, warnings);
+        geoTagsOnly.removeDuplicates();
+        if (!geoTagsOnly.isEmpty()) {
+            SingBoxRuleSetManager::appendGeoCompatibilityWarnings(geoTagsOnly, warnings);
+        }
     }
 
     route.insert(QStringLiteral("rules"), rules);
     route.insert(QStringLiteral("final"), options.finalOutbound);
+
+    if (options.usedRuleSetTagsOut) {
+        *options.usedRuleSetTagsOut = usedRuleSetTags;
+    }
     return route;
 }
 
