@@ -168,6 +168,28 @@ QString AppPaths::singBoxRuleSetDir()
     return path;
 }
 
+QString AppPaths::singBoxRuleSetSourceDir()
+{
+    const QString path = QDir(dataDir()).filePath(QStringLiteral("sing-box/rule-set-source"));
+    ensureDir(path);
+    return path;
+}
+
+QString AppPaths::localRuleSetSrsPath(const QString& tag)
+{
+    return QDir(singBoxRuleSetDir()).filePath(QStringLiteral("%1.srs").arg(tag));
+}
+
+QString AppPaths::localRuleSetJsonPath(const QString& tag)
+{
+    return QDir(singBoxRuleSetSourceDir()).filePath(QStringLiteral("%1.json").arg(tag));
+}
+
+QString AppPaths::ruleSetStorePath()
+{
+    return QDir(dataDir()).filePath(QStringLiteral("sing-box/rulesets.json"));
+}
+
 QString AppPaths::singBoxCoreDir()
 {
     return QDir(coresDir()).filePath(QStringLiteral("sing-box"));

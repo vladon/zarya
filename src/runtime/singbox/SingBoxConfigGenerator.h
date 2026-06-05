@@ -4,6 +4,7 @@
 #include "domain/Profile.h"
 #include "domain/RoutingProfile.h"
 #include "runtime/ConfigWarning.h"
+#include "runtime/singbox/SingBoxRuleSetContext.h"
 
 #include <QJsonObject>
 #include <QStringList>
@@ -16,6 +17,7 @@ struct SingBoxConfigOptions {
     bool enableAutoDetectInterface = true;
     bool enableRuleSets = true;
     QString finalOutbound = QStringLiteral("proxy");
+    SingBoxRuleSetContext ruleSetContext;
 };
 
 struct SingBoxConfigGenerationResult {
@@ -37,6 +39,8 @@ public:
 
     bool supportsProfile(const Profile& profile, QString* reason = nullptr) const;
 
+    QList<ConfigWarning> classifyWarnings(const QStringList& warnings) const;
+
 private:
     QJsonObject buildTunInbound() const;
     QJsonObject appendDnsHijackRoute(QJsonObject route, QStringList* warnings) const;
@@ -46,8 +50,6 @@ private:
     QJsonObject buildVmessOutbound(const Profile& profile, QString* errorMessage) const;
     QJsonObject buildTrojanOutbound(const Profile& profile, QString* errorMessage) const;
     QJsonObject buildShadowsocksOutbound(const Profile& profile, QString* errorMessage) const;
-
-    QList<ConfigWarning> classifyWarnings(const QStringList& warnings) const;
 };
 
 } // namespace zarya

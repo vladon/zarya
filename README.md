@@ -1,6 +1,6 @@
 # Zarya
 
-Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). Cross-platform Qt 6 desktop proxy client (milestones 0.1–0.16): profiles, subscriptions, Xray, routing, geo data updates, DNS profiles, system proxy, experimental TUN, privileged helper, experimental kill switch (Linux nft PoC), tray, autostart, and packaging.
+Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). Cross-platform Qt 6 desktop proxy client (milestones 0.1–0.17): profiles, subscriptions, Xray, routing, geo data updates, DNS profiles, system proxy, experimental TUN, sing-box rule sets (.srs), privileged helper, experimental kill switch (Linux nft PoC), tray, autostart, and packaging.
 
 ## Requirements
 
@@ -271,6 +271,12 @@ Zarya’s default mode remains **system proxy via Xray**. An opt-in **experiment
 - **Tools → Preview sing-box TUN config…** — generated JSON, warnings, Copy/Save, `sing-box check`.
 - TUN config uses the same **RoutingProfile** and **DnsProfile** as Xray mode where possible.
 - TUN mode does **not** enable OS system proxy.
+
+## sing-box rule sets (0.17)
+
+- **Tools → sing-box Rule Sets** — manage local `.srs` files separately from Xray `geoip.dat`/`geosite.dat`.
+- Import `.srs`, compile source JSON via `sing-box rule-set compile`, optional strict mode before TUN start.
+- See `docs/sing-box-rule-sets.md`.
 
 ## Experimental kill switch (0.16)
 

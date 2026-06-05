@@ -23,6 +23,8 @@
 #include "runtime/ConfigWarning.h"
 #include "runtime/singbox/SingBoxConfigGenerator.h"
 #include "helperclient/HelperProcessManager.h"
+#include "rulesets/RuleSetManager.h"
+#include "rulesets/RuleSetStatus.h"
 #include "runtime/singbox/SingBoxTunRuntimeBackend.h"
 #include "runtime/xray/XraySystemProxyRuntimeBackend.h"
 #include "testing/TestManager.h"
@@ -51,7 +53,8 @@ bool vmessFailureMayBeClockSkew(const QString& text)
 AppController::AppController(CoreManager* coreManager, SystemProxyController* systemProxy,
                              XrayAdapter* xrayAdapter, TestManager* testManager,
                              RoutingManager* routingManager, GeoDataManager* geoDataManager,
-                             DnsManager* dnsManager, QObject* parent)
+                             DnsManager* dnsManager, RuleSetManager* ruleSetManager,
+                             QObject* parent)
     : QObject(parent)
     , m_coreManager(coreManager)
     , m_systemProxy(systemProxy)
@@ -60,6 +63,7 @@ AppController::AppController(CoreManager* coreManager, SystemProxyController* sy
     , m_routingManager(routingManager)
     , m_geoDataManager(geoDataManager)
     , m_dnsManager(dnsManager)
+    , m_ruleSetManager(ruleSetManager)
 {
     m_runtimeFactory = std::make_unique<RuntimeBackendFactory>(coreManager);
     setupRuntimeBackends();
@@ -154,6 +158,11 @@ void AppController::setOpenGeoDataManagerCallback(std::function<void()> callback
 void AppController::setOpenDnsProfilesCallback(std::function<void()> callback)
 {
     m_openDnsProfiles = std::move(callback);
+}
+
+void AppController::setOpenRuleSetManagerCallback(std::function<void()> callback)
+{
+    m_openRuleSetManager = std::move(callback);
 }
 
 bool AppController::confirmDnsGeoDataIfNeeded(const DnsProfile& dnsProfile)
@@ -418,9 +427,105 @@ SingBoxConfigGenerationResult AppController::generateSingBoxTunConfig(const Prof
     options.enableDnsHijack =
         settings.tunEnableDnsHijack()
         && settings.tunDnsHijackMode() != TunDnsHijackMode::Disabled;
+    if (m_ruleSetManager) {
+        options.ruleSetContext = m_ruleSetManager->buildContext(
+            routingProfile, dnsProfile, settings.tunRequireLocalRuleSets());
+    }
 
     const SingBoxConfigGenerator generator;
-    return generator.generate(profile, routingProfile, dnsProfile, options);
+    SingBoxConfigGenerationResult result =
+        generator.generate(profile, routingProfile, dnsProfile, options);
+
+    if (m_ruleSetManager) {
+        for (const RequiredRuleSet& required :
+             m_ruleSetManager->detectRequired(routingProfile, dnsProfile)) {
+            const QString line = QStringLiteral("Rule set %1 (%2): %3")
+                                   .arg(required.tag, required.sourceArea,
+                                        required.available ? QStringLiteral("present")
+                                                           : ruleSetStatusDisplayName(
+                                                                 required.catalogStatus));
+            if (!result.warnings.contains(line)) {
+                result.warnings.append(line);
+            }
+            if (!required.available && settings.tunRequireLocalRuleSets()) {
+                const QString blockingLine =
+                    QStringLiteral("Required rule set %1 is missing.").arg(required.tag);
+                if (!result.warnings.contains(blockingLine)) {
+                    result.warnings.append(blockingLine);
+                }
+            }
+        }
+    }
+    if (result.success) {
+        result.classifiedWarnings = generator.classifyWarnings(result.warnings);
+    }
+    return result;
+}
+
+bool AppController::confirmRuleSetsIfNeeded(const RoutingProfile& routingProfile,
+                                            const DnsProfile& dnsProfile)
+{
+    if (!m_ruleSetManager) {
+        return true;
+    }
+
+    const AppSettings& settings = AppSettings::instance();
+    const QVector<RequiredRuleSet> required =
+        m_ruleSetManager->detectRequired(routingProfile, dnsProfile);
+    bool anyMissing = false;
+    for (const RequiredRuleSet& entry : required) {
+        if (!entry.available) {
+            anyMissing = true;
+            break;
+        }
+    }
+    if (!anyMissing) {
+        return true;
+    }
+
+    QStringList lines;
+    for (const RequiredRuleSet& entry : required) {
+        lines.append(QStringLiteral("%1: %2")
+                         .arg(entry.tag, entry.available ? QStringLiteral("present")
+                                                         : QStringLiteral("missing")));
+    }
+
+    if (settings.tunRequireLocalRuleSets()) {
+        if (m_dialogParent) {
+            QMessageBox::critical(
+                m_dialogParent, QStringLiteral("Missing sing-box rule sets"),
+                QStringLiteral(
+                    "The active TUN routing/DNS profiles require sing-box rule sets that are "
+                    "missing:\n\n%1")
+                    .arg(lines.join(QStringLiteral("\n"))));
+        }
+        return false;
+    }
+
+    if (!m_dialogParent) {
+        return true;
+    }
+
+    QMessageBox box(m_dialogParent);
+    box.setIcon(QMessageBox::Warning);
+    box.setWindowTitle(QStringLiteral("sing-box rule sets"));
+    box.setText(QStringLiteral(
+        "The active TUN routing/DNS profiles reference sing-box rule sets that are missing:\n\n%1\n\n"
+        "Continue anyway? sing-box check is the final authority.")
+                    .arg(lines.join(QStringLiteral("\n"))));
+    auto* managerButton = box.addButton(QStringLiteral("Open Rule Set Manager"),
+                                        QMessageBox::ActionRole);
+    box.addButton(QMessageBox::Cancel);
+    auto* continueButton = box.addButton(QStringLiteral("Continue"), QMessageBox::AcceptRole);
+    box.setDefaultButton(QMessageBox::Cancel);
+    box.exec();
+    if (box.clickedButton() == managerButton) {
+        if (m_openRuleSetManager) {
+            m_openRuleSetManager();
+        }
+        return false;
+    }
+    return box.clickedButton() == continueButton;
 }
 
 bool AppController::confirmSingBoxConfigWarningsIfNeeded(
@@ -527,6 +632,11 @@ bool AppController::startProfileTunSingBox(const Profile& profile, bool fromAuto
         if (!confirmDnsWarningsIfNeeded(dnsProfile, routingProfile)) {
             return false;
         }
+    }
+
+    if (!confirmRuleSetsIfNeeded(routingProfile, dnsProfile)) {
+        emit logLine(QStringLiteral("TUN start canceled due to missing rule sets."));
+        return false;
     }
 
     const SingBoxConfigGenerationResult generation = generateSingBoxTunConfig(profile);

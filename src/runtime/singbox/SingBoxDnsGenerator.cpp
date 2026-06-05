@@ -1,8 +1,10 @@
 #include "runtime/singbox/SingBoxDnsGenerator.h"
 
+#include "rulesets/RuleSetNormalizer.h"
 #include "runtime/singbox/SingBoxRuleSetManager.h"
 
 #include <QJsonArray>
+#include <QSet>
 
 namespace zarya {
 
@@ -141,22 +143,43 @@ QJsonObject SingBoxDnsGenerator::generateDns(const DnsProfile& dnsProfile,
                       QStringLiteral("https://cloudflare-dns.com/dns-query"));
         remote.insert(QStringLiteral("detour"), QStringLiteral("proxy"));
 
+        const QString cnTag = RuleSetNormalizer::geositeTagFromValue(QStringLiteral("cn"));
+        const QString globalTag =
+            RuleSetNormalizer::geositeTagFromValue(QStringLiteral("geolocation-!cn"));
+
         QJsonObject cnRule;
-        cnRule.insert(QStringLiteral("geosite"), QJsonArray{QStringLiteral("cn")});
+        if (options.ruleSetContext.hasLocalRuleSet(cnTag)) {
+            cnRule.insert(QStringLiteral("rule_set"), QJsonArray{cnTag});
+            if (options.usedRuleSetTagsOut) {
+                options.usedRuleSetTagsOut->insert(cnTag);
+            }
+        } else {
+            cnRule.insert(QStringLiteral("geosite"), QJsonArray{QStringLiteral("cn")});
+            appendWarning(warnings,
+                          QStringLiteral("DNS rule set %1 missing; using native geosite tag.")
+                              .arg(cnTag));
+        }
         cnRule.insert(QStringLiteral("server"), QStringLiteral("local-cn"));
 
         QJsonObject globalRule;
-        globalRule.insert(QStringLiteral("geosite"),
-                          QJsonArray{QStringLiteral("geolocation-!cn")});
+        if (options.ruleSetContext.hasLocalRuleSet(globalTag)) {
+            globalRule.insert(QStringLiteral("rule_set"), QJsonArray{globalTag});
+            if (options.usedRuleSetTagsOut) {
+                options.usedRuleSetTagsOut->insert(globalTag);
+            }
+        } else {
+            globalRule.insert(QStringLiteral("geosite"),
+                              QJsonArray{QStringLiteral("geolocation-!cn")});
+            appendWarning(warnings,
+                          QStringLiteral("DNS rule set %1 missing; using native geosite tag.")
+                              .arg(globalTag));
+        }
         globalRule.insert(QStringLiteral("server"), QStringLiteral("remote"));
 
         QJsonObject dns;
         dns.insert(QStringLiteral("servers"), QJsonArray{localCn, remote});
         dns.insert(QStringLiteral("rules"), QJsonArray{cnRule, globalRule});
         dns.insert(QStringLiteral("final"), QStringLiteral("remote"));
-
-        QStringList geoTags = {QStringLiteral("cn"), QStringLiteral("geolocation-!cn")};
-        SingBoxRuleSetManager::appendGeoCompatibilityWarnings(geoTags, warnings);
         return dns;
     }
     case DnsProfileMode::Custom: {

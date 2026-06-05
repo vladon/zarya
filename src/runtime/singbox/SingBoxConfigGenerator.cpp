@@ -4,6 +4,7 @@
 #include "runtime/singbox/SingBoxRouteGenerator.h"
 
 #include <QJsonArray>
+#include <QSet>
 
 namespace zarya {
 
@@ -26,7 +27,9 @@ QList<ConfigWarning> SingBoxConfigGenerator::classifyWarnings(const QStringList&
     for (const QString& warning : warnings) {
         const QString lower = warning.toLower();
         if (lower.contains(QStringLiteral("not supported by experimental tun"))
-            || lower.contains(QStringLiteral("cannot be represented"))) {
+            || lower.contains(QStringLiteral("cannot be represented"))
+            || lower.contains(QStringLiteral("required rule set"))
+                   && lower.contains(QStringLiteral("is missing"))) {
             classified.append(ConfigWarning::blocking(warning));
         } else if (lower.contains(QStringLiteral("dns leak"))
                    || lower.contains(QStringLiteral("rule-set"))
@@ -95,11 +98,15 @@ SingBoxConfigGenerationResult SingBoxConfigGenerator::generate(
         return result;
     }
 
+    QSet<QString> usedRuleSetTags;
+
     SingBoxRouteGenerationOptions routeOptions;
     routeOptions.tunMode = options.tunMode;
     routeOptions.enableAutoDetectInterface = options.enableAutoDetectInterface;
     routeOptions.enableRuleSets = options.enableRuleSets;
     routeOptions.finalOutbound = options.finalOutbound;
+    routeOptions.ruleSetContext = options.ruleSetContext;
+    routeOptions.usedRuleSetTagsOut = &usedRuleSetTags;
 
     const SingBoxRouteGenerator routeGenerator;
     QJsonObject route = routeGenerator.generateRoute(routingProfile, routeOptions, &warnings);
@@ -111,9 +118,29 @@ SingBoxConfigGenerationResult SingBoxConfigGenerator::generate(
     SingBoxDnsGenerationOptions dnsOptions;
     dnsOptions.tunMode = options.tunMode;
     dnsOptions.enableDnsHijack = options.enableDnsHijack;
+    dnsOptions.ruleSetContext = options.ruleSetContext;
+    dnsOptions.usedRuleSetTagsOut = &usedRuleSetTags;
 
     const SingBoxDnsGenerator dnsGenerator;
     const QJsonObject dns = dnsGenerator.generateDns(dnsProfile, dnsOptions, &warnings);
+
+    if (options.enableRuleSets && !usedRuleSetTags.isEmpty()) {
+        QJsonArray ruleSetDefinitions;
+        for (const QString& tag : usedRuleSetTags) {
+            const QString path = options.ruleSetContext.localPathForTag(tag);
+            if (path.isEmpty()) {
+                continue;
+            }
+            ruleSetDefinitions.append(
+                QJsonObject{{QStringLiteral("type"), QStringLiteral("local")},
+                            {QStringLiteral("tag"), tag},
+                            {QStringLiteral("format"), QStringLiteral("binary")},
+                            {QStringLiteral("path"), path}});
+        }
+        if (!ruleSetDefinitions.isEmpty()) {
+            route.insert(QStringLiteral("rule_set"), ruleSetDefinitions);
+        }
+    }
     if (dns.isEmpty() && dnsProfile.mode != DnsProfileMode::System) {
         warnings.append(QStringLiteral("DNS section is empty; sing-box check is the final authority."));
     }
