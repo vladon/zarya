@@ -278,6 +278,12 @@ Zarya’s default mode remains **system proxy via Xray**. An opt-in **experiment
 - Import `.srs`, compile source JSON via `sing-box rule-set compile`, optional strict mode before TUN start.
 - See `docs/sing-box-rule-sets.md`.
 
+## Backup import/export (0.20)
+
+- **File → Export Backup…** / **File → Import Backup…** — portable `.zarya-backup.zip` archives.
+- Selective export/import, redacted diagnostic mode, checksum verification, automatic pre-import backup.
+- See `docs/backup-import-export.md`.
+
 ## Core update manager (0.19)
 
 - **Tools → Core Manager** — download, verify, and install **Xray** and **sing-box** from GitHub releases.

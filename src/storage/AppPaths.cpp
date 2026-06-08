@@ -232,4 +232,11 @@ QString AppPaths::geoDataDir()
     return path;
 }
 
+QString AppPaths::backupsDir()
+{
+    const QString path = QDir(dataDir()).filePath(QStringLiteral("backups"));
+    ensureDir(path);
+    return path;
+}
+
 } // namespace zarya
