@@ -7,7 +7,7 @@ namespace zarya {
 QString PackagingInfo::versionString()
 {
 #ifndef ZARYA_VERSION_STRING
-#define ZARYA_VERSION_STRING "0.20.0"
+#define ZARYA_VERSION_STRING "0.21.0"
 #endif
     return QStringLiteral(ZARYA_VERSION_STRING);
 }

@@ -10,6 +10,7 @@
 #include "storage/SubscriptionStore.h"
 #include "dns/DnsManager.h"
 #include "backup/BackupManager.h"
+#include "diagnostics/DiagnosticsManager.h"
 #include "cores/CoreBinaryManager.h"
 #include "geodata/GeoDataManager.h"
 #include "rulesets/RuleSetManager.h"
@@ -78,6 +79,8 @@ private slots:
     void onCoreManager();
     void onExportBackup();
     void onImportBackup();
+    void onCreateDiagnosticsBundle();
+    DiagnosticsContext buildDiagnosticsContext();
     void onRuleSetManager();
     void onDnsProfiles();
     void onPreviewSingBoxTunConfig();
@@ -168,6 +171,7 @@ private:
     GeoDataManager m_geoDataManager;
     CoreBinaryManager m_coreBinaryManager;
     BackupManager m_backupManager;
+    DiagnosticsManager m_diagnosticsManager;
     RuleSetManager m_ruleSetManager;
     TestManager m_testManager;
     CoreManager m_coreManager;
