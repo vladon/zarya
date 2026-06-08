@@ -1,6 +1,6 @@
 # Zarya
 
-Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). Milestones 0.1–0.22: profiles, subscriptions, Xray, routing, geo data, DNS, system proxy, experimental TUN, sing-box rule sets, core update manager, backup import/export, diagnostics bundle, beta hardening (schema migrations, startup recovery, settings validation, safe writes, smoke tests), privileged helper, experimental kill switch (Linux nft / Windows WFP PoC), tray, autostart, and packaging.
+Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). Milestones 0.1–0.23: profiles, subscriptions, Xray, routing, geo data, DNS, system proxy, experimental TUN, sing-box rule sets, core update manager, backup import/export, diagnostics bundle, beta hardening (schema migrations, startup recovery, settings validation, safe writes, smoke tests), privileged helper, experimental kill switch (Linux nft / Windows WFP PoC), tray, autostart, and packaging.
 
 ## Requirements
 
@@ -88,6 +88,18 @@ zarya/
 In **Settings**, you can use a relative path such as `.\cores\xray\xray.exe` (from the working directory when you launch Zarya) or an absolute path.
 
 The app **starts and runs without** Xray installed. Profile management, import, and config generation work offline. Starting a profile runs `xray run -test` first; if Xray is missing or validation fails, the core is not started and the log panel shows details.
+
+## Quick start
+
+1. Open **Tools → Core Manager** and install Xray.
+2. Import a profile link (**File → Import Profile Links…**) or add a subscription.
+3. Choose **Routing: Bypass LAN** (default) in the setup wizard or **Tools → Routing Profiles**.
+4. Choose **DNS: System DNS** (default).
+5. Click **Start**.
+
+## First-run setup
+
+Zarya shows a setup wizard on first launch. You can reopen it from **Help → Run Setup Wizard**.
 
 ## Configure Xray path
 

@@ -604,4 +604,24 @@ void AppSettings::setCheckCoreUpdatesOnStartup(bool enabled)
     settings().setValue(QStringLiteral("cores/checkUpdatesOnStartup"), enabled);
 }
 
+bool AppSettings::firstRunCompleted() const
+{
+    return settings().value(QStringLiteral("onboarding/firstRunCompleted"), false).toBool();
+}
+
+void AppSettings::setFirstRunCompleted(bool completed)
+{
+    settings().setValue(QStringLiteral("onboarding/firstRunCompleted"), completed);
+}
+
+bool AppSettings::dismissBetaBanner() const
+{
+    return settings().value(QStringLiteral("onboarding/dismissBetaBanner"), false).toBool();
+}
+
+void AppSettings::setDismissBetaBanner(bool dismissed)
+{
+    settings().setValue(QStringLiteral("onboarding/dismissBetaBanner"), dismissed);
+}
+
 } // namespace zarya

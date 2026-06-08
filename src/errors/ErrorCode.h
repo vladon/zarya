@@ -16,6 +16,8 @@ inline QString dnsProfileInvalid() { return QStringLiteral("DNS_PROFILE_INVALID"
 inline QString routingProfileInvalid() { return QStringLiteral("ROUTING_PROFILE_INVALID"); }
 inline QString backupImportChecksumFailed() { return QStringLiteral("BACKUP_IMPORT_CHECKSUM_FAILED"); }
 inline QString migrationFailed() { return QStringLiteral("MIGRATION_FAILED"); }
+inline QString geoDataMissing() { return QStringLiteral("GEODATA_MISSING"); }
+inline QString profileUnsupportedRuntime() { return QStringLiteral("PROFILE_UNSUPPORTED_RUNTIME"); }
 
 } // namespace ErrorCode
 

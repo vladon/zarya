@@ -2,6 +2,7 @@
 
 #include "app/AppController.h"
 #include "app/StartupOptions.h"
+#include "errors/ErrorPresenter.h"
 #include "core/CoreManager.h"
 #include "core/SingBoxAdapter.h"
 #include "core/XrayAdapter.h"
@@ -26,6 +27,7 @@ class QAction;
 class QCloseEvent;
 class QComboBox;
 class QEvent;
+class QLabel;
 class QPlainTextEdit;
 class QSplitter;
 class QTableView;
@@ -34,6 +36,9 @@ class QToolBar;
 namespace zarya {
 
 class TrayController;
+class BetaBannerWidget;
+class StatusDashboardWidget;
+struct FirstRunState;
 struct Profile;
 struct Subscription;
 
@@ -154,7 +159,14 @@ private:
     QString runtimeStatusText() const;
     void runPreLoadStartup(const StartupOptions& options);
     void runStartupRecovery();
-    void checkReadinessOnStartup();
+    void maybeShowFirstRunWizard();
+    void runFirstRunWizard(bool force = false);
+    void applyFirstRunState(const FirstRunState& state);
+    void updateStatusDashboard();
+    void updateEmptyState();
+    Profile* resolveProfileForStart();
+    bool lineMatchesLogFilter(const QString& line) const;
+    void handleErrorAction(ErrorAction action, const AppError& error);
     void checkKillSwitchRecoveryOnStartup();
     QString killSwitchStatusText() const;
     QString trayStatusText() const;
@@ -183,9 +195,14 @@ private:
     AppController m_appController;
     TrayController* m_trayController = nullptr;
 
+    BetaBannerWidget* m_betaBanner = nullptr;
+    StatusDashboardWidget* m_statusDashboard = nullptr;
+    QLabel* m_emptyStateLabel = nullptr;
     QSplitter* m_splitter = nullptr;
     QTableView* m_tableView = nullptr;
     QPlainTextEdit* m_logView = nullptr;
+    QComboBox* m_logFilterCombo = nullptr;
+    QString m_logFilterKey;
     QToolBar* m_toolBar = nullptr;
     QComboBox* m_profileFilterCombo = nullptr;
 

@@ -28,8 +28,10 @@
 #include "runtime/singbox/SingBoxTunRuntimeBackend.h"
 #include "runtime/xray/XraySystemProxyRuntimeBackend.h"
 #include "recovery/StartupRecovery.h"
+#include "ui/SafeExitDialog.h"
 #include "testing/TestManager.h"
 
+#include <QDialog>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonDocument>
@@ -985,6 +987,12 @@ bool AppController::attemptProxyRestoreOnShutdown(QString* error)
 
 bool AppController::safeShutdown(bool proxyExitAnyway)
 {
+    return safeShutdownWithOptions(proxyExitAnyway, true, true, true);
+}
+
+bool AppController::safeShutdownWithOptions(bool proxyExitAnyway, bool stopRuntime,
+                                            bool restoreProxy, bool disableKillSwitch)
+{
     emit logLine(QStringLiteral("Safe shutdown started"));
 
     if (m_testManager && m_testManager->isBusy()) {
@@ -992,14 +1000,23 @@ bool AppController::safeShutdown(bool proxyExitAnyway)
         m_testManager->cancel();
     }
 
-    if (isCoreRunning()) {
+    if (stopRuntime && isCoreRunning()) {
         emit logLine(QStringLiteral("Stopping core"));
         stopCurrentProfile();
         emit coreStateChanged(false);
     }
 
+    if (disableKillSwitch) {
+        HelperProcessManager* helper = helperProcessManager();
+        if (helper) {
+            QString killSwitchError;
+            helper->connectToHelper(&killSwitchError);
+            helper->killSwitchDisable(&killSwitchError);
+        }
+    }
+
     QString proxyError;
-    if (m_activeRuntimeMode == RuntimeMode::TunSingBoxExperimental) {
+    if (!restoreProxy || m_activeRuntimeMode == RuntimeMode::TunSingBoxExperimental) {
         proxyError.clear();
     } else if (!attemptProxyRestoreOnShutdown(&proxyError) && !proxyExitAnyway) {
         emit logLine(QStringLiteral("System proxy restore failed during shutdown"));
@@ -1027,19 +1044,23 @@ void AppController::requestQuit()
 {
     emit logLine(QStringLiteral("Quit requested"));
 
+    bool stopRuntime = true;
+    bool restoreProxy = true;
+    bool disableKillSwitch = true;
     if (AppSettings::instance().confirmExitWhileRunning() && isCoreRunning() && m_dialogParent) {
-        const auto answer = QMessageBox::question(
-            m_dialogParent, QStringLiteral("Exit Zarya"),
-            QStringLiteral("The proxy core is still running. Exit anyway?"),
-            QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
-        if (answer != QMessageBox::Yes) {
+        SafeExitDialog dialog(m_dialogParent);
+        if (dialog.exec() != QDialog::Accepted) {
             emit logLine(QStringLiteral("Safe shutdown canceled"));
             emit quitBlocked(QStringLiteral("Exit canceled by user."));
             return;
         }
+        const SafeExitOptions options = dialog.options();
+        stopRuntime = options.stopRuntime;
+        restoreProxy = options.restoreSystemProxy;
+        disableKillSwitch = options.disableKillSwitch;
     }
 
-    if (safeShutdown(false)) {
+    if (safeShutdownWithOptions(false, stopRuntime, restoreProxy, disableKillSwitch)) {
         emit quitApproved();
         return;
     }
@@ -1070,7 +1091,7 @@ void AppController::requestQuit()
         if (box.clickedButton() == retryButton) {
             QString error;
             if (attemptProxyRestoreOnShutdown(&error)) {
-                if (safeShutdown(true)) {
+                if (safeShutdownWithOptions(true, true, true, true)) {
                     emit quitApproved();
                     return;
                 }
@@ -1081,7 +1102,7 @@ void AppController::requestQuit()
         }
         if (box.clickedButton() == exitButton) {
             emit logLine(QStringLiteral("Exit anyway after proxy restore failure"));
-            if (safeShutdown(true)) {
+            if (safeShutdownWithOptions(true, true, false, true)) {
                 emit quitApproved();
             } else {
                 emit quitBlocked(QStringLiteral("Shutdown failed."));

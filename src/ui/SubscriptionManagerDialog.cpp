@@ -8,6 +8,7 @@
 #include "ui/SubscriptionDialog.h"
 #include "ui/models/SubscriptionTableModel.h"
 
+#include <QLabel>
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QMessageBox>
@@ -68,9 +69,27 @@ SubscriptionManagerDialog::SubscriptionManagerDialog(
     buttons->addStretch();
     buttons->addWidget(closeButton);
 
+    m_updateSummaryLabel = new QLabel(this);
+    m_updateSummaryLabel->setWordWrap(true);
+    m_updateSummaryLabel->setText(QStringLiteral("Last update: —"));
+
     auto* layout = new QVBoxLayout(this);
     layout->addWidget(m_tableView);
+    layout->addWidget(m_updateSummaryLabel);
     layout->addLayout(buttons);
+}
+
+void SubscriptionManagerDialog::showUpdateSummary(const SubscriptionUpdateStats& stats)
+{
+    if (!m_updateSummaryLabel) {
+        return;
+    }
+    m_updateSummaryLabel->setText(
+        QStringLiteral("Last update — Added: %1, Updated: %2, Missing: %3, Skipped: %4")
+            .arg(stats.addedProfiles)
+            .arg(stats.updatedProfiles)
+            .arg(stats.markedMissingProfiles)
+            .arg(stats.skippedLines));
 }
 
 void SubscriptionManagerDialog::refreshTable()
@@ -211,6 +230,7 @@ void SubscriptionManagerDialog::onUpdateSelected()
     }
     notifyProfilesChanged();
 
+    showUpdateSummary(result.stats);
     if (!result.success) {
         QMessageBox::warning(this, QStringLiteral("Update failed"), result.errorMessage);
     }
@@ -227,12 +247,18 @@ void SubscriptionManagerDialog::onUpdateAll()
     }
     notifyProfilesChanged();
 
+    SubscriptionUpdateStats total;
     int failed = 0;
     for (const SubscriptionUpdateResult& result : results) {
+        total.addedProfiles += result.stats.addedProfiles;
+        total.updatedProfiles += result.stats.updatedProfiles;
+        total.markedMissingProfiles += result.stats.markedMissingProfiles;
+        total.skippedLines += result.stats.skippedLines;
         if (!result.success) {
             ++failed;
         }
     }
+    showUpdateSummary(total);
     if (failed > 0) {
         QMessageBox::warning(this, QStringLiteral("Update all"),
                              QStringLiteral("%1 subscription(s) failed to update.").arg(failed));

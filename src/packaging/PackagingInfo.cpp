@@ -25,6 +25,15 @@ QString PackagingInfo::platformName()
 #endif
 }
 
+bool PackagingInfo::isBetaBuild()
+{
+    const QString version = versionString().toLower();
+    if (version.contains(QStringLiteral("beta")) || version.contains(QStringLiteral("dev"))) {
+        return true;
+    }
+    return version.startsWith(QStringLiteral("0."));
+}
+
 QString PackagingInfo::artifactPlatformTag()
 {
 #if defined(Q_OS_WIN)
