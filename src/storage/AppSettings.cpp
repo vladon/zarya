@@ -1,5 +1,6 @@
 #include "storage/AppSettings.h"
 
+#include "app/StartupOptions.h"
 #include "platform/Platform.h"
 #include "storage/AppPaths.h"
 
@@ -148,8 +149,39 @@ void AppSettings::markCleanShutdown()
 
 bool AppSettings::shouldWarnUncleanTunShutdown() const
 {
-    return settings().value(QStringLiteral("runtime/tunWasRunning"), false).toBool()
-           && !settings().value(QStringLiteral("runtime/lastShutdownClean"), true).toBool();
+    return tunWasRunning() && !lastShutdownClean();
+}
+
+bool AppSettings::tunWasRunning() const
+{
+    return settings().value(QStringLiteral("runtime/tunWasRunning"), false).toBool();
+}
+
+bool AppSettings::lastShutdownClean() const
+{
+    return settings().value(QStringLiteral("runtime/lastShutdownClean"), true).toBool();
+}
+
+LogLevel AppSettings::logLevel() const
+{
+    const QString value = settings().value(QStringLiteral("logging/level"), QStringLiteral("info")).toString();
+    if (value.compare(QStringLiteral("debug"), Qt::CaseInsensitive) == 0) {
+        return LogLevel::Debug;
+    }
+    if (value.compare(QStringLiteral("warn"), Qt::CaseInsensitive) == 0
+        || value.compare(QStringLiteral("warning"), Qt::CaseInsensitive) == 0) {
+        return LogLevel::Warn;
+    }
+    if (value.compare(QStringLiteral("error"), Qt::CaseInsensitive) == 0) {
+        return LogLevel::Error;
+    }
+    return LogLevel::Info;
+}
+
+void AppSettings::setLogLevel(LogLevel level)
+{
+    settings().setValue(QStringLiteral("logging/level"),
+                        StartupOptionsParser::logLevelToString(level).toLower());
 }
 
 RuntimeMode AppSettings::lastRuntimeMode() const

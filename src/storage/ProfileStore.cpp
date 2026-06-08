@@ -1,7 +1,9 @@
 #include "storage/ProfileStore.h"
 
 #include "domain/ProfileSourceType.h"
+#include "migration/JsonFileMigrator.h"
 #include "storage/AppPaths.h"
+#include "storage/SafeJsonWriter.h"
 #include "testing/TestStatus.h"
 
 #include <QDir>
@@ -224,17 +226,9 @@ bool ProfileStore::save(const QVector<Profile>& profiles, QString* errorMessage)
     QJsonObject root;
     root.insert(QStringLiteral("version"), 4);
     root.insert(QStringLiteral("profiles"), array);
+    JsonFileMigrator::wrapWithSchema(&root);
 
-    QFile file(m_filePath);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        if (errorMessage) {
-            *errorMessage = file.errorString();
-        }
-        return false;
-    }
-
-    file.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
-    return true;
+    return SafeJsonWriter::writeDocument(m_filePath, QJsonDocument(root), errorMessage);
 }
 
 } // namespace zarya

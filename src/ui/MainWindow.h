@@ -152,7 +152,9 @@ private:
     QString routingStatusText() const;
     QString dnsStatusText() const;
     QString runtimeStatusText() const;
-    void checkUncleanTunShutdownWarning();
+    void runPreLoadStartup(const StartupOptions& options);
+    void runStartupRecovery();
+    void checkReadinessOnStartup();
     void checkKillSwitchRecoveryOnStartup();
     QString killSwitchStatusText() const;
     QString trayStatusText() const;

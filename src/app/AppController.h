@@ -43,12 +43,17 @@ public:
     void setOpenRuleSetManagerCallback(std::function<void()> callback);
 
     bool startProfile(const Profile& profile, bool fromAutostart = false);
+    bool startProfileById(const QString& profileId, bool fromAutostart = false);
     SingBoxConfigGenerationResult generateSingBoxTunConfig(const Profile& profile) const;
     bool lastStartWasAutostart() const;
     bool stopCurrentProfile();
+    bool stopRuntime();
+    bool restartRuntime(const Profile& profile);
     bool isCoreRunning() const;
+    RuntimeState runtimeState() const;
     RuntimeMode activeRuntimeMode() const;
     HelperProcessManager* helperProcessManager() const;
+    bool recoverPreviousSession(QStringList* logLines = nullptr);
 
     bool enableSystemProxyManual();
     bool restoreSystemProxyManual();
@@ -100,6 +105,7 @@ private:
     std::function<void()> m_openDnsProfiles;
     std::function<void()> m_openRuleSetManager;
     bool m_lastStartWasAutostart = false;
+    RuntimeState m_runtimeState = RuntimeState::Stopped;
 };
 
 } // namespace zarya

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "app/StartupOptions.h"
+
 #include <QDateTime>
 #include <QJsonArray>
 #include <QString>
@@ -21,6 +23,9 @@ public:
     void setAppStartedAt(const QDateTime& startedAt);
     QDateTime appStartedAt() const;
 
+    void setMinLogLevel(LogLevel level);
+    LogLevel minLogLevel() const;
+
     void append(const QString& line);
     void appendError(const QString& area, const QString& message);
 
@@ -34,6 +39,7 @@ private:
     QStringList m_lines;
     QVector<LogErrorEntry> m_errors;
     QDateTime m_appStartedAt;
+    LogLevel m_minLogLevel = LogLevel::Info;
     static constexpr int kMaxStoredLines = 5000;
     static constexpr int kMaxStoredErrors = 200;
 };

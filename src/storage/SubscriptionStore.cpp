@@ -1,6 +1,8 @@
 #include "storage/SubscriptionStore.h"
 
+#include "migration/JsonFileMigrator.h"
 #include "storage/AppPaths.h"
+#include "storage/SafeJsonWriter.h"
 
 #include <QDir>
 #include <QFile>
@@ -121,17 +123,9 @@ bool SubscriptionStore::save(const QVector<Subscription>& subscriptions, QString
     QJsonObject root;
     root.insert(QStringLiteral("version"), 1);
     root.insert(QStringLiteral("subscriptions"), array);
+    JsonFileMigrator::wrapWithSchema(&root);
 
-    QFile file(m_filePath);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        if (errorMessage) {
-            *errorMessage = file.errorString();
-        }
-        return false;
-    }
-
-    file.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
-    return true;
+    return SafeJsonWriter::writeDocument(m_filePath, QJsonDocument(root), errorMessage);
 }
 
 } // namespace zarya

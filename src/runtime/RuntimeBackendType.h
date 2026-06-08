@@ -29,7 +29,8 @@ enum class RuntimeState {
     Starting,
     Running,
     Stopping,
-    Error,
+    Failed,
+    Recovering,
 };
 
 QString runtimeModeToString(RuntimeMode mode);
