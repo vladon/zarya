@@ -5,8 +5,17 @@
 #include "domain/Profile.h"
 #include "domain/ProtocolType.h"
 #include "domain/Subscription.h"
+#include "app/Application.h"
 #include "app/StartupOptions.h"
+#include "errors/AppError.h"
+#include "errors/ErrorCode.h"
+#include "errors/ErrorPresenter.h"
+#include "migration/MigrationManager.h"
 #include "packaging/PackagingInfo.h"
+#include "recovery/StartupRecovery.h"
+#include "storage/SettingsValidator.h"
+#include "ui/ReadinessDialog.h"
+#include "ui/StartupRecoveryDialog.h"
 #include "helperclient/HelperProcessManager.h"
 #include "killswitch/KillSwitchState.h"
 #include "storage/AppPaths.h"
@@ -75,6 +84,8 @@ MainWindow::MainWindow(QWidget* parent)
     connect(&m_coreBinaryManager, &CoreBinaryManager::logLine, this, &MainWindow::appendLog);
     connect(&m_subscriptionManager, &SubscriptionManager::logLine, this, &MainWindow::appendLog);
 
+    const StartupOptions& startupOptions = Application::instance()->startupOptions();
+    runPreLoadStartup(startupOptions);
     restoreWindowState();
     loadAllOnStartup();
     updateStatusBar();
@@ -90,7 +101,7 @@ MainWindow::MainWindow(QWidget* parent)
     appendLog(QStringLiteral("Active routing profile: %1")
                   .arg(m_routingManager.activeProfile().name));
     checkGeoDataOnStartup();
-    checkUncleanTunShutdownWarning();
+    runStartupRecovery();
     appendLog(QStringLiteral("Subscriptions: %1").arg(m_subscriptionStore.filePath()));
     appendLog(QStringLiteral("Xray path: %1").arg(AppSettings::instance().resolvedXrayPath()));
     if (!m_systemProxy.isSupported()) {
@@ -430,19 +441,72 @@ void MainWindow::checkKillSwitchRecoveryOnStartup()
     }
 }
 
-void MainWindow::checkUncleanTunShutdownWarning()
+void MainWindow::runPreLoadStartup(const StartupOptions& options)
 {
-    if (!AppSettings::instance().shouldWarnUncleanTunShutdown()) {
+    const MigrationResult migration = MigrationManager::runStartupMigrations();
+    for (const QString& line : migration.logLines) {
+        appendLog(line);
+    }
+    if (!migration.ok) {
+        AppError error = appErrorFromCode(ErrorCode::migrationFailed(),
+                                          migration.errors.join(QStringLiteral("\n")));
+        error.details = migration.errors.join(QStringLiteral("\n"));
+        ErrorPresenter::show(this, error, true);
+    }
+
+    const SettingsValidationResult validation = SettingsValidator::validateAndFixOnStartup();
+    for (const QString& fix : validation.autoFixed) {
+        appendLog(QStringLiteral("Settings: %1").arg(fix));
+    }
+    for (const QString& warning : validation.warnings) {
+        appendLog(QStringLiteral("Settings warning: %1").arg(warning));
+    }
+
+    LogLevel effectiveLevel = AppSettings::instance().logLevel();
+    if (options.logLevel != LogLevel::Info) {
+        effectiveLevel = options.logLevel;
+        AppSettings::instance().setLogLevel(effectiveLevel);
+    }
+    LogBuffer::instance().setMinLogLevel(effectiveLevel);
+}
+
+void MainWindow::runStartupRecovery()
+{
+    const StartupRecoveryPlan plan = StartupRecovery::detect();
+    if (!plan.uncleanShutdown && plan.detectedLines.isEmpty()) {
         return;
     }
-    appendLog(QStringLiteral(
-        "Previous session may have exited while experimental TUN mode was active."));
-    QMessageBox::warning(
-        this, QStringLiteral("TUN recovery"),
-        QStringLiteral(
-            "Zarya may have exited unexpectedly while TUN mode was active.\n\n"
-            "If networking is broken, stop remaining sing-box processes or reboot.\n\n"
-            "Automatic route recovery is not implemented yet."));
+
+    appendLog(QStringLiteral("Unclean previous shutdown detected."));
+    StartupRecoveryDialog dialog(plan, this);
+    if (dialog.exec() != QDialog::Accepted) {
+        appendLog(QStringLiteral("Startup recovery skipped by user."));
+        return;
+    }
+
+    QStringList logLines;
+    const StartupRecoveryPlan selected = dialog.selectedPlan();
+    if (!StartupRecovery::apply(selected, &logLines)) {
+        appendLog(QStringLiteral("Startup recovery encountered errors."));
+    }
+    for (const QString& line : logLines) {
+        appendLog(line);
+    }
+}
+
+void MainWindow::checkReadinessOnStartup()
+{
+    const QString xrayPath = AppSettings::instance().resolvedXrayPath();
+    const bool hasCore = !xrayPath.isEmpty() && QFile::exists(xrayPath);
+    if (hasCore && !m_allProfiles.isEmpty()) {
+        return;
+    }
+
+    ReadinessDialog dialog(this);
+    connect(&dialog, &ReadinessDialog::openCoreManagerRequested, this, &MainWindow::onCoreManager);
+    connect(&dialog, &ReadinessDialog::importProfileRequested, this, &MainWindow::onImportVless);
+    connect(&dialog, &ReadinessDialog::openSettingsRequested, this, &MainWindow::onSettings);
+    dialog.exec();
 }
 
 void MainWindow::setupAppController()
@@ -704,6 +768,7 @@ void MainWindow::logStartupContext(const StartupOptions& options)
 void MainWindow::finishStartup(const StartupOptions& options)
 {
     checkKillSwitchRecoveryOnStartup();
+    checkReadinessOnStartup();
     checkCoreUpdatesOnStartup();
 
     const AppSettings& settings = AppSettings::instance();

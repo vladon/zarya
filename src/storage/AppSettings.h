@@ -1,5 +1,6 @@
 #pragma once
 
+#include "app/StartupOptions.h"
 #include "killswitch/KillSwitchMode.h"
 #include "runtime/RuntimeBackendType.h"
 
@@ -43,7 +44,12 @@ public:
     void markTunSessionStarted();
     void markCleanShutdown();
     bool shouldWarnUncleanTunShutdown() const;
+    bool tunWasRunning() const;
+    bool lastShutdownClean() const;
     RuntimeMode lastRuntimeMode() const;
+
+    LogLevel logLevel() const;
+    void setLogLevel(LogLevel level);
 
     bool autoEnableSystemProxyOnStart() const;
     void setAutoEnableSystemProxyOnStart(bool enabled);

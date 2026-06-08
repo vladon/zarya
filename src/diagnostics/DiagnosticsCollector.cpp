@@ -19,6 +19,7 @@
 #include "helperclient/HelperProcessManager.h"
 #include "killswitch/KillSwitchState.h"
 #include "logging/LogBuffer.h"
+#include "migration/MigrationManager.h"
 #include "packaging/PackagingInfo.h"
 #include "dns/DnsManager.h"
 #include "platform/PlatformPrivilege.h"
@@ -72,11 +73,25 @@ bool categoryEnabled(const DiagnosticsOptions& options, DiagnosticsCategory cate
     return options.categories.contains(category);
 }
 
+QJsonObject collectMigrationStatus()
+{
+    const MigrationResult& migration = MigrationManager::lastResult();
+    QJsonObject object;
+    object.insert(QStringLiteral("ok"), migration.ok);
+    object.insert(QStringLiteral("migratedFiles"),
+                  QJsonArray::fromStringList(migration.migratedFiles));
+    object.insert(QStringLiteral("backups"), QJsonArray::fromStringList(migration.backups));
+    object.insert(QStringLiteral("errors"), QJsonArray::fromStringList(migration.errors));
+    object.insert(QStringLiteral("log"), QJsonArray::fromStringList(migration.logLines));
+    return object;
+}
+
 QJsonObject collectAppInfo(const DiagnosticsContext& context)
 {
     QJsonObject object;
     object.insert(QStringLiteral("appName"), QStringLiteral("Zarya"));
     object.insert(QStringLiteral("appVersion"), PackagingInfo::versionString());
+    object.insert(QStringLiteral("migration"), collectMigrationStatus());
 #ifdef NDEBUG
     object.insert(QStringLiteral("buildType"), QStringLiteral("Release"));
 #else

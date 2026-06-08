@@ -139,6 +139,25 @@ set(ZARYA_LOGGING_SOURCES
     src/logging/LogBuffer.cpp
 )
 
+set(ZARYA_MIGRATION_SOURCES
+    src/migration/MigrationResult.cpp
+    src/migration/JsonFileMigrator.cpp
+    src/migration/MigrationManager.cpp
+)
+
+set(ZARYA_ERROR_SOURCES
+    src/errors/AppError.cpp
+    src/errors/ErrorPresenter.cpp
+)
+
+set(ZARYA_RECOVERY_SOURCES
+    src/recovery/StartupRecovery.cpp
+)
+
+set(ZARYA_SECURITY_SOURCES
+    src/security/ConfigRedactor.cpp
+)
+
 set(ZARYA_DIAGNOSTICS_SOURCES
     src/diagnostics/DiagnosticsCategory.cpp
     src/diagnostics/DiagnosticsOptions.cpp
@@ -269,6 +288,8 @@ set(ZARYA_SOURCES
     src/ui/BackupImportDialog.cpp
     src/ui/DiagnosticsDialog.cpp
     src/ui/DiagnosticsPreviewDialog.cpp
+    src/ui/StartupRecoveryDialog.cpp
+    src/ui/ReadinessDialog.cpp
     src/ui/DnsManagerDialog.cpp
     src/ui/DnsProfileDialog.cpp
     src/ui/DnsServerEditorDialog.cpp
@@ -280,6 +301,9 @@ set(ZARYA_SOURCES
     src/storage/ProfileStore.cpp
     src/storage/SubscriptionStore.cpp
     src/storage/RoutingStore.cpp
+    src/storage/SafeJsonWriter.cpp
+    src/storage/DefaultSettings.cpp
+    src/storage/SettingsValidator.cpp
     src/storage/AppSettings.cpp
     src/storage/GeoDataSettingsStore.cpp
     src/storage/DnsStore.cpp
@@ -295,6 +319,10 @@ set(ZARYA_SOURCES
     ${ZARYA_CORE_UPDATE_SOURCES}
     ${ZARYA_BACKUP_SOURCES}
     ${ZARYA_LOGGING_SOURCES}
+    ${ZARYA_MIGRATION_SOURCES}
+    ${ZARYA_ERROR_SOURCES}
+    ${ZARYA_RECOVERY_SOURCES}
+    ${ZARYA_SECURITY_SOURCES}
     ${ZARYA_DIAGNOSTICS_SOURCES}
     src/import/VlessUriParser.cpp
     ${ZARYA_PLATFORM_SOURCES}
@@ -532,3 +560,26 @@ add_executable(zarya_geodata_verifier_test
 target_include_directories(zarya_geodata_verifier_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 zarya_link_qt_core(zarya_geodata_verifier_test)
+
+add_executable(zarya_smoke_test
+    tests/smoke/smoke_test.cpp
+    src/app/StartupOptions.cpp
+    src/storage/SettingsValidator.cpp
+    src/storage/DefaultSettings.cpp
+    src/storage/AppSettings.cpp
+    src/storage/AppPaths.cpp
+    src/diagnostics/DiagnosticsRedactor.cpp
+    src/backup/BackupExportOptions.cpp
+    src/subscription/ShareLinkParser.cpp
+    ${ZARYA_DOMAIN_SOURCES}
+    src/runtime/RuntimeBackendType.cpp
+    src/killswitch/KillSwitchMode.cpp
+    src/platform/Platform.cpp
+    src/packaging/PackagingInfo.cpp
+)
+
+target_include_directories(zarya_smoke_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+zarya_link_qt_core(zarya_smoke_test)
+
+enable_testing()
+add_test(NAME smoke COMMAND zarya_smoke_test)

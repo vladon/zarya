@@ -1,7 +1,9 @@
 #include "storage/RuleSetStore.h"
 
 #include "rulesets/RuleSetKind.h"
+#include "migration/JsonFileMigrator.h"
 #include "storage/AppPaths.h"
+#include "storage/SafeJsonWriter.h"
 
 #include <QFile>
 #include <QJsonArray>
@@ -75,7 +77,17 @@ bool RuleSetStore::load(QVector<RuleSetItem>* customItems, QString* errorMessage
         }
         return false;
     }
-    const QJsonArray array = QJsonDocument::fromJson(file.readAll()).array();
+    const QJsonDocument document = QJsonDocument::fromJson(file.readAll());
+    QJsonArray array;
+    if (document.isArray()) {
+        array = document.array();
+    } else if (document.isObject()) {
+        const QJsonObject object = document.object();
+        array = object.value(QStringLiteral("custom")).toArray();
+        if (array.isEmpty()) {
+            array = object.value(QStringLiteral("items")).toArray();
+        }
+    }
     for (const QJsonValue& value : array) {
         customItems->append(itemFromJson(value.toObject()));
     }
@@ -91,15 +103,11 @@ bool RuleSetStore::save(const QVector<RuleSetItem>& customItems, QString* errorM
         }
         array.append(itemToJson(item));
     }
-    QFile file(AppPaths::ruleSetStorePath());
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        if (errorMessage) {
-            *errorMessage = file.errorString();
-        }
-        return false;
-    }
-    file.write(QJsonDocument(array).toJson(QJsonDocument::Indented));
-    return true;
+    QJsonObject root;
+    root.insert(QStringLiteral("custom"), array);
+    JsonFileMigrator::wrapWithSchema(&root);
+    return SafeJsonWriter::writeDocument(AppPaths::ruleSetStorePath(), QJsonDocument(root),
+                                         errorMessage);
 }
 
 } // namespace zarya

@@ -1,5 +1,14 @@
 # Zarya Recovery Procedures
 
+## Unclean shutdown (GUI)
+
+If Zarya was killed while a profile was running, the next startup may show **Startup Recovery**:
+
+- Restore system proxy (when Zarya-owned proxy restore on exit is enabled)
+- Clean runtime temp config files (`xray.json`, `sing-box.json`)
+
+Use **Recover** to apply selected actions, **Skip** to continue without changes, or follow kill-switch / TUN sections below if networking is still broken.
+
 ## Kill switch (experimental)
 
 ### Linux nftables PoC

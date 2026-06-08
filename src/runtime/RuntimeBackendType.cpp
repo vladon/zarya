@@ -84,8 +84,10 @@ QString runtimeStateDisplayString(RuntimeState state)
         return QStringLiteral("running");
     case RuntimeState::Stopping:
         return QStringLiteral("stopping");
-    case RuntimeState::Error:
-        return QStringLiteral("error");
+    case RuntimeState::Failed:
+        return QStringLiteral("failed");
+    case RuntimeState::Recovering:
+        return QStringLiteral("recovering");
     }
     return QStringLiteral("stopped");
 }

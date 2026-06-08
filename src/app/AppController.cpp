@@ -27,6 +27,7 @@
 #include "rulesets/RuleSetStatus.h"
 #include "runtime/singbox/SingBoxTunRuntimeBackend.h"
 #include "runtime/xray/XraySystemProxyRuntimeBackend.h"
+#include "recovery/StartupRecovery.h"
 #include "testing/TestManager.h"
 
 #include <QFile>
@@ -70,12 +71,14 @@ AppController::AppController(CoreManager* coreManager, SystemProxyController* sy
 
     connect(m_coreManager, &CoreManager::started, this, [this](const QString& coreName) {
         Q_UNUSED(coreName);
+        m_runtimeState = RuntimeState::Running;
         emit coreStateChanged(true);
         if (m_afterCoreStarted) {
             m_afterCoreStarted();
         }
     });
     connect(m_coreManager, &CoreManager::stopped, this, [this]() {
+        m_runtimeState = RuntimeState::Stopped;
         emit coreStateChanged(false);
     });
     connect(m_coreManager, &CoreManager::logLine, this, &AppController::logLine);
@@ -119,9 +122,10 @@ void AppController::setupRuntimeBackends()
     connect(singBoxBackend, &IRuntimeBackend::logLine, this, &AppController::logLine);
     connect(singBoxBackend, &IRuntimeBackend::errorOccurred, this, &AppController::logLine);
     connect(singBoxBackend, &IRuntimeBackend::stateChanged, this, [this](RuntimeState state) {
+        m_runtimeState = state;
         if (state == RuntimeState::Running) {
             emit coreStateChanged(true);
-        } else if (state == RuntimeState::Stopped || state == RuntimeState::Error) {
+        } else if (state == RuntimeState::Stopped || state == RuntimeState::Failed) {
             emit coreStateChanged(false);
         }
     });
@@ -344,6 +348,24 @@ bool AppController::isCoreRunning() const
     return false;
 }
 
+RuntimeState AppController::runtimeState() const
+{
+    return m_runtimeState;
+}
+
+bool AppController::recoverPreviousSession(QStringList* logLines)
+{
+    m_runtimeState = RuntimeState::Recovering;
+    const StartupRecoveryPlan plan = StartupRecovery::detect();
+    QString error;
+    const bool ok = StartupRecovery::apply(plan, logLines, &error);
+    m_runtimeState = RuntimeState::Stopped;
+    if (!error.isEmpty() && logLines) {
+        logLines->append(error);
+    }
+    return ok;
+}
+
 bool AppController::confirmSystemProxyChangeIfNeeded() const
 {
     if (!AppSettings::instance().confirmBeforeChangingSystemProxy()) {
@@ -399,6 +421,30 @@ bool AppController::startProfile(const Profile& profile, bool fromAutostart)
     if (profile.coreType != CoreType::Xray) {
         emit logLine(QStringLiteral("Only Xray profiles can be started."));
         return false;
+    }
+
+    if (m_runtimeState == RuntimeState::Starting || m_runtimeState == RuntimeState::Stopping
+        || m_runtimeState == RuntimeState::Recovering) {
+        emit logLine(QStringLiteral("Runtime is busy; try again shortly."));
+        return false;
+    }
+
+    if (isCoreRunning()) {
+        if (m_dialogParent) {
+            const auto answer = QMessageBox::question(
+                m_dialogParent, QStringLiteral("Profile running"),
+                QStringLiteral("A profile is already running. Stop and start the selected profile?"),
+                QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+            if (answer != QMessageBox::Yes) {
+                return false;
+            }
+            if (!stopCurrentProfile()) {
+                return false;
+            }
+        } else {
+            emit logLine(QStringLiteral("Profile is already running."));
+            return false;
+        }
     }
 
     const AppSettings& settings = AppSettings::instance();
@@ -814,6 +860,7 @@ bool AppController::startProfileSystemProxyXray(const Profile& profile, bool fro
     emit logLine(QStringLiteral("Validation OK"));
 
     emit logLine(QStringLiteral("Starting Xray…"));
+    m_runtimeState = RuntimeState::Starting;
     m_coreManager->startCore(executablePath, configPath, m_xrayAdapter->displayName());
     AppSettings::instance().setLastStartedProfileId(profile.id);
     m_activeRuntimeMode = RuntimeMode::SystemProxyXray;
@@ -821,16 +868,43 @@ bool AppController::startProfileSystemProxyXray(const Profile& profile, bool fro
     return true;
 }
 
+bool AppController::stopRuntime()
+{
+    return stopCurrentProfile();
+}
+
+bool AppController::restartRuntime(const Profile& profile)
+{
+    if (!stopCurrentProfile()) {
+        return false;
+    }
+    return startProfile(profile, false);
+}
+
+bool AppController::startProfileById(const QString& profileId, bool fromAutostart)
+{
+    Q_UNUSED(profileId);
+    Q_UNUSED(fromAutostart);
+    emit logLine(QStringLiteral("startProfileById requires profile lookup in MainWindow."));
+    return false;
+}
+
 bool AppController::stopCurrentProfile()
 {
     if (!isCoreRunning()) {
+        m_runtimeState = RuntimeState::Stopped;
         return true;
     }
+    if (m_runtimeState == RuntimeState::Stopping) {
+        return false;
+    }
+    m_runtimeState = RuntimeState::Stopping;
     emit logLine(QStringLiteral("Stopping core…"));
 
     if (m_activeRuntimeMode == RuntimeMode::TunSingBoxExperimental && m_runtimeFactory) {
         const bool stopped = m_runtimeFactory->singBoxTunBackend()->stop();
         m_activeRuntimeMode = RuntimeMode::SystemProxyXray;
+        m_runtimeState = RuntimeState::Stopped;
         emit coreStateChanged(false);
         return stopped;
     }
@@ -838,6 +912,7 @@ bool AppController::stopCurrentProfile()
     restoreSystemProxyAutomatic();
     m_coreManager->stop();
     m_activeRuntimeMode = RuntimeMode::SystemProxyXray;
+    m_runtimeState = RuntimeState::Stopped;
     AppSettings::instance().markCleanShutdown();
     return true;
 }

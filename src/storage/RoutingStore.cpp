@@ -1,7 +1,9 @@
 #include "storage/RoutingStore.h"
 
 #include "domain/RoutingMode.h"
+#include "migration/JsonFileMigrator.h"
 #include "storage/AppPaths.h"
+#include "storage/SafeJsonWriter.h"
 
 #include <QDir>
 #include <QFile>
@@ -151,21 +153,9 @@ bool RoutingStore::save(const QVector<RoutingProfile>& profiles, QString* errorM
     QJsonObject root;
     root.insert(QStringLiteral("version"), 1);
     root.insert(QStringLiteral("profiles"), array);
+    JsonFileMigrator::wrapWithSchema(&root);
 
-    QFile file(m_filePath);
-    const QFileInfo info(file);
-    QDir dir = info.dir();
-    if (!dir.exists()) {
-        dir.mkpath(QStringLiteral("."));
-    }
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        if (errorMessage) {
-            *errorMessage = file.errorString();
-        }
-        return false;
-    }
-    file.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
-    return true;
+    return SafeJsonWriter::writeDocument(m_filePath, QJsonDocument(root), errorMessage);
 }
 
 } // namespace zarya

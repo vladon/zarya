@@ -225,7 +225,7 @@ bool SingBoxTunRuntimeBackend::start(const Profile& profile, const RuntimeStartO
         emit logLine(useHelper ? QStringLiteral("TUN mode started via helper")
                                : QStringLiteral("TUN mode started"));
     } else {
-        m_state = RuntimeState::Error;
+        m_state = RuntimeState::Failed;
         emit stateChanged(m_state);
     }
     return started;

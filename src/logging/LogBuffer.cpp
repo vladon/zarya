@@ -20,6 +20,16 @@ QDateTime LogBuffer::appStartedAt() const
     return m_appStartedAt;
 }
 
+void LogBuffer::setMinLogLevel(LogLevel level)
+{
+    m_minLogLevel = level;
+}
+
+LogLevel LogBuffer::minLogLevel() const
+{
+    return m_minLogLevel;
+}
+
 void LogBuffer::append(const QString& line)
 {
     if (line.isEmpty()) {
