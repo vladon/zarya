@@ -135,6 +135,21 @@ set(ZARYA_RUNTIME_SOURCES
     ${ZARYA_RULESET_SOURCES}
 )
 
+set(ZARYA_LOGGING_SOURCES
+    src/logging/LogBuffer.cpp
+)
+
+set(ZARYA_DIAGNOSTICS_SOURCES
+    src/diagnostics/DiagnosticsCategory.cpp
+    src/diagnostics/DiagnosticsOptions.cpp
+    src/diagnostics/DiagnosticsManifest.cpp
+    src/diagnostics/DiagnosticsSnapshot.cpp
+    src/diagnostics/DiagnosticsRedactor.cpp
+    src/diagnostics/DiagnosticsCollector.cpp
+    src/diagnostics/DiagnosticsBundleWriter.cpp
+    src/diagnostics/DiagnosticsManager.cpp
+)
+
 set(ZARYA_BACKUP_SOURCES
     src/backup/BackupCategory.cpp
     src/backup/BackupExportOptions.cpp
@@ -252,6 +267,8 @@ set(ZARYA_SOURCES
     src/ui/CoreManagerDialog.cpp
     src/ui/BackupExportDialog.cpp
     src/ui/BackupImportDialog.cpp
+    src/ui/DiagnosticsDialog.cpp
+    src/ui/DiagnosticsPreviewDialog.cpp
     src/ui/DnsManagerDialog.cpp
     src/ui/DnsProfileDialog.cpp
     src/ui/DnsServerEditorDialog.cpp
@@ -277,6 +294,8 @@ set(ZARYA_SOURCES
     ${ZARYA_GEODATA_SOURCES}
     ${ZARYA_CORE_UPDATE_SOURCES}
     ${ZARYA_BACKUP_SOURCES}
+    ${ZARYA_LOGGING_SOURCES}
+    ${ZARYA_DIAGNOSTICS_SOURCES}
     src/import/VlessUriParser.cpp
     ${ZARYA_PLATFORM_SOURCES}
     ${ZARYA_AUTOSTART_SOURCES}

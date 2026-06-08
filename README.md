@@ -278,6 +278,12 @@ Zarya’s default mode remains **system proxy via Xray**. An opt-in **experiment
 - Import `.srs`, compile source JSON via `sing-box rule-set compile`, optional strict mode before TUN start.
 - See `docs/sing-box-rule-sets.md`.
 
+## Diagnostics bundle (0.21)
+
+- **Help → Create Diagnostics Bundle…** — redacted `.zarya-diagnostics.zip` for support and debugging.
+- Not a backup; secrets, tokens, and raw runtime configs are excluded by design.
+- See `docs/diagnostics-bundle.md`.
+
 ## Backup import/export (0.20)
 
 - **File → Export Backup…** / **File → Import Backup…** — portable `.zarya-backup.zip` archives.

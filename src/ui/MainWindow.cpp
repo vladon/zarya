@@ -14,7 +14,10 @@
 #include "ui/ImportVlessDialog.h"
 #include "ui/ProfileDialog.h"
 #include "ui/DnsManagerDialog.h"
+#include "diagnostics/DiagnosticsContext.h"
+#include "logging/LogBuffer.h"
 #include "ui/BackupExportDialog.h"
+#include "ui/DiagnosticsDialog.h"
 #include "ui/BackupImportDialog.h"
 #include "ui/CoreManagerDialog.h"
 #include "ui/GeoDataManagerDialog.h"
@@ -47,6 +50,7 @@
 #include <QStatusBar>
 #include <QTableView>
 #include <QToolBar>
+#include <QDateTime>
 
 namespace zarya {
 
@@ -56,6 +60,7 @@ MainWindow::MainWindow(QWidget* parent)
                       &m_routingManager, &m_geoDataManager, &m_dnsManager, &m_ruleSetManager,
                       this)
 {
+    LogBuffer::instance().setAppStartedAt(QDateTime::currentDateTimeUtc());
     setupUi();
     setupMenuBar();
     setupToolBar();
@@ -187,6 +192,9 @@ void MainWindow::setupMenuBar()
         toolsMenu->addAction(QStringLiteral("&Restore Previous Proxy"));
 
     auto* helpMenu = menuBar()->addMenu(QStringLiteral("&Help"));
+    helpMenu->addAction(QStringLiteral("Create &Diagnostics Bundle…"), this,
+                        &MainWindow::onCreateDiagnosticsBundle);
+    helpMenu->addSeparator();
     helpMenu->addAction(QStringLiteral("&About"), this, &MainWindow::onAbout);
 }
 
@@ -233,6 +241,7 @@ void MainWindow::setupConnections()
     connect(m_exportBackupAction, &QAction::triggered, this, &MainWindow::onExportBackup);
     connect(m_importBackupAction, &QAction::triggered, this, &MainWindow::onImportBackup);
     connect(&m_backupManager, &BackupManager::logLine, this, &MainWindow::appendLog);
+    connect(&m_diagnosticsManager, &DiagnosticsManager::logLine, this, &MainWindow::appendLog);
     connect(m_settingsAction, &QAction::triggered, this, &MainWindow::onSettings);
     connect(m_routingProfilesAction, &QAction::triggered, this, &MainWindow::onRoutingProfiles);
     connect(m_geoDataManagerAction, &QAction::triggered, this, &MainWindow::onGeoDataManager);
@@ -259,6 +268,10 @@ void MainWindow::setupConnections()
     connect(&m_coreManager, &CoreManager::stopped, this, &MainWindow::onCoreStopped);
     connect(&m_appController, &AppController::logLine, this, &MainWindow::appendLog);
     if (HelperProcessManager* helper = m_appController.helperProcessManager()) {
+        connect(helper, &HelperProcessManager::helperLogLine, this,
+                [this](const QString& line) {
+                    appendLog(QStringLiteral("helper: %1").arg(line));
+                });
         connect(helper, &HelperProcessManager::killSwitchStateChanged, this,
                 [this](const KillSwitchState&) { updateStatusBar(); });
         connect(helper, &HelperProcessManager::tunExitedWithKillSwitchActive, this,
@@ -294,6 +307,7 @@ void MainWindow::setupConnections()
 
 void MainWindow::appendLog(const QString& line)
 {
+    LogBuffer::instance().append(line);
     m_logView->appendPlainText(line);
 }
 
@@ -1224,6 +1238,37 @@ void MainWindow::onImportBackup()
     loadAllOnStartup();
     m_ruleSetManager.reload();
     appendLog(QStringLiteral("Configuration reloaded after backup import."));
+}
+
+DiagnosticsContext MainWindow::buildDiagnosticsContext()
+{
+    DiagnosticsContext context;
+    context.profiles = m_allProfiles;
+    if (Profile* selected = selectedProfileInStorage()) {
+        context.selectedProfile = *selected;
+        context.hasSelectedProfile = true;
+    }
+    context.coreManager = &m_coreManager;
+    context.coreBinaryManager = &m_coreBinaryManager;
+    context.appController = &m_appController;
+    context.systemProxy = &m_systemProxy;
+    context.routingManager = &m_routingManager;
+    context.dnsManager = &m_dnsManager;
+    context.geoDataManager = &m_geoDataManager;
+    context.ruleSetManager = &m_ruleSetManager;
+    context.helper = m_appController.helperProcessManager();
+    context.xrayAdapter = &m_xrayAdapter;
+    context.appStartedAt = LogBuffer::instance().appStartedAt();
+    context.systemTrayAvailable = trayIsAvailable();
+    return context;
+}
+
+void MainWindow::onCreateDiagnosticsBundle()
+{
+    m_diagnosticsManager.setContext(buildDiagnosticsContext());
+    DiagnosticsDialog dialog(m_diagnosticsManager,
+                             [this](const QString& line) { appendLog(line); }, this);
+    dialog.exec();
 }
 
 void MainWindow::checkCoreUpdatesOnStartup()
