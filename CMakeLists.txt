@@ -135,6 +135,19 @@ set(ZARYA_RUNTIME_SOURCES
     ${ZARYA_RULESET_SOURCES}
 )
 
+set(ZARYA_BACKUP_SOURCES
+    src/backup/BackupCategory.cpp
+    src/backup/BackupExportOptions.cpp
+    src/backup/BackupImportOptions.cpp
+    src/backup/BackupManifest.cpp
+    src/backup/BackupArchive.cpp
+    src/backup/BackupRedactor.cpp
+    src/backup/BackupValidator.cpp
+    src/backup/BackupExporter.cpp
+    src/backup/BackupImporter.cpp
+    src/backup/BackupManager.cpp
+)
+
 set(ZARYA_CORE_UPDATE_SOURCES
     src/cores/CoreInstallStatus.cpp
     src/cores/CorePlatform.cpp
@@ -237,6 +250,8 @@ set(ZARYA_SOURCES
     src/ui/RuleSetManagerDialog.cpp
     src/ui/GeoDataManagerDialog.cpp
     src/ui/CoreManagerDialog.cpp
+    src/ui/BackupExportDialog.cpp
+    src/ui/BackupImportDialog.cpp
     src/ui/DnsManagerDialog.cpp
     src/ui/DnsProfileDialog.cpp
     src/ui/DnsServerEditorDialog.cpp
@@ -261,6 +276,7 @@ set(ZARYA_SOURCES
     ${ZARYA_KILLSWITCH_GUI_SOURCES}
     ${ZARYA_GEODATA_SOURCES}
     ${ZARYA_CORE_UPDATE_SOURCES}
+    ${ZARYA_BACKUP_SOURCES}
     src/import/VlessUriParser.cpp
     ${ZARYA_PLATFORM_SOURCES}
     ${ZARYA_AUTOSTART_SOURCES}

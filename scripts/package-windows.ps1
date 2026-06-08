@@ -6,7 +6,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
-$Version = "0.19.0"
+$Version = "0.20.0"
 $Staging = Join-Path $Root "dist\Zarya-$Version-windows-x64-portable"
 $BuildOutput = Join-Path $Root "$BuildDir\$Config"
 

@@ -9,6 +9,7 @@
 #include "storage/ProfileStore.h"
 #include "storage/SubscriptionStore.h"
 #include "dns/DnsManager.h"
+#include "backup/BackupManager.h"
 #include "cores/CoreBinaryManager.h"
 #include "geodata/GeoDataManager.h"
 #include "rulesets/RuleSetManager.h"
@@ -75,6 +76,8 @@ private slots:
     void onRoutingProfiles();
     void onGeoDataManager();
     void onCoreManager();
+    void onExportBackup();
+    void onImportBackup();
     void onRuleSetManager();
     void onDnsProfiles();
     void onPreviewSingBoxTunConfig();
@@ -164,6 +167,7 @@ private:
     DnsManager m_dnsManager;
     GeoDataManager m_geoDataManager;
     CoreBinaryManager m_coreBinaryManager;
+    BackupManager m_backupManager;
     RuleSetManager m_ruleSetManager;
     TestManager m_testManager;
     CoreManager m_coreManager;
@@ -190,6 +194,8 @@ private:
     QAction* m_stopAction = nullptr;
     QAction* m_saveAction = nullptr;
     QAction* m_loadAction = nullptr;
+    QAction* m_exportBackupAction = nullptr;
+    QAction* m_importBackupAction = nullptr;
     QAction* m_settingsAction = nullptr;
     QAction* m_routingProfilesAction = nullptr;
     QAction* m_geoDataManagerAction = nullptr;

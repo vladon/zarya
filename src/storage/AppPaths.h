@@ -41,6 +41,7 @@ public:
     static QString geoDataDir();
     static QString xrayResourceDir();
     static QString xrayCoreDir();
+    static QString backupsDir();
 
 private:
     static void ensureDir(const QString& path);

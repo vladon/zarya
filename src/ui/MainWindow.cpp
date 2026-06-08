@@ -14,6 +14,8 @@
 #include "ui/ImportVlessDialog.h"
 #include "ui/ProfileDialog.h"
 #include "ui/DnsManagerDialog.h"
+#include "ui/BackupExportDialog.h"
+#include "ui/BackupImportDialog.h"
 #include "ui/CoreManagerDialog.h"
 #include "ui/GeoDataManagerDialog.h"
 #include "ui/RuleSetManagerDialog.h"
@@ -127,6 +129,9 @@ void MainWindow::setupMenuBar()
     m_saveAction = fileMenu->addAction(QStringLiteral("&Save profiles"));
     m_loadAction = fileMenu->addAction(QStringLiteral("&Reload profiles"));
     fileMenu->addSeparator();
+    m_exportBackupAction = fileMenu->addAction(QStringLiteral("Export &Backup…"));
+    m_importBackupAction = fileMenu->addAction(QStringLiteral("Import &Backup…"));
+    fileMenu->addSeparator();
     m_settingsAction = fileMenu->addAction(QStringLiteral("&Settings…"));
     fileMenu->addSeparator();
     m_showAction = fileMenu->addAction(QStringLiteral("&Show"));
@@ -225,6 +230,9 @@ void MainWindow::setupConnections()
     connect(m_importAction, &QAction::triggered, this, &MainWindow::onImportVless);
     connect(m_saveAction, &QAction::triggered, this, &MainWindow::onSaveProfiles);
     connect(m_loadAction, &QAction::triggered, this, &MainWindow::onLoadProfiles);
+    connect(m_exportBackupAction, &QAction::triggered, this, &MainWindow::onExportBackup);
+    connect(m_importBackupAction, &QAction::triggered, this, &MainWindow::onImportBackup);
+    connect(&m_backupManager, &BackupManager::logLine, this, &MainWindow::appendLog);
     connect(m_settingsAction, &QAction::triggered, this, &MainWindow::onSettings);
     connect(m_routingProfilesAction, &QAction::triggered, this, &MainWindow::onRoutingProfiles);
     connect(m_geoDataManagerAction, &QAction::triggered, this, &MainWindow::onGeoDataManager);
@@ -1164,6 +1172,58 @@ void MainWindow::onCoreManager()
                              [this](const QString& line) { appendLog(line); }, this);
     dialog.exec();
     m_coreBinaryManager.refreshLocalState();
+}
+
+void MainWindow::onExportBackup()
+{
+    QString error;
+    if (!saveAll(&error)) {
+        QMessageBox::warning(this, QStringLiteral("Export Backup"),
+                             QStringLiteral("Could not save current state before export:\n%1")
+                                 .arg(error));
+        return;
+    }
+
+    BackupExportDialog dialog(m_backupManager,
+                              [this](const QString& line) { appendLog(line); }, this);
+    dialog.exec();
+}
+
+void MainWindow::onImportBackup()
+{
+    const bool coreRunning = m_appController.isCoreRunning();
+    HelperProcessManager* helper = m_appController.helperProcessManager();
+    const bool killSwitchActive = BackupManager::isKillSwitchActive(helper);
+
+    if (killSwitchActive || coreRunning) {
+        const QString reason =
+            BackupManager::runtimeBlockReason(coreRunning, killSwitchActive);
+        QMessageBox::warning(this, QStringLiteral("Import Backup"), reason);
+        if (killSwitchActive) {
+            return;
+        }
+    }
+
+    if (coreRunning) {
+        const auto answer = QMessageBox::question(
+            this, QStringLiteral("Import Backup"),
+            QStringLiteral("A proxy core is currently running. You can preview a backup, but "
+                           "import is disabled until the core is stopped.\n\nOpen import dialog "
+                           "anyway?"));
+        if (answer != QMessageBox::Yes) {
+            return;
+        }
+    }
+
+    BackupImportDialog dialog(m_backupManager, coreRunning, killSwitchActive,
+                              [this](const QString& line) { appendLog(line); }, this);
+    if (dialog.exec() != QDialog::Accepted || !dialog.importApplied()) {
+        return;
+    }
+
+    loadAllOnStartup();
+    m_ruleSetManager.reload();
+    appendLog(QStringLiteral("Configuration reloaded after backup import."));
 }
 
 void MainWindow::checkCoreUpdatesOnStartup()
