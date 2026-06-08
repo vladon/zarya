@@ -135,6 +135,23 @@ set(ZARYA_RUNTIME_SOURCES
     ${ZARYA_RULESET_SOURCES}
 )
 
+set(ZARYA_CORE_UPDATE_SOURCES
+    src/cores/CoreInstallStatus.cpp
+    src/cores/CorePlatform.cpp
+    src/cores/CoreVersionDetector.cpp
+    src/cores/CoreReleaseProvider.cpp
+    src/cores/GitHubReleaseProvider.cpp
+    src/cores/CoreAssetSelector.cpp
+    src/cores/CoreChecksum.cpp
+    src/cores/CoreDownloader.cpp
+    src/cores/CoreArchiveExtractor.cpp
+    src/cores/CoreVerifier.cpp
+    src/cores/CorePaths.cpp
+    src/cores/CoreInstaller.cpp
+    src/cores/CoreRollbackManager.cpp
+    src/cores/CoreBinaryManager.cpp
+)
+
 set(ZARYA_GEODATA_SOURCES
     src/geodata/GeoDataFileStatus.cpp
     src/geodata/GeoDataSource.cpp
@@ -219,6 +236,7 @@ set(ZARYA_SOURCES
     src/ui/SingBoxConfigPreviewDialog.cpp
     src/ui/RuleSetManagerDialog.cpp
     src/ui/GeoDataManagerDialog.cpp
+    src/ui/CoreManagerDialog.cpp
     src/ui/DnsManagerDialog.cpp
     src/ui/DnsProfileDialog.cpp
     src/ui/DnsServerEditorDialog.cpp
@@ -242,6 +260,7 @@ set(ZARYA_SOURCES
     ${ZARYA_KILLSWITCH_PLATFORM}
     ${ZARYA_KILLSWITCH_GUI_SOURCES}
     ${ZARYA_GEODATA_SOURCES}
+    ${ZARYA_CORE_UPDATE_SOURCES}
     src/import/VlessUriParser.cpp
     ${ZARYA_PLATFORM_SOURCES}
     ${ZARYA_AUTOSTART_SOURCES}

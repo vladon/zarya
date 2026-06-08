@@ -1,6 +1,6 @@
 # Zarya
 
-Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). Cross-platform Qt 6 desktop proxy client (milestones 0.1–0.18): profiles, subscriptions, Xray, routing, geo data updates, DNS profiles, system proxy, experimental TUN, sing-box rule sets (.srs), privileged helper, experimental kill switch (Linux nft PoC; Windows WFP PoC), tray, autostart, and packaging.
+Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). Cross-platform Qt 6 desktop proxy client (milestones 0.1–0.19): profiles, subscriptions, Xray, routing, geo data updates, DNS profiles, system proxy, experimental TUN, sing-box rule sets (.srs), core update manager, privileged helper, experimental kill switch (Linux nft PoC; Windows WFP PoC), tray, autostart, and packaging.
 
 ## Requirements
 
@@ -278,11 +278,17 @@ Zarya’s default mode remains **system proxy via Xray**. An opt-in **experiment
 - Import `.srs`, compile source JSON via `sing-box rule-set compile`, optional strict mode before TUN start.
 - See `docs/sing-box-rule-sets.md`.
 
-## Experimental kill switch (0.16)
+## Core update manager (0.19)
+
+- **Tools → Core Manager** — download, verify, and install **Xray** and **sing-box** from GitHub releases.
+- Checksum verification when upstream provides checksum assets; backup and rollback supported.
+- Does not update Zarya itself, helper, or Wintun — see `docs/core-update-manager.md`.
+
+## Experimental kill switch (0.16+)
 
 - Implemented in **`zarya-helper`** (requires helper mode, not direct GUI sing-box).
 - **Linux:** nftables PoC (`table inet zarya` only; never flushes global ruleset).
-- **Windows / macOS:** design stub / unsupported in 0.16 — see `docs/kill-switch-design.md`.
+- **Windows:** WFP PoC (0.18); **macOS:** unsupported — see `docs/kill-switch-design.md`.
 - Recovery: `docs/recovery.md` and Settings → Kill Switch → Show Recovery Instructions.
 - For elevated TUN on Windows/macOS/Linux, run `zarya-helper` elevated manually or use dev mode and accept platform limits.
 
