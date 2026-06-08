@@ -47,6 +47,11 @@ AppError appErrorFromCode(const QString& code, const QString& details)
         error.suggestedAction = QStringLiteral("Check .bak files and logs; restore from backup.");
         error.severity = ErrorSeverity::Critical;
         error.area = QStringLiteral("Migration");
+    } else if (code == ErrorCode::profileUnsupportedRuntime()) {
+        error.title = QStringLiteral("Unsupported profile");
+        error.message = QStringLiteral("This profile is not supported by the current runtime.");
+        error.suggestedAction = QStringLiteral("Switch to Xray system proxy or edit the profile.");
+        error.area = QStringLiteral("Runtime");
     } else if (code == ErrorCode::backupImportChecksumFailed()) {
         error.title = QStringLiteral("Backup checksum failed");
         error.message = QStringLiteral("The backup archive failed checksum verification.");

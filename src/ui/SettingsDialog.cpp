@@ -178,7 +178,7 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     coreForm->addRow(QStringLiteral("Local SOCKS port"), m_socksPortSpin);
     coreForm->addRow(QStringLiteral("Local HTTP port"), m_httpPortSpin);
 
-    auto* coreGroup = new QGroupBox(QStringLiteral("Core"), this);
+    auto* coreGroup = new QGroupBox(QStringLiteral("Cores"), this);
     coreGroup->setLayout(coreForm);
 
     auto* proxyForm = new QFormLayout;
@@ -196,7 +196,7 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     proxyForm->addRow(QStringLiteral("Preferred network service"), m_macPreferredServiceEdit);
 #endif
 
-    auto* proxyGroup = new QGroupBox(QStringLiteral("System proxy"), this);
+    auto* proxyGroup = new QGroupBox(QStringLiteral("Proxy Mode"), this);
     proxyGroup->setLayout(proxyForm);
 
     auto* testingForm = new QFormLayout;
@@ -380,7 +380,8 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     experimentalForm->addRow(QString(), ruleSetNote);
     experimentalForm->addRow(QString(), tunWarnings);
 
-    auto* experimentalGroup = new QGroupBox(QStringLiteral("Experimental"), this);
+    auto* experimentalGroup = new QGroupBox(
+        QStringLiteral("Experimental (TUN · helper · kill switch)"), this);
     experimentalGroup->setLayout(experimentalForm);
 
     m_allowCoreUpdateWithoutChecksumCheck =
@@ -516,7 +517,8 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     killSwitchForm->addRow(QString(), m_killSwitchWarningLabel);
     killSwitchForm->addRow(QString(), killSwitchButtonsRow);
 
-    auto* killSwitchGroup = new QGroupBox(QStringLiteral("Kill Switch (experimental)"), this);
+    auto* killSwitchGroup = new QGroupBox(
+        QStringLiteral("Kill Switch — Experimental · Requires helper · Linux/Windows PoC"), this);
     killSwitchGroup->setLayout(killSwitchForm);
 
     const auto updateRuntimeControls = [this]() {
@@ -557,12 +559,12 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     auto* layout = new QVBoxLayout(this);
     layout->addWidget(coreGroup);
     layout->addWidget(proxyGroup);
-    layout->addWidget(testingGroup);
     layout->addWidget(routingGroup);
     layout->addWidget(dnsGroup);
     layout->addWidget(startupGroup);
     layout->addWidget(desktopGroup);
     layout->addWidget(coreUpdatesGroup);
+    layout->addWidget(testingGroup);
     layout->addWidget(experimentalGroup);
     layout->addWidget(killSwitchGroup);
     layout->addWidget(buttons);

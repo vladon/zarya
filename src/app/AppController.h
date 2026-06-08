@@ -61,6 +61,8 @@ public:
 
     void requestQuit();
     bool safeShutdown(bool proxyExitAnyway = false);
+    bool safeShutdownWithOptions(bool proxyExitAnyway, bool stopRuntime, bool restoreProxy,
+                                 bool disableKillSwitch);
 
 signals:
     void logLine(const QString& line);

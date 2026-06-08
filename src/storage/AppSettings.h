@@ -168,6 +168,12 @@ public:
     bool checkCoreUpdatesOnStartup() const;
     void setCheckCoreUpdatesOnStartup(bool enabled);
 
+    bool firstRunCompleted() const;
+    void setFirstRunCompleted(bool completed);
+
+    bool dismissBetaBanner() const;
+    void setDismissBetaBanner(bool dismissed);
+
     static bool defaultAutoEnableSystemProxyOnStart();
     static bool defaultMinimizeToTrayOnClose();
 

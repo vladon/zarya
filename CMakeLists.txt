@@ -290,6 +290,14 @@ set(ZARYA_SOURCES
     src/ui/DiagnosticsPreviewDialog.cpp
     src/ui/StartupRecoveryDialog.cpp
     src/ui/ReadinessDialog.cpp
+    src/ui/SafeExitDialog.cpp
+    src/ui/BetaBannerWidget.cpp
+    src/ui/onboarding/FirstRunWizard.cpp
+    src/ui/onboarding/FirstRunState.cpp
+    src/ui/onboarding/FirstRunChecklistWidget.cpp
+    src/ui/import/ProfileImportWidget.cpp
+    src/ui/widgets/StatusBadge.cpp
+    src/ui/widgets/StatusDashboardWidget.cpp
     src/ui/DnsManagerDialog.cpp
     src/ui/DnsProfileDialog.cpp
     src/ui/DnsServerEditorDialog.cpp

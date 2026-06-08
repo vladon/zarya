@@ -3,12 +3,14 @@
 #include <QDialog>
 #include <functional>
 
+class QLabel;
 class QTableView;
 
 namespace zarya {
 
 struct Profile;
 struct Subscription;
+struct SubscriptionUpdateStats;
 class SubscriptionManager;
 class SubscriptionStore;
 class ProfileStore;
@@ -47,6 +49,9 @@ private:
 
     SubscriptionTableModel* m_tableModel = nullptr;
     QTableView* m_tableView = nullptr;
+    QLabel* m_updateSummaryLabel = nullptr;
+
+    void showUpdateSummary(const SubscriptionUpdateStats& stats);
 };
 
 } // namespace zarya

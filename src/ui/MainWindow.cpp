@@ -2,6 +2,7 @@
 
 #include "ui/TrayController.h"
 
+#include "domain/CoreType.h"
 #include "domain/Profile.h"
 #include "domain/ProtocolType.h"
 #include "domain/Subscription.h"
@@ -14,8 +15,13 @@
 #include "packaging/PackagingInfo.h"
 #include "recovery/StartupRecovery.h"
 #include "storage/SettingsValidator.h"
-#include "ui/ReadinessDialog.h"
+#include "ui/BetaBannerWidget.h"
+#include "ui/onboarding/FirstRunState.h"
+#include "ui/onboarding/FirstRunWizard.h"
 #include "ui/StartupRecoveryDialog.h"
+#include "ui/widgets/StatusDashboardWidget.h"
+#include "errors/ErrorCode.h"
+#include "runtime/singbox/SingBoxConfigGenerator.h"
 #include "helperclient/HelperProcessManager.h"
 #include "killswitch/KillSwitchState.h"
 #include "storage/AppPaths.h"
@@ -40,9 +46,15 @@
 #include "ui/SingBoxConfigPreviewDialog.h"
 
 #include <QApplication>
+#include <QClipboard>
+#include <QHBoxLayout>
+#include <QPushButton>
 #include <QJsonDocument>
 #include <QCloseEvent>
 #include <QComboBox>
+#include <QInputDialog>
+#include <QLabel>
+#include <QScrollArea>
 #include <QEvent>
 #include <QSettings>
 #include <QTimer>
@@ -129,12 +141,104 @@ void MainWindow::setupUi()
     m_logView->setMaximumBlockCount(5000);
     m_logView->setPlaceholderText(QStringLiteral("Core and application logs appear here…"));
 
+    m_emptyStateLabel = new QLabel(this);
+    m_emptyStateLabel->setWordWrap(true);
+    m_emptyStateLabel->setAlignment(Qt::AlignCenter);
+    m_emptyStateLabel->setStyleSheet(QStringLiteral("padding:12px; color:#555;"));
+    m_emptyStateLabel->hide();
+
+    m_logFilterCombo = new QComboBox(this);
+    m_logFilterCombo->addItem(QStringLiteral("All"), QStringLiteral("all"));
+    m_logFilterCombo->addItem(QStringLiteral("Errors"), QStringLiteral("errors"));
+    m_logFilterCombo->addItem(QStringLiteral("Warnings"), QStringLiteral("warnings"));
+    m_logFilterCombo->addItem(QStringLiteral("Runtime"), QStringLiteral("runtime"));
+    m_logFilterCombo->addItem(QStringLiteral("Subscriptions"), QStringLiteral("subscriptions"));
+    m_logFilterCombo->addItem(QStringLiteral("Core"), QStringLiteral("core"));
+    m_logFilterCombo->addItem(QStringLiteral("Helper"), QStringLiteral("helper"));
+    m_logFilterCombo->addItem(QStringLiteral("Kill Switch"), QStringLiteral("killswitch"));
+    connect(m_logFilterCombo, &QComboBox::currentIndexChanged, this, [this]() {
+        m_logFilterKey = m_logFilterCombo->currentData().toString();
+        m_logView->clear();
+        for (const QString& line : LogBuffer::instance().recentLines(5000)) {
+            if (lineMatchesLogFilter(line)) {
+                m_logView->appendPlainText(line);
+            }
+        }
+    });
+
+    auto* logToolbar = new QWidget(this);
+    auto* copySelectedBtn = new QPushButton(QStringLiteral("Copy selected"), logToolbar);
+    auto* copyAllBtn = new QPushButton(QStringLiteral("Copy all visible"), logToolbar);
+    auto* clearViewBtn = new QPushButton(QStringLiteral("Clear view"), logToolbar);
+    auto* diagBtn = new QPushButton(QStringLiteral("Create diagnostics"), logToolbar);
+    connect(copySelectedBtn, &QPushButton::clicked, this, [this]() {
+        QApplication::clipboard()->setText(m_logView->textCursor().selectedText());
+    });
+    connect(copyAllBtn, &QPushButton::clicked, this,
+            [this]() { QApplication::clipboard()->setText(m_logView->toPlainText()); });
+    connect(clearViewBtn, &QPushButton::clicked, this, [this]() { m_logView->clear(); });
+    connect(diagBtn, &QPushButton::clicked, this, &MainWindow::onCreateDiagnosticsBundle);
+    auto* logToolbarLayout = new QHBoxLayout(logToolbar);
+    logToolbarLayout->setContentsMargins(0, 0, 0, 0);
+    logToolbarLayout->addWidget(new QLabel(QStringLiteral("Log filter:"), logToolbar));
+    logToolbarLayout->addWidget(m_logFilterCombo);
+    logToolbarLayout->addWidget(copySelectedBtn);
+    logToolbarLayout->addWidget(copyAllBtn);
+    logToolbarLayout->addWidget(clearViewBtn);
+    logToolbarLayout->addWidget(diagBtn);
+    logToolbarLayout->addStretch();
+
+    auto* logPanel = new QWidget(this);
+    auto* logPanelLayout = new QVBoxLayout(logPanel);
+    logPanelLayout->setContentsMargins(0, 0, 0, 0);
+    logPanelLayout->addWidget(logToolbar);
+    logPanelLayout->addWidget(m_logView);
+
     m_splitter = new QSplitter(Qt::Vertical, this);
     m_splitter->addWidget(m_tableView);
-    m_splitter->addWidget(m_logView);
+    m_splitter->addWidget(logPanel);
     m_splitter->setStretchFactor(0, 3);
     m_splitter->setStretchFactor(1, 1);
-    setCentralWidget(m_splitter);
+
+    m_statusDashboard = new StatusDashboardWidget(this);
+    connect(m_statusDashboard, &StatusDashboardWidget::openCoreManagerRequested, this,
+            &MainWindow::onCoreManager);
+    connect(m_statusDashboard, &StatusDashboardWidget::addProfileRequested, this,
+            &MainWindow::onAddProfile);
+    connect(m_statusDashboard, &StatusDashboardWidget::addSubscriptionRequested, this,
+            &MainWindow::onSubscriptions);
+    connect(m_statusDashboard, &StatusDashboardWidget::runSetupRequested, this,
+            [this]() { runFirstRunWizard(true); });
+    connect(m_statusDashboard, &StatusDashboardWidget::pasteLinkRequested, this,
+            &MainWindow::onImportVless);
+    connect(m_statusDashboard, &StatusDashboardWidget::importBackupRequested, this,
+            &MainWindow::onImportBackup);
+    connect(m_statusDashboard, &StatusDashboardWidget::startRequested, this,
+            &MainWindow::onStartCore);
+    connect(m_statusDashboard, &StatusDashboardWidget::stopRequested, this,
+            &MainWindow::onStopCore);
+    connect(m_statusDashboard, &StatusDashboardWidget::testRequested, this,
+            &MainWindow::onTestSelected);
+    connect(m_statusDashboard, &StatusDashboardWidget::updateSubscriptionsRequested, this,
+            &MainWindow::onUpdateAllSubscriptions);
+    connect(m_statusDashboard, &StatusDashboardWidget::openLogsRequested, this, [this]() {
+        m_splitter->setSizes({height() / 3, height() * 2 / 3});
+        m_logView->setFocus();
+    });
+    connect(m_statusDashboard, &StatusDashboardWidget::createDiagnosticsRequested, this,
+            &MainWindow::onCreateDiagnosticsBundle);
+
+    auto* central = new QWidget(this);
+    auto* centralLayout = new QVBoxLayout(central);
+    centralLayout->setContentsMargins(4, 4, 4, 4);
+    if (PackagingInfo::isBetaBuild() && !AppSettings::instance().dismissBetaBanner()) {
+        m_betaBanner = new BetaBannerWidget(central);
+        centralLayout->addWidget(m_betaBanner);
+    }
+    centralLayout->addWidget(m_statusDashboard);
+    centralLayout->addWidget(m_emptyStateLabel);
+    centralLayout->addWidget(m_splitter, 1);
+    setCentralWidget(central);
 
     statusBar()->showMessage(QStringLiteral("Ready"));
 }
@@ -163,7 +267,9 @@ void MainWindow::setupMenuBar()
     m_editAction = profileMenu->addAction(QStringLiteral("&Edit…"));
     m_deleteAction = profileMenu->addAction(QStringLiteral("&Delete"));
     profileMenu->addSeparator();
-    m_importAction = profileMenu->addAction(QStringLiteral("Import &share links…"));
+    m_importAction = profileMenu->addAction(QStringLiteral("Import Profile &Links…"));
+    fileMenu->insertAction(m_settingsAction, m_importAction);
+    fileMenu->insertSeparator(m_settingsAction);
 
     auto* subscriptionsMenu = menuBar()->addMenu(QStringLiteral("Su&bscriptions"));
     m_subscriptionsAction = subscriptionsMenu->addAction(QStringLiteral("&Manage…"));
@@ -203,6 +309,8 @@ void MainWindow::setupMenuBar()
         toolsMenu->addAction(QStringLiteral("&Restore Previous Proxy"));
 
     auto* helpMenu = menuBar()->addMenu(QStringLiteral("&Help"));
+    helpMenu->addAction(QStringLiteral("Run Setup &Wizard…"), this,
+                        [this]() { runFirstRunWizard(true); });
     helpMenu->addAction(QStringLiteral("Create &Diagnostics Bundle…"), this,
                         &MainWindow::onCreateDiagnosticsBundle);
     helpMenu->addSeparator();
@@ -319,7 +427,41 @@ void MainWindow::setupConnections()
 void MainWindow::appendLog(const QString& line)
 {
     LogBuffer::instance().append(line);
-    m_logView->appendPlainText(line);
+    if (lineMatchesLogFilter(line)) {
+        m_logView->appendPlainText(line);
+    }
+}
+
+bool MainWindow::lineMatchesLogFilter(const QString& line) const
+{
+    if (m_logFilterKey.isEmpty() || m_logFilterKey == QStringLiteral("all")) {
+        return true;
+    }
+    const QString lower = line.toLower();
+    if (m_logFilterKey == QStringLiteral("errors")) {
+        return lower.contains(QStringLiteral("error")) || lower.contains(QStringLiteral("failed"));
+    }
+    if (m_logFilterKey == QStringLiteral("warnings")) {
+        return lower.contains(QStringLiteral("warning"));
+    }
+    if (m_logFilterKey == QStringLiteral("runtime")) {
+        return lower.contains(QStringLiteral("xray")) || lower.contains(QStringLiteral("sing-box"))
+               || lower.contains(QStringLiteral("starting")) || lower.contains(QStringLiteral("stopping"))
+               || lower.contains(QStringLiteral("runtime"));
+    }
+    if (m_logFilterKey == QStringLiteral("subscriptions")) {
+        return lower.contains(QStringLiteral("subscription"));
+    }
+    if (m_logFilterKey == QStringLiteral("core")) {
+        return lower.contains(QStringLiteral("core")) || lower.contains(QStringLiteral("xray"));
+    }
+    if (m_logFilterKey == QStringLiteral("helper")) {
+        return lower.contains(QStringLiteral("helper"));
+    }
+    if (m_logFilterKey == QStringLiteral("killswitch")) {
+        return lower.contains(QStringLiteral("kill switch")) || lower.contains(QStringLiteral("killswitch"));
+    }
+    return true;
 }
 
 QString MainWindow::coreStatusText() const
@@ -494,19 +636,221 @@ void MainWindow::runStartupRecovery()
     }
 }
 
-void MainWindow::checkReadinessOnStartup()
+void MainWindow::maybeShowFirstRunWizard()
 {
-    const QString xrayPath = AppSettings::instance().resolvedXrayPath();
-    const bool hasCore = !xrayPath.isEmpty() && QFile::exists(xrayPath);
-    if (hasCore && !m_allProfiles.isEmpty()) {
+    m_coreBinaryManager.refreshLocalState();
+    if (!FirstRunState::shouldShowWizard(m_coreBinaryManager, m_allProfiles.size(),
+                                         m_subscriptions.size())) {
         return;
     }
+    runFirstRunWizard(false);
+}
 
-    ReadinessDialog dialog(this);
-    connect(&dialog, &ReadinessDialog::openCoreManagerRequested, this, &MainWindow::onCoreManager);
-    connect(&dialog, &ReadinessDialog::importProfileRequested, this, &MainWindow::onImportVless);
-    connect(&dialog, &ReadinessDialog::openSettingsRequested, this, &MainWindow::onSettings);
-    dialog.exec();
+void MainWindow::runFirstRunWizard(bool force)
+{
+    Q_UNUSED(force);
+    FirstRunWizard wizard(&m_coreBinaryManager, &m_routingManager, &m_dnsManager, this);
+    connect(&wizard, &FirstRunWizard::openCoreManagerRequested, this, &MainWindow::onCoreManager);
+    connect(&wizard, &FirstRunWizard::chooseXrayBinaryRequested, this, [this]() {
+        if (m_coreBinaryManager.setManagedExecutablePath(CoreType::Xray)) {
+            m_coreBinaryManager.refreshLocalState();
+        }
+    });
+    connect(&wizard, &FirstRunWizard::chooseSingBoxBinaryRequested, this, [this]() {
+        if (m_coreBinaryManager.setManagedExecutablePath(CoreType::SingBox)) {
+            m_coreBinaryManager.refreshLocalState();
+        }
+    });
+    connect(&wizard, &FirstRunWizard::installXrayRequested, this, [this]() {
+        onCoreManager();
+        m_coreBinaryManager.updateCore(CoreType::Xray);
+    });
+    connect(&wizard, &FirstRunWizard::installSingBoxRequested, this, [this]() {
+        onCoreManager();
+        m_coreBinaryManager.updateCore(CoreType::SingBox);
+    });
+    connect(&wizard, &FirstRunWizard::openRoutingProfilesRequested, this,
+            &MainWindow::onRoutingProfiles);
+    connect(&wizard, &FirstRunWizard::openDnsProfilesRequested, this, &MainWindow::onDnsProfiles);
+    connect(&wizard, &FirstRunWizard::importBackupRequested, this, &MainWindow::onImportBackup);
+    connect(&wizard, &FirstRunWizard::addProfileManuallyRequested, this, &MainWindow::onAddProfile);
+    connect(&wizard, &FirstRunWizard::wizardFinishedState, this, &MainWindow::applyFirstRunState);
+
+    if (wizard.exec() == QDialog::Accepted) {
+        AppSettings::instance().setFirstRunCompleted(true);
+    } else if (wizard.wasSkipped()) {
+        AppSettings::instance().setFirstRunCompleted(true);
+        appendLog(QStringLiteral("First-run setup skipped."));
+    }
+    updateStatusDashboard();
+    updateEmptyState();
+}
+
+void MainWindow::applyFirstRunState(const FirstRunState& state)
+{
+    if (!state.importedProfiles.isEmpty()) {
+        for (const Profile& profile : state.importedProfiles) {
+            m_allProfiles.append(profile);
+        }
+        saveAll();
+        refreshProfileView();
+    }
+    if (!state.addedSubscriptions.isEmpty()) {
+        for (const Subscription& sub : state.addedSubscriptions) {
+            m_subscriptions.append(sub);
+        }
+        m_subscriptionStore.save(m_subscriptions);
+    }
+    m_routingManager.setActiveProfileId(state.routingProfileId);
+    m_dnsManager.setActiveProfileId(state.dnsProfileId);
+    m_routingManager.save();
+    m_dnsManager.save();
+
+    AppSettings& settings = AppSettings::instance();
+    settings.setRuntimeMode(state.runtimeMode);
+    if (state.runtimeMode == RuntimeMode::TunSingBoxExperimental) {
+        settings.setEnableExperimentalTun(true);
+        settings.setTunWarningAccepted(state.tunWarningAccepted);
+    }
+
+    if (!m_allProfiles.isEmpty()) {
+        selectProfileById(m_allProfiles.first().id);
+    }
+    if (state.startProfileOnFinish && !m_allProfiles.isEmpty()) {
+        startSelectedProfile();
+    }
+}
+
+void MainWindow::updateStatusDashboard()
+{
+    if (!m_statusDashboard) {
+        return;
+    }
+    m_coreBinaryManager.refreshLocalState();
+    const CoreInfo xray = m_coreBinaryManager.infoFor(CoreType::Xray);
+    const bool hasProfiles = !m_allProfiles.isEmpty();
+    const bool configured = xray.exists && hasProfiles;
+
+    StatusDashboardModel model;
+    model.configured = configured;
+    model.running = m_appController.isCoreRunning();
+    model.routingText = m_routingManager.activeProfile().name;
+    model.dnsText = m_dnsManager.activeProfile().name;
+    model.systemProxyText =
+        m_systemProxy.enabledByZarya() ? QStringLiteral("On") : QStringLiteral("Off");
+    model.coreText = xray.exists ? QStringLiteral("Xray %1").arg(xray.installedVersion) : QStringLiteral("missing");
+    const AppSettings& settings = AppSettings::instance();
+    model.httpEndpoint = QStringLiteral("127.0.0.1:%1").arg(settings.httpPort());
+    model.socksEndpoint = QStringLiteral("127.0.0.1:%1").arg(settings.socksPort());
+
+    Profile* selected = selectedProfileInStorage();
+    if (!selected && !m_allProfiles.isEmpty()) {
+        selected = &m_allProfiles.first();
+    }
+    model.profileName = selected ? selected->name : QString();
+
+    m_statusDashboard->updateModel(model);
+}
+
+void MainWindow::updateEmptyState()
+{
+    if (!m_emptyStateLabel) {
+        return;
+    }
+    const int visibleCount = m_tableModel.rowCount();
+    if (visibleCount > 0) {
+        m_emptyStateLabel->hide();
+        return;
+    }
+    m_emptyStateLabel->show();
+    if (!m_subscriptions.isEmpty()) {
+        m_emptyStateLabel->setText(
+            QStringLiteral("Subscriptions exist but no profiles are imported yet.\n\n"
+                             "Use Subscriptions → Update All to import profiles."));
+    } else if (!m_profileFilterKey.isEmpty() && m_profileFilterKey != QStringLiteral("__manual__")
+               && !m_allProfiles.isEmpty()) {
+        m_emptyStateLabel->setText(
+            QStringLiteral("No profiles match the current filter.\n\nClear the filter to see all profiles."));
+    } else {
+        m_emptyStateLabel->setText(
+            QStringLiteral("No profiles yet.\n\nAdd a proxy profile manually, paste a share link, "
+                           "or add a subscription."));
+    }
+}
+
+Profile* MainWindow::resolveProfileForStart()
+{
+    Profile* profile = selectedProfileInStorage();
+    if (profile) {
+        return profile;
+    }
+    QVector<Profile*> enabled;
+    for (Profile& p : m_allProfiles) {
+        if (p.enabled && !p.deletedBySubscriptionUpdate) {
+            enabled.append(&p);
+        }
+    }
+    if (enabled.size() == 1) {
+        selectProfileById(enabled.first()->id);
+        return enabled.first();
+    }
+    if (enabled.isEmpty()) {
+        return nullptr;
+    }
+    QStringList names;
+    for (Profile* p : enabled) {
+        names.append(p->name);
+    }
+    bool ok = false;
+    const QString chosen =
+        QInputDialog::getItem(this, QStringLiteral("Select profile"), QStringLiteral("Profile:"),
+                              names, 0, false, &ok);
+    if (!ok) {
+        return nullptr;
+    }
+    for (Profile* p : enabled) {
+        if (p->name == chosen) {
+            selectProfileById(p->id);
+            return p;
+        }
+    }
+    return nullptr;
+}
+
+void MainWindow::handleErrorAction(ErrorAction action, const AppError& error)
+{
+    Q_UNUSED(error);
+    switch (action) {
+    case ErrorAction::OpenCoreManager:
+        onCoreManager();
+        break;
+    case ErrorAction::ChooseExistingBinary:
+        if (m_coreBinaryManager.setManagedExecutablePath(CoreType::Xray)) {
+            m_coreBinaryManager.refreshLocalState();
+        }
+        break;
+    case ErrorAction::CreateDiagnostics:
+        onCreateDiagnosticsBundle();
+        break;
+    case ErrorAction::OpenSettings:
+        onSettings();
+        break;
+    case ErrorAction::OpenRuleSetManager:
+        onRuleSetManager();
+        break;
+    case ErrorAction::OpenGeoDataManager:
+        onGeoDataManager();
+        break;
+    case ErrorAction::SwitchToSystemProxy:
+        AppSettings::instance().setRuntimeMode(RuntimeMode::SystemProxyXray);
+        AppSettings::instance().setEnableExperimentalTun(false);
+        break;
+    case ErrorAction::OpenProfile:
+        onEditProfile();
+        break;
+    default:
+        break;
+    }
 }
 
 void MainWindow::setupAppController()
@@ -590,12 +934,43 @@ void MainWindow::hideToTray(bool notify)
 
 void MainWindow::startSelectedProfile()
 {
-    Profile* profilePtr = selectedProfileInStorage();
-    if (!profilePtr) {
-        appendLog(QStringLiteral("Select a profile to start."));
+    m_coreBinaryManager.refreshLocalState();
+    const CoreInfo xray = m_coreBinaryManager.infoFor(CoreType::Xray);
+    if (!xray.exists) {
+        AppError error = appErrorFromCode(ErrorCode::coreXrayMissing());
+        const ErrorAction action = ErrorPresenter::showWithActions(this, error);
+        handleErrorAction(action, error);
         return;
     }
+
+    Profile* profilePtr = resolveProfileForStart();
+    if (!profilePtr) {
+        appendLog(QStringLiteral("No profile available to start."));
+        updateEmptyState();
+        return;
+    }
+
+    const AppSettings& settings = AppSettings::instance();
+    if (settings.effectiveRuntimeMode() == RuntimeMode::TunSingBoxExperimental) {
+        QString unsupportedReason;
+        const SingBoxConfigGenerator generator;
+        if (!generator.supportsProfile(*profilePtr, &unsupportedReason)) {
+            AppError error = appErrorFromCode(ErrorCode::profileUnsupportedRuntime(), unsupportedReason);
+            error.message = QStringLiteral("This profile is not supported by the current runtime.");
+            const ErrorAction action = ErrorPresenter::showWithActions(this, error);
+            handleErrorAction(action, error);
+            return;
+        }
+    } else if (!m_xrayAdapter.supportsProfile(*profilePtr, nullptr)) {
+        AppError error = appErrorFromCode(ErrorCode::profileUnsupportedRuntime());
+        error.message = QStringLiteral("This profile is not supported by the current runtime.");
+        const ErrorAction action = ErrorPresenter::showWithActions(this, error);
+        handleErrorAction(action, error);
+        return;
+    }
+
     m_appController.startProfile(*profilePtr);
+    updateStatusDashboard();
 }
 
 void MainWindow::testSelected()
@@ -723,6 +1098,7 @@ void MainWindow::updateStatusBar()
     }
 
     statusBar()->showMessage(message);
+    updateStatusDashboard();
 
     const bool coreRunning = m_coreManager.isRunning();
     m_enableSystemProxyAction->setEnabled(coreRunning && m_systemProxy.isSupported()
@@ -768,7 +1144,7 @@ void MainWindow::logStartupContext(const StartupOptions& options)
 void MainWindow::finishStartup(const StartupOptions& options)
 {
     checkKillSwitchRecoveryOnStartup();
-    checkReadinessOnStartup();
+    maybeShowFirstRunWizard();
     checkCoreUpdatesOnStartup();
 
     const AppSettings& settings = AppSettings::instance();
@@ -1006,6 +1382,8 @@ void MainWindow::refreshProfileView()
         visible.append(profile);
     }
     m_tableModel.setProfiles(visible);
+    updateEmptyState();
+    updateStatusDashboard();
 }
 
 void MainWindow::onProfileFilterChanged(int index)
@@ -1462,12 +1840,6 @@ bool MainWindow::writeConfigFile(const QString& path, const QJsonObject& config,
 
 void MainWindow::onStartCore()
 {
-    const int row = selectedRow();
-    if (row < 0) {
-        QMessageBox::information(this, QStringLiteral("Start core"),
-                                 QStringLiteral("Select a profile to start."));
-        return;
-    }
     startSelectedProfile();
 }
 
