@@ -520,4 +520,56 @@ void AppSettings::setStartAtLogin(bool enabled)
     settings().setValue(QStringLiteral("startup/startAtLogin"), enabled);
 }
 
+bool AppSettings::allowCoreUpdateWithoutChecksum() const
+{
+    return settings().value(QStringLiteral("cores/allowUpdateWithoutChecksum"), false).toBool();
+}
+
+void AppSettings::setAllowCoreUpdateWithoutChecksum(bool enabled)
+{
+    settings().setValue(QStringLiteral("cores/allowUpdateWithoutChecksum"), enabled);
+}
+
+bool AppSettings::allowManageExternalCorePaths() const
+{
+    return settings().value(QStringLiteral("cores/allowManageExternalCorePaths"), false).toBool();
+}
+
+void AppSettings::setAllowManageExternalCorePaths(bool enabled)
+{
+    settings().setValue(QStringLiteral("cores/allowManageExternalCorePaths"), enabled);
+}
+
+int AppSettings::coreBackupRetentionCount() const
+{
+    const int count = settings().value(QStringLiteral("cores/backupRetentionCount"), 2).toInt();
+    return count >= 1 ? count : 2;
+}
+
+void AppSettings::setCoreBackupRetentionCount(int count)
+{
+    settings().setValue(QStringLiteral("cores/backupRetentionCount"), qMax(1, count));
+}
+
+int AppSettings::githubApiTimeoutSeconds() const
+{
+    const int seconds = settings().value(QStringLiteral("cores/githubApiTimeoutSeconds"), 20).toInt();
+    return seconds >= 5 ? seconds : 20;
+}
+
+void AppSettings::setGithubApiTimeoutSeconds(int seconds)
+{
+    settings().setValue(QStringLiteral("cores/githubApiTimeoutSeconds"), qMax(5, seconds));
+}
+
+bool AppSettings::checkCoreUpdatesOnStartup() const
+{
+    return settings().value(QStringLiteral("cores/checkUpdatesOnStartup"), false).toBool();
+}
+
+void AppSettings::setCheckCoreUpdatesOnStartup(bool enabled)
+{
+    settings().setValue(QStringLiteral("cores/checkUpdatesOnStartup"), enabled);
+}
+
 } // namespace zarya

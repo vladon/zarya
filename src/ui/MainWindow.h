@@ -9,6 +9,7 @@
 #include "storage/ProfileStore.h"
 #include "storage/SubscriptionStore.h"
 #include "dns/DnsManager.h"
+#include "cores/CoreBinaryManager.h"
 #include "geodata/GeoDataManager.h"
 #include "rulesets/RuleSetManager.h"
 #include "routing/RoutingManager.h"
@@ -73,6 +74,7 @@ private slots:
     void onSettings();
     void onRoutingProfiles();
     void onGeoDataManager();
+    void onCoreManager();
     void onRuleSetManager();
     void onDnsProfiles();
     void onPreviewSingBoxTunConfig();
@@ -135,6 +137,7 @@ private:
     bool confirmSystemProxyChangeIfNeeded();
     void tryAutoEnableSystemProxy(bool fromAutostart = false);
     void checkGeoDataOnStartup();
+    void checkCoreUpdatesOnStartup();
     bool startProfileById(const QString& profileId, bool fromAutostart);
     Profile* profileById(const QString& profileId);
     void tryRestoreSystemProxy(SystemProxyRestoreMode mode, bool showFailureDialog);
@@ -160,6 +163,7 @@ private:
     RoutingManager m_routingManager;
     DnsManager m_dnsManager;
     GeoDataManager m_geoDataManager;
+    CoreBinaryManager m_coreBinaryManager;
     RuleSetManager m_ruleSetManager;
     TestManager m_testManager;
     CoreManager m_coreManager;
@@ -189,6 +193,7 @@ private:
     QAction* m_settingsAction = nullptr;
     QAction* m_routingProfilesAction = nullptr;
     QAction* m_geoDataManagerAction = nullptr;
+    QAction* m_coreManagerAction = nullptr;
     QAction* m_ruleSetManagerAction = nullptr;
     QAction* m_dnsProfilesAction = nullptr;
     QAction* m_previewSingBoxTunConfigAction = nullptr;

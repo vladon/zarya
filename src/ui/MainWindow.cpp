@@ -14,6 +14,7 @@
 #include "ui/ImportVlessDialog.h"
 #include "ui/ProfileDialog.h"
 #include "ui/DnsManagerDialog.h"
+#include "ui/CoreManagerDialog.h"
 #include "ui/GeoDataManagerDialog.h"
 #include "ui/RuleSetManagerDialog.h"
 #include "ui/RoutingManagerDialog.h"
@@ -59,6 +60,12 @@ MainWindow::MainWindow(QWidget* parent)
     setupAppController();
     setupConnections();
     setupTray();
+    m_coreBinaryManager.setProcessCoreManager(&m_coreManager);
+    m_coreBinaryManager.setSingBoxRunningCallback([this]() {
+        return m_appController.activeRuntimeMode() == RuntimeMode::TunSingBoxExperimental
+               && m_appController.isCoreRunning();
+    });
+    connect(&m_coreBinaryManager, &CoreBinaryManager::logLine, this, &MainWindow::appendLog);
     connect(&m_subscriptionManager, &SubscriptionManager::logLine, this, &MainWindow::appendLog);
 
     restoreWindowState();
@@ -163,6 +170,7 @@ void MainWindow::setupMenuBar()
     m_routingProfilesAction =
         toolsMenu->addAction(QStringLiteral("Routing &Profiles…"));
     m_geoDataManagerAction = toolsMenu->addAction(QStringLiteral("Geo Data &Manager…"));
+    m_coreManagerAction = toolsMenu->addAction(QStringLiteral("&Core Manager…"));
     m_ruleSetManagerAction = toolsMenu->addAction(QStringLiteral("sing-box Rule &Sets…"));
     m_dnsProfilesAction = toolsMenu->addAction(QStringLiteral("DNS &Profiles…"));
     m_previewSingBoxTunConfigAction =
@@ -220,6 +228,7 @@ void MainWindow::setupConnections()
     connect(m_settingsAction, &QAction::triggered, this, &MainWindow::onSettings);
     connect(m_routingProfilesAction, &QAction::triggered, this, &MainWindow::onRoutingProfiles);
     connect(m_geoDataManagerAction, &QAction::triggered, this, &MainWindow::onGeoDataManager);
+    connect(m_coreManagerAction, &QAction::triggered, this, &MainWindow::onCoreManager);
     connect(m_ruleSetManagerAction, &QAction::triggered, this, &MainWindow::onRuleSetManager);
     connect(m_dnsProfilesAction, &QAction::triggered, this, &MainWindow::onDnsProfiles);
     connect(m_previewSingBoxTunConfigAction, &QAction::triggered, this,
@@ -673,6 +682,7 @@ void MainWindow::logStartupContext(const StartupOptions& options)
 void MainWindow::finishStartup(const StartupOptions& options)
 {
     checkKillSwitchRecoveryOnStartup();
+    checkCoreUpdatesOnStartup();
 
     const AppSettings& settings = AppSettings::instance();
     const bool startMinimized =
@@ -1146,6 +1156,24 @@ void MainWindow::onRuleSetManager()
     RuleSetManagerDialog dialog(m_ruleSetManager, m_routingManager, m_dnsManager,
                                 [this](const QString& line) { appendLog(line); }, this);
     dialog.exec();
+}
+
+void MainWindow::onCoreManager()
+{
+    CoreManagerDialog dialog(m_coreBinaryManager,
+                             [this](const QString& line) { appendLog(line); }, this);
+    dialog.exec();
+    m_coreBinaryManager.refreshLocalState();
+}
+
+void MainWindow::checkCoreUpdatesOnStartup()
+{
+    if (!AppSettings::instance().checkCoreUpdatesOnStartup()) {
+        return;
+    }
+    appendLog(QStringLiteral("Checking core updates on startup"));
+    m_coreBinaryManager.refreshLocalState();
+    m_coreBinaryManager.checkLatestVersions();
 }
 
 void MainWindow::onGeoDataManager()

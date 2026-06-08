@@ -383,6 +383,38 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     auto* experimentalGroup = new QGroupBox(QStringLiteral("Experimental"), this);
     experimentalGroup->setLayout(experimentalForm);
 
+    m_allowCoreUpdateWithoutChecksumCheck =
+        new QCheckBox(QStringLiteral("Allow installing core archives without checksum verification"),
+                      this);
+    m_allowCoreUpdateWithoutChecksumCheck->setChecked(settings.allowCoreUpdateWithoutChecksum());
+
+    m_allowManageExternalCorePathsCheck =
+        new QCheckBox(QStringLiteral("Allow managing cores outside Zarya-managed directory"), this);
+    m_allowManageExternalCorePathsCheck->setChecked(settings.allowManageExternalCorePaths());
+
+    m_coreBackupRetentionSpin = new QSpinBox(this);
+    m_coreBackupRetentionSpin->setRange(1, 10);
+    m_coreBackupRetentionSpin->setValue(settings.coreBackupRetentionCount());
+
+    m_githubApiTimeoutSpin = new QSpinBox(this);
+    m_githubApiTimeoutSpin->setRange(5, 120);
+    m_githubApiTimeoutSpin->setSuffix(QStringLiteral(" s"));
+    m_githubApiTimeoutSpin->setValue(settings.githubApiTimeoutSeconds());
+
+    m_checkCoreUpdatesOnStartupCheck =
+        new QCheckBox(QStringLiteral("Check core updates on startup"), this);
+    m_checkCoreUpdatesOnStartupCheck->setChecked(settings.checkCoreUpdatesOnStartup());
+
+    auto* coreUpdatesForm = new QFormLayout;
+    coreUpdatesForm->addRow(QString(), m_allowCoreUpdateWithoutChecksumCheck);
+    coreUpdatesForm->addRow(QString(), m_allowManageExternalCorePathsCheck);
+    coreUpdatesForm->addRow(QStringLiteral("Backup retention"), m_coreBackupRetentionSpin);
+    coreUpdatesForm->addRow(QStringLiteral("GitHub API timeout"), m_githubApiTimeoutSpin);
+    coreUpdatesForm->addRow(QString(), m_checkCoreUpdatesOnStartupCheck);
+
+    auto* coreUpdatesGroup = new QGroupBox(QStringLiteral("Core updates"), this);
+    coreUpdatesGroup->setLayout(coreUpdatesForm);
+
     m_enableKillSwitchCheck =
         new QCheckBox(QStringLiteral("Enable experimental kill switch"), this);
     m_enableKillSwitchCheck->setChecked(settings.enableExperimentalKillSwitch());
@@ -530,6 +562,7 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     layout->addWidget(dnsGroup);
     layout->addWidget(startupGroup);
     layout->addWidget(desktopGroup);
+    layout->addWidget(coreUpdatesGroup);
     layout->addWidget(experimentalGroup);
     layout->addWidget(killSwitchGroup);
     layout->addWidget(buttons);
@@ -733,6 +766,12 @@ bool SettingsDialog::validateAndSave()
     settings.setKillSwitchBlockWhenTunStopped(true);
     settings.setKillSwitchAutoDisableOnCleanStop(
         m_killSwitchAutoDisableOnStopCheck->isChecked());
+
+    settings.setAllowCoreUpdateWithoutChecksum(m_allowCoreUpdateWithoutChecksumCheck->isChecked());
+    settings.setAllowManageExternalCorePaths(m_allowManageExternalCorePathsCheck->isChecked());
+    settings.setCoreBackupRetentionCount(m_coreBackupRetentionSpin->value());
+    settings.setGithubApiTimeoutSeconds(m_githubApiTimeoutSpin->value());
+    settings.setCheckCoreUpdatesOnStartup(m_checkCoreUpdatesOnStartupCheck->isChecked());
 
     return true;
 }

@@ -147,6 +147,21 @@ public:
     bool startAtLogin() const;
     void setStartAtLogin(bool enabled);
 
+    bool allowCoreUpdateWithoutChecksum() const;
+    void setAllowCoreUpdateWithoutChecksum(bool enabled);
+
+    bool allowManageExternalCorePaths() const;
+    void setAllowManageExternalCorePaths(bool enabled);
+
+    int coreBackupRetentionCount() const;
+    void setCoreBackupRetentionCount(int count);
+
+    int githubApiTimeoutSeconds() const;
+    void setGithubApiTimeoutSeconds(int seconds);
+
+    bool checkCoreUpdatesOnStartup() const;
+    void setCheckCoreUpdatesOnStartup(bool enabled);
+
     static bool defaultAutoEnableSystemProxyOnStart();
     static bool defaultMinimizeToTrayOnClose();
 

@@ -109,6 +109,12 @@ private:
     QPushButton* m_disableKillSwitchButton = nullptr;
     QPushButton* m_killSwitchRecoveryButton = nullptr;
 
+    QCheckBox* m_allowCoreUpdateWithoutChecksumCheck = nullptr;
+    QCheckBox* m_allowManageExternalCorePathsCheck = nullptr;
+    QSpinBox* m_coreBackupRetentionSpin = nullptr;
+    QSpinBox* m_githubApiTimeoutSpin = nullptr;
+    QCheckBox* m_checkCoreUpdatesOnStartupCheck = nullptr;
+
     QCheckBox* m_startAtLoginCheck = nullptr;
     QCheckBox* m_startMinimizedToTrayCheck = nullptr;
     QCheckBox* m_autoStartLastProfileCheck = nullptr;
