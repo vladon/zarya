@@ -430,9 +430,7 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
         QStringLiteral("Kill switch backend: nftables PoC (table inet zarya)"), this);
 #elif defined(Q_OS_WIN)
     m_killSwitchBackendLabel = new QLabel(
-        QStringLiteral(
-            "Kill switch backend: design stub — production should use Windows Filtering "
-            "Platform (WFP)."),
+        QStringLiteral("Kill switch backend: Windows WFP PoC (requires Administrator helper)"),
         this);
 #elif defined(Q_OS_MACOS)
     m_killSwitchBackendLabel = new QLabel(
@@ -783,11 +781,23 @@ void SettingsDialog::onTestKillSwitchSupport()
 
 void SettingsDialog::onEnableKillSwitchNow()
 {
+#if defined(Q_OS_WIN)
+    QMessageBox::warning(
+        this, QStringLiteral("Kill switch"),
+        QStringLiteral(
+            "The Windows WFP kill switch is experimental.\n\n"
+            "It will install temporary Zarya-owned WFP filters to block outbound connections "
+            "except loopback and the selected proxy server.\n\n"
+            "zarya-helper must be running as Administrator.\n\n"
+            "Kill switch is enabled automatically when you start TUN mode with kill switch "
+            "enabled."));
+#else
     QMessageBox::information(
         this, QStringLiteral("Kill switch"),
         QStringLiteral(
             "Kill switch is enabled automatically when you start TUN mode with kill switch "
             "enabled.\n\nSelect a profile and press Start, or use a running TUN session."));
+#endif
 }
 
 void SettingsDialog::onDisableKillSwitchNow()

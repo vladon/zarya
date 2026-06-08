@@ -1,12 +1,13 @@
 #include "killswitch/KillSwitchManager.h"
 
+#include "killswitch/KillSwitchLog.h"
 #include "killswitch/KillSwitchMarker.h"
 #include "killswitch/KillSwitchMode.h"
 
 #if defined(Q_OS_LINUX)
 #include "killswitch/linux/LinuxNftKillSwitchManager.h"
 #elif defined(Q_OS_WIN)
-#include "killswitch/windows/WindowsKillSwitchManager.h"
+#include "killswitch/windows/WindowsWfpKillSwitchManager.h"
 #elif defined(Q_OS_MACOS)
 #include "killswitch/macos/MacKillSwitchManager.h"
 #else
@@ -18,10 +19,21 @@
 
 namespace zarya {
 
+void IKillSwitchBackend::augmentMarker(KillSwitchMarkerData* data) const
+{
+    Q_UNUSED(data);
+}
+
+QStringList IKillSwitchBackend::activeRuleDescriptions() const
+{
+    return {};
+}
+
 KillSwitchManager::KillSwitchManager(QObject* parent)
     : QObject(parent)
     , m_backend(createBackend())
 {
+    setKillSwitchLogSink([this](const QString& line) { emit logLine(line); });
     m_state.backend = m_backend ? m_backend->backendId() : QStringLiteral("unknown");
     m_state.status = KillSwitchStatus::Disabled;
 }
@@ -31,7 +43,7 @@ std::unique_ptr<IKillSwitchBackend> KillSwitchManager::createBackend()
 #if defined(Q_OS_LINUX)
     return std::make_unique<LinuxNftKillSwitchManager>();
 #elif defined(Q_OS_WIN)
-    return std::make_unique<WindowsKillSwitchManager>();
+    return std::make_unique<WindowsWfpKillSwitchManager>();
 #elif defined(Q_OS_MACOS)
     return std::make_unique<MacKillSwitchManager>();
 #else
@@ -127,6 +139,7 @@ bool KillSwitchManager::enable(const KillSwitchRuleSet& rules, bool privileged, 
     marker.enabledAt = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
     marker.rulesetName = QStringLiteral("zarya");
     marker.tunInterfaceName = rules.tunInterfaceName;
+    m_backend->augmentMarker(&marker);
     if (!KillSwitchMarker::write(marker, &error)) {
         m_backend->disable(nullptr);
         if (errorMessage) {
@@ -146,7 +159,10 @@ bool KillSwitchManager::enable(const KillSwitchRuleSet& rules, bool privileged, 
     enabled.enabledAt = QDateTime::currentDateTimeUtc();
     enabled.recoveryMarkerPresent = true;
     enabled.lastError.clear();
-    enabled.activeRules = {QStringLiteral("table inet zarya")};
+    const QStringList rulesDescription = m_backend->activeRuleDescriptions();
+    enabled.activeRules =
+        rulesDescription.isEmpty() ? QStringList{QStringLiteral("table inet zarya")}
+                                   : rulesDescription;
     setState(enabled);
     emit logLine(QStringLiteral("helper: kill switch enabled (%1)").arg(enabled.backend));
     return true;
@@ -202,7 +218,7 @@ QString KillSwitchManager::recoveryInstructionsForPlatform()
 #if defined(Q_OS_LINUX)
     LinuxNftKillSwitchManager backend;
 #elif defined(Q_OS_WIN)
-    WindowsKillSwitchManager backend;
+    WindowsWfpKillSwitchManager backend;
 #elif defined(Q_OS_MACOS)
     MacKillSwitchManager backend;
 #else

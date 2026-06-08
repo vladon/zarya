@@ -9,6 +9,8 @@
 
 namespace zarya {
 
+struct KillSwitchMarkerData;
+
 class IKillSwitchBackend {
 public:
     virtual ~IKillSwitchBackend() = default;
@@ -19,6 +21,8 @@ public:
     virtual bool enable(const KillSwitchRuleSet& rules, QString* errorMessage) = 0;
     virtual bool disable(QString* errorMessage) = 0;
     virtual QString recoveryInstructions() const = 0;
+    virtual void augmentMarker(KillSwitchMarkerData* data) const;
+    virtual QStringList activeRuleDescriptions() const;
 };
 
 class KillSwitchManager : public QObject {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QString>
+#include <QStringList>
 
 namespace zarya {
 
@@ -10,6 +11,9 @@ struct KillSwitchMarkerData {
     QString enabledAt;
     QString rulesetName;
     QString tunInterfaceName;
+    QString providerKey;
+    QString sublayerKey;
+    QStringList filterKeys;
 };
 
 class KillSwitchMarker {

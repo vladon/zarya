@@ -4,7 +4,7 @@
 
 namespace zarya {
 
-class WindowsKillSwitchManager : public IKillSwitchBackend {
+class WindowsWfpKillSwitchManager : public IKillSwitchBackend {
 public:
     QString backendId() const override;
     QString displayName() const override;
@@ -12,6 +12,8 @@ public:
     bool enable(const KillSwitchRuleSet& rules, QString* errorMessage) override;
     bool disable(QString* errorMessage) override;
     QString recoveryInstructions() const override;
+    void augmentMarker(KillSwitchMarkerData* data) const override;
+    QStringList activeRuleDescriptions() const override;
 };
 
 } // namespace zarya

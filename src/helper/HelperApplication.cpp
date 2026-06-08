@@ -2,8 +2,11 @@
 
 #include "helper/HelperAuth.h"
 #include "ipc/IpcTransport.h"
+#include "killswitch/KillSwitchManager.h"
+#include "platform/PlatformPrivilege.h"
 #include "storage/AppPaths.h"
 
+#include <QJsonDocument>
 #include <cstdio>
 
 namespace zarya {
@@ -23,6 +26,10 @@ bool HelperApplication::parseArguments(QString* errorMessage)
             m_devMode = true;
         } else if (arg == QStringLiteral("--service")) {
             m_serviceMode = true;
+        } else if (arg == QStringLiteral("--recover-killswitch")) {
+            m_recoverKillSwitchCli = true;
+        } else if (arg == QStringLiteral("--killswitch-status")) {
+            m_killSwitchStatusCli = true;
         } else if (arg == QStringLiteral("--token-file") && index + 1 < args.size()) {
             m_tokenFilePath = args.at(++index);
         } else if (arg == QStringLiteral("--allowed-runtime-dir") && index + 1 < args.size()) {
@@ -32,6 +39,11 @@ bool HelperApplication::parseArguments(QString* errorMessage)
         } else if (arg == QStringLiteral("--server-name") && index + 1 < args.size()) {
             m_serverName = args.at(++index);
         }
+    }
+
+    if (m_recoverKillSwitchCli || m_killSwitchStatusCli) {
+        AppPaths::initialize(false);
+        return true;
     }
 
     if (m_tokenFilePath.isEmpty()) {
@@ -66,12 +78,37 @@ bool HelperApplication::parseArguments(QString* errorMessage)
     return true;
 }
 
+int HelperApplication::runKillSwitchCli()
+{
+    const PrivilegeCheckResult privileges = PlatformPrivilege::currentProcessPrivileges();
+    KillSwitchManager manager;
+    manager.refreshStartupState(privileges.elevated);
+
+    if (m_killSwitchStatusCli) {
+        const QJsonObject object = KillSwitchManager::stateToJson(manager.state());
+        fprintf(stdout, "%s\n", QJsonDocument(object).toJson(QJsonDocument::Indented).constData());
+        return 0;
+    }
+
+    QString error;
+    if (!manager.recover(true, &error)) {
+        fprintf(stderr, "zarya-helper: kill switch recovery failed: %s\n", error.toUtf8().constData());
+        return 1;
+    }
+    fprintf(stdout, "zarya-helper: kill switch recovered\n");
+    return 0;
+}
+
 int HelperApplication::run()
 {
     QString error;
     if (!parseArguments(&error)) {
         fprintf(stderr, "zarya-helper: %s\n", error.toUtf8().constData());
         return 1;
+    }
+
+    if (m_recoverKillSwitchCli || m_killSwitchStatusCli) {
+        return runKillSwitchCli();
     }
 
     if (!m_commandServer.start(m_serverName, m_authToken, m_pathPolicy, &error)) {
