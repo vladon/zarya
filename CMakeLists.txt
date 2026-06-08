@@ -79,13 +79,21 @@ set(ZARYA_KILLSWITCH_COMMON
     src/killswitch/KillSwitchMode.cpp
     src/killswitch/KillSwitchState.cpp
     src/killswitch/KillSwitchMarker.cpp
+    src/killswitch/KillSwitchLog.cpp
     src/killswitch/KillSwitchManager.cpp
 )
 
 if(UNIX AND NOT APPLE)
     set(ZARYA_KILLSWITCH_PLATFORM src/killswitch/linux/LinuxNftKillSwitchManager.cpp)
 elseif(WIN32)
-    set(ZARYA_KILLSWITCH_PLATFORM src/killswitch/windows/WindowsKillSwitchManager.cpp)
+    set(ZARYA_KILLSWITCH_PLATFORM src/killswitch/windows/WindowsWfpKillSwitchManager_stub.cpp)
+    set(ZARYA_KILLSWITCH_WINDOWS_WFP_SOURCES
+        src/killswitch/windows/WindowsWfpKillSwitchManager.cpp
+        src/killswitch/windows/WindowsWfpSession.cpp
+        src/killswitch/windows/WindowsWfpFilterBuilder.cpp
+        src/killswitch/windows/WindowsWfpGuids.cpp
+        src/killswitch/windows/WindowsWfpUtils.cpp
+    )
 elseif(APPLE)
     set(ZARYA_KILLSWITCH_PLATFORM src/killswitch/macos/MacKillSwitchManager.cpp)
 else()
@@ -337,11 +345,19 @@ set(ZARYA_HELPER_SOURCES
     ${ZARYA_KILLSWITCH_SOURCES}
 )
 
+if(WIN32)
+    list(APPEND ZARYA_HELPER_SOURCES ${ZARYA_KILLSWITCH_WINDOWS_WFP_SOURCES})
+    list(REMOVE_ITEM ZARYA_HELPER_SOURCES src/killswitch/windows/WindowsWfpKillSwitchManager_stub.cpp)
+endif()
+
 add_executable(zarya-helper ${ZARYA_HELPER_SOURCES})
 target_include_directories(zarya-helper PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_definitions(zarya-helper PRIVATE ZARYA_VERSION_STRING="${ZARYA_VERSION_STRING}")
 zarya_link_qt_core(zarya-helper)
 target_link_libraries(zarya-helper PRIVATE Qt6::Network)
+if(WIN32)
+    target_link_libraries(zarya-helper PRIVATE Fwpuclnt Ws2_32 iphlpapi)
+endif()
 
 # Config generation checks (unit-like; uses shared or static Qt Core)
 add_executable(zarya_xray_config_test

@@ -121,5 +121,5 @@ Add optional transparent proxy (TUN) mode to Zarya without breaking the existing
 | **0.15** | Privileged `zarya-helper` PoC (local IPC, token auth, TUN start/stop); not a production service |
 | **0.16** | Experimental kill switch in helper (Linux nftables PoC; Windows WFP / macOS NE documented as future) |
 | **0.17** | sing-box rule-set manager: local `.srs` storage, catalog, import/compile, `route.rule_set` integration |
-| 0.18+ | Remote rule-set download catalog URLs, auto-update policies |
-| 0.17+ | Production Windows WFP kill switch, macOS Network Extension |
+| **0.18** | Windows WFP kill switch PoC in helper (`ALE_AUTH_CONNECT` allow/block filters) |
+| 0.18+ | Remote rule-set download catalog URLs, production WFP hardening, macOS Network Extension |

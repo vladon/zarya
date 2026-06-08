@@ -4,7 +4,7 @@
 
 Prevent direct traffic leaks when experimental TUN mode is expected to carry traffic. If sing-box TUN stops or crashes while kill switch is enabled, output traffic should be blocked except loopback, optional LAN, traffic over the TUN interface, and the selected proxy server IP:port.
 
-## Non-goals (0.16)
+## Non-goals
 
 - Production Windows WFP provider or callout driver
 - Kernel driver
@@ -31,10 +31,14 @@ Firewall and routing changes require elevated privileges. The GUI runs as a norm
 - Rules file: `runtime/killswitch/zarya-nft.conf`
 - Recovery: `sudo nft delete table inet zarya`
 
-### Windows (0.16 design stub)
+### Windows WFP PoC (0.18)
 
-- Reports unsupported; documents WFP as production direction
-- No firewall rules installed
+- Real WFP backend in `zarya-helper` (`windows-wfp`)
+- Zarya-owned provider/sublayer and filters on `ALE_AUTH_CONNECT` v4/v6
+- Allows loopback, proxy IP:port, optional TUN interface; blocks other outbound connect
+- Transaction-wrapped enable/disable; stable GUIDs for recovery
+- Requires Administrator helper and running BFE service
+- See [windows-wfp-kill-switch.md](windows-wfp-kill-switch.md)
 
 ### macOS (0.16 unsupported)
 
@@ -69,11 +73,12 @@ See [recovery.md](recovery.md).
 
 - Incorrect rules can block all network access until manual recovery
 - Linux PoC requires root/sudo helper
-- Windows/macOS do not provide real kill switch in 0.16
+- Windows WFP PoC can block network access if misconfigured; use recovery CLI
+- macOS does not provide real kill switch yet
 
 ## Future milestones
 
-- Windows WFP backend
 - macOS Network Extension or controlled PF anchor with explicit opt-in
+- Production WFP hardening and optional persistent service
 - systemd / Windows service integration
 - Route recovery coordination with TUN teardown

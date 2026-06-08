@@ -16,8 +16,12 @@ public:
 private:
     bool parseArguments(QString* errorMessage);
 
+    int runKillSwitchCli();
+
     bool m_devMode = false;
     bool m_serviceMode = false;
+    bool m_recoverKillSwitchCli = false;
+    bool m_killSwitchStatusCli = false;
     QString m_tokenFilePath;
     QString m_allowedRuntimeDir;
     QString m_allowedCoreDir;

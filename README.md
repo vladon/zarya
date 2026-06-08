@@ -1,6 +1,6 @@
 # Zarya
 
-Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). Cross-platform Qt 6 desktop proxy client (milestones 0.1–0.17): profiles, subscriptions, Xray, routing, geo data updates, DNS profiles, system proxy, experimental TUN, sing-box rule sets (.srs), privileged helper, experimental kill switch (Linux nft PoC), tray, autostart, and packaging.
+Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). Cross-platform Qt 6 desktop proxy client (milestones 0.1–0.18): profiles, subscriptions, Xray, routing, geo data updates, DNS profiles, system proxy, experimental TUN, sing-box rule sets (.srs), privileged helper, experimental kill switch (Linux nft PoC; Windows WFP PoC), tray, autostart, and packaging.
 
 ## Requirements
 

@@ -12,9 +12,27 @@ sudo nft delete table inet zarya
 
 Zarya only manages `table inet zarya` and does not flush the global ruleset.
 
-### Windows (0.16)
+### Windows WFP PoC (0.18)
 
-No Zarya kill switch firewall rules are installed by default in this milestone. Future versions may create rules under group **Zarya Kill Switch**. Production should use Windows Filtering Platform (WFP).
+Preferred:
+
+```powershell
+zarya-helper --recover-killswitch
+```
+
+Status:
+
+```powershell
+zarya-helper --killswitch-status
+```
+
+Manual inspection:
+
+```powershell
+netsh wfp show state
+```
+
+Zarya only removes its own WFP provider/sublayer filters. See [windows-wfp-kill-switch.md](windows-wfp-kill-switch.md).
 
 ### macOS (0.16)
 
