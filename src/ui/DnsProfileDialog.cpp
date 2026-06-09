@@ -55,15 +55,15 @@ DnsProfileDialog::DnsProfileDialog(const DnsProfile& profile, bool readOnly, QWi
     , m_profile(profile)
     , m_readOnly(readOnly)
 {
-    setWindowTitle(readOnly ? QStringLiteral("View DNS Profile")
-                            : QStringLiteral("Edit DNS Profile"));
+    setWindowTitle(readOnly ? tr("View DNS Profile")
+                            : tr("Edit DNS Profile"));
     resize(820, 560);
 
     auto* tabs = new QTabWidget(this);
 
     auto* generalTab = new QWidget(this);
     m_nameEdit = new QLineEdit(profile.name, generalTab);
-    m_enabledCheck = new QCheckBox(QStringLiteral("Enabled"), generalTab);
+    m_enabledCheck = new QCheckBox(tr("Enabled"), generalTab);
     m_enabledCheck->setChecked(profile.enabled);
 
     m_modeCombo = new QComboBox(generalTab);
@@ -87,29 +87,29 @@ DnsProfileDialog::DnsProfileDialog(const DnsProfile& profile, bool readOnly, QWi
     m_queryStrategyCombo->setCurrentIndex(strategyIndex >= 0 ? strategyIndex : 0);
 
     auto* generalForm = new QFormLayout(generalTab);
-    generalForm->addRow(QStringLiteral("Name"), m_nameEdit);
-    generalForm->addRow(QStringLiteral("Mode"), m_modeCombo);
+    generalForm->addRow(tr("Name"), m_nameEdit);
+    generalForm->addRow(tr("Mode"), m_modeCombo);
     generalForm->addRow(QString(), m_enabledCheck);
-    generalForm->addRow(QStringLiteral("Query strategy"), m_queryStrategyCombo);
-    tabs->addTab(generalTab, QStringLiteral("General"));
+    generalForm->addRow(tr("Query strategy"), m_queryStrategyCombo);
+    tabs->addTab(generalTab, tr("General"));
 
     auto* serversTab = new QWidget(this);
     m_serversTable = new QTableWidget(serversTab);
     m_serversTable->setColumnCount(6);
     m_serversTable->setHorizontalHeaderLabels(
-        {QStringLiteral("Enabled"), QStringLiteral("Address"), QStringLiteral("Kind"),
-         QStringLiteral("Domains"), QStringLiteral("Expect IPs"), QStringLiteral("Note")});
+        {tr("Enabled"), tr("Address"), tr("Kind"),
+         tr("Domains"), tr("Expect IPs"), tr("Note")});
     m_serversTable->horizontalHeader()->setStretchLastSection(true);
     m_serversTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_serversTable->setSelectionMode(QAbstractItemView::SingleSelection);
     m_serversTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     refreshServersTable();
 
-    auto* addServerButton = new QPushButton(QStringLiteral("Add Server"), serversTab);
-    auto* editServerButton = new QPushButton(QStringLiteral("Edit Server"), serversTab);
-    auto* deleteServerButton = new QPushButton(QStringLiteral("Delete Server"), serversTab);
-    auto* moveUpButton = new QPushButton(QStringLiteral("Move Up"), serversTab);
-    auto* moveDownButton = new QPushButton(QStringLiteral("Move Down"), serversTab);
+    auto* addServerButton = new QPushButton(tr("Add Server"), serversTab);
+    auto* editServerButton = new QPushButton(tr("Edit Server"), serversTab);
+    auto* deleteServerButton = new QPushButton(tr("Delete Server"), serversTab);
+    auto* moveUpButton = new QPushButton(tr("Move Up"), serversTab);
+    auto* moveDownButton = new QPushButton(tr("Move Down"), serversTab);
     connect(addServerButton, &QPushButton::clicked, this, &DnsProfileDialog::onAddServer);
     connect(editServerButton, &QPushButton::clicked, this, &DnsProfileDialog::onEditServer);
     connect(deleteServerButton, &QPushButton::clicked, this, &DnsProfileDialog::onDeleteServer);
@@ -127,35 +127,35 @@ DnsProfileDialog::DnsProfileDialog(const DnsProfile& profile, bool readOnly, QWi
     auto* serversLayout = new QVBoxLayout(serversTab);
     serversLayout->addWidget(m_serversTable);
     serversLayout->addLayout(serverButtons);
-    tabs->addTab(serversTab, QStringLiteral("Servers"));
+    tabs->addTab(serversTab, tr("Servers"));
 
     auto* hostsTab = new QWidget(this);
     m_hostsEdit = new QPlainTextEdit(hostsTab);
     m_hostsEdit->setPlainText(hostsToText(profile.hosts));
     auto* hostsLayout = new QVBoxLayout(hostsTab);
-    hostsLayout->addWidget(new QLabel(QStringLiteral("One mapping per line: domain=ip or "
+    hostsLayout->addWidget(new QLabel(tr("One mapping per line: domain=ip or "
                                                       "domain:example.com=1.2.3.4"),
                                         hostsTab));
     hostsLayout->addWidget(m_hostsEdit);
-    tabs->addTab(hostsTab, QStringLiteral("Hosts"));
+    tabs->addTab(hostsTab, tr("Hosts"));
 
     auto* advancedTab = new QWidget(this);
-    m_disableCacheCheck = new QCheckBox(QStringLiteral("Disable DNS cache"), advancedTab);
+    m_disableCacheCheck = new QCheckBox(tr("Disable DNS cache"), advancedTab);
     m_disableCacheCheck->setChecked(profile.disableCache);
-    m_disableFallbackCheck = new QCheckBox(QStringLiteral("Disable fallback"), advancedTab);
+    m_disableFallbackCheck = new QCheckBox(tr("Disable fallback"), advancedTab);
     m_disableFallbackCheck->setChecked(profile.disableFallback);
     m_disableFallbackIfMatchCheck =
-        new QCheckBox(QStringLiteral("Disable fallback if match"), advancedTab);
+        new QCheckBox(tr("Disable fallback if match"), advancedTab);
     m_disableFallbackIfMatchCheck->setChecked(profile.disableFallbackIfMatch);
     auto* advancedLayout = new QVBoxLayout(advancedTab);
     advancedLayout->addWidget(m_disableCacheCheck);
     advancedLayout->addWidget(m_disableFallbackCheck);
     advancedLayout->addWidget(m_disableFallbackIfMatchCheck);
     advancedLayout->addStretch();
-    tabs->addTab(advancedTab, QStringLiteral("Advanced"));
+    tabs->addTab(advancedTab, tr("Advanced"));
 
-    auto* validateButton = new QPushButton(QStringLiteral("Validate"), this);
-    auto* previewButton = new QPushButton(QStringLiteral("Preview DNS JSON"), this);
+    auto* validateButton = new QPushButton(tr("Validate"), this);
+    auto* previewButton = new QPushButton(tr("Preview DNS JSON"), this);
     connect(validateButton, &QPushButton::clicked, this, &DnsProfileDialog::onValidate);
     connect(previewButton, &QPushButton::clicked, this, &DnsProfileDialog::onPreviewDnsJson);
 
@@ -220,8 +220,8 @@ void DnsProfileDialog::refreshServersTable()
     m_serversTable->setRowCount(m_profile.servers.size());
     for (int row = 0; row < m_profile.servers.size(); ++row) {
         const DnsServer& server = m_profile.servers.at(row);
-        m_serversTable->setItem(row, 0, new QTableWidgetItem(server.enabled ? QStringLiteral("Yes")
-                                                                            : QStringLiteral("No")));
+        m_serversTable->setItem(row, 0, new QTableWidgetItem(server.enabled ? tr("Yes")
+                                                                            : tr("No")));
         m_serversTable->setItem(row, 1, new QTableWidgetItem(server.address));
         m_serversTable->setItem(row, 2,
                                 new QTableWidgetItem(dnsServerKindDisplayString(server.kind)));
@@ -293,11 +293,11 @@ void DnsProfileDialog::onValidate()
     const DnsProfile current = profile();
     const QStringList warnings = DnsValidator::warnings(current);
     if (warnings.isEmpty()) {
-        QMessageBox::information(this, QStringLiteral("DNS validation"),
-                                 QStringLiteral("No validation warnings."));
+        QMessageBox::information(this, tr("DNS validation"),
+                                 tr("No validation warnings."));
         return;
     }
-    QMessageBox::warning(this, QStringLiteral("DNS validation"), warnings.join(QStringLiteral("\n")));
+    QMessageBox::warning(this, tr("DNS validation"), warnings.join(QStringLiteral("\n")));
 }
 
 void DnsProfileDialog::onPreviewDnsJson()
@@ -307,10 +307,10 @@ void DnsProfileDialog::onPreviewDnsJson()
     const QJsonObject dns = generator.generate(current);
     const QString json =
         dns.isEmpty()
-            ? QStringLiteral("(DNS section omitted — System DNS or no servers)")
+            ? tr("(DNS section omitted — System DNS or no servers)")
             : QString::fromUtf8(QJsonDocument(dns).toJson(QJsonDocument::Indented));
     RoutingJsonPreviewDialog preview(json, this);
-    preview.setWindowTitle(QStringLiteral("DNS JSON Preview"));
+    preview.setWindowTitle(tr("DNS JSON Preview"));
     preview.exec();
 }
 

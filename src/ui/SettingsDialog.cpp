@@ -1,5 +1,6 @@
 #include "ui/SettingsDialog.h"
 
+#include "i18n/LanguageManager.h"
 #include "helperclient/HelperProcessManager.h"
 #include "storage/AppPaths.h"
 #include "killswitch/KillSwitchMode.h"
@@ -49,12 +50,27 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     , m_dnsManager(dnsManager)
     , m_helperManager(helperManager)
 {
-    setWindowTitle(QStringLiteral("Settings"));
+    setWindowTitle(tr("Settings"));
 
     const AppSettings& settings = AppSettings::instance();
 
+    m_languageCombo = new QComboBox(this);
+    for (const LanguageInfo& lang : LanguageManager::instance().availableLanguages()) {
+        m_languageCombo->addItem(lang.nativeName, lang.code);
+    }
+    const int langIndex =
+        m_languageCombo->findData(LanguageManager::instance().currentLanguageCode());
+    if (langIndex >= 0) {
+        m_languageCombo->setCurrentIndex(langIndex);
+    }
+
+    auto* generalForm = new QFormLayout;
+    generalForm->addRow(tr("Language"), m_languageCombo);
+    auto* generalGroup = new QGroupBox(tr("General"), this);
+    generalGroup->setLayout(generalForm);
+
     m_xrayPathEdit = new QLineEdit(settings.xrayExecutablePath(), this);
-    auto* browseButton = new QPushButton(QStringLiteral("Browse…"), this);
+    auto* browseButton = new QPushButton(tr("Browse…"), this);
     connect(browseButton, &QPushButton::clicked, this, &SettingsDialog::onBrowseXray);
 
     auto* pathRow = new QHBoxLayout;
@@ -75,11 +91,11 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     updateHttpEndpointLabel();
 
     m_autoEnableSystemProxyCheck =
-        new QCheckBox(QStringLiteral("Enable system proxy when profile starts"), this);
+        new QCheckBox(tr("Enable system proxy when profile starts"), this);
     m_autoEnableSystemProxyCheck->setChecked(settings.autoEnableSystemProxyOnStart());
 
     m_restoreProxyOnExitCheck =
-        new QCheckBox(QStringLiteral("Restore previous proxy settings on stop/exit"), this);
+        new QCheckBox(tr("Restore previous proxy settings on stop/exit"), this);
     m_restoreProxyOnExitCheck->setChecked(settings.restoreProxyOnExit());
 
     const std::unique_ptr<ISystemProxyManager> proxyManager = SystemProxyManagerFactory::create();
@@ -94,19 +110,19 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
 #if defined(Q_OS_LINUX)
     if (auto* linuxManager = dynamic_cast<LinuxSystemProxyManager*>(proxyManager.get())) {
         m_linuxDesktopLabel->setText(
-            QStringLiteral("Detected desktop: %1").arg(linuxManager->detectedDesktopName()));
+            tr("Detected desktop: %1").arg(linuxManager->detectedDesktopName()));
     } else {
-        m_linuxDesktopLabel->setText(QStringLiteral("Detected desktop: (unknown)"));
+        m_linuxDesktopLabel->setText(tr("Detected desktop: (unknown)"));
     }
 #else
     m_linuxDesktopLabel->hide();
 #endif
 
     m_macApplyAllServicesCheck =
-        new QCheckBox(QStringLiteral("Apply proxy to all network services"), this);
+        new QCheckBox(tr("Apply proxy to all network services"), this);
     m_macApplyAllServicesCheck->setChecked(settings.macApplyProxyToAllServices());
     m_macPreferredServiceEdit = new QLineEdit(settings.macPreferredNetworkService(), this);
-    m_macPreferredServiceEdit->setPlaceholderText(QStringLiteral("e.g. Wi-Fi (optional)"));
+    m_macPreferredServiceEdit->setPlaceholderText(tr("e.g. Wi-Fi (optional)"));
 #if !defined(Q_OS_MACOS)
     m_macApplyAllServicesCheck->hide();
     m_macPreferredServiceEdit->hide();
@@ -128,27 +144,27 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     m_maxConcurrentTestsSpin->setValue(settings.maxConcurrentTests());
 
     m_skipTcpBeforeRealDelayCheck =
-        new QCheckBox(QStringLiteral("Skip TCP test before real delay"), this);
+        new QCheckBox(tr("Skip TCP test before real delay"), this);
     m_skipTcpBeforeRealDelayCheck->setChecked(settings.skipTcpBeforeRealDelay());
 
     m_minimizeToTrayOnCloseCheck =
-        new QCheckBox(QStringLiteral("Close button hides to tray"), this);
+        new QCheckBox(tr("Close button hides to tray"), this);
     m_minimizeToTrayOnCloseCheck->setChecked(settings.minimizeToTrayOnClose());
     m_minimizeToTrayOnMinimizeCheck =
-        new QCheckBox(QStringLiteral("Minimize hides to tray"), this);
+        new QCheckBox(tr("Minimize hides to tray"), this);
     m_minimizeToTrayOnMinimizeCheck->setChecked(settings.minimizeToTrayOnMinimize());
     m_showTrayNotificationsCheck =
-        new QCheckBox(QStringLiteral("Show tray notifications"), this);
+        new QCheckBox(tr("Show tray notifications"), this);
     m_showTrayNotificationsCheck->setChecked(settings.showTrayNotifications());
     m_confirmExitWhileRunningCheck =
-        new QCheckBox(QStringLiteral("Confirm exit while core is running"), this);
+        new QCheckBox(tr("Confirm exit while core is running"), this);
     m_confirmExitWhileRunningCheck->setChecked(settings.confirmExitWhileRunning());
 
     m_autostartManager = AutostartManagerFactory::create();
     m_autostartBackendLabel =
         new QLabel(m_autostartManager ? m_autostartManager->backendName() : QString(), this);
 
-    m_startAtLoginCheck = new QCheckBox(QStringLiteral("Start Zarya when I log in"), this);
+    m_startAtLoginCheck = new QCheckBox(tr("Start Zarya when I log in"), this);
     const bool osAutostartEnabled =
         m_autostartManager && m_autostartManager->isSupported()
         && m_autostartManager->isEnabled();
@@ -156,15 +172,15 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     m_startAtLoginCheck->setEnabled(m_autostartManager && m_autostartManager->isSupported());
 
     m_startMinimizedToTrayCheck =
-        new QCheckBox(QStringLiteral("Start minimized to tray"), this);
+        new QCheckBox(tr("Start minimized to tray"), this);
     m_startMinimizedToTrayCheck->setChecked(settings.startMinimizedToTray());
 
     m_autoStartLastProfileCheck =
-        new QCheckBox(QStringLiteral("Auto-start last used profile"), this);
+        new QCheckBox(tr("Auto-start last used profile"), this);
     m_autoStartLastProfileCheck->setChecked(settings.autoStartLastProfile());
 
     m_autoEnableProxyAfterAutoStartCheck = new QCheckBox(
-        QStringLiteral("Enable system proxy after auto-starting profile"), this);
+        tr("Enable system proxy after auto-starting profile"), this);
     m_autoEnableProxyAfterAutoStartCheck->setChecked(
         settings.autoEnableSystemProxyAfterAutoStart());
 
@@ -174,39 +190,39 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     m_autoStartDelaySpin->setValue(settings.autoStartDelaySeconds());
 
     auto* coreForm = new QFormLayout;
-    coreForm->addRow(QStringLiteral("Xray executable"), pathRow);
-    coreForm->addRow(QStringLiteral("Local SOCKS port"), m_socksPortSpin);
-    coreForm->addRow(QStringLiteral("Local HTTP port"), m_httpPortSpin);
+    coreForm->addRow(tr("Xray executable"), pathRow);
+    coreForm->addRow(tr("Local SOCKS port"), m_socksPortSpin);
+    coreForm->addRow(tr("Local HTTP port"), m_httpPortSpin);
 
-    auto* coreGroup = new QGroupBox(QStringLiteral("Cores"), this);
+    auto* coreGroup = new QGroupBox(tr("Cores"), this);
     coreGroup->setLayout(coreForm);
 
     auto* proxyForm = new QFormLayout;
-    proxyForm->addRow(QStringLiteral("Backend"), m_proxyBackendLabel);
-    proxyForm->addRow(QStringLiteral("Support level"), m_proxySupportLabel);
-    proxyForm->addRow(QStringLiteral("Limitations"), m_proxyLimitationsLabel);
-    proxyForm->addRow(QStringLiteral("System proxy endpoint"), m_httpEndpointLabel);
+    proxyForm->addRow(tr("Backend"), m_proxyBackendLabel);
+    proxyForm->addRow(tr("Support level"), m_proxySupportLabel);
+    proxyForm->addRow(tr("Limitations"), m_proxyLimitationsLabel);
+    proxyForm->addRow(tr("System proxy endpoint"), m_httpEndpointLabel);
 #if defined(Q_OS_LINUX)
-    proxyForm->addRow(QStringLiteral("Desktop"), m_linuxDesktopLabel);
+    proxyForm->addRow(tr("Desktop"), m_linuxDesktopLabel);
 #endif
     proxyForm->addRow(QString(), m_autoEnableSystemProxyCheck);
     proxyForm->addRow(QString(), m_restoreProxyOnExitCheck);
 #if defined(Q_OS_MACOS)
     proxyForm->addRow(QString(), m_macApplyAllServicesCheck);
-    proxyForm->addRow(QStringLiteral("Preferred network service"), m_macPreferredServiceEdit);
+    proxyForm->addRow(tr("Preferred network service"), m_macPreferredServiceEdit);
 #endif
 
-    auto* proxyGroup = new QGroupBox(QStringLiteral("Proxy Mode"), this);
+    auto* proxyGroup = new QGroupBox(tr("Proxy Mode"), this);
     proxyGroup->setLayout(proxyForm);
 
     auto* testingForm = new QFormLayout;
-    testingForm->addRow(QStringLiteral("Test URL"), m_testUrlEdit);
-    testingForm->addRow(QStringLiteral("TCP timeout"), m_tcpTimeoutSpin);
-    testingForm->addRow(QStringLiteral("Real delay timeout"), m_realDelayTimeoutSpin);
-    testingForm->addRow(QStringLiteral("Max concurrent tests"), m_maxConcurrentTestsSpin);
+    testingForm->addRow(tr("Test URL"), m_testUrlEdit);
+    testingForm->addRow(tr("TCP timeout"), m_tcpTimeoutSpin);
+    testingForm->addRow(tr("Real delay timeout"), m_realDelayTimeoutSpin);
+    testingForm->addRow(tr("Max concurrent tests"), m_maxConcurrentTestsSpin);
     testingForm->addRow(QString(), m_skipTcpBeforeRealDelayCheck);
 
-    auto* testingGroup = new QGroupBox(QStringLiteral("Testing"), this);
+    auto* testingGroup = new QGroupBox(tr("Testing"), this);
     testingGroup->setLayout(testingForm);
 
     auto* desktopForm = new QFormLayout;
@@ -215,12 +231,12 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     desktopForm->addRow(QString(), m_showTrayNotificationsCheck);
     desktopForm->addRow(QString(), m_confirmExitWhileRunningCheck);
 
-    auto* desktopGroup = new QGroupBox(QStringLiteral("Desktop behavior"), this);
+    auto* desktopGroup = new QGroupBox(tr("Desktop behavior"), this);
     desktopGroup->setLayout(desktopForm);
 
     m_routingProfileCombo = new QComboBox(this);
     refreshRoutingCombo();
-    auto* manageRoutingButton = new QPushButton(QStringLiteral("Manage Routing Profiles…"), this);
+    auto* manageRoutingButton = new QPushButton(tr("Manage Routing Profiles…"), this);
     connect(manageRoutingButton, &QPushButton::clicked, this,
             &SettingsDialog::onManageRoutingProfiles);
 
@@ -229,14 +245,14 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     routingRow->addWidget(manageRoutingButton);
 
     auto* routingForm = new QFormLayout;
-    routingForm->addRow(QStringLiteral("Active routing profile"), routingRow);
+    routingForm->addRow(tr("Active routing profile"), routingRow);
 
-    auto* routingGroup = new QGroupBox(QStringLiteral("Routing"), this);
+    auto* routingGroup = new QGroupBox(tr("Routing"), this);
     routingGroup->setLayout(routingForm);
 
     m_dnsProfileCombo = new QComboBox(this);
     refreshDnsCombo();
-    auto* manageDnsButton = new QPushButton(QStringLiteral("Manage DNS Profiles…"), this);
+    auto* manageDnsButton = new QPushButton(tr("Manage DNS Profiles…"), this);
     connect(manageDnsButton, &QPushButton::clicked, this, &SettingsDialog::onManageDnsProfiles);
 
     auto* dnsRow = new QHBoxLayout;
@@ -244,35 +260,35 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     dnsRow->addWidget(manageDnsButton);
 
     auto* dnsForm = new QFormLayout;
-    dnsForm->addRow(QStringLiteral("Active DNS profile"), dnsRow);
+    dnsForm->addRow(tr("Active DNS profile"), dnsRow);
 
-    auto* dnsGroup = new QGroupBox(QStringLiteral("DNS"), this);
+    auto* dnsGroup = new QGroupBox(tr("DNS"), this);
     dnsGroup->setLayout(dnsForm);
 
     auto* startupForm = new QFormLayout;
-    startupForm->addRow(QStringLiteral("Autostart backend"), m_autostartBackendLabel);
+    startupForm->addRow(tr("Autostart backend"), m_autostartBackendLabel);
     startupForm->addRow(QString(), m_startAtLoginCheck);
     startupForm->addRow(QString(), m_startMinimizedToTrayCheck);
     startupForm->addRow(QString(), m_autoStartLastProfileCheck);
     startupForm->addRow(QString(), m_autoEnableProxyAfterAutoStartCheck);
-    startupForm->addRow(QStringLiteral("Auto-start delay"), m_autoStartDelaySpin);
+    startupForm->addRow(tr("Auto-start delay"), m_autoStartDelaySpin);
     if (m_autostartManager && !m_autostartManager->limitations().isEmpty()) {
         auto* autostartLimits = new QLabel(m_autostartManager->limitations(), this);
         autostartLimits->setWordWrap(true);
-        startupForm->addRow(QStringLiteral("Autostart notes"), autostartLimits);
+        startupForm->addRow(tr("Autostart notes"), autostartLimits);
     }
 
-    auto* startupGroup = new QGroupBox(QStringLiteral("Startup"), this);
+    auto* startupGroup = new QGroupBox(tr("Startup"), this);
     startupGroup->setLayout(startupForm);
 
     m_enableExperimentalTunCheck =
-        new QCheckBox(QStringLiteral("Enable experimental TUN mode"), this);
+        new QCheckBox(tr("Enable experimental TUN mode"), this);
     m_enableExperimentalTunCheck->setChecked(settings.enableExperimentalTun());
 
     m_systemProxyRuntimeRadio =
-        new QRadioButton(QStringLiteral("System proxy via Xray"), this);
+        new QRadioButton(tr("System proxy via Xray"), this);
     m_tunRuntimeRadio =
-        new QRadioButton(QStringLiteral("TUN via sing-box (experimental)"), this);
+        new QRadioButton(tr("TUN via sing-box (experimental)"), this);
     if (settings.runtimeMode() == RuntimeMode::TunSingBoxExperimental) {
         m_tunRuntimeRadio->setChecked(true);
     } else {
@@ -280,28 +296,28 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     }
 
     m_singBoxPathEdit = new QLineEdit(settings.singBoxExecutablePath(), this);
-    auto* browseSingBoxButton = new QPushButton(QStringLiteral("Browse…"), this);
+    auto* browseSingBoxButton = new QPushButton(tr("Browse…"), this);
     connect(browseSingBoxButton, &QPushButton::clicked, this, &SettingsDialog::onBrowseSingBox);
     auto* singBoxRow = new QHBoxLayout;
     singBoxRow->addWidget(m_singBoxPathEdit);
     singBoxRow->addWidget(browseSingBoxButton);
 
     m_tunUseActiveRoutingCheck =
-        new QCheckBox(QStringLiteral("Use active RoutingProfile for TUN"), this);
+        new QCheckBox(tr("Use active RoutingProfile for TUN"), this);
     m_tunUseActiveRoutingCheck->setChecked(settings.tunUseActiveRoutingProfile());
 
     m_tunUseActiveDnsCheck =
-        new QCheckBox(QStringLiteral("Use active DnsProfile for TUN"), this);
+        new QCheckBox(tr("Use active DnsProfile for TUN"), this);
     m_tunUseActiveDnsCheck->setChecked(settings.tunUseActiveDnsProfile());
 
     m_tunEnableDnsHijackCheck =
-        new QCheckBox(QStringLiteral("Enable DNS hijack in TUN mode"), this);
+        new QCheckBox(tr("Enable DNS hijack in TUN mode"), this);
     m_tunEnableDnsHijackCheck->setChecked(settings.tunEnableDnsHijack());
 
     m_tunDnsHijackModeCombo = new QComboBox(this);
-    m_tunDnsHijackModeCombo->addItem(QStringLiteral("Hijack to sing-box DNS"),
+    m_tunDnsHijackModeCombo->addItem(tr("Hijack to sing-box DNS"),
                                      static_cast<int>(TunDnsHijackMode::HijackToSingBoxDns));
-    m_tunDnsHijackModeCombo->addItem(QStringLiteral("Disabled"),
+    m_tunDnsHijackModeCombo->addItem(tr("Disabled"),
                                      static_cast<int>(TunDnsHijackMode::Disabled));
     const int hijackIndex = m_tunDnsHijackModeCombo->findData(
         static_cast<int>(settings.tunDnsHijackMode()));
@@ -310,9 +326,9 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     }
 
     m_tunDirectGuiRadio =
-        new QRadioButton(QStringLiteral("Run sing-box directly from GUI"), this);
+        new QRadioButton(tr("Run sing-box directly from GUI"), this);
     m_tunHelperRadio =
-        new QRadioButton(QStringLiteral("Use zarya-helper experimental"), this);
+        new QRadioButton(tr("Use zarya-helper experimental"), this);
     if (settings.tunPrivilegeMode() == TunPrivilegeMode::HelperExperimental) {
         m_tunHelperRadio->setChecked(true);
     } else {
@@ -320,11 +336,11 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     }
 
     m_helperStatusLabel = new QLabel(m_helperManager ? m_helperManager->statusText()
-                                                     : QStringLiteral("Helper unavailable"),
+                                                     : tr("Helper unavailable"),
                                      this);
-    m_startHelperButton = new QPushButton(QStringLiteral("Start Helper"), this);
-    m_connectHelperButton = new QPushButton(QStringLiteral("Connect"), this);
-    m_checkHelperStatusButton = new QPushButton(QStringLiteral("Check Status"), this);
+    m_startHelperButton = new QPushButton(tr("Start Helper"), this);
+    m_connectHelperButton = new QPushButton(tr("Connect"), this);
+    m_checkHelperStatusButton = new QPushButton(tr("Check Status"), this);
     connect(m_startHelperButton, &QPushButton::clicked, this, &SettingsDialog::onStartHelper);
     connect(m_connectHelperButton, &QPushButton::clicked, this, &SettingsDialog::onConnectHelper);
     connect(m_checkHelperStatusButton, &QPushButton::clicked, this,
@@ -340,10 +356,9 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     helperButtonsRow->addWidget(m_checkHelperStatusButton);
 
     auto* tunWarnings = new QLabel(
-        QStringLiteral(
-            "TUN mode changes system routes and may require administrator/root permissions. "
-            "zarya-helper is experimental and is not installed as a privileged service in this "
-            "milestone."),
+        tr("TUN mode changes system routes and may require administrator/root permissions. "
+           "zarya-helper is experimental and is not installed as a privileged service in this "
+           "milestone."),
         this);
     tunWarnings->setWordWrap(true);
 
@@ -351,18 +366,18 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     experimentalForm->addRow(QString(), m_enableExperimentalTunCheck);
     experimentalForm->addRow(QString(), m_systemProxyRuntimeRadio);
     experimentalForm->addRow(QString(), m_tunRuntimeRadio);
-    experimentalForm->addRow(QStringLiteral("sing-box executable"), singBoxRow);
+    experimentalForm->addRow(tr("sing-box executable"), singBoxRow);
     experimentalForm->addRow(QString(), m_tunUseActiveRoutingCheck);
     experimentalForm->addRow(QString(), m_tunUseActiveDnsCheck);
     experimentalForm->addRow(QString(), m_tunEnableDnsHijackCheck);
-    experimentalForm->addRow(QStringLiteral("TUN DNS hijack mode"), m_tunDnsHijackModeCombo);
-    experimentalForm->addRow(QStringLiteral("TUN privilege mode"), m_tunDirectGuiRadio);
+    experimentalForm->addRow(tr("TUN DNS hijack mode"), m_tunDnsHijackModeCombo);
+    experimentalForm->addRow(tr("TUN privilege mode"), m_tunDirectGuiRadio);
     experimentalForm->addRow(QString(), m_tunHelperRadio);
-    experimentalForm->addRow(QStringLiteral("Helper status"), m_helperStatusLabel);
+    experimentalForm->addRow(tr("Helper status"), m_helperStatusLabel);
     experimentalForm->addRow(QString(), helperButtonsRow);
 
     m_tunRequireLocalRuleSetsCheck =
-        new QCheckBox(QStringLiteral("Require local .srs rule sets before starting TUN"), this);
+        new QCheckBox(tr("Require local .srs rule sets before starting TUN"), this);
     m_tunRequireLocalRuleSetsCheck->setChecked(settings.tunRequireLocalRuleSets());
 
     m_ruleSetDirLabel = new QLabel(AppPaths::singBoxRuleSetDir(), this);
@@ -370,27 +385,27 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     m_ruleSetDirLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
     auto* ruleSetNote = new QLabel(
-        QStringLiteral("Manage rule sets from Tools → sing-box Rule Sets. Xray geoip.dat/geosite.dat "
-                       "are separate from sing-box .srs files."),
+        tr("Manage rule sets from Tools → sing-box Rule Sets. Xray geoip.dat/geosite.dat "
+           "are separate from sing-box .srs files."),
         this);
     ruleSetNote->setWordWrap(true);
 
-    experimentalForm->addRow(QStringLiteral("Rule sets"), m_tunRequireLocalRuleSetsCheck);
-    experimentalForm->addRow(QStringLiteral("Rule-set directory"), m_ruleSetDirLabel);
+    experimentalForm->addRow(tr("Rule sets"), m_tunRequireLocalRuleSetsCheck);
+    experimentalForm->addRow(tr("Rule-set directory"), m_ruleSetDirLabel);
     experimentalForm->addRow(QString(), ruleSetNote);
     experimentalForm->addRow(QString(), tunWarnings);
 
     auto* experimentalGroup = new QGroupBox(
-        QStringLiteral("Experimental (TUN · helper · kill switch)"), this);
+        tr("Experimental (TUN · helper · kill switch)"), this);
     experimentalGroup->setLayout(experimentalForm);
 
     m_allowCoreUpdateWithoutChecksumCheck =
-        new QCheckBox(QStringLiteral("Allow installing core archives without checksum verification"),
+        new QCheckBox(tr("Allow installing core archives without checksum verification"),
                       this);
     m_allowCoreUpdateWithoutChecksumCheck->setChecked(settings.allowCoreUpdateWithoutChecksum());
 
     m_allowManageExternalCorePathsCheck =
-        new QCheckBox(QStringLiteral("Allow managing cores outside Zarya-managed directory"), this);
+        new QCheckBox(tr("Allow managing cores outside Zarya-managed directory"), this);
     m_allowManageExternalCorePathsCheck->setChecked(settings.allowManageExternalCorePaths());
 
     m_coreBackupRetentionSpin = new QSpinBox(this);
@@ -403,45 +418,45 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     m_githubApiTimeoutSpin->setValue(settings.githubApiTimeoutSeconds());
 
     m_checkCoreUpdatesOnStartupCheck =
-        new QCheckBox(QStringLiteral("Check core updates on startup"), this);
+        new QCheckBox(tr("Check core updates on startup"), this);
     m_checkCoreUpdatesOnStartupCheck->setChecked(settings.checkCoreUpdatesOnStartup());
 
     auto* coreUpdatesForm = new QFormLayout;
     coreUpdatesForm->addRow(QString(), m_allowCoreUpdateWithoutChecksumCheck);
     coreUpdatesForm->addRow(QString(), m_allowManageExternalCorePathsCheck);
-    coreUpdatesForm->addRow(QStringLiteral("Backup retention"), m_coreBackupRetentionSpin);
-    coreUpdatesForm->addRow(QStringLiteral("GitHub API timeout"), m_githubApiTimeoutSpin);
+    coreUpdatesForm->addRow(tr("Backup retention"), m_coreBackupRetentionSpin);
+    coreUpdatesForm->addRow(tr("GitHub API timeout"), m_githubApiTimeoutSpin);
     coreUpdatesForm->addRow(QString(), m_checkCoreUpdatesOnStartupCheck);
 
-    auto* coreUpdatesGroup = new QGroupBox(QStringLiteral("Core updates"), this);
+    auto* coreUpdatesGroup = new QGroupBox(tr("Core updates"), this);
     coreUpdatesGroup->setLayout(coreUpdatesForm);
 
     m_enableKillSwitchCheck =
-        new QCheckBox(QStringLiteral("Enable experimental kill switch"), this);
+        new QCheckBox(tr("Enable experimental kill switch"), this);
     m_enableKillSwitchCheck->setChecked(settings.enableExperimentalKillSwitch());
 
     m_killSwitchModeLabel =
-        new QLabel(QStringLiteral("Mode: TUN only experimental"), this);
+        new QLabel(tr("Mode: TUN only experimental"), this);
 
     m_killSwitchAllowLanCheck =
-        new QCheckBox(QStringLiteral("Allow LAN/private networks"), this);
+        new QCheckBox(tr("Allow LAN/private networks"), this);
     m_killSwitchAllowLanCheck->setChecked(settings.killSwitchAllowLan());
 
     m_killSwitchAllowLoopbackCheck =
-        new QCheckBox(QStringLiteral("Allow loopback"), this);
+        new QCheckBox(tr("Allow loopback"), this);
     m_killSwitchAllowLoopbackCheck->setChecked(settings.killSwitchAllowLoopback());
 
     m_killSwitchAllowProxyCheck =
-        new QCheckBox(QStringLiteral("Allow traffic to selected proxy server"), this);
+        new QCheckBox(tr("Allow traffic to selected proxy server"), this);
     m_killSwitchAllowProxyCheck->setChecked(true);
     m_killSwitchAllowProxyCheck->setEnabled(false);
 
     m_killSwitchAutoDisableOnStopCheck =
-        new QCheckBox(QStringLiteral("Disable kill switch on clean Stop"), this);
+        new QCheckBox(tr("Disable kill switch on clean Stop"), this);
     m_killSwitchAutoDisableOnStopCheck->setChecked(settings.killSwitchAutoDisableOnCleanStop());
 
     m_killSwitchKeepActiveAfterStopCheck =
-        new QCheckBox(QStringLiteral("Keep kill switch active after Stop"), this);
+        new QCheckBox(tr("Keep kill switch active after Stop"), this);
     m_killSwitchKeepActiveAfterStopCheck->setChecked(
         !settings.killSwitchAutoDisableOnCleanStop());
 
@@ -460,36 +475,34 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
 
 #if defined(Q_OS_LINUX)
     m_killSwitchBackendLabel = new QLabel(
-        QStringLiteral("Kill switch backend: nftables PoC (table inet zarya)"), this);
+        tr("Kill switch backend: nftables PoC (table inet zarya)"), this);
 #elif defined(Q_OS_WIN)
     m_killSwitchBackendLabel = new QLabel(
-        QStringLiteral("Kill switch backend: Windows WFP PoC (requires Administrator helper)"),
+        tr("Kill switch backend: Windows WFP PoC (requires Administrator helper)"),
         this);
 #elif defined(Q_OS_MACOS)
     m_killSwitchBackendLabel = new QLabel(
-        QStringLiteral(
-            "Kill switch backend: unsupported in 0.16 — PF is not a stable public API for "
-            "third-party apps."),
+        tr("Kill switch backend: unsupported in 0.16 — PF is not a stable public API for "
+           "third-party apps."),
         this);
 #else
-    m_killSwitchBackendLabel = new QLabel(QStringLiteral("Kill switch backend: unsupported"),
+    m_killSwitchBackendLabel = new QLabel(tr("Kill switch backend: unsupported"),
                                           this);
 #endif
     m_killSwitchBackendLabel->setWordWrap(true);
 
     m_killSwitchWarningLabel = new QLabel(
-        QStringLiteral(
-            "Experimental kill switch changes firewall/routing rules. A bug may block network "
-            "access until rules are removed manually. Requires zarya-helper mode. Use only if you "
-            "understand the recovery procedure."),
+        tr("Experimental kill switch changes firewall/routing rules. A bug may block network "
+           "access until rules are removed manually. Requires zarya-helper mode. Use only if you "
+           "understand the recovery procedure."),
         this);
     m_killSwitchWarningLabel->setWordWrap(true);
 
-    m_testKillSwitchButton = new QPushButton(QStringLiteral("Test Support"), this);
-    m_enableKillSwitchButton = new QPushButton(QStringLiteral("Enable Now"), this);
-    m_disableKillSwitchButton = new QPushButton(QStringLiteral("Disable Now"), this);
+    m_testKillSwitchButton = new QPushButton(tr("Test Support"), this);
+    m_enableKillSwitchButton = new QPushButton(tr("Enable Now"), this);
+    m_disableKillSwitchButton = new QPushButton(tr("Disable Now"), this);
     m_killSwitchRecoveryButton =
-        new QPushButton(QStringLiteral("Show Recovery Instructions"), this);
+        new QPushButton(tr("Show Recovery Instructions"), this);
     connect(m_testKillSwitchButton, &QPushButton::clicked, this,
             &SettingsDialog::onTestKillSwitchSupport);
     connect(m_enableKillSwitchButton, &QPushButton::clicked, this,
@@ -518,7 +531,7 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     killSwitchForm->addRow(QString(), killSwitchButtonsRow);
 
     auto* killSwitchGroup = new QGroupBox(
-        QStringLiteral("Kill Switch — Experimental · Requires helper · Linux/Windows PoC"), this);
+        tr("Kill Switch — Experimental · Requires helper · Linux/Windows PoC"), this);
     killSwitchGroup->setLayout(killSwitchForm);
 
     const auto updateRuntimeControls = [this]() {
@@ -557,6 +570,7 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
     auto* layout = new QVBoxLayout(this);
+    layout->addWidget(generalGroup);
     layout->addWidget(coreGroup);
     layout->addWidget(proxyGroup);
     layout->addWidget(routingGroup);
@@ -574,7 +588,7 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
 void SettingsDialog::onBrowseSingBox()
 {
     const QString path =
-        QFileDialog::getOpenFileName(this, QStringLiteral("Select sing-box executable"), {},
+        QFileDialog::getOpenFileName(this, tr("Select sing-box executable"), {},
                                    QStringLiteral("Executables (*.exe);;All files (*.*)"));
     if (!path.isEmpty()) {
         m_singBoxPathEdit->setText(path);
@@ -589,13 +603,13 @@ bool SettingsDialog::confirmTunWarningIfNeeded()
 
     QMessageBox box(this);
     box.setIcon(QMessageBox::Warning);
-    box.setWindowTitle(QStringLiteral("Experimental TUN mode"));
-    box.setText(QStringLiteral(
+    box.setWindowTitle(tr("Experimental TUN mode"));
+    box.setText(tr(
         "TUN mode is experimental. It may change network routes and DNS behavior.\n\n"
         "If it fails, Zarya will attempt to stop sing-box and restore state, but this mode is "
         "not production-ready yet.\n\n"
         "Kill switch is experimental and requires zarya-helper mode."));
-    QPushButton* enableButton = box.addButton(QStringLiteral("Enable Experimental TUN"),
+    QPushButton* enableButton = box.addButton(tr("Enable Experimental TUN"),
                                               QMessageBox::AcceptRole);
     box.addButton(QMessageBox::Cancel);
     box.exec();
@@ -609,7 +623,7 @@ bool SettingsDialog::confirmTunWarningIfNeeded()
 void SettingsDialog::onBrowseXray()
 {
     const QString path =
-        QFileDialog::getOpenFileName(this, QStringLiteral("Select Xray executable"), {},
+        QFileDialog::getOpenFileName(this, tr("Select Xray executable"), {},
                                    QStringLiteral("Executables (*.exe);;All files (*.*)"));
     if (!path.isEmpty()) {
         m_xrayPathEdit->setText(path);
@@ -677,9 +691,20 @@ bool SettingsDialog::validateAndSave()
     const QUrl testUrl(m_testUrlEdit->text().trimmed());
     if (!testUrl.isValid()
         || (testUrl.scheme() != QStringLiteral("http") && testUrl.scheme() != QStringLiteral("https"))) {
-        QMessageBox::warning(this, QStringLiteral("Settings"),
-                             QStringLiteral("Test URL must be a valid http or https URL."));
+        QMessageBox::warning(this, tr("Settings"),
+                             tr("Test URL must be a valid http or https URL."));
         return false;
+    }
+
+    bool languageChanged = false;
+    const QString selectedLanguage = m_languageCombo->currentData().toString();
+    if (selectedLanguage != LanguageManager::instance().currentLanguageCode()) {
+        QString langError;
+        if (!LanguageManager::instance().setLanguage(selectedLanguage, &langError)) {
+            QMessageBox::warning(this, tr("Settings"), langError);
+            return false;
+        }
+        languageChanged = true;
     }
 
     AppSettings& settings = AppSettings::instance();
@@ -713,12 +738,12 @@ bool SettingsDialog::validateAndSave()
         QString autostartError;
         if (wantAutostart) {
             if (!m_autostartManager->enable({QStringLiteral("--minimized")}, &autostartError)) {
-                QMessageBox::warning(this, QStringLiteral("Autostart"), autostartError);
+                QMessageBox::warning(this, tr("Autostart"), autostartError);
                 return false;
             }
         } else if (m_autostartManager->isEnabled()
                    && !m_autostartManager->disable(&autostartError)) {
-            QMessageBox::warning(this, QStringLiteral("Autostart"), autostartError);
+            QMessageBox::warning(this, tr("Autostart"), autostartError);
             return false;
         }
         settings.setStartAtLogin(wantAutostart);
@@ -775,6 +800,12 @@ bool SettingsDialog::validateAndSave()
     settings.setGithubApiTimeoutSeconds(m_githubApiTimeoutSpin->value());
     settings.setCheckCoreUpdatesOnStartup(m_checkCoreUpdatesOnStartupCheck->isChecked());
 
+    if (languageChanged) {
+        QMessageBox::information(
+            this, tr("Settings"),
+            tr("Language will be fully applied after restart."));
+    }
+
     return true;
 }
 
@@ -801,22 +832,20 @@ void SettingsDialog::onTestKillSwitchSupport()
     }
     QString error;
     if (!m_helperManager->connectToHelper(&error)) {
-        QMessageBox::warning(this, QStringLiteral("Kill switch"), error);
+        QMessageBox::warning(this, tr("Kill switch"), error);
         return;
     }
     QJsonObject payload;
     if (!m_helperManager->killSwitchCheckSupport(&payload, &error)) {
-        QMessageBox::warning(this, QStringLiteral("Kill switch"), error);
+        QMessageBox::warning(this, tr("Kill switch"), error);
         return;
     }
     QMessageBox::information(
-        this, QStringLiteral("Kill switch support"),
-        QStringLiteral("Backend: %1\nPrivileged: %2\nSupported: %3\n\n%4")
+        this, tr("Kill switch support"),
+        tr("Backend: %1\nPrivileged: %2\nSupported: %3\n\n%4")
             .arg(payload.value(QStringLiteral("backend")).toString(),
-                 payload.value(QStringLiteral("privileged")).toBool() ? QStringLiteral("yes")
-                                                                      : QStringLiteral("no"),
-                 payload.value(QStringLiteral("supported")).toBool() ? QStringLiteral("yes")
-                                                                     : QStringLiteral("no"),
+                 payload.value(QStringLiteral("privileged")).toBool() ? tr("yes") : tr("no"),
+                 payload.value(QStringLiteral("supported")).toBool() ? tr("yes") : tr("no"),
                  payload.value(QStringLiteral("lastError")).toString()));
 }
 
@@ -824,20 +853,18 @@ void SettingsDialog::onEnableKillSwitchNow()
 {
 #if defined(Q_OS_WIN)
     QMessageBox::warning(
-        this, QStringLiteral("Kill switch"),
-        QStringLiteral(
-            "The Windows WFP kill switch is experimental.\n\n"
-            "It will install temporary Zarya-owned WFP filters to block outbound connections "
-            "except loopback and the selected proxy server.\n\n"
-            "zarya-helper must be running as Administrator.\n\n"
-            "Kill switch is enabled automatically when you start TUN mode with kill switch "
-            "enabled."));
+        this, tr("Kill switch"),
+        tr("The Windows WFP kill switch is experimental.\n\n"
+           "It will install temporary Zarya-owned WFP filters to block outbound connections "
+           "except loopback and the selected proxy server.\n\n"
+           "zarya-helper must be running as Administrator.\n\n"
+           "Kill switch is enabled automatically when you start TUN mode with kill switch "
+           "enabled."));
 #else
     QMessageBox::information(
-        this, QStringLiteral("Kill switch"),
-        QStringLiteral(
-            "Kill switch is enabled automatically when you start TUN mode with kill switch "
-            "enabled.\n\nSelect a profile and press Start, or use a running TUN session."));
+        this, tr("Kill switch"),
+        tr("Kill switch is enabled automatically when you start TUN mode with kill switch "
+           "enabled.\n\nSelect a profile and press Start, or use a running TUN session."));
 #endif
 }
 
@@ -848,21 +875,21 @@ void SettingsDialog::onDisableKillSwitchNow()
     }
     QString error;
     if (!m_helperManager->connectToHelper(&error)) {
-        QMessageBox::warning(this, QStringLiteral("Kill switch"), error);
+        QMessageBox::warning(this, tr("Kill switch"), error);
         return;
     }
     if (!m_helperManager->killSwitchDisable(&error)) {
-        QMessageBox::warning(this, QStringLiteral("Kill switch"), error);
+        QMessageBox::warning(this, tr("Kill switch"), error);
         return;
     }
-    QMessageBox::information(this, QStringLiteral("Kill switch"),
-                             QStringLiteral("Kill switch disabled."));
+    QMessageBox::information(this, tr("Kill switch"),
+                             tr("Kill switch disabled."));
 }
 
 void SettingsDialog::onShowKillSwitchRecovery()
 {
     QMessageBox box(this);
-    box.setWindowTitle(QStringLiteral("Kill switch recovery"));
+    box.setWindowTitle(tr("Kill switch recovery"));
     box.setText(HelperProcessManager::recoveryInstructionsText());
     box.setStandardButtons(QMessageBox::Close);
     box.exec();
@@ -875,7 +902,7 @@ void SettingsDialog::onStartHelper()
     }
     QString error;
     if (!m_helperManager->startHelperDevMode(&error)) {
-        QMessageBox::warning(this, QStringLiteral("Helper"), error);
+        QMessageBox::warning(this, tr("Helper"), error);
     }
     m_helperStatusLabel->setText(m_helperManager->statusText());
 }
@@ -887,7 +914,7 @@ void SettingsDialog::onConnectHelper()
     }
     QString error;
     if (!m_helperManager->connectToHelper(&error)) {
-        QMessageBox::warning(this, QStringLiteral("Helper"), error);
+        QMessageBox::warning(this, tr("Helper"), error);
     }
     m_helperStatusLabel->setText(m_helperManager->statusText());
 }
@@ -900,13 +927,12 @@ void SettingsDialog::onCheckHelperStatus()
     QJsonObject payload;
     QString error;
     if (!m_helperManager->status(&payload, &error)) {
-        QMessageBox::warning(this, QStringLiteral("Helper"), error);
+        QMessageBox::warning(this, tr("Helper"), error);
         return;
     }
     m_helperStatusLabel->setText(
-        QStringLiteral("running=%1, pid=%2")
-            .arg(payload.value(QStringLiteral("running")).toBool() ? QStringLiteral("yes")
-                                                                   : QStringLiteral("no"))
+        tr("running=%1, pid=%2")
+            .arg(payload.value(QStringLiteral("running")).toBool() ? tr("yes") : tr("no"))
             .arg(payload.value(QStringLiteral("pid")).toInt()));
 }
 

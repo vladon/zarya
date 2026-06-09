@@ -1,5 +1,7 @@
 #include "geodata/GeoDataFileStatus.h"
 
+#include "i18n/TranslatableEnums.h"
+
 namespace zarya {
 
 QString geoDataKindFileName(GeoDataKind kind)
@@ -15,25 +17,7 @@ QString geoDataKindFileName(GeoDataKind kind)
 
 QString geoDataStatusDisplayString(GeoDataStatus status)
 {
-    switch (status) {
-    case GeoDataStatus::Missing:
-        return QStringLiteral("Missing");
-    case GeoDataStatus::Present:
-        return QStringLiteral("Present");
-    case GeoDataStatus::Updating:
-        return QStringLiteral("Updating");
-    case GeoDataStatus::Verified:
-        return QStringLiteral("Verified");
-    case GeoDataStatus::ChecksumFailed:
-        return QStringLiteral("Checksum failed");
-    case GeoDataStatus::DownloadFailed:
-        return QStringLiteral("Download failed");
-    case GeoDataStatus::NotWritable:
-        return QStringLiteral("Not writable");
-    case GeoDataStatus::Unknown:
-        return QStringLiteral("Unknown");
-    }
-    return QStringLiteral("Unknown");
+    return TranslatableEnums::trGeoDataStatus(status);
 }
 
 } // namespace zarya

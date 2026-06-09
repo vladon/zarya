@@ -24,14 +24,14 @@ DnsManagerDialog::DnsManagerDialog(DnsManager& manager,
     , m_manager(manager)
     , m_logCallback(logCallback)
 {
-    setWindowTitle(QStringLiteral("DNS Profiles"));
+    setWindowTitle(tr("DNS Profiles"));
     resize(920, 480);
 
     m_table = new QTableWidget(this);
     m_table->setColumnCount(6);
     m_table->setHorizontalHeaderLabels(
-        {QStringLiteral("Name"), QStringLiteral("Mode"), QStringLiteral("Built-in"),
-         QStringLiteral("Servers"), QStringLiteral("Query Strategy"), QStringLiteral("Flags")});
+        {tr("Name"), tr("Mode"), tr("Built-in"),
+         tr("Servers"), tr("Query Strategy"), tr("Flags")});
     m_table->horizontalHeader()->setStretchLastSection(true);
     m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_table->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -39,13 +39,13 @@ DnsManagerDialog::DnsManagerDialog(DnsManager& manager,
     m_table->setAlternatingRowColors(true);
     refreshTable();
 
-    auto* newButton = new QPushButton(QStringLiteral("New"), this);
-    auto* editButton = new QPushButton(QStringLiteral("Edit"), this);
-    auto* duplicateButton = new QPushButton(QStringLiteral("Duplicate"), this);
-    auto* deleteButton = new QPushButton(QStringLiteral("Delete"), this);
-    auto* setActiveButton = new QPushButton(QStringLiteral("Set Active"), this);
-    auto* previewButton = new QPushButton(QStringLiteral("Preview JSON"), this);
-    auto* closeButton = new QPushButton(QStringLiteral("Close"), this);
+    auto* newButton = new QPushButton(tr("New"), this);
+    auto* editButton = new QPushButton(tr("Edit"), this);
+    auto* duplicateButton = new QPushButton(tr("Duplicate"), this);
+    auto* deleteButton = new QPushButton(tr("Delete"), this);
+    auto* setActiveButton = new QPushButton(tr("Set Active"), this);
+    auto* previewButton = new QPushButton(tr("Preview JSON"), this);
+    auto* closeButton = new QPushButton(tr("Close"), this);
 
     connect(newButton, &QPushButton::clicked, this, &DnsManagerDialog::onNew);
     connect(editButton, &QPushButton::clicked, this, &DnsManagerDialog::onEdit);
@@ -82,14 +82,14 @@ void DnsManagerDialog::refreshTable()
         const DnsProfile& profile = profiles.at(row);
         QString name = profile.name;
         if (profile.id == activeId) {
-            name += QStringLiteral(" (active)");
+            name += tr(" (active)");
         }
         m_table->setItem(row, 0, new QTableWidgetItem(name));
         m_table->setItem(row, 1,
                          new QTableWidgetItem(dnsProfileModeDisplayString(profile.mode)));
         m_table->setItem(row, 2,
-                         new QTableWidgetItem(profile.isBuiltIn ? QStringLiteral("Yes")
-                                                              : QStringLiteral("No")));
+                         new QTableWidgetItem(profile.isBuiltIn ? tr("Yes")
+                                                              : tr("No")));
         m_table->setItem(row, 3,
                          new QTableWidgetItem(QString::number(generator.enabledServerCount(profile))));
         m_table->setItem(
@@ -103,16 +103,16 @@ QString DnsManagerDialog::flagsText(const DnsProfile& profile) const
 {
     QStringList flags;
     if (!profile.enabled) {
-        flags.append(QStringLiteral("disabled"));
+        flags.append(tr("disabled"));
     }
     if (profile.disableCache) {
-        flags.append(QStringLiteral("no-cache"));
+        flags.append(tr("no-cache"));
     }
     if (profile.disableFallback) {
-        flags.append(QStringLiteral("no-fallback"));
+        flags.append(tr("no-fallback"));
     }
     if (profile.disableFallbackIfMatch) {
-        flags.append(QStringLiteral("no-fallback-if-match"));
+        flags.append(tr("no-fallback-if-match"));
     }
     return flags.isEmpty() ? QStringLiteral("—") : flags.join(QStringLiteral(", "));
 }
@@ -136,7 +136,7 @@ void DnsManagerDialog::onNew()
 {
     DnsProfile profile;
     profile.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    profile.name = QStringLiteral("New DNS Profile");
+    profile.name = tr("New DNS Profile");
     profile.mode = DnsProfileMode::Custom;
     profile.enabled = true;
     profile.queryStrategy = DnsQueryStrategy::UseIP;
@@ -148,8 +148,8 @@ void DnsManagerDialog::onNew()
     const QStringList warnings = DnsValidator::warnings(dialog.profile());
     if (!warnings.isEmpty()) {
         const auto answer = QMessageBox::question(
-            this, QStringLiteral("DNS validation warnings"),
-            QStringLiteral("%1\n\nSave anyway?").arg(warnings.join(QStringLiteral("\n"))));
+            this, tr("DNS validation warnings"),
+            tr("%1\n\nSave anyway?").arg(warnings.join(QStringLiteral("\n"))));
         if (answer != QMessageBox::Yes) {
             return;
         }
@@ -171,8 +171,8 @@ void DnsManagerDialog::onEdit()
     const QStringList warnings = DnsValidator::warnings(dialog.profile());
     if (!warnings.isEmpty()) {
         const auto answer = QMessageBox::question(
-            this, QStringLiteral("DNS validation warnings"),
-            QStringLiteral("%1\n\nSave anyway?").arg(warnings.join(QStringLiteral("\n"))));
+            this, tr("DNS validation warnings"),
+            tr("%1\n\nSave anyway?").arg(warnings.join(QStringLiteral("\n"))));
         if (answer != QMessageBox::Yes) {
             return;
         }
@@ -190,7 +190,7 @@ void DnsManagerDialog::onDuplicate()
     QString error;
     const DnsProfile copy = m_manager.duplicateProfile(selected.id, &error);
     if (copy.id.isEmpty()) {
-        QMessageBox::warning(this, QStringLiteral("Duplicate"), error);
+        QMessageBox::warning(this, tr("Duplicate"), error);
         return;
     }
     refreshTable();
@@ -204,7 +204,7 @@ void DnsManagerDialog::onDelete()
     }
     QString error;
     if (!m_manager.removeProfile(selected.id, &error)) {
-        QMessageBox::warning(this, QStringLiteral("Delete"), error);
+        QMessageBox::warning(this, tr("Delete"), error);
         return;
     }
     refreshTable();
@@ -218,7 +218,7 @@ void DnsManagerDialog::onSetActive()
     }
     m_manager.setActiveProfileId(selected.id);
     if (m_logCallback) {
-        m_logCallback(QStringLiteral("DNS profile changed: %1").arg(selected.name));
+        m_logCallback(tr("DNS profile changed: %1").arg(selected.name));
     }
     emit activeProfileChanged(selected.name);
     refreshTable();
@@ -234,10 +234,10 @@ void DnsManagerDialog::onPreview()
     const QJsonObject dns = generator.generate(selected);
     const QString json =
         dns.isEmpty()
-            ? QStringLiteral("(DNS section omitted)")
+            ? tr("(DNS section omitted)")
             : QString::fromUtf8(QJsonDocument(dns).toJson(QJsonDocument::Indented));
     RoutingJsonPreviewDialog preview(json, this);
-    preview.setWindowTitle(QStringLiteral("DNS JSON Preview"));
+    preview.setWindowTitle(tr("DNS JSON Preview"));
     preview.exec();
 }
 

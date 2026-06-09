@@ -27,7 +27,7 @@ GeoDataManagerDialog::GeoDataManagerDialog(GeoDataManager& manager,
     , m_manager(manager)
     , m_logCallback(logCallback)
 {
-    setWindowTitle(QStringLiteral("Geo Data Manager"));
+    setWindowTitle(tr("Geo Data Manager"));
     resize(920, 560);
 
     m_sourceCombo = new QComboBox(this);
@@ -51,8 +51,8 @@ GeoDataManagerDialog::GeoDataManagerDialog(GeoDataManager& manager,
     m_table = new QTableWidget(this);
     m_table->setColumnCount(5);
     m_table->setHorizontalHeaderLabels(
-        {QStringLiteral("File"), QStringLiteral("Status"), QStringLiteral("Size"),
-         QStringLiteral("Modified"), QStringLiteral("SHA256")});
+        {tr("File"), tr("Status"), tr("Size"),
+         tr("Modified"), QStringLiteral("SHA256")});
     m_table->horizontalHeader()->setStretchLastSection(true);
     m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -62,27 +62,26 @@ GeoDataManagerDialog::GeoDataManagerDialog(GeoDataManager& manager,
     m_logView->setReadOnly(true);
     m_logView->setMaximumBlockCount(500);
 
-    m_autoCheckCheck = new QCheckBox(QStringLiteral("Check geo data status on startup"), this);
+    m_autoCheckCheck = new QCheckBox(tr("Check geo data status on startup"), this);
     m_autoCheckCheck->setChecked(GeoDataSettingsStore::instance().autoCheckOnStartup());
 
     m_warnMissingCheck =
-        new QCheckBox(QStringLiteral("Warn if routing uses geo rules and files are missing"), this);
+        new QCheckBox(tr("Warn if routing uses geo rules and files are missing"), this);
     m_warnMissingCheck->setChecked(GeoDataSettingsStore::instance().warnIfMissing());
 
     auto* limitations = new QLabel(
-        QStringLiteral(
-            "Geo data files are used by Xray routing rules such as geoip:ru and geosite:ru."),
+        tr("Geo data files are used by Xray routing rules such as geoip:ru and geosite:ru."),
         this);
     limitations->setWordWrap(true);
 
-    auto* checkButton = new QPushButton(QStringLiteral("Check Status"), this);
-    m_updateGeoIpButton = new QPushButton(QStringLiteral("Update geoip.dat"), this);
-    m_updateGeoSiteButton = new QPushButton(QStringLiteral("Update geosite.dat"), this);
-    m_updateAllButton = new QPushButton(QStringLiteral("Update All"), this);
-    auto* verifyButton = new QPushButton(QStringLiteral("Verify"), this);
-    auto* openFolderButton = new QPushButton(QStringLiteral("Open Folder"), this);
-    m_cancelButton = new QPushButton(QStringLiteral("Cancel"), this);
-    auto* closeButton = new QPushButton(QStringLiteral("Close"), this);
+    auto* checkButton = new QPushButton(tr("Check Status"), this);
+    m_updateGeoIpButton = new QPushButton(tr("Update geoip.dat"), this);
+    m_updateGeoSiteButton = new QPushButton(tr("Update geosite.dat"), this);
+    m_updateAllButton = new QPushButton(tr("Update All"), this);
+    auto* verifyButton = new QPushButton(tr("Verify"), this);
+    auto* openFolderButton = new QPushButton(tr("Open Folder"), this);
+    m_cancelButton = new QPushButton(tr("Cancel"), this);
+    auto* closeButton = new QPushButton(tr("Close"), this);
 
     connect(checkButton, &QPushButton::clicked, this, &GeoDataManagerDialog::onCheckStatus);
     connect(m_updateGeoIpButton, &QPushButton::clicked, this, &GeoDataManagerDialog::onUpdateGeoIp);
@@ -119,13 +118,13 @@ GeoDataManagerDialog::GeoDataManagerDialog(GeoDataManager& manager,
     buttons->addWidget(closeButton);
 
     auto* sourceLayout = new QFormLayout;
-    sourceLayout->addRow(QStringLiteral("Source:"), m_sourceCombo);
+    sourceLayout->addRow(tr("Source:"), m_sourceCombo);
     sourceLayout->addRow(QString(), m_sourceDescriptionLabel);
 
     auto* targetLayout = new QFormLayout;
-    targetLayout->addRow(QStringLiteral("Xray resource directory:"), m_targetLabel);
+    targetLayout->addRow(tr("Xray resource directory:"), m_targetLabel);
 
-    auto* optionsBox = new QGroupBox(QStringLiteral("Options"), this);
+    auto* optionsBox = new QGroupBox(tr("Options"), this);
     auto* optionsLayout = new QVBoxLayout(optionsBox);
     optionsLayout->addWidget(m_autoCheckCheck);
     optionsLayout->addWidget(m_warnMissingCheck);
@@ -136,7 +135,7 @@ GeoDataManagerDialog::GeoDataManagerDialog(GeoDataManager& manager,
     layout->addWidget(m_table);
     layout->addWidget(limitations);
     layout->addWidget(optionsBox);
-    layout->addWidget(new QLabel(QStringLiteral("Log"), this));
+    layout->addWidget(new QLabel(tr("Log"), this));
     layout->addWidget(m_logView, 1);
     layout->addLayout(buttons);
 
@@ -192,8 +191,8 @@ void GeoDataManagerDialog::onOpenFolder()
 {
     const QString directory = m_manager.targetDirectory();
     if (directory.isEmpty()) {
-        QMessageBox::warning(this, QStringLiteral("Geo Data Manager"),
-                             QStringLiteral("Xray resource directory is not configured."));
+        QMessageBox::warning(this, tr("Geo Data Manager"),
+                             tr("Xray resource directory is not configured."));
         return;
     }
     QDesktopServices::openUrl(QUrl::fromLocalFile(directory));
@@ -214,7 +213,7 @@ void GeoDataManagerDialog::onProgressChanged(GeoDataKind kind, qint64 received, 
     Q_UNUSED(kind);
     if (total > 0) {
         m_logView->appendPlainText(
-            QStringLiteral("Download progress: %1 / %2").arg(formatBytes(received), formatBytes(total)));
+            tr("Download progress: %1 / %2").arg(formatBytes(received), formatBytes(total)));
     }
 }
 
@@ -267,12 +266,12 @@ void GeoDataManagerDialog::setBusy(bool busy)
 QString GeoDataManagerDialog::formatBytes(qint64 bytes) const
 {
     if (bytes < 1024) {
-        return QStringLiteral("%1 B").arg(bytes);
+        return tr("%1 B").arg(bytes);
     }
     if (bytes < 1024 * 1024) {
-        return QStringLiteral("%1 KB").arg(bytes / 1024);
+        return tr("%1 KB").arg(bytes / 1024);
     }
-    return QStringLiteral("%1 MB").arg(bytes / (1024 * 1024));
+    return tr("%1 MB").arg(bytes / (1024 * 1024));
 }
 
 } // namespace zarya

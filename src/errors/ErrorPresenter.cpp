@@ -1,6 +1,7 @@
 #include "errors/ErrorPresenter.h"
 
 #include "errors/ErrorCode.h"
+#include "i18n/ZaryaTr.h"
 
 #include <QApplication>
 #include <QClipboard>
@@ -36,7 +37,7 @@ ErrorAction ErrorPresenter::showWithActions(QWidget* parent, const AppError& err
     QMessageBox box(parent);
     box.setIcon(error.severity == ErrorSeverity::Critical ? QMessageBox::Critical
                                                           : QMessageBox::Warning);
-    box.setWindowTitle(error.title.isEmpty() ? QStringLiteral("Zarya") : error.title);
+    box.setWindowTitle(error.title.isEmpty() ? ZaryaTr::tr("Zarya") : error.title);
     box.setText(text);
     if (!error.details.isEmpty()) {
         box.setDetailedText(QStringLiteral("Code: %1\nArea: %2\n\n%3")
@@ -45,50 +46,50 @@ ErrorAction ErrorPresenter::showWithActions(QWidget* parent, const AppError& err
 
     QHash<QAbstractButton*, ErrorAction> actions;
     if (error.code == ErrorCode::coreXrayMissing()) {
-        addActionButton(&box, QStringLiteral("Open Core Manager"), ErrorAction::OpenCoreManager,
+        addActionButton(&box, ZaryaTr::tr("Open Core Manager"), ErrorAction::OpenCoreManager,
                         &actions);
-        addActionButton(&box, QStringLiteral("Choose Existing Binary"),
+        addActionButton(&box, ZaryaTr::tr("Choose Existing Binary"),
                         ErrorAction::ChooseExistingBinary, &actions);
         box.addButton(QMessageBox::Cancel);
     } else if (error.code == ErrorCode::coreValidationFailed()) {
-        addActionButton(&box, QStringLiteral("Show Details"), ErrorAction::ShowDetails, &actions);
-        addActionButton(&box, QStringLiteral("Create Diagnostics"), ErrorAction::CreateDiagnostics,
+        addActionButton(&box, ZaryaTr::tr("Show Details"), ErrorAction::ShowDetails, &actions);
+        addActionButton(&box, ZaryaTr::tr("Create Diagnostics"), ErrorAction::CreateDiagnostics,
                         &actions);
         box.addButton(QMessageBox::Ok);
     } else if (error.code == ErrorCode::systemProxyRestoreFailed()) {
-        addActionButton(&box, QStringLiteral("Retry Restore"), ErrorAction::RetryRestore, &actions);
-        addActionButton(&box, QStringLiteral("Open Settings"), ErrorAction::OpenSettings, &actions);
-        addActionButton(&box, QStringLiteral("Create Diagnostics"), ErrorAction::CreateDiagnostics,
+        addActionButton(&box, ZaryaTr::tr("Retry Restore"), ErrorAction::RetryRestore, &actions);
+        addActionButton(&box, ZaryaTr::tr("Open Settings"), ErrorAction::OpenSettings, &actions);
+        addActionButton(&box, ZaryaTr::tr("Create Diagnostics"), ErrorAction::CreateDiagnostics,
                         &actions);
         box.addButton(QMessageBox::Cancel);
     } else if (error.code == ErrorCode::killSwitchNeedsRecovery()) {
-        addActionButton(&box, QStringLiteral("Recover"), ErrorAction::RecoverKillSwitch, &actions);
-        addActionButton(&box, QStringLiteral("Show Recovery Instructions"),
+        addActionButton(&box, ZaryaTr::tr("Recover"), ErrorAction::RecoverKillSwitch, &actions);
+        addActionButton(&box, ZaryaTr::tr("Show Recovery Instructions"),
                         ErrorAction::ShowRecoveryInstructions, &actions);
-        addActionButton(&box, QStringLiteral("Create Diagnostics"), ErrorAction::CreateDiagnostics,
+        addActionButton(&box, ZaryaTr::tr("Create Diagnostics"), ErrorAction::CreateDiagnostics,
                         &actions);
         box.addButton(QMessageBox::Cancel);
     } else if (error.code == ErrorCode::ruleSetMissing()) {
-        addActionButton(&box, QStringLiteral("Open Rule Set Manager"), ErrorAction::OpenRuleSetManager,
+        addActionButton(&box, ZaryaTr::tr("Open Rule Set Manager"), ErrorAction::OpenRuleSetManager,
                         &actions);
-        addActionButton(&box, QStringLiteral("Continue"), ErrorAction::Continue, &actions);
+        addActionButton(&box, ZaryaTr::tr("Continue"), ErrorAction::Continue, &actions);
         box.addButton(QMessageBox::Cancel);
     } else if (error.code == ErrorCode::geoDataMissing()) {
-        addActionButton(&box, QStringLiteral("Open Geo Data Manager"), ErrorAction::OpenGeoDataManager,
+        addActionButton(&box, ZaryaTr::tr("Open Geo Data Manager"), ErrorAction::OpenGeoDataManager,
                         &actions);
-        addActionButton(&box, QStringLiteral("Continue"), ErrorAction::Continue, &actions);
+        addActionButton(&box, ZaryaTr::tr("Continue"), ErrorAction::Continue, &actions);
         box.addButton(QMessageBox::Cancel);
     } else if (error.code == ErrorCode::profileUnsupportedRuntime()) {
-        addActionButton(&box, QStringLiteral("Switch to Xray system proxy"),
+        addActionButton(&box, ZaryaTr::tr("Switch to Xray system proxy"),
                         ErrorAction::SwitchToSystemProxy, &actions);
-        addActionButton(&box, QStringLiteral("Open Profile"), ErrorAction::OpenProfile, &actions);
+        addActionButton(&box, ZaryaTr::tr("Open Profile"), ErrorAction::OpenProfile, &actions);
         box.addButton(QMessageBox::Cancel);
     } else {
         box.setStandardButtons(QMessageBox::Ok);
     }
 
     if (includeCopyDiagnostics) {
-        addActionButton(&box, QStringLiteral("Copy details"), ErrorAction::CopyDetails, &actions);
+        addActionButton(&box, ZaryaTr::tr("Copy details"), ErrorAction::CopyDetails, &actions);
     }
 
     box.exec();

@@ -1,5 +1,7 @@
 #include "runtime/RuntimeBackendType.h"
 
+#include "i18n/TranslatableEnums.h"
+
 namespace zarya {
 
 QString runtimeModeToString(RuntimeMode mode)
@@ -24,13 +26,7 @@ RuntimeMode runtimeModeFromString(const QString& value)
 
 QString runtimeModeDisplayString(RuntimeMode mode)
 {
-    switch (mode) {
-    case RuntimeMode::SystemProxyXray:
-        return QStringLiteral("Xray system proxy");
-    case RuntimeMode::TunSingBoxExperimental:
-        return QStringLiteral("sing-box TUN experimental");
-    }
-    return QStringLiteral("Xray system proxy");
+    return TranslatableEnums::trRuntimeMode(mode);
 }
 
 QString tunDnsHijackModeToString(TunDnsHijackMode mode)
@@ -75,21 +71,7 @@ TunPrivilegeMode tunPrivilegeModeFromString(const QString& value)
 
 QString runtimeStateDisplayString(RuntimeState state)
 {
-    switch (state) {
-    case RuntimeState::Stopped:
-        return QStringLiteral("stopped");
-    case RuntimeState::Starting:
-        return QStringLiteral("starting");
-    case RuntimeState::Running:
-        return QStringLiteral("running");
-    case RuntimeState::Stopping:
-        return QStringLiteral("stopping");
-    case RuntimeState::Failed:
-        return QStringLiteral("failed");
-    case RuntimeState::Recovering:
-        return QStringLiteral("recovering");
-    }
-    return QStringLiteral("stopped");
+    return TranslatableEnums::trRuntimeState(state);
 }
 
 } // namespace zarya

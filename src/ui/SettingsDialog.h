@@ -74,6 +74,7 @@ private:
     QCheckBox* m_showTrayNotificationsCheck = nullptr;
     QCheckBox* m_confirmExitWhileRunningCheck = nullptr;
 
+    QComboBox* m_languageCombo = nullptr;
     QComboBox* m_routingProfileCombo = nullptr;
     QComboBox* m_dnsProfileCombo = nullptr;
 

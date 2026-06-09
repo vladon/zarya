@@ -14,18 +14,18 @@ StatusDashboardWidget::StatusDashboardWidget(QWidget* parent)
     setObjectName(QStringLiteral("statusDashboard"));
 
     m_unconfiguredPanel = new QWidget(this);
-    auto* unconfiguredTitle = new QLabel(QStringLiteral("Zarya is not configured yet"), m_unconfiguredPanel);
+    auto* unconfiguredTitle = new QLabel(tr("Zarya is not configured yet"), m_unconfiguredPanel);
     unconfiguredTitle->setStyleSheet(QStringLiteral("font-weight:bold; font-size:14px;"));
     auto* unconfiguredSteps = new QLabel(
-        QStringLiteral("1. Install Xray core\n2. Add a profile or subscription\n3. Start a profile"),
+        tr("1. Install Xray core\n2. Add a profile or subscription\n3. Start a profile"),
         m_unconfiguredPanel);
     unconfiguredSteps->setWordWrap(true);
-    auto* coreBtn = new QPushButton(QStringLiteral("Open Core Manager"), m_unconfiguredPanel);
-    auto* profileBtn = new QPushButton(QStringLiteral("Add Profile"), m_unconfiguredPanel);
-    auto* subBtn = new QPushButton(QStringLiteral("Add Subscription"), m_unconfiguredPanel);
-    auto* setupBtn = new QPushButton(QStringLiteral("Run Setup"), m_unconfiguredPanel);
-    auto* pasteBtn = new QPushButton(QStringLiteral("Paste Link"), m_unconfiguredPanel);
-    auto* backupBtn = new QPushButton(QStringLiteral("Import Backup"), m_unconfiguredPanel);
+    auto* coreBtn = new QPushButton(tr("Open Core Manager"), m_unconfiguredPanel);
+    auto* profileBtn = new QPushButton(tr("Add Profile"), m_unconfiguredPanel);
+    auto* subBtn = new QPushButton(tr("Add Subscription"), m_unconfiguredPanel);
+    auto* setupBtn = new QPushButton(tr("Run Setup"), m_unconfiguredPanel);
+    auto* pasteBtn = new QPushButton(tr("Paste Link"), m_unconfiguredPanel);
+    auto* backupBtn = new QPushButton(tr("Import Backup"), m_unconfiguredPanel);
     connect(coreBtn, &QPushButton::clicked, this, &StatusDashboardWidget::openCoreManagerRequested);
     connect(profileBtn, &QPushButton::clicked, this, &StatusDashboardWidget::addProfileRequested);
     connect(subBtn, &QPushButton::clicked, this, &StatusDashboardWidget::addSubscriptionRequested);
@@ -52,7 +52,7 @@ StatusDashboardWidget::StatusDashboardWidget(QWidget* parent)
     m_primaryButton = new QPushButton(m_configuredPanel);
     m_secondaryButton = new QPushButton(m_configuredPanel);
     connect(m_primaryButton, &QPushButton::clicked, this, [this]() {
-        if (m_primaryButton->text() == QStringLiteral("Stop")) {
+        if (m_primaryButton->text() == tr("Stop")) {
             emit stopRequested();
         } else {
             emit startRequested();
@@ -60,13 +60,13 @@ StatusDashboardWidget::StatusDashboardWidget(QWidget* parent)
     });
     connect(m_secondaryButton, &QPushButton::clicked, this, [this]() {
         const QString text = m_secondaryButton->text();
-        if (text.contains(QStringLiteral("Diagnostics"))) {
+        if (text.contains(tr("Diagnostics"))) {
             emit createDiagnosticsRequested();
-        } else if (text.contains(QStringLiteral("Logs"))) {
+        } else if (text.contains(tr("Logs"))) {
             emit openLogsRequested();
-        } else if (text.contains(QStringLiteral("Test"))) {
+        } else if (text.contains(tr("Test"))) {
             emit testRequested();
-        } else if (text.contains(QStringLiteral("Subscriptions"))) {
+        } else if (text.contains(tr("Subscriptions"))) {
             emit updateSubscriptionsRequested();
         }
     });
@@ -106,22 +106,22 @@ void StatusDashboardWidget::showConfigured(const StatusDashboardModel& model)
     m_configuredPanel->show();
 
     if (model.running) {
-        m_titleLabel->setText(QStringLiteral("Runtime: Running"));
+        m_titleLabel->setText(tr("Runtime: Running"));
         m_runtimeBadge->setKind(StatusBadgeKind::Running);
-        m_runtimeBadge->setBadgeText(QStringLiteral("Running"));
+        m_runtimeBadge->setBadgeText(tr("Running"));
         m_detailLabel->setText(
-            QStringLiteral("Profile: %1\nLocal HTTP: %2\nLocal SOCKS: %3\nSystem proxy: %4\n"
-                           "Routing: %5")
+            tr("Profile: %1\nLocal HTTP: %2\nLocal SOCKS: %3\nSystem proxy: %4\n"
+               "Routing: %5")
                 .arg(model.profileName, model.httpEndpoint, model.socksEndpoint,
                      model.systemProxyText, model.routingText));
-        m_primaryButton->setText(QStringLiteral("Stop"));
-        m_secondaryButton->setText(QStringLiteral("Open Logs"));
+        m_primaryButton->setText(tr("Stop"));
+        m_secondaryButton->setText(tr("Open Logs"));
         m_secondaryButton->disconnect();
         connect(m_secondaryButton, &QPushButton::clicked, this,
                 &StatusDashboardWidget::openLogsRequested);
         auto* diagBtn = findChild<QPushButton*>(QStringLiteral("diagBtn"));
         if (!diagBtn) {
-            diagBtn = new QPushButton(QStringLiteral("Create Diagnostics"), m_configuredPanel);
+            diagBtn = new QPushButton(tr("Create Diagnostics"), m_configuredPanel);
             diagBtn->setObjectName(QStringLiteral("diagBtn"));
             m_configuredPanel->layout()->addWidget(diagBtn);
             connect(diagBtn, &QPushButton::clicked, this,
@@ -132,15 +132,15 @@ void StatusDashboardWidget::showConfigured(const StatusDashboardModel& model)
         if (auto* diagBtn = findChild<QPushButton*>(QStringLiteral("diagBtn"))) {
             diagBtn->hide();
         }
-        m_titleLabel->setText(QStringLiteral("Runtime: Stopped"));
+        m_titleLabel->setText(tr("Runtime: Stopped"));
         m_runtimeBadge->setKind(StatusBadgeKind::Stopped);
-        m_runtimeBadge->setBadgeText(QStringLiteral("Stopped"));
+        m_runtimeBadge->setBadgeText(tr("Stopped"));
         m_detailLabel->setText(
-            QStringLiteral("Selected profile: %1\nRouting: %2\nDNS: %3\nSystem proxy: %4\nCore: %5")
+            tr("Selected profile: %1\nRouting: %2\nDNS: %3\nSystem proxy: %4\nCore: %5")
                 .arg(model.profileName.isEmpty() ? QStringLiteral("—") : model.profileName,
                      model.routingText, model.dnsText, model.systemProxyText, model.coreText));
-        m_primaryButton->setText(QStringLiteral("Start"));
-        m_secondaryButton->setText(QStringLiteral("Test"));
+        m_primaryButton->setText(tr("Start"));
+        m_secondaryButton->setText(tr("Test"));
         m_secondaryButton->disconnect();
         connect(m_secondaryButton, &QPushButton::clicked, this,
                 &StatusDashboardWidget::testRequested);

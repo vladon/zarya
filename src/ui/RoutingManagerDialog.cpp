@@ -24,14 +24,14 @@ RoutingManagerDialog::RoutingManagerDialog(RoutingManager& manager,
     , m_manager(manager)
     , m_logCallback(logCallback)
 {
-    setWindowTitle(QStringLiteral("Routing Profiles"));
+    setWindowTitle(tr("Routing Profiles"));
     resize(900, 480);
 
     m_table = new QTableWidget(this);
     m_table->setColumnCount(5);
     m_table->setHorizontalHeaderLabels(
-        {QStringLiteral("Name"), QStringLiteral("Mode"), QStringLiteral("Built-in"),
-         QStringLiteral("Rules"), QStringLiteral("Domain strategy")});
+        {tr("Name"), tr("Mode"), tr("Built-in"),
+         tr("Rules"), tr("Domain strategy")});
     m_table->horizontalHeader()->setStretchLastSection(true);
     m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_table->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -39,13 +39,13 @@ RoutingManagerDialog::RoutingManagerDialog(RoutingManager& manager,
     m_table->setAlternatingRowColors(true);
     refreshTable();
 
-    auto* newButton = new QPushButton(QStringLiteral("New"), this);
-    auto* editButton = new QPushButton(QStringLiteral("Edit"), this);
-    auto* duplicateButton = new QPushButton(QStringLiteral("Duplicate"), this);
-    auto* deleteButton = new QPushButton(QStringLiteral("Delete"), this);
-    auto* setActiveButton = new QPushButton(QStringLiteral("Set Active"), this);
-    auto* previewButton = new QPushButton(QStringLiteral("Preview JSON"), this);
-    auto* closeButton = new QPushButton(QStringLiteral("Close"), this);
+    auto* newButton = new QPushButton(tr("New"), this);
+    auto* editButton = new QPushButton(tr("Edit"), this);
+    auto* duplicateButton = new QPushButton(tr("Duplicate"), this);
+    auto* deleteButton = new QPushButton(tr("Delete"), this);
+    auto* setActiveButton = new QPushButton(tr("Set Active"), this);
+    auto* previewButton = new QPushButton(tr("Preview JSON"), this);
+    auto* closeButton = new QPushButton(tr("Close"), this);
 
     connect(newButton, &QPushButton::clicked, this, &RoutingManagerDialog::onNew);
     connect(editButton, &QPushButton::clicked, this, &RoutingManagerDialog::onEdit);
@@ -81,14 +81,14 @@ void RoutingManagerDialog::refreshTable()
         const RoutingProfile& profile = profiles[row];
         QString name = profile.name;
         if (profile.id == activeId) {
-            name += QStringLiteral(" (active)");
+            name += tr(" (active)");
         }
         m_table->setItem(row, 0, new QTableWidgetItem(name));
         m_table->setItem(row, 1,
                          new QTableWidgetItem(routingModeDisplayString(profile.mode)));
         m_table->setItem(row, 2,
-                         new QTableWidgetItem(profile.isBuiltIn ? QStringLiteral("Yes")
-                                                                : QStringLiteral("No")));
+                         new QTableWidgetItem(profile.isBuiltIn ? tr("Yes")
+                                                                : tr("No")));
         m_table->setItem(row, 3, new QTableWidgetItem(QString::number(profile.rules.size())));
         m_table->setItem(row, 4, new QTableWidgetItem(profile.domainStrategy));
         m_table->item(row, 0)->setData(Qt::UserRole, profile.id);
@@ -118,7 +118,7 @@ void RoutingManagerDialog::onNew()
 {
     RoutingProfile profile;
     profile.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    profile.name = QStringLiteral("My Routing");
+    profile.name = tr("My Routing");
     profile.mode = RoutingMode::Custom;
     profile.domainStrategy = QStringLiteral("AsIs");
     profile.enabled = true;
@@ -129,8 +129,8 @@ void RoutingManagerDialog::onNew()
         return;
     }
     if (!m_manager.upsertProfile(dialog.profile())) {
-        QMessageBox::warning(this, QStringLiteral("Routing"),
-                             QStringLiteral("Failed to save routing profile."));
+        QMessageBox::warning(this, tr("Routing"),
+                             tr("Failed to save routing profile."));
         return;
     }
     QString error;
@@ -142,8 +142,8 @@ void RoutingManagerDialog::onEdit()
 {
     const RoutingProfile profile = selectedProfile();
     if (profile.id.isEmpty()) {
-        QMessageBox::information(this, QStringLiteral("Routing"),
-                                 QStringLiteral("Select a routing profile."));
+        QMessageBox::information(this, tr("Routing"),
+                                 tr("Select a routing profile."));
         return;
     }
 
@@ -158,8 +158,8 @@ void RoutingManagerDialog::onEdit()
     }
 
     if (!m_manager.upsertProfile(dialog.profile())) {
-        QMessageBox::warning(this, QStringLiteral("Routing"),
-                             QStringLiteral("Failed to update routing profile."));
+        QMessageBox::warning(this, tr("Routing"),
+                             tr("Failed to update routing profile."));
         return;
     }
     QString error;
@@ -176,7 +176,7 @@ void RoutingManagerDialog::onDuplicate()
     QString error;
     const RoutingProfile copy = m_manager.duplicateProfile(profile.id, &error);
     if (copy.id.isEmpty()) {
-        QMessageBox::warning(this, QStringLiteral("Routing"), error);
+        QMessageBox::warning(this, tr("Routing"), error);
         return;
     }
     m_manager.save(&error);
@@ -197,19 +197,19 @@ void RoutingManagerDialog::onDelete()
         return;
     }
     if (profile.isBuiltIn) {
-        QMessageBox::information(this, QStringLiteral("Routing"),
-                                 QStringLiteral("Built-in routing profiles cannot be deleted."));
+        QMessageBox::information(this, tr("Routing"),
+                                 tr("Built-in routing profiles cannot be deleted."));
         return;
     }
     const auto answer = QMessageBox::question(
-        this, QStringLiteral("Delete routing profile"),
-        QStringLiteral("Delete routing profile \"%1\"?").arg(profile.name));
+        this, tr("Delete routing profile"),
+        tr("Delete routing profile \"%1\"?").arg(profile.name));
     if (answer != QMessageBox::Yes) {
         return;
     }
     QString error;
     if (!m_manager.removeProfile(profile.id, &error)) {
-        QMessageBox::warning(this, QStringLiteral("Routing"), error);
+        QMessageBox::warning(this, tr("Routing"), error);
         return;
     }
     m_manager.save(&error);
@@ -228,7 +228,7 @@ void RoutingManagerDialog::onSetActive()
     }
     m_manager.save();
     if (m_logCallback) {
-        m_logCallback(QStringLiteral("Routing profile changed: %1").arg(profile.name));
+        m_logCallback(tr("Routing profile changed: %1").arg(profile.name));
     }
     refreshTable();
     emit activeProfileChanged(profile.name);
@@ -241,7 +241,7 @@ void RoutingManagerDialog::onPreview()
         return;
     }
     if (m_logCallback) {
-        m_logCallback(QStringLiteral("Routing config preview requested"));
+        m_logCallback(tr("Routing config preview requested"));
     }
     const XrayRoutingGenerator generator;
     const QJsonObject routing = generator.generate(profile);

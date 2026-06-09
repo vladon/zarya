@@ -11,22 +11,22 @@ namespace zarya {
 SafeExitDialog::SafeExitDialog(QWidget* parent)
     : QDialog(parent)
 {
-    setWindowTitle(QStringLiteral("Exit Zarya"));
+    setWindowTitle(tr("Exit Zarya"));
 
-    auto* intro = new QLabel(QStringLiteral("Zarya is running.\n\nWhat should happen?"), this);
+    auto* intro = new QLabel(tr("Zarya is running.\n\nWhat should happen?"), this);
     intro->setWordWrap(true);
 
-    m_stopRuntimeCheck = new QCheckBox(QStringLiteral("Stop runtime"), this);
+    m_stopRuntimeCheck = new QCheckBox(tr("Stop runtime"), this);
     m_stopRuntimeCheck->setChecked(true);
-    m_restoreProxyCheck = new QCheckBox(QStringLiteral("Restore system proxy"), this);
+    m_restoreProxyCheck = new QCheckBox(tr("Restore system proxy"), this);
     m_restoreProxyCheck->setChecked(true);
     m_disableKillSwitchCheck =
-        new QCheckBox(QStringLiteral("Disable kill switch if active and configured for clean stop"),
+        new QCheckBox(tr("Disable kill switch if active and configured for clean stop"),
                       this);
     m_disableKillSwitchCheck->setChecked(true);
 
     auto* buttons = new QDialogButtonBox(this);
-    auto* exitButton = buttons->addButton(QStringLiteral("Exit Safely"), QDialogButtonBox::AcceptRole);
+    auto* exitButton = buttons->addButton(tr("Exit Safely"), QDialogButtonBox::AcceptRole);
     buttons->addButton(QDialogButtonBox::Cancel);
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);

@@ -32,14 +32,14 @@ QString ProfileTableModel::formatTcpColumn(const Profile& profile)
         return QStringLiteral("…");
     }
     if (profile.lastTcpPingMs >= 0) {
-        return QStringLiteral("%1 ms").arg(profile.lastTcpPingMs);
+        return tr("%1 ms").arg(profile.lastTcpPingMs);
     }
     if (profile.lastTestStatus == TestStatus::Timeout && profile.lastRealDelayMs < 0) {
-        return QStringLiteral("timeout");
+        return tr("timeout");
     }
     if (profile.lastTestStatus == TestStatus::Failed && profile.lastTcpPingMs < 0
         && profile.lastRealDelayMs < 0) {
-        return QStringLiteral("failed");
+        return tr("failed");
     }
     return {};
 }
@@ -50,7 +50,7 @@ QString ProfileTableModel::formatDelayColumn(const Profile& profile)
         return QStringLiteral("…");
     }
     if (profile.lastRealDelayMs >= 0) {
-        return QStringLiteral("%1 ms").arg(profile.lastRealDelayMs);
+        return tr("%1 ms").arg(profile.lastRealDelayMs);
     }
     return {};
 }
@@ -67,7 +67,7 @@ QVariant ProfileTableModel::data(const QModelIndex& index, int role) const
         case Name: {
             QString name = profile.name;
             if (profile.deletedBySubscriptionUpdate) {
-                name += QStringLiteral(" [missing]");
+                name += tr(" [missing]");
             }
             return name;
         }
@@ -94,7 +94,7 @@ QVariant ProfileTableModel::data(const QModelIndex& index, int role) const
         case Subscription:
             return profile.subscriptionName;
         case Enabled:
-            return profile.enabled ? QStringLiteral("Yes") : QStringLiteral("No");
+            return profile.enabled ? tr("Yes") : tr("No");
         default:
             break;
         }
@@ -111,29 +111,29 @@ QVariant ProfileTableModel::headerData(int section, Qt::Orientation orientation,
 
     switch (section) {
     case Name:
-        return QStringLiteral("Name");
+        return tr("Name");
     case Protocol:
-        return QStringLiteral("Protocol");
+        return tr("Protocol");
     case Address:
-        return QStringLiteral("Address");
+        return tr("Address");
     case Port:
-        return QStringLiteral("Port");
+        return tr("Port");
     case Tcp:
         return QStringLiteral("TCP");
     case Delay:
-        return QStringLiteral("Delay");
+        return tr("Delay");
     case TestStatus:
-        return QStringLiteral("Test Status");
+        return tr("Test Status");
     case LastTested:
-        return QStringLiteral("Last Tested");
+        return tr("Last Tested");
     case Core:
-        return QStringLiteral("Core");
+        return tr("Core");
     case Source:
-        return QStringLiteral("Source");
+        return tr("Source");
     case Subscription:
-        return QStringLiteral("Subscription");
+        return tr("Subscription");
     case Enabled:
-        return QStringLiteral("Enabled");
+        return tr("Enabled");
     default:
         return {};
     }

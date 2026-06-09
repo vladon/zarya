@@ -13,11 +13,11 @@ BetaBannerWidget::BetaBannerWidget(QWidget* parent)
 {
     setStyleSheet(QStringLiteral("background:#fff3e0; border-bottom:1px solid #ffcc80;"));
     m_label = new QLabel(
-        QStringLiteral("Zarya beta — experimental features may break networking. "
-                       "Use Diagnostics Bundle when reporting issues."),
+        tr("Zarya beta — experimental features may break networking. "
+           "Use Diagnostics Bundle when reporting issues."),
         this);
     m_label->setWordWrap(true);
-    auto* dismiss = new QPushButton(QStringLiteral("Dismiss"), this);
+    auto* dismiss = new QPushButton(tr("Dismiss"), this);
     connect(dismiss, &QPushButton::clicked, this, [this]() {
         AppSettings::instance().setDismissBetaBanner(true);
         hide();

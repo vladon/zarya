@@ -40,7 +40,7 @@ QVariant SubscriptionTableModel::data(const QModelIndex& index, int role) const
     case Url:
         return subscription.url;
     case Enabled:
-        return subscription.enabled ? QStringLiteral("Yes") : QStringLiteral("No");
+        return subscription.enabled ? tr("Yes") : tr("No");
     case Profiles:
         return subscription.profileCount;
     case LastUpdated:
@@ -65,19 +65,19 @@ QVariant SubscriptionTableModel::headerData(int section, Qt::Orientation orienta
 
     switch (section) {
     case Name:
-        return QStringLiteral("Name");
+        return tr("Name");
     case Url:
         return QStringLiteral("URL");
     case Enabled:
-        return QStringLiteral("Enabled");
+        return tr("Enabled");
     case Profiles:
-        return QStringLiteral("Profiles");
+        return tr("Profiles");
     case LastUpdated:
-        return QStringLiteral("Last Updated");
+        return tr("Last Updated");
     case Status:
-        return QStringLiteral("Status");
+        return tr("Status");
     case LastError:
-        return QStringLiteral("Last Error");
+        return tr("Last Error");
     default:
         return {};
     }

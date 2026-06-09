@@ -39,12 +39,12 @@ RoutingProfileDialog::RoutingProfileDialog(const RoutingProfile& profile, bool r
     , m_profile(profile)
     , m_readOnly(readOnly)
 {
-    setWindowTitle(readOnly ? QStringLiteral("View Routing Profile")
-                            : QStringLiteral("Edit Routing Profile"));
+    setWindowTitle(readOnly ? tr("View Routing Profile")
+                            : tr("Edit Routing Profile"));
     resize(760, 520);
 
     m_nameEdit = new QLineEdit(profile.name, this);
-    m_enabledCheck = new QCheckBox(QStringLiteral("Enabled"), this);
+    m_enabledCheck = new QCheckBox(tr("Enabled"), this);
     m_enabledCheck->setChecked(profile.enabled);
 
     m_modeCombo = new QComboBox(this);
@@ -70,22 +70,22 @@ RoutingProfileDialog::RoutingProfileDialog(const RoutingProfile& profile, bool r
     m_rulesTable = new QTableWidget(this);
     m_rulesTable->setColumnCount(5);
     m_rulesTable->setHorizontalHeaderLabels(
-        {QStringLiteral("Enabled"), QStringLiteral("Action"), QStringLiteral("Type"),
-         QStringLiteral("Values"), QStringLiteral("Note")});
+        {tr("Enabled"), tr("Action"), tr("Type"),
+         tr("Values"), tr("Note")});
     m_rulesTable->horizontalHeader()->setStretchLastSection(true);
     m_rulesTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_rulesTable->setSelectionMode(QAbstractItemView::SingleSelection);
     m_rulesTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     refreshRulesTable();
 
-    auto* addRuleButton = new QPushButton(QStringLiteral("Add Rule"), this);
-    auto* editRuleButton = new QPushButton(QStringLiteral("Edit Rule"), this);
-    auto* deleteRuleButton = new QPushButton(QStringLiteral("Delete Rule"), this);
-    auto* moveUpButton = new QPushButton(QStringLiteral("Move Up"), this);
-    auto* moveDownButton = new QPushButton(QStringLiteral("Move Down"), this);
-    auto* validateButton = new QPushButton(QStringLiteral("Validate"), this);
-    auto* previewButton = new QPushButton(QStringLiteral("Preview Xray Routing JSON"), this);
-    m_duplicateButton = new QPushButton(QStringLiteral("Duplicate Profile"), this);
+    auto* addRuleButton = new QPushButton(tr("Add Rule"), this);
+    auto* editRuleButton = new QPushButton(tr("Edit Rule"), this);
+    auto* deleteRuleButton = new QPushButton(tr("Delete Rule"), this);
+    auto* moveUpButton = new QPushButton(tr("Move Up"), this);
+    auto* moveDownButton = new QPushButton(tr("Move Down"), this);
+    auto* validateButton = new QPushButton(tr("Validate"), this);
+    auto* previewButton = new QPushButton(tr("Preview Xray Routing JSON"), this);
+    m_duplicateButton = new QPushButton(tr("Duplicate Profile"), this);
 
     connect(addRuleButton, &QPushButton::clicked, this, &RoutingProfileDialog::onAddRule);
     connect(editRuleButton, &QPushButton::clicked, this, &RoutingProfileDialog::onEditRule);
@@ -106,15 +106,15 @@ RoutingProfileDialog::RoutingProfileDialog(const RoutingProfile& profile, bool r
     ruleButtons->addWidget(validateButton);
     ruleButtons->addWidget(previewButton);
 
-    auto* rulesGroup = new QGroupBox(QStringLiteral("Rules"), this);
+    auto* rulesGroup = new QGroupBox(tr("Rules"), this);
     auto* rulesLayout = new QVBoxLayout(rulesGroup);
     rulesLayout->addWidget(m_rulesTable);
     rulesLayout->addLayout(ruleButtons);
 
     auto* form = new QFormLayout;
-    form->addRow(QStringLiteral("Name"), m_nameEdit);
-    form->addRow(QStringLiteral("Mode"), m_modeCombo);
-    form->addRow(QStringLiteral("Domain strategy"), m_domainStrategyCombo);
+    form->addRow(tr("Name"), m_nameEdit);
+    form->addRow(tr("Mode"), m_modeCombo);
+    form->addRow(tr("Domain strategy"), m_domainStrategyCombo);
     form->addRow(QString(), m_enabledCheck);
 
     auto* buttons = new QDialogButtonBox(
@@ -127,8 +127,8 @@ RoutingProfileDialog::RoutingProfileDialog(const RoutingProfile& profile, bool r
         connect(buttons, &QDialogButtonBox::accepted, this, [this]() {
             m_profile.name = m_nameEdit->text().trimmed();
             if (m_profile.name.isEmpty()) {
-                QMessageBox::warning(this, QStringLiteral("Profile"),
-                                     QStringLiteral("Name is required."));
+                QMessageBox::warning(this, tr("Profile"),
+                                     tr("Name is required."));
                 return;
             }
             m_profile.mode = static_cast<RoutingMode>(m_modeCombo->currentData().toInt());
@@ -172,8 +172,8 @@ void RoutingProfileDialog::refreshRulesTable()
     for (int row = 0; row < m_profile.rules.size(); ++row) {
         const RoutingRule& rule = m_profile.rules[row];
         m_rulesTable->setItem(row, 0,
-                              new QTableWidgetItem(rule.enabled ? QStringLiteral("Yes")
-                                                                : QStringLiteral("No")));
+                              new QTableWidgetItem(rule.enabled ? tr("Yes")
+                                                                : tr("No")));
         m_rulesTable->setItem(row, 1,
                               new QTableWidgetItem(routingActionDisplayString(rule.action)));
         m_rulesTable->setItem(row, 2,
@@ -213,8 +213,8 @@ void RoutingProfileDialog::onEditRule()
 {
     const int row = selectedRuleRow();
     if (row < 0) {
-        QMessageBox::information(this, QStringLiteral("Rules"),
-                                 QStringLiteral("Select a rule to edit."));
+        QMessageBox::information(this, tr("Rules"),
+                                 tr("Select a rule to edit."));
         return;
     }
     RoutingRuleEditorDialog dialog(m_profile.rules[row], m_readOnly, this);
@@ -268,11 +268,11 @@ void RoutingProfileDialog::onValidate()
 {
     const QStringList warnings = RoutingProfileValidator::warnings(m_profile);
     if (warnings.isEmpty()) {
-        QMessageBox::information(this, QStringLiteral("Validation"),
-                                 QStringLiteral("No validation warnings."));
+        QMessageBox::information(this, tr("Validation"),
+                                 tr("No validation warnings."));
         return;
     }
-    QMessageBox::warning(this, QStringLiteral("Validation"), warnings.join(QStringLiteral("\n")));
+    QMessageBox::warning(this, tr("Validation"), warnings.join(QStringLiteral("\n")));
 }
 
 void RoutingProfileDialog::onPreviewJson()

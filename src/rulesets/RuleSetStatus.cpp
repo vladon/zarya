@@ -1,5 +1,7 @@
 #include "rulesets/RuleSetStatus.h"
 
+#include "i18n/TranslatableEnums.h"
+
 namespace zarya {
 
 QString ruleSetStatusToString(RuleSetStatus status)
@@ -31,29 +33,7 @@ QString ruleSetStatusToString(RuleSetStatus status)
 
 QString ruleSetStatusDisplayName(RuleSetStatus status)
 {
-    switch (status) {
-    case RuleSetStatus::Missing:
-        return QStringLiteral("Missing");
-    case RuleSetStatus::Present:
-        return QStringLiteral("Present");
-    case RuleSetStatus::Updating:
-        return QStringLiteral("Updating");
-    case RuleSetStatus::Verified:
-        return QStringLiteral("Verified");
-    case RuleSetStatus::ChecksumFailed:
-        return QStringLiteral("Checksum failed");
-    case RuleSetStatus::CompileFailed:
-        return QStringLiteral("Compile failed");
-    case RuleSetStatus::DownloadFailed:
-        return QStringLiteral("Download failed");
-    case RuleSetStatus::Unsupported:
-        return QStringLiteral("Unsupported");
-    case RuleSetStatus::SourceMissing:
-        return QStringLiteral("Source missing");
-    case RuleSetStatus::Unknown:
-        break;
-    }
-    return QStringLiteral("Unknown");
+    return TranslatableEnums::trRuleSetStatus(status);
 }
 
 } // namespace zarya

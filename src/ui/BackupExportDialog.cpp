@@ -27,20 +27,20 @@ BackupExportDialog::BackupExportDialog(BackupManager& manager,
     , m_manager(manager)
     , m_logCallback(logCallback)
 {
-    setWindowTitle(QStringLiteral("Export Backup"));
+    setWindowTitle(tr("Export Backup"));
     resize(520, 480);
 
-    m_fullBackupRadio = new QRadioButton(QStringLiteral("Full configuration backup"), this);
+    m_fullBackupRadio = new QRadioButton(tr("Full configuration backup"), this);
     m_diagnosticBackupRadio =
-        new QRadioButton(QStringLiteral("Redacted diagnostic backup"), this);
+        new QRadioButton(tr("Redacted diagnostic backup"), this);
     m_fullBackupRadio->setChecked(true);
 
-    auto* typeGroup = new QGroupBox(QStringLiteral("Backup type"), this);
+    auto* typeGroup = new QGroupBox(tr("Backup type"), this);
     auto* typeLayout = new QVBoxLayout(typeGroup);
     typeLayout->addWidget(m_fullBackupRadio);
     typeLayout->addWidget(m_diagnosticBackupRadio);
 
-    auto* includeGroup = new QGroupBox(QStringLiteral("Include"), this);
+    auto* includeGroup = new QGroupBox(tr("Include"), this);
     auto* includeLayout = new QVBoxLayout(includeGroup);
     m_profilesCheck = new QCheckBox(backupCategoryDisplayName(BackupCategory::Profiles), this);
     m_subscriptionsCheck =
@@ -72,15 +72,15 @@ BackupExportDialog::BackupExportDialog(BackupManager& manager,
         QStringLiteral("zarya-backup-%1.zarya-backup.zip")
             .arg(QDate::currentDate().toString(QStringLiteral("yyyy-MM-dd")));
     m_outputEdit = new QLineEdit(defaultName, this);
-    auto* browseButton = new QPushButton(QStringLiteral("Browse…"), this);
+    auto* browseButton = new QPushButton(tr("Browse…"), this);
     connect(browseButton, &QPushButton::clicked, this, &BackupExportDialog::onBrowse);
 
     auto* outputRow = new QHBoxLayout;
     outputRow->addWidget(m_outputEdit, 1);
     outputRow->addWidget(browseButton);
 
-    m_exportButton = new QPushButton(QStringLiteral("Export"), this);
-    auto* cancelButton = new QPushButton(QStringLiteral("Cancel"), this);
+    m_exportButton = new QPushButton(tr("Export"), this);
+    auto* cancelButton = new QPushButton(tr("Cancel"), this);
     connect(m_exportButton, &QPushButton::clicked, this, &BackupExportDialog::onExport);
     connect(cancelButton, &QPushButton::clicked, this, &QDialog::reject);
 
@@ -92,7 +92,7 @@ BackupExportDialog::BackupExportDialog(BackupManager& manager,
     auto* layout = new QVBoxLayout(this);
     layout->addWidget(typeGroup);
     layout->addWidget(includeGroup);
-    layout->addWidget(new QLabel(QStringLiteral("Output"), this));
+    layout->addWidget(new QLabel(tr("Output"), this));
     layout->addLayout(outputRow);
     layout->addLayout(buttons);
 
@@ -114,8 +114,8 @@ BackupExportDialog::BackupExportDialog(BackupManager& manager,
 void BackupExportDialog::onBrowse()
 {
     const QString path = QFileDialog::getSaveFileName(
-        this, QStringLiteral("Export Backup"), m_outputEdit->text(),
-        QStringLiteral("Zarya Backup (*.zarya-backup.zip)"));
+        this, tr("Export Backup"), m_outputEdit->text(),
+        tr("Zarya Backup (*.zarya-backup.zip)"));
     if (!path.isEmpty()) {
         m_outputEdit->setText(path);
     }
@@ -146,8 +146,8 @@ void BackupExportDialog::onExport()
 {
     QString outputPath = m_outputEdit->text().trimmed();
     if (outputPath.isEmpty()) {
-        QMessageBox::warning(this, QStringLiteral("Export Backup"),
-                             QStringLiteral("Choose an output file."));
+        QMessageBox::warning(this, tr("Export Backup"),
+                             tr("Choose an output file."));
         return;
     }
     if (!outputPath.endsWith(QStringLiteral(".zarya-backup.zip"), Qt::CaseInsensitive)) {
@@ -157,8 +157,8 @@ void BackupExportDialog::onExport()
     const qint64 estimated = estimateSelectedSizeBytes();
     if (estimated > 20 * 1024 * 1024) {
         const auto answer = QMessageBox::question(
-            this, QStringLiteral("Large backup"),
-            QStringLiteral("Selected optional files are about %1 MB. Continue?")
+            this, tr("Large backup"),
+            tr("Selected optional files are about %1 MB. Continue?")
                 .arg(estimated / (1024 * 1024)));
         if (answer != QMessageBox::Yes) {
             return;
@@ -204,15 +204,15 @@ void BackupExportDialog::onExport()
 
     QString error;
     if (!m_manager.exportBackup(options, &error)) {
-        QMessageBox::critical(this, QStringLiteral("Export Backup"), error);
+        QMessageBox::critical(this, tr("Export Backup"), error);
         return;
     }
 
     if (m_logCallback) {
-        m_logCallback(QStringLiteral("Backup exported: %1").arg(outputPath));
+        m_logCallback(tr("Backup exported: %1").arg(outputPath));
     }
-    QMessageBox::information(this, QStringLiteral("Export Backup"),
-                             QStringLiteral("Backup created:\n%1").arg(outputPath));
+    QMessageBox::information(this, tr("Export Backup"),
+                             tr("Backup created:\n%1").arg(outputPath));
     accept();
 }
 

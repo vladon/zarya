@@ -1,5 +1,6 @@
 #include "ui/ImportVlessDialog.h"
 
+#include "i18n/ZaryaTr.h"
 #include "subscription/ShareLinkParser.h"
 
 #include <QDialogButtonBox>
@@ -13,11 +14,11 @@ namespace zarya {
 ImportVlessDialog::ImportVlessDialog(QWidget* parent)
     : QDialog(parent)
 {
-    setWindowTitle(QStringLiteral("Import share links"));
+    setWindowTitle(tr("Import share links"));
 
     m_linksEdit = new QPlainTextEdit(this);
     m_linksEdit->setPlaceholderText(
-        QStringLiteral("Paste one vless://, vmess://, trojan://, or ss:// link per line…"));
+        tr("Paste one vless://, vmess://, trojan://, or ss:// link per line…"));
     m_linksEdit->setMinimumHeight(160);
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
@@ -41,7 +42,7 @@ void ImportVlessDialog::onImport()
         m_linksEdit->toPlainText().split(QRegularExpression(QStringLiteral("[\\r\\n]+")),
                                        Qt::SkipEmptyParts);
     if (lines.isEmpty()) {
-        QMessageBox::warning(this, QStringLiteral("Import"), QStringLiteral("No links to import."));
+        QMessageBox::warning(this, tr("Import"), tr("No links to import."));
         return;
     }
 
@@ -61,16 +62,17 @@ void ImportVlessDialog::onImport()
     }
 
     if (m_imported.isEmpty()) {
-        QMessageBox::warning(this, QStringLiteral("Import failed"),
+        QMessageBox::warning(this, tr("Import failed"),
                              errors.join(QLatin1Char('\n')));
         return;
     }
 
     if (!errors.isEmpty()) {
-        QMessageBox::warning(this, QStringLiteral("Partial import"),
-                             QStringLiteral("Imported %1 profile(s). Some lines failed:\n%2")
-                                 .arg(m_imported.size())
-                                 .arg(errors.join(QLatin1Char('\n'))));
+        QMessageBox::warning(
+            this, tr("Partial import"),
+            ZaryaTr::plural("Imported %n profile(s). Some lines failed:", m_imported.size())
+                + QStringLiteral("\n")
+                + errors.join(QLatin1Char('\n')));
     }
 
     accept();

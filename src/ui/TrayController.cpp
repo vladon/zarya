@@ -69,23 +69,23 @@ QIcon TrayController::createTrayIcon() const
 void TrayController::setupTray()
 {
     m_trayIcon = new QSystemTrayIcon(createTrayIcon(), this);
-    m_trayIcon->setToolTip(QStringLiteral("Zarya"));
+    m_trayIcon->setToolTip(tr("Zarya"));
 
     m_trayMenu = new QMenu;
-    m_showAction = m_trayMenu->addAction(QStringLiteral("Show Zarya"));
-    m_hideAction = m_trayMenu->addAction(QStringLiteral("Hide Zarya"));
+    m_showAction = m_trayMenu->addAction(tr("Show Zarya"));
+    m_hideAction = m_trayMenu->addAction(tr("Hide Zarya"));
     m_trayMenu->addSeparator();
-    m_startAction = m_trayMenu->addAction(QStringLiteral("Start Selected Profile"));
-    m_stopAction = m_trayMenu->addAction(QStringLiteral("Stop"));
-    m_enableProxyAction = m_trayMenu->addAction(QStringLiteral("System Proxy: Enable"));
-    m_restoreProxyAction = m_trayMenu->addAction(QStringLiteral("System Proxy: Restore"));
+    m_startAction = m_trayMenu->addAction(tr("Start Selected Profile"));
+    m_stopAction = m_trayMenu->addAction(tr("Stop"));
+    m_enableProxyAction = m_trayMenu->addAction(tr("System Proxy: Enable"));
+    m_restoreProxyAction = m_trayMenu->addAction(tr("System Proxy: Restore"));
     m_trayMenu->addSeparator();
-    m_updateAllAction = m_trayMenu->addAction(QStringLiteral("Update All Subscriptions"));
-    m_testSelectedAction = m_trayMenu->addAction(QStringLiteral("Test Selected Profile"));
+    m_updateAllAction = m_trayMenu->addAction(tr("Update All Subscriptions"));
+    m_testSelectedAction = m_trayMenu->addAction(tr("Test Selected Profile"));
     m_trayMenu->addSeparator();
-    m_disableKillSwitchAction = m_trayMenu->addAction(QStringLiteral("Kill Switch: Disable"));
+    m_disableKillSwitchAction = m_trayMenu->addAction(tr("Kill Switch: Disable"));
     m_trayMenu->addSeparator();
-    m_exitAction = m_trayMenu->addAction(QStringLiteral("Exit"));
+    m_exitAction = m_trayMenu->addAction(tr("Exit"));
 
     connect(m_showAction, &QAction::triggered, m_mainWindow, &MainWindow::showFromTray);
     connect(m_hideAction, &QAction::triggered, m_mainWindow, &MainWindow::hideToTray);
