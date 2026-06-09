@@ -34,7 +34,9 @@ StartupOptions StartupOptionsParser::parse(QCoreApplication& app)
     QCommandLineParser parser;
     parser.setApplicationDescription(QStringLiteral("Zarya proxy client"));
     parser.addHelpOption();
-    parser.addVersionOption();
+    QCommandLineOption versionOption({QStringLiteral("V"), QStringLiteral("version")},
+                                     QStringLiteral("Display version information"));
+    parser.addOption(versionOption);
 
     QCommandLineOption portableOption({QStringLiteral("p"), QStringLiteral("portable")},
                                       QStringLiteral("Store config in app-local data directory"));
@@ -58,6 +60,7 @@ StartupOptions StartupOptionsParser::parse(QCoreApplication& app)
     parser.process(app);
 
     StartupOptions options;
+    options.printVersionAndExit = parser.isSet(versionOption);
     options.portable = parser.isSet(portableOption);
     options.minimized = parser.isSet(minimizedOption);
     options.noAutostartProfile = parser.isSet(noAutostartProfileOption);

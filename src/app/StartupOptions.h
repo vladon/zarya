@@ -17,6 +17,7 @@ struct StartupOptions {
     bool portable = false;
     bool minimized = false;
     bool noAutostartProfile = false;
+    bool printVersionAndExit = false;
     QString startProfileId;
     LogLevel logLevel = LogLevel::Info;
 

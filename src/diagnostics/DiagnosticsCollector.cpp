@@ -20,6 +20,7 @@
 #include "killswitch/KillSwitchState.h"
 #include "logging/LogBuffer.h"
 #include "migration/MigrationManager.h"
+#include "app/BuildInfo.h"
 #include "packaging/PackagingInfo.h"
 #include "dns/DnsManager.h"
 #include "platform/PlatformPrivilege.h"
@@ -90,7 +91,11 @@ QJsonObject collectAppInfo(const DiagnosticsContext& context)
 {
     QJsonObject object;
     object.insert(QStringLiteral("appName"), QStringLiteral("Zarya"));
-    object.insert(QStringLiteral("appVersion"), PackagingInfo::versionString());
+    object.insert(QStringLiteral("appVersion"), BuildInfo::appVersion());
+    object.insert(QStringLiteral("buildCommit"), BuildInfo::buildCommit());
+    object.insert(QStringLiteral("buildDateUtc"), BuildInfo::buildDateUtc());
+    object.insert(QStringLiteral("buildChannel"), BuildInfo::buildChannel());
+    object.insert(QStringLiteral("compilerInfo"), BuildInfo::compilerInfo());
     object.insert(QStringLiteral("migration"), collectMigrationStatus());
 #ifdef NDEBUG
     object.insert(QStringLiteral("buildType"), QStringLiteral("Release"));

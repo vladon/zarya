@@ -12,12 +12,16 @@ namespace zarya {
 Application::Application(int& argc, char** argv)
     : QApplication(argc, argv)
 {
-    m_startupOptions = StartupOptionsParser::parse(*this);
-
     setOrganizationName(QStringLiteral("Zarya"));
     setOrganizationDomain(QStringLiteral("zarya.app"));
     setApplicationName(QStringLiteral("Zarya"));
     setApplicationVersion(PackagingInfo::versionString());
+
+    m_startupOptions = StartupOptionsParser::parse(*this);
+
+    if (m_startupOptions.printVersionAndExit) {
+        return;
+    }
 
     AppPaths::initialize(m_startupOptions.portable);
     LanguageManager::instance().installTranslators();

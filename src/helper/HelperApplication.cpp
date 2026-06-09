@@ -1,5 +1,6 @@
 #include "helper/HelperApplication.h"
 
+#include "app/BuildInfo.h"
 #include "helper/HelperAuth.h"
 #include "ipc/IpcTransport.h"
 #include "killswitch/KillSwitchManager.h"
@@ -101,6 +102,33 @@ int HelperApplication::runKillSwitchCli()
 
 int HelperApplication::run()
 {
+    const QStringList args = arguments();
+    for (int index = 1; index < args.size(); ++index) {
+        const QString& arg = args.at(index);
+        if (arg == QStringLiteral("--version") || arg == QStringLiteral("-v")) {
+            fprintf(stdout, "%s\n", BuildInfo::helperCliVersionText().toUtf8().constData());
+            return 0;
+        }
+        if (arg == QStringLiteral("--help") || arg == QStringLiteral("-h")) {
+            fprintf(stdout,
+                    "zarya-helper %s\n"
+                    "Usage: zarya-helper --token-file <path> [options]\n"
+                    "Options:\n"
+                    "  --version                 Show version\n"
+                    "  --help                    Show this help\n"
+                    "  --token-file <path>       Auth token file (required for server mode)\n"
+                    "  --allowed-runtime-dir <p>   Allowed runtime directory\n"
+                    "  --allowed-core-dir <p>    Allowed sing-box core directory\n"
+                    "  --server-name <name>      IPC server name\n"
+                    "  --dev                     Development mode\n"
+                    "  --service                 Service mode\n"
+                    "  --recover-killswitch      Recover kill switch state\n"
+                    "  --killswitch-status       Print kill switch status JSON\n",
+                    BuildInfo::appVersion().toUtf8().constData());
+            return 0;
+        }
+    }
+
     QString error;
     if (!parseArguments(&error)) {
         fprintf(stderr, "zarya-helper: %s\n", error.toUtf8().constData());

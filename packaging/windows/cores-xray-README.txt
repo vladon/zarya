@@ -1,3 +1,7 @@
-Place the Xray executable here (xray.exe on Windows, xray on Linux/macOS), or use Tools → Core Manager to download and install automatically.
+Place the Xray executable here, or use Tools → Core Manager to install it.
 
-Geo Data Manager can download geoip.dat and geosite.dat into this directory for routing rules such as geoip:ru and geosite:ru.
+Expected executable:
+- Windows: xray.exe
+- macOS/Linux: xray
+
+Geo Data Manager can place geoip.dat and geosite.dat in this directory.

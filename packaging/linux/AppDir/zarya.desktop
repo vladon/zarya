@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Zarya
+Comment=Cross-platform proxy client
+Exec=zarya
+Icon=zarya
+Terminal=false
+Categories=Network;
