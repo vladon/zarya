@@ -123,7 +123,7 @@ MainWindow::MainWindow(QWidget* parent)
 
 void MainWindow::setupUi()
 {
-    setWindowTitle(QStringLiteral("Zarya"));
+    setWindowTitle(tr("Zarya"));
     resize(960, 640);
 
     m_tableView = new QTableView(this);
@@ -139,7 +139,7 @@ void MainWindow::setupUi()
     m_logView = new QPlainTextEdit(this);
     m_logView->setReadOnly(true);
     m_logView->setMaximumBlockCount(5000);
-    m_logView->setPlaceholderText(QStringLiteral("Core and application logs appear here…"));
+    m_logView->setPlaceholderText(tr("Core and application logs appear here…"));
 
     m_emptyStateLabel = new QLabel(this);
     m_emptyStateLabel->setWordWrap(true);
@@ -148,14 +148,14 @@ void MainWindow::setupUi()
     m_emptyStateLabel->hide();
 
     m_logFilterCombo = new QComboBox(this);
-    m_logFilterCombo->addItem(QStringLiteral("All"), QStringLiteral("all"));
-    m_logFilterCombo->addItem(QStringLiteral("Errors"), QStringLiteral("errors"));
-    m_logFilterCombo->addItem(QStringLiteral("Warnings"), QStringLiteral("warnings"));
-    m_logFilterCombo->addItem(QStringLiteral("Runtime"), QStringLiteral("runtime"));
-    m_logFilterCombo->addItem(QStringLiteral("Subscriptions"), QStringLiteral("subscriptions"));
-    m_logFilterCombo->addItem(QStringLiteral("Core"), QStringLiteral("core"));
-    m_logFilterCombo->addItem(QStringLiteral("Helper"), QStringLiteral("helper"));
-    m_logFilterCombo->addItem(QStringLiteral("Kill Switch"), QStringLiteral("killswitch"));
+    m_logFilterCombo->addItem(tr("All"), QStringLiteral("all"));
+    m_logFilterCombo->addItem(tr("Errors"), QStringLiteral("errors"));
+    m_logFilterCombo->addItem(tr("Warnings"), QStringLiteral("warnings"));
+    m_logFilterCombo->addItem(tr("Runtime"), QStringLiteral("runtime"));
+    m_logFilterCombo->addItem(tr("Subscriptions"), QStringLiteral("subscriptions"));
+    m_logFilterCombo->addItem(tr("Core"), QStringLiteral("core"));
+    m_logFilterCombo->addItem(tr("Helper"), QStringLiteral("helper"));
+    m_logFilterCombo->addItem(tr("Kill Switch"), QStringLiteral("killswitch"));
     connect(m_logFilterCombo, &QComboBox::currentIndexChanged, this, [this]() {
         m_logFilterKey = m_logFilterCombo->currentData().toString();
         m_logView->clear();
@@ -167,10 +167,10 @@ void MainWindow::setupUi()
     });
 
     auto* logToolbar = new QWidget(this);
-    auto* copySelectedBtn = new QPushButton(QStringLiteral("Copy selected"), logToolbar);
-    auto* copyAllBtn = new QPushButton(QStringLiteral("Copy all visible"), logToolbar);
-    auto* clearViewBtn = new QPushButton(QStringLiteral("Clear view"), logToolbar);
-    auto* diagBtn = new QPushButton(QStringLiteral("Create diagnostics"), logToolbar);
+    auto* copySelectedBtn = new QPushButton(tr("Copy selected"), logToolbar);
+    auto* copyAllBtn = new QPushButton(tr("Copy all visible"), logToolbar);
+    auto* clearViewBtn = new QPushButton(tr("Clear view"), logToolbar);
+    auto* diagBtn = new QPushButton(tr("Create diagnostics"), logToolbar);
     connect(copySelectedBtn, &QPushButton::clicked, this, [this]() {
         QApplication::clipboard()->setText(m_logView->textCursor().selectedText());
     });
@@ -180,7 +180,7 @@ void MainWindow::setupUi()
     connect(diagBtn, &QPushButton::clicked, this, &MainWindow::onCreateDiagnosticsBundle);
     auto* logToolbarLayout = new QHBoxLayout(logToolbar);
     logToolbarLayout->setContentsMargins(0, 0, 0, 0);
-    logToolbarLayout->addWidget(new QLabel(QStringLiteral("Log filter:"), logToolbar));
+    logToolbarLayout->addWidget(new QLabel(tr("Log filter:"), logToolbar));
     logToolbarLayout->addWidget(m_logFilterCombo);
     logToolbarLayout->addWidget(copySelectedBtn);
     logToolbarLayout->addWidget(copyAllBtn);
@@ -240,86 +240,86 @@ void MainWindow::setupUi()
     centralLayout->addWidget(m_splitter, 1);
     setCentralWidget(central);
 
-    statusBar()->showMessage(QStringLiteral("Ready"));
+    statusBar()->showMessage(tr("Ready"));
 }
 
 void MainWindow::setupMenuBar()
 {
-    auto* fileMenu = menuBar()->addMenu(QStringLiteral("&File"));
-    m_saveAction = fileMenu->addAction(QStringLiteral("&Save profiles"));
-    m_loadAction = fileMenu->addAction(QStringLiteral("&Reload profiles"));
+    auto* fileMenu = menuBar()->addMenu(tr("&File"));
+    m_saveAction = fileMenu->addAction(tr("&Save profiles"));
+    m_loadAction = fileMenu->addAction(tr("&Reload profiles"));
     fileMenu->addSeparator();
-    m_exportBackupAction = fileMenu->addAction(QStringLiteral("Export &Backup…"));
-    m_importBackupAction = fileMenu->addAction(QStringLiteral("Import &Backup…"));
+    m_exportBackupAction = fileMenu->addAction(tr("Export &Backup…"));
+    m_importBackupAction = fileMenu->addAction(tr("Import &Backup…"));
     fileMenu->addSeparator();
-    m_settingsAction = fileMenu->addAction(QStringLiteral("&Settings…"));
+    m_settingsAction = fileMenu->addAction(tr("&Settings…"));
     fileMenu->addSeparator();
-    m_showAction = fileMenu->addAction(QStringLiteral("&Show"));
-    m_hideToTrayAction = fileMenu->addAction(QStringLiteral("Hide to &Tray"));
+    m_showAction = fileMenu->addAction(tr("&Show"));
+    m_hideToTrayAction = fileMenu->addAction(tr("Hide to &Tray"));
     fileMenu->addSeparator();
-    m_exitAction = fileMenu->addAction(QStringLiteral("E&xit"));
+    m_exitAction = fileMenu->addAction(tr("E&xit"));
     connect(m_showAction, &QAction::triggered, this, &MainWindow::showFromTray);
     connect(m_hideToTrayAction, &QAction::triggered, this, [this]() { hideToTray(false); });
     connect(m_exitAction, &QAction::triggered, this, &MainWindow::requestApplicationQuit);
 
-    auto* profileMenu = menuBar()->addMenu(QStringLiteral("&Profiles"));
-    m_addAction = profileMenu->addAction(QStringLiteral("&Add…"));
-    m_editAction = profileMenu->addAction(QStringLiteral("&Edit…"));
-    m_deleteAction = profileMenu->addAction(QStringLiteral("&Delete"));
+    auto* profileMenu = menuBar()->addMenu(tr("&Profiles"));
+    m_addAction = profileMenu->addAction(tr("&Add…"));
+    m_editAction = profileMenu->addAction(tr("&Edit…"));
+    m_deleteAction = profileMenu->addAction(tr("&Delete"));
     profileMenu->addSeparator();
-    m_importAction = profileMenu->addAction(QStringLiteral("Import Profile &Links…"));
+    m_importAction = profileMenu->addAction(tr("Import Profile &Links…"));
     fileMenu->insertAction(m_settingsAction, m_importAction);
     fileMenu->insertSeparator(m_settingsAction);
 
-    auto* subscriptionsMenu = menuBar()->addMenu(QStringLiteral("Su&bscriptions"));
-    m_subscriptionsAction = subscriptionsMenu->addAction(QStringLiteral("&Manage…"));
+    auto* subscriptionsMenu = menuBar()->addMenu(tr("Su&bscriptions"));
+    m_subscriptionsAction = subscriptionsMenu->addAction(tr("&Manage…"));
     m_updateSubscriptionAction =
-        subscriptionsMenu->addAction(QStringLiteral("Update &Selected"));
+        subscriptionsMenu->addAction(tr("Update &Selected"));
     m_updateAllSubscriptionsAction =
-        subscriptionsMenu->addAction(QStringLiteral("Update &All"));
+        subscriptionsMenu->addAction(tr("Update &All"));
 
-    auto* testMenu = menuBar()->addMenu(QStringLiteral("&Test"));
-    m_testSelectedAction = testMenu->addAction(QStringLiteral("Test &Selected"));
-    m_testAllAction = testMenu->addAction(QStringLiteral("Test &All"));
+    auto* testMenu = menuBar()->addMenu(tr("&Test"));
+    m_testSelectedAction = testMenu->addAction(tr("Test &Selected"));
+    m_testAllAction = testMenu->addAction(tr("Test &All"));
     testMenu->addSeparator();
-    m_testTcpSelectedAction = testMenu->addAction(QStringLiteral("Test &TCP Selected"));
-    m_testDelaySelectedAction = testMenu->addAction(QStringLiteral("Test &Delay Selected"));
+    m_testTcpSelectedAction = testMenu->addAction(tr("Test &TCP Selected"));
+    m_testDelaySelectedAction = testMenu->addAction(tr("Test &Delay Selected"));
     testMenu->addSeparator();
-    m_cancelTestsAction = testMenu->addAction(QStringLiteral("&Cancel Tests"));
+    m_cancelTestsAction = testMenu->addAction(tr("&Cancel Tests"));
     m_cancelTestsAction->setEnabled(false);
 
-    auto* coreMenu = menuBar()->addMenu(QStringLiteral("&Core"));
-    m_startAction = coreMenu->addAction(QStringLiteral("&Start"));
-    m_stopAction = coreMenu->addAction(QStringLiteral("S&top"));
+    auto* coreMenu = menuBar()->addMenu(tr("&Core"));
+    m_startAction = coreMenu->addAction(tr("&Start"));
+    m_stopAction = coreMenu->addAction(tr("S&top"));
     m_stopAction->setEnabled(false);
 
-    auto* toolsMenu = menuBar()->addMenu(QStringLiteral("&Tools"));
+    auto* toolsMenu = menuBar()->addMenu(tr("&Tools"));
     m_routingProfilesAction =
-        toolsMenu->addAction(QStringLiteral("Routing &Profiles…"));
-    m_geoDataManagerAction = toolsMenu->addAction(QStringLiteral("Geo Data &Manager…"));
-    m_coreManagerAction = toolsMenu->addAction(QStringLiteral("&Core Manager…"));
-    m_ruleSetManagerAction = toolsMenu->addAction(QStringLiteral("sing-box Rule &Sets…"));
-    m_dnsProfilesAction = toolsMenu->addAction(QStringLiteral("DNS &Profiles…"));
+        toolsMenu->addAction(tr("Routing &Profiles…"));
+    m_geoDataManagerAction = toolsMenu->addAction(tr("Geo Data &Manager…"));
+    m_coreManagerAction = toolsMenu->addAction(tr("&Core Manager…"));
+    m_ruleSetManagerAction = toolsMenu->addAction(tr("sing-box Rule &Sets…"));
+    m_dnsProfilesAction = toolsMenu->addAction(tr("DNS &Profiles…"));
     m_previewSingBoxTunConfigAction =
-        toolsMenu->addAction(QStringLiteral("Preview sing-box TUN config…"));
+        toolsMenu->addAction(tr("Preview sing-box TUN config…"));
     toolsMenu->addSeparator();
     m_enableSystemProxyAction =
-        toolsMenu->addAction(QStringLiteral("Enable &System Proxy"));
+        toolsMenu->addAction(tr("Enable &System Proxy"));
     m_restoreSystemProxyAction =
-        toolsMenu->addAction(QStringLiteral("&Restore Previous Proxy"));
+        toolsMenu->addAction(tr("&Restore Previous Proxy"));
 
-    auto* helpMenu = menuBar()->addMenu(QStringLiteral("&Help"));
-    helpMenu->addAction(QStringLiteral("Run Setup &Wizard…"), this,
+    auto* helpMenu = menuBar()->addMenu(tr("&Help"));
+    helpMenu->addAction(tr("Run Setup &Wizard…"), this,
                         [this]() { runFirstRunWizard(true); });
-    helpMenu->addAction(QStringLiteral("Create &Diagnostics Bundle…"), this,
+    helpMenu->addAction(tr("Create &Diagnostics Bundle…"), this,
                         &MainWindow::onCreateDiagnosticsBundle);
     helpMenu->addSeparator();
-    helpMenu->addAction(QStringLiteral("&About"), this, &MainWindow::onAbout);
+    helpMenu->addAction(tr("&About"), this, &MainWindow::onAbout);
 }
 
 void MainWindow::setupToolBar()
 {
-    m_toolBar = addToolBar(QStringLiteral("Main"));
+    m_toolBar = addToolBar(tr("Main"));
     m_toolBar->setMovable(false);
     m_toolBar->addAction(m_addAction);
     m_toolBar->addAction(m_editAction);
@@ -533,18 +533,18 @@ void MainWindow::checkKillSwitchRecoveryOnStartup()
         if (QFile::exists(AppPaths::killSwitchMarkerPath())) {
             QMessageBox box(this);
             box.setIcon(QMessageBox::Warning);
-            box.setWindowTitle(QStringLiteral("Kill switch recovery"));
-            box.setText(QStringLiteral(
+            box.setWindowTitle(tr("Kill switch recovery"));
+            box.setText(tr(
                 "Zarya detected a previous kill switch state. Network access may be restricted.\n\n"
                 "Helper is not running. Start helper manually (elevated on Linux) and use "
                 "Disable Kill Switch, or follow recovery instructions."));
             QPushButton* recoveryButton =
-                box.addButton(QStringLiteral("Show Recovery Instructions"),
+                box.addButton(tr("Show Recovery Instructions"),
                               QMessageBox::ActionRole);
-            box.addButton(QStringLiteral("Ignore"), QMessageBox::RejectRole);
+            box.addButton(tr("Ignore"), QMessageBox::RejectRole);
             box.exec();
             if (box.clickedButton() == recoveryButton) {
-                QMessageBox::information(this, QStringLiteral("Kill switch recovery"),
+                QMessageBox::information(this, tr("Kill switch recovery"),
                                          HelperProcessManager::recoveryInstructionsText());
             }
         }
@@ -559,26 +559,26 @@ void MainWindow::checkKillSwitchRecoveryOnStartup()
 
     QMessageBox box(this);
     box.setIcon(QMessageBox::Warning);
-    box.setWindowTitle(QStringLiteral("Kill switch recovery"));
-    box.setText(QStringLiteral(
+    box.setWindowTitle(tr("Kill switch recovery"));
+    box.setText(tr(
         "Zarya detected a previous kill switch state. Network access may be restricted."));
     QPushButton* disableButton =
-        box.addButton(QStringLiteral("Disable Kill Switch"), QMessageBox::AcceptRole);
+        box.addButton(tr("Disable Kill Switch"), QMessageBox::AcceptRole);
     QPushButton* recoveryButton =
-        box.addButton(QStringLiteral("Show Recovery Instructions"), QMessageBox::ActionRole);
-    box.addButton(QStringLiteral("Ignore"), QMessageBox::RejectRole);
+        box.addButton(tr("Show Recovery Instructions"), QMessageBox::ActionRole);
+    box.addButton(tr("Ignore"), QMessageBox::RejectRole);
     box.setDefaultButton(disableButton);
     box.exec();
 
     if (box.clickedButton() == disableButton) {
         QString disableError;
         if (!helper->killSwitchDisable(&disableError)) {
-            QMessageBox::warning(this, QStringLiteral("Kill switch"), disableError);
+            QMessageBox::warning(this, tr("Kill switch"), disableError);
         } else {
             appendLog(QStringLiteral("Kill switch disabled during startup recovery."));
         }
     } else if (box.clickedButton() == recoveryButton) {
-        QMessageBox::information(this, QStringLiteral("Kill switch recovery"),
+        QMessageBox::information(this, tr("Kill switch recovery"),
                                  HelperProcessManager::recoveryInstructionsText());
     }
 }
@@ -765,16 +765,16 @@ void MainWindow::updateEmptyState()
     m_emptyStateLabel->show();
     if (!m_subscriptions.isEmpty()) {
         m_emptyStateLabel->setText(
-            QStringLiteral("Subscriptions exist but no profiles are imported yet.\n\n"
-                             "Use Subscriptions → Update All to import profiles."));
+            tr("Subscriptions exist but no profiles are imported yet.\n\n"
+               "Use Subscriptions → Update All to import profiles."));
     } else if (!m_profileFilterKey.isEmpty() && m_profileFilterKey != QStringLiteral("__manual__")
                && !m_allProfiles.isEmpty()) {
         m_emptyStateLabel->setText(
-            QStringLiteral("No profiles match the current filter.\n\nClear the filter to see all profiles."));
+            tr("No profiles match the current filter.\n\nClear the filter to see all profiles."));
     } else {
         m_emptyStateLabel->setText(
-            QStringLiteral("No profiles yet.\n\nAdd a proxy profile manually, paste a share link, "
-                           "or add a subscription."));
+            tr("No profiles yet.\n\nAdd a proxy profile manually, paste a share link, "
+               "or add a subscription."));
     }
 }
 
@@ -803,7 +803,7 @@ Profile* MainWindow::resolveProfileForStart()
     }
     bool ok = false;
     const QString chosen =
-        QInputDialog::getItem(this, QStringLiteral("Select profile"), QStringLiteral("Profile:"),
+        QInputDialog::getItem(this, tr("Select profile"), tr("Profile:"),
                               names, 0, false, &ok);
     if (!ok) {
         return nullptr;
@@ -956,14 +956,14 @@ void MainWindow::startSelectedProfile()
         const SingBoxConfigGenerator generator;
         if (!generator.supportsProfile(*profilePtr, &unsupportedReason)) {
             AppError error = appErrorFromCode(ErrorCode::profileUnsupportedRuntime(), unsupportedReason);
-            error.message = QStringLiteral("This profile is not supported by the current runtime.");
+            error.message = tr("This profile is not supported by the current runtime.");
             const ErrorAction action = ErrorPresenter::showWithActions(this, error);
             handleErrorAction(action, error);
             return;
         }
     } else if (!m_xrayAdapter.supportsProfile(*profilePtr, nullptr)) {
         AppError error = appErrorFromCode(ErrorCode::profileUnsupportedRuntime());
-        error.message = QStringLiteral("This profile is not supported by the current runtime.");
+        error.message = tr("This profile is not supported by the current runtime.");
         const ErrorAction action = ErrorPresenter::showWithActions(this, error);
         handleErrorAction(action, error);
         return;
@@ -1123,8 +1123,8 @@ bool MainWindow::confirmSystemProxyChangeIfNeeded()
     }
 
     return QMessageBox::question(
-               this, QStringLiteral("Change system proxy"),
-               QStringLiteral("Zarya will change Windows system proxy settings. Continue?"))
+               this, tr("Change system proxy"),
+               tr("Zarya will change Windows system proxy settings. Continue?"))
            == QMessageBox::Yes;
 }
 
@@ -1265,9 +1265,9 @@ void MainWindow::tryRestoreSystemProxy(SystemProxyRestoreMode mode, bool showFai
     if (!restored && showFailureDialog && !error.isEmpty()) {
         if (mode == SystemProxyRestoreMode::Manual
             || (mode == SystemProxyRestoreMode::Automatic && wasEnabledByZarya)) {
-            QMessageBox::warning(this, QStringLiteral("System proxy"),
-                                 QStringLiteral("Failed to restore system proxy:\n%1")
-                                     .arg(error));
+        QMessageBox::warning(this, tr("System proxy"),
+                             tr("Failed to restore system proxy:\n%1")
+                                 .arg(error));
         }
     }
 
@@ -1352,8 +1352,8 @@ void MainWindow::refreshProfileFilterCombo()
     const QString previous = m_profileFilterKey;
     m_profileFilterCombo->blockSignals(true);
     m_profileFilterCombo->clear();
-    m_profileFilterCombo->addItem(QStringLiteral("All profiles"), QString());
-    m_profileFilterCombo->addItem(QStringLiteral("Manual"), QStringLiteral("__manual__"));
+    m_profileFilterCombo->addItem(tr("All profiles"), QString());
+    m_profileFilterCombo->addItem(tr("Manual"), QStringLiteral("__manual__"));
     for (const Subscription& subscription : m_subscriptions) {
         m_profileFilterCombo->addItem(subscription.name, subscription.id);
     }
@@ -1437,9 +1437,9 @@ void MainWindow::onUpdateSelectedSubscription()
     QString subscriptionId = m_profileFilterKey;
     if (subscriptionId.isEmpty() || subscriptionId == QStringLiteral("__manual__")) {
         QMessageBox::information(
-            this, QStringLiteral("Update subscription"),
-            QStringLiteral("Select a subscription in the profile filter, or use Subscriptions → "
-                           "Manage to update a specific entry."));
+            this, tr("Update subscription"),
+            tr("Select a subscription in the profile filter, or use Subscriptions → "
+               "Manage to update a specific entry."));
         return;
     }
 
@@ -1451,8 +1451,8 @@ void MainWindow::onUpdateSelectedSubscription()
         }
     }
     if (index < 0) {
-        QMessageBox::warning(this, QStringLiteral("Update subscription"),
-                             QStringLiteral("Subscription not found."));
+        QMessageBox::warning(this, tr("Update subscription"),
+                             tr("Subscription not found."));
         return;
     }
 
@@ -1460,13 +1460,13 @@ void MainWindow::onUpdateSelectedSubscription()
         m_subscriptionManager.updateSubscription(m_subscriptions[index], m_allProfiles);
     QString error;
     if (!saveAll(&error)) {
-        QMessageBox::warning(this, QStringLiteral("Save failed"), error);
+        QMessageBox::warning(this, tr("Save failed"), error);
     }
     refreshProfileFilterCombo();
     refreshProfileView();
 
     if (!result.success) {
-        QMessageBox::warning(this, QStringLiteral("Update failed"), result.errorMessage);
+        QMessageBox::warning(this, tr("Update failed"), result.errorMessage);
     }
 }
 
@@ -1484,7 +1484,7 @@ void MainWindow::onUpdateAllSubscriptions()
     }
     QString error;
     if (!saveAll(&error)) {
-        QMessageBox::warning(this, QStringLiteral("Save failed"), error);
+        QMessageBox::warning(this, tr("Save failed"), error);
     }
     refreshProfileFilterCombo();
     refreshProfileView();
@@ -1496,8 +1496,8 @@ void MainWindow::onUpdateAllSubscriptions()
         }
     }
     if (failed > 0) {
-        QMessageBox::warning(this, QStringLiteral("Update all"),
-                             QStringLiteral("%1 subscription(s) failed to update.").arg(failed));
+        QMessageBox::warning(this, tr("Update all"),
+                             tr("%1 subscription(s) failed to update.").arg(failed));
     }
 }
 
@@ -1516,8 +1516,8 @@ void MainWindow::onEditProfile()
 {
     const int row = selectedRow();
     if (row < 0) {
-        QMessageBox::information(this, QStringLiteral("Edit profile"),
-                                 QStringLiteral("Select a profile first."));
+        QMessageBox::information(this, tr("Edit profile"),
+                                 tr("Select a profile first."));
         return;
     }
 
@@ -1533,8 +1533,8 @@ void MainWindow::onDeleteProfile()
 {
     const int row = selectedRow();
     if (row < 0) {
-        QMessageBox::information(this, QStringLiteral("Delete profile"),
-                                 QStringLiteral("Select a profile first."));
+        QMessageBox::information(this, tr("Delete profile"),
+                                 tr("Select a profile first."));
         return;
     }
 
@@ -1544,8 +1544,8 @@ void MainWindow::onDeleteProfile()
         return;
     }
     const QString name = m_allProfiles.at(index).name;
-    if (QMessageBox::question(this, QStringLiteral("Delete profile"),
-                              QStringLiteral("Delete profile \"%1\"?").arg(name))
+    if (QMessageBox::question(this, tr("Delete profile"),
+                              tr("Delete profile \"%1\"?").arg(name))
         != QMessageBox::Yes) {
         return;
     }
@@ -1576,7 +1576,7 @@ void MainWindow::onSaveProfiles()
 {
     QString error;
     if (!saveAll(&error)) {
-        QMessageBox::warning(this, QStringLiteral("Save failed"), error);
+        QMessageBox::warning(this, tr("Save failed"), error);
         appendLog(QStringLiteral("Save failed: %1").arg(error));
         return;
     }
@@ -1589,7 +1589,7 @@ void MainWindow::onLoadProfiles()
     QString error;
     m_allProfiles = m_profileStore.load(&error);
     if (!error.isEmpty() && m_allProfiles.isEmpty()) {
-        QMessageBox::warning(this, QStringLiteral("Load failed"), error);
+        QMessageBox::warning(this, tr("Load failed"), error);
         appendLog(QStringLiteral("Load failed: %1").arg(error));
         return;
     }
@@ -1635,8 +1635,8 @@ void MainWindow::onExportBackup()
 {
     QString error;
     if (!saveAll(&error)) {
-        QMessageBox::warning(this, QStringLiteral("Export Backup"),
-                             QStringLiteral("Could not save current state before export:\n%1")
+        QMessageBox::warning(this, tr("Export Backup"),
+                             tr("Could not save current state before export:\n%1")
                                  .arg(error));
         return;
     }
@@ -1655,7 +1655,7 @@ void MainWindow::onImportBackup()
     if (killSwitchActive || coreRunning) {
         const QString reason =
             BackupManager::runtimeBlockReason(coreRunning, killSwitchActive);
-        QMessageBox::warning(this, QStringLiteral("Import Backup"), reason);
+        QMessageBox::warning(this, tr("Import Backup"), reason);
         if (killSwitchActive) {
             return;
         }
@@ -1663,10 +1663,10 @@ void MainWindow::onImportBackup()
 
     if (coreRunning) {
         const auto answer = QMessageBox::question(
-            this, QStringLiteral("Import Backup"),
-            QStringLiteral("A proxy core is currently running. You can preview a backup, but "
-                           "import is disabled until the core is stopped.\n\nOpen import dialog "
-                           "anyway?"));
+            this, tr("Import Backup"),
+            tr("A proxy core is currently running. You can preview a backup, but "
+               "import is disabled until the core is stopped.\n\nOpen import dialog "
+               "anyway?"));
         if (answer != QMessageBox::Yes) {
             return;
         }
@@ -1749,14 +1749,14 @@ void MainWindow::onPreviewSingBoxTunConfig()
 {
     Profile* profile = selectedProfileInStorage();
     if (!profile) {
-        QMessageBox::information(this, QStringLiteral("Preview sing-box config"),
-                                 QStringLiteral("Select a profile first."));
+        QMessageBox::information(this, tr("Preview sing-box config"),
+                                 tr("Select a profile first."));
         return;
     }
 
     const SingBoxConfigGenerationResult generation = m_appController.generateSingBoxTunConfig(*profile);
     if (!generation.success) {
-        QMessageBox::warning(this, QStringLiteral("Preview sing-box config"),
+        QMessageBox::warning(this, tr("Preview sing-box config"),
                              generation.errorMessage);
         return;
     }
@@ -1852,17 +1852,17 @@ void MainWindow::onEnableSystemProxy()
 {
     if (!m_coreManager.isRunning()) {
         QMessageBox::information(
-            this, QStringLiteral("System proxy"),
-            QStringLiteral("Core is not running. Start a profile before enabling system proxy."));
+            this, tr("System proxy"),
+            tr("Core is not running. Start a profile before enabling system proxy."));
         return;
     }
 
     if (m_systemProxy.supportLevel() == QStringLiteral("partial")
         || !m_systemProxy.isSupported()) {
         QMessageBox::information(
-            this, QStringLiteral("System proxy"),
+            this, tr("System proxy"),
             m_systemProxy.limitations().isEmpty()
-                ? QStringLiteral("System proxy is not supported on this platform.")
+                ? tr("System proxy is not supported on this platform.")
                 : m_systemProxy.limitations());
         return;
     }
@@ -1875,8 +1875,8 @@ void MainWindow::onEnableSystemProxy()
     QString error;
     const auto logLine = [this](const QString& line) { appendLog(line); };
     if (!m_systemProxy.enableLocalHttpProxy(settings.httpPort(), logLine, &error)) {
-        QMessageBox::warning(this, QStringLiteral("System proxy"),
-                             QStringLiteral("Failed to enable system proxy:\n%1").arg(error));
+        QMessageBox::warning(this, tr("System proxy"),
+                             tr("Failed to enable system proxy:\n%1").arg(error));
     }
     updateStatusBar();
 }
@@ -1885,8 +1885,8 @@ void MainWindow::onRestoreSystemProxy()
 {
     if (!m_systemProxy.hasSavedState()) {
         QMessageBox::information(
-            this, QStringLiteral("System proxy"),
-            QStringLiteral("No saved previous proxy state. Nothing to restore."));
+            this, tr("System proxy"),
+            tr("No saved previous proxy state. Nothing to restore."));
         return;
     }
 
@@ -1918,7 +1918,7 @@ void MainWindow::onCoreLogLine(const QString& line)
 void MainWindow::onCoreError(const QString& message)
 {
     appendLog(QStringLiteral("Error: %1").arg(message));
-    QMessageBox::warning(this, QStringLiteral("Core error"), message);
+    QMessageBox::warning(this, tr("Core error"), message);
     updateStatusBar();
 }
 
@@ -1951,8 +1951,8 @@ QVector<QString> MainWindow::collectAllTestableProfileIds() const
 void MainWindow::startTestsForIds(const QVector<QString>& profileIds, TestMode mode)
 {
     if (profileIds.isEmpty()) {
-        QMessageBox::information(this, QStringLiteral("Test"),
-                                 QStringLiteral("Select at least one profile to test."));
+        QMessageBox::information(this, tr("Test"),
+                                 tr("Select at least one profile to test."));
         return;
     }
 
@@ -1966,8 +1966,8 @@ void MainWindow::startTestsForIds(const QVector<QString>& profileIds, TestMode m
     }
 
     if (profiles.isEmpty()) {
-        QMessageBox::information(this, QStringLiteral("Test"),
-                                 QStringLiteral("No matching profiles found."));
+        QMessageBox::information(this, tr("Test"),
+                                 tr("No matching profiles found."));
         return;
     }
 
@@ -1997,9 +1997,9 @@ void MainWindow::showProfileContextMenu(const QPoint& position)
         index, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
 
     QMenu menu(this);
-    menu.addAction(QStringLiteral("Test this profile"), this, &MainWindow::onTestProfileContext);
-    menu.addAction(QStringLiteral("Test TCP"), this, &MainWindow::onTestTcpContext);
-    menu.addAction(QStringLiteral("Test real delay"), this, &MainWindow::onTestDelayContext);
+    menu.addAction(tr("Test this profile"), this, &MainWindow::onTestProfileContext);
+    menu.addAction(tr("Test TCP"), this, &MainWindow::onTestTcpContext);
+    menu.addAction(tr("Test real delay"), this, &MainWindow::onTestDelayContext);
     menu.exec(m_tableView->viewport()->mapToGlobal(position));
 }
 
@@ -2087,8 +2087,8 @@ void MainWindow::onAllTestsFinished()
 void MainWindow::onAbout()
 {
     QMessageBox::about(
-        this, QStringLiteral("About Zarya"),
-        QStringLiteral(
+        this, tr("About Zarya"),
+        tr(
             "Zarya 0.7\n\nNative proxy profile manager with system tray, Xray multi-protocol "
             "support, Windows system proxy, subscriptions, and node testing."));
 }

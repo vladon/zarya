@@ -21,7 +21,7 @@ namespace zarya {
 ProfileDialog::ProfileDialog(QWidget* parent)
     : QDialog(parent)
 {
-    setWindowTitle(QStringLiteral("Profile"));
+    setWindowTitle(tr("Profile"));
     m_tabs = new QTabWidget(this);
 
     auto* basicPage = new QWidget(this);
@@ -54,7 +54,7 @@ ProfileDialog::ProfileDialog(QWidget* parent)
     m_securityCipherEdit->setPlaceholderText(QStringLiteral("auto"));
     m_alterIdSpin = new QSpinBox(basicPage);
     m_alterIdSpin->setRange(0, 65535);
-    m_enabledCheck = new QCheckBox(QStringLiteral("Enabled"), basicPage);
+    m_enabledCheck = new QCheckBox(tr("Enabled"), basicPage);
     m_enabledCheck->setChecked(true);
     m_unsupportedReasonLabel = new QLabel(basicPage);
     m_unsupportedReasonLabel->setWordWrap(true);
@@ -63,11 +63,11 @@ ProfileDialog::ProfileDialog(QWidget* parent)
     connect(m_protocolCombo, qOverload<int>(&QComboBox::currentIndexChanged), this,
             &ProfileDialog::onProtocolChanged);
 
-    basicForm->addRow(QStringLiteral("Name"), m_nameEdit);
-    basicForm->addRow(QStringLiteral("Protocol"), m_protocolCombo);
-    basicForm->addRow(QStringLiteral("Core"), m_coreCombo);
-    basicForm->addRow(QStringLiteral("Address"), m_addressEdit);
-    basicForm->addRow(QStringLiteral("Port"), m_portSpin);
+    basicForm->addRow(tr("Name"), m_nameEdit);
+    basicForm->addRow(tr("Protocol"), m_protocolCombo);
+    basicForm->addRow(tr("Core"), m_coreCombo);
+    basicForm->addRow(tr("Address"), m_addressEdit);
+    basicForm->addRow(tr("Port"), m_portSpin);
     m_uuidRowWidget = new QWidget(basicPage);
     auto* uuidRowLayout = new QFormLayout(m_uuidRowWidget);
     uuidRowLayout->setContentsMargins(0, 0, 0, 0);
@@ -76,29 +76,29 @@ ProfileDialog::ProfileDialog(QWidget* parent)
     m_passwordRowWidget = new QWidget(basicPage);
     auto* passwordRowLayout = new QFormLayout(m_passwordRowWidget);
     passwordRowLayout->setContentsMargins(0, 0, 0, 0);
-    passwordRowLayout->addRow(QStringLiteral("Password"), m_passwordEdit);
+    passwordRowLayout->addRow(tr("Password"), m_passwordEdit);
     basicForm->addRow(m_passwordRowWidget);
     m_encryptionRowWidget = new QWidget(basicPage);
     auto* encryptionRowLayout = new QFormLayout(m_encryptionRowWidget);
     encryptionRowLayout->setContentsMargins(0, 0, 0, 0);
-    encryptionRowLayout->addRow(QStringLiteral("VLESS encryption"), m_encryptionEdit);
+    encryptionRowLayout->addRow(tr("VLESS encryption"), m_encryptionEdit);
     basicForm->addRow(m_encryptionRowWidget);
     m_methodRowWidget = new QWidget(basicPage);
     auto* methodRowLayout = new QFormLayout(m_methodRowWidget);
     methodRowLayout->setContentsMargins(0, 0, 0, 0);
-    methodRowLayout->addRow(QStringLiteral("Method"), m_methodEdit);
+    methodRowLayout->addRow(tr("Method"), m_methodEdit);
     basicForm->addRow(m_methodRowWidget);
     m_alterIdRowWidget = new QWidget(basicPage);
     auto* alterRowLayout = new QFormLayout(m_alterIdRowWidget);
     alterRowLayout->setContentsMargins(0, 0, 0, 0);
-    alterRowLayout->addRow(QStringLiteral("Alter ID"), m_alterIdSpin);
+    alterRowLayout->addRow(tr("Alter ID"), m_alterIdSpin);
     basicForm->addRow(m_alterIdRowWidget);
     m_securityCipherRowWidget = new QWidget(basicPage);
     auto* cipherRowLayout = new QFormLayout(m_securityCipherRowWidget);
     cipherRowLayout->setContentsMargins(0, 0, 0, 0);
-    cipherRowLayout->addRow(QStringLiteral("VMess security"), m_securityCipherEdit);
+    cipherRowLayout->addRow(tr("VMess security"), m_securityCipherEdit);
     basicForm->addRow(m_securityCipherRowWidget);
-    basicForm->addRow(QStringLiteral("Import note"), m_unsupportedReasonLabel);
+    basicForm->addRow(tr("Import note"), m_unsupportedReasonLabel);
     basicForm->addRow(QString(), m_enabledCheck);
 
     auto* transportPage = new QWidget(this);
@@ -110,12 +110,12 @@ ProfileDialog::ProfileDialog(QWidget* parent)
     m_pathEdit = new QLineEdit(transportPage);
     m_hostEdit = new QLineEdit(transportPage);
     m_headerTypeEdit = new QLineEdit(transportPage);
-    transportForm->addRow(QStringLiteral("Network"), m_networkCombo);
-    transportForm->addRow(QStringLiteral("Path"), m_pathEdit);
-    transportForm->addRow(QStringLiteral("Host"), m_hostEdit);
-    transportForm->addRow(QStringLiteral("Header type"), m_headerTypeEdit);
+    transportForm->addRow(tr("Network"), m_networkCombo);
+    transportForm->addRow(tr("Path"), m_pathEdit);
+    transportForm->addRow(tr("Host"), m_hostEdit);
+    transportForm->addRow(tr("Header type"), m_headerTypeEdit);
     m_serviceNameEdit = new QLineEdit(transportPage);
-    transportForm->addRow(QStringLiteral("gRPC service"), m_serviceNameEdit);
+    transportForm->addRow(tr("gRPC service"), m_serviceNameEdit);
 
     m_realityTab = new QWidget(this);
     auto* realityForm = new QFormLayout(m_realityTab);
@@ -134,11 +134,11 @@ ProfileDialog::ProfileDialog(QWidget* parent)
     m_spiderXEdit = new QLineEdit(m_realityTab);
     m_spiderXEdit->setPlaceholderText(QStringLiteral("/"));
 
-    realityForm->addRow(QStringLiteral("Security"), m_securityCombo);
-    realityForm->addRow(QStringLiteral("Server name (SNI)"), m_serverNameEdit);
-    realityForm->addRow(QStringLiteral("Public key"), m_publicKeyEdit);
-    realityForm->addRow(QStringLiteral("Short ID"), m_shortIdEdit);
-    realityForm->addRow(QStringLiteral("Fingerprint"), m_fingerprintEdit);
+    realityForm->addRow(tr("Security"), m_securityCombo);
+    realityForm->addRow(tr("Server name (SNI)"), m_serverNameEdit);
+    realityForm->addRow(tr("Public key"), m_publicKeyEdit);
+    realityForm->addRow(tr("Short ID"), m_shortIdEdit);
+    realityForm->addRow(tr("Fingerprint"), m_fingerprintEdit);
     realityForm->addRow(QStringLiteral("SpiderX"), m_spiderXEdit);
 
     auto* advancedPage = new QWidget(this);
@@ -147,22 +147,22 @@ ProfileDialog::ProfileDialog(QWidget* parent)
     m_flowEdit->setPlaceholderText(QStringLiteral("xtls-rprx-vision"));
     m_sniEdit = new QLineEdit(advancedPage);
     m_remarkEdit = new QLineEdit(advancedPage);
-    m_allowInsecureCheck = new QCheckBox(QStringLiteral("Allow insecure TLS"), advancedPage);
-    advancedForm->addRow(QStringLiteral("Flow"), m_flowEdit);
-    advancedForm->addRow(QStringLiteral("Legacy SNI field"), m_sniEdit);
-    advancedForm->addRow(QStringLiteral("Remark"), m_remarkEdit);
+    m_allowInsecureCheck = new QCheckBox(tr("Allow insecure TLS"), advancedPage);
+    advancedForm->addRow(tr("Flow"), m_flowEdit);
+    advancedForm->addRow(tr("Legacy SNI field"), m_sniEdit);
+    advancedForm->addRow(tr("Remark"), m_remarkEdit);
     advancedForm->addRow(QString(), m_allowInsecureCheck);
 
-    m_tabs->addTab(basicPage, QStringLiteral("Basic"));
-    m_tabs->addTab(transportPage, QStringLiteral("Transport"));
-    m_tabs->addTab(m_realityTab, QStringLiteral("TLS / REALITY"));
-    m_tabs->addTab(advancedPage, QStringLiteral("Advanced"));
+    m_tabs->addTab(basicPage, tr("Basic"));
+    m_tabs->addTab(transportPage, tr("Transport"));
+    m_tabs->addTab(m_realityTab, tr("TLS / REALITY"));
+    m_tabs->addTab(advancedPage, tr("Advanced"));
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     connect(buttons, &QDialogButtonBox::accepted, this, [this]() {
         QString error;
         if (!validateInput(&error)) {
-            QMessageBox::warning(this, QStringLiteral("Validation"), error);
+            QMessageBox::warning(this, tr("Validation"), error);
             return;
         }
         accept();

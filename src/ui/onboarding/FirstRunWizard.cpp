@@ -39,7 +39,7 @@ FirstRunWizard::FirstRunWizard(CoreBinaryManager* coreManager, RoutingManager* r
     , m_dnsManager(dnsManager)
 {
     FirstRunState::applyDefaults(&m_state);
-    setWindowTitle(QStringLiteral("Zarya Setup"));
+    setWindowTitle(tr("Zarya Setup"));
     setWizardStyle(QWizard::ModernStyle);
     resize(620, 480);
     setupPages();
@@ -59,14 +59,14 @@ void FirstRunWizard::setupPages()
 {
     // Welcome
     auto* welcome = new QWizardPage(this);
-    welcome->setTitle(QStringLiteral("Welcome to Zarya"));
+    welcome->setTitle(tr("Welcome to Zarya"));
     auto* welcomeText = new QLabel(
-        QStringLiteral("Zarya is a cross-platform proxy client.\n\n"
-                       "Recommended setup:\n"
-                       "1. Install Xray core\n"
-                       "2. Add a profile or subscription\n"
-                       "3. Choose routing/DNS behavior\n"
-                       "4. Start a profile"),
+        tr("Zarya is a cross-platform proxy client.\n\n"
+           "Recommended setup:\n"
+           "1. Install Xray core\n"
+           "2. Add a profile or subscription\n"
+           "3. Choose routing/DNS behavior\n"
+           "4. Start a profile"),
         welcome);
     welcomeText->setWordWrap(true);
     auto* welcomeLayout = new QVBoxLayout(welcome);
@@ -76,22 +76,22 @@ void FirstRunWizard::setupPages()
 
     // Core setup
     auto* corePage = new QWizardPage(this);
-    corePage->setTitle(QStringLiteral("Core setup"));
+    corePage->setTitle(tr("Core setup"));
     auto* coreInfo = new QLabel(corePage);
     coreInfo->setObjectName(QStringLiteral("coreStatusLabel"));
     coreInfo->setWordWrap(true);
     auto* coreHelp = new QLabel(
-        QStringLiteral("Xray is required for the default system-proxy mode.\n"
-                       "sing-box is only needed for experimental TUN mode."),
+        tr("Xray is required for the default system-proxy mode.\n"
+           "sing-box is only needed for experimental TUN mode."),
         corePage);
     coreHelp->setWordWrap(true);
-    auto* installXrayBtn = new QPushButton(QStringLiteral("Install Xray"), corePage);
-    auto* installSingBoxBtn = new QPushButton(QStringLiteral("Install sing-box (experimental TUN)"),
+    auto* installXrayBtn = new QPushButton(tr("Install Xray"), corePage);
+    auto* installSingBoxBtn = new QPushButton(tr("Install sing-box (experimental TUN)"),
                                               corePage);
-    auto* chooseXrayBtn = new QPushButton(QStringLiteral("Choose existing Xray binary"), corePage);
+    auto* chooseXrayBtn = new QPushButton(tr("Choose existing Xray binary"), corePage);
     auto* chooseSingBoxBtn =
-        new QPushButton(QStringLiteral("Choose existing sing-box binary"), corePage);
-    auto* openCoreMgrBtn = new QPushButton(QStringLiteral("Open Core Manager"), corePage);
+        new QPushButton(tr("Choose existing sing-box binary"), corePage);
+    auto* openCoreMgrBtn = new QPushButton(tr("Open Core Manager"), corePage);
     connect(installXrayBtn, &QPushButton::clicked, this,
             &FirstRunWizard::installXrayRequested);
     connect(installSingBoxBtn, &QPushButton::clicked, this,
@@ -119,22 +119,22 @@ void FirstRunWizard::setupPages()
 
     // Import
     auto* importPage = new QWizardPage(this);
-    importPage->setTitle(QStringLiteral("Import profiles"));
+    importPage->setTitle(tr("Import profiles"));
     auto* importWidget = new ProfileImportWidget(importPage);
     importWidget->setObjectName(QStringLiteral("profileImportWidget"));
     auto* subUrlEdit = new QLineEdit(importPage);
     subUrlEdit->setObjectName(QStringLiteral("subscriptionUrlEdit"));
-    subUrlEdit->setPlaceholderText(QStringLiteral("Subscription URL"));
+    subUrlEdit->setPlaceholderText(tr("Subscription URL"));
     auto* subNameEdit = new QLineEdit(importPage);
     subNameEdit->setObjectName(QStringLiteral("subscriptionNameEdit"));
-    subNameEdit->setPlaceholderText(QStringLiteral("Subscription name"));
-    auto* importBackupBtn = new QPushButton(QStringLiteral("Import backup…"), importPage);
-    auto* addManualBtn = new QPushButton(QStringLiteral("Add profile manually…"), importPage);
+    subNameEdit->setPlaceholderText(tr("Subscription name"));
+    auto* importBackupBtn = new QPushButton(tr("Import backup…"), importPage);
+    auto* addManualBtn = new QPushButton(tr("Add profile manually…"), importPage);
     connect(importBackupBtn, &QPushButton::clicked, this, &FirstRunWizard::importBackupRequested);
     connect(addManualBtn, &QPushButton::clicked, this, &FirstRunWizard::addProfileManuallyRequested);
     auto* importForm = new QFormLayout;
-    importForm->addRow(QStringLiteral("Subscription URL"), subUrlEdit);
-    importForm->addRow(QStringLiteral("Name"), subNameEdit);
+    importForm->addRow(tr("Subscription URL"), subUrlEdit);
+    importForm->addRow(tr("Name"), subNameEdit);
     auto* importLayout = new QVBoxLayout(importPage);
     importLayout->addWidget(importWidget);
     importLayout->addLayout(importForm);
@@ -144,40 +144,40 @@ void FirstRunWizard::setupPages()
 
     // Routing/DNS
     auto* routingDnsPage = new QWizardPage(this);
-    routingDnsPage->setTitle(QStringLiteral("Routing and DNS"));
-    auto* bypassLanRadio = new QRadioButton(QStringLiteral("Bypass LAN (recommended)"), routingDnsPage);
+    routingDnsPage->setTitle(tr("Routing and DNS"));
+    auto* bypassLanRadio = new QRadioButton(tr("Bypass LAN (recommended)"), routingDnsPage);
     bypassLanRadio->setObjectName(QStringLiteral("routingBypassLan"));
     bypassLanRadio->setChecked(true);
-    auto* proxyAllRadio = new QRadioButton(QStringLiteral("Proxy All"), routingDnsPage);
+    auto* proxyAllRadio = new QRadioButton(tr("Proxy All"), routingDnsPage);
     proxyAllRadio->setObjectName(QStringLiteral("routingProxyAll"));
-    auto* bypassRuRadio = new QRadioButton(QStringLiteral("Bypass LAN + RU"), routingDnsPage);
+    auto* bypassRuRadio = new QRadioButton(tr("Bypass LAN + RU"), routingDnsPage);
     bypassRuRadio->setObjectName(QStringLiteral("routingBypassRu"));
-    auto* routingCustomRadio = new QRadioButton(QStringLiteral("Custom…"), routingDnsPage);
+    auto* routingCustomRadio = new QRadioButton(tr("Custom…"), routingDnsPage);
     routingCustomRadio->setObjectName(QStringLiteral("routingCustom"));
-    auto* systemDnsRadio = new QRadioButton(QStringLiteral("System DNS (recommended)"), routingDnsPage);
+    auto* systemDnsRadio = new QRadioButton(tr("System DNS (recommended)"), routingDnsPage);
     systemDnsRadio->setObjectName(QStringLiteral("dnsSystem"));
     systemDnsRadio->setChecked(true);
-    auto* secureDnsRadio = new QRadioButton(QStringLiteral("Secure Remote DNS"), routingDnsPage);
+    auto* secureDnsRadio = new QRadioButton(tr("Secure Remote DNS"), routingDnsPage);
     secureDnsRadio->setObjectName(QStringLiteral("dnsSecure"));
-    auto* dnsCustomRadio = new QRadioButton(QStringLiteral("Custom…"), routingDnsPage);
+    auto* dnsCustomRadio = new QRadioButton(tr("Custom…"), routingDnsPage);
     dnsCustomRadio->setObjectName(QStringLiteral("dnsCustom"));
     auto* routingHelp = new QLabel(
-        QStringLiteral("Bypass LAN keeps local/private network traffic direct.\n"
-                       "System DNS keeps default behavior."),
+        tr("Bypass LAN keeps local/private network traffic direct.\n"
+           "System DNS keeps default behavior."),
         routingDnsPage);
     routingHelp->setWordWrap(true);
-    auto* openRoutingBtn = new QPushButton(QStringLiteral("Open Routing Profiles"), routingDnsPage);
-    auto* openDnsBtn = new QPushButton(QStringLiteral("Open DNS Profiles"), routingDnsPage);
+    auto* openRoutingBtn = new QPushButton(tr("Open Routing Profiles"), routingDnsPage);
+    auto* openDnsBtn = new QPushButton(tr("Open DNS Profiles"), routingDnsPage);
     connect(openRoutingBtn, &QPushButton::clicked, this,
             &FirstRunWizard::openRoutingProfilesRequested);
     connect(openDnsBtn, &QPushButton::clicked, this, &FirstRunWizard::openDnsProfilesRequested);
-    auto* routingGroup = new QGroupBox(QStringLiteral("Routing"), routingDnsPage);
+    auto* routingGroup = new QGroupBox(tr("Routing"), routingDnsPage);
     auto* routingLayout = new QVBoxLayout(routingGroup);
     routingLayout->addWidget(bypassLanRadio);
     routingLayout->addWidget(proxyAllRadio);
     routingLayout->addWidget(bypassRuRadio);
     routingLayout->addWidget(routingCustomRadio);
-    auto* dnsGroup = new QGroupBox(QStringLiteral("DNS"), routingDnsPage);
+    auto* dnsGroup = new QGroupBox(tr("DNS"), routingDnsPage);
     auto* dnsLayout = new QVBoxLayout(dnsGroup);
     dnsLayout->addWidget(systemDnsRadio);
     dnsLayout->addWidget(secureDnsRadio);
@@ -192,22 +192,22 @@ void FirstRunWizard::setupPages()
 
     // Runtime
     auto* runtimePage = new QWizardPage(this);
-    runtimePage->setTitle(QStringLiteral("Runtime mode"));
+    runtimePage->setTitle(tr("Runtime mode"));
     auto* systemProxyRadio =
-        new QRadioButton(QStringLiteral("System proxy via Xray — recommended"), runtimePage);
+        new QRadioButton(tr("System proxy via Xray — recommended"), runtimePage);
     systemProxyRadio->setChecked(true);
     systemProxyRadio->setObjectName(QStringLiteral("runtimeSystemProxy"));
     auto* tunRadio =
-        new QRadioButton(QStringLiteral("Experimental TUN via sing-box"), runtimePage);
+        new QRadioButton(tr("Experimental TUN via sing-box"), runtimePage);
     tunRadio->setObjectName(QStringLiteral("runtimeTun"));
     auto* tunAcceptCheck = new QCheckBox(
-        QStringLiteral("I understand TUN mode is experimental"), runtimePage);
+        tr("I understand TUN mode is experimental"), runtimePage);
     tunAcceptCheck->setObjectName(QStringLiteral("tunAcceptCheck"));
     tunAcceptCheck->setEnabled(false);
     connect(tunRadio, &QRadioButton::toggled, tunAcceptCheck, &QCheckBox::setEnabled);
     auto* tunWarning = new QLabel(
-        QStringLiteral("TUN mode is experimental. It may require elevated helper permissions "
-                       "and can change routes/firewall behavior."),
+        tr("TUN mode is experimental. It may require elevated helper permissions "
+           "and can change routes/firewall behavior."),
         runtimePage);
     tunWarning->setWordWrap(true);
     tunWarning->setStyleSheet(QStringLiteral("color:#b71c1c;"));
@@ -220,10 +220,10 @@ void FirstRunWizard::setupPages()
 
     // Finish
     auto* finishPage = new QWizardPage(this);
-    finishPage->setTitle(QStringLiteral("Finish"));
+    finishPage->setTitle(tr("Finish"));
     auto* checklist = new FirstRunChecklistWidget(finishPage);
     checklist->setObjectName(QStringLiteral("finishChecklist"));
-    auto* startNowCheck = new QCheckBox(QStringLiteral("Start selected profile now"), finishPage);
+    auto* startNowCheck = new QCheckBox(tr("Start selected profile now"), finishPage);
     startNowCheck->setObjectName(QStringLiteral("startProfileNowCheck"));
     startNowCheck->setChecked(false);
     auto* finishLayout = new QVBoxLayout(finishPage);
@@ -233,7 +233,7 @@ void FirstRunWizard::setupPages()
 
     setStartId(kPageWelcome);
     setOption(QWizard::NoBackButtonOnStartPage, false);
-    button(QWizard::CancelButton)->setText(QStringLiteral("Skip setup"));
+    button(QWizard::CancelButton)->setText(tr("Skip setup"));
 }
 
 void FirstRunWizard::refreshCorePage()
@@ -249,10 +249,10 @@ void FirstRunWizard::refreshCorePage()
         return;
     }
     label->setText(
-        QStringLiteral("Xray: %1 (%2)\nsing-box: %3 (%4)")
-            .arg(xray.exists ? QStringLiteral("installed") : QStringLiteral("missing"),
+        tr("Xray: %1 (%2)\nsing-box: %3 (%4)")
+            .arg(xray.exists ? tr("installed") : tr("missing"),
                  xray.installedVersion.isEmpty() ? QStringLiteral("—") : xray.installedVersion,
-                 singBox.exists ? QStringLiteral("installed") : QStringLiteral("missing"),
+                 singBox.exists ? tr("installed") : tr("missing"),
                  singBox.installedVersion.isEmpty() ? QStringLiteral("—")
                                                     : singBox.installedVersion));
 }
@@ -294,7 +294,7 @@ void FirstRunWizard::accept()
                 sub.name = subName->text().trimmed();
             }
             if (sub.name.isEmpty()) {
-                sub.name = QStringLiteral("Subscription");
+                sub.name = tr("Subscription");
             }
             m_state.addedSubscriptions.append(sub);
         }

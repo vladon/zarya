@@ -1,5 +1,7 @@
 #include "domain/RoutingMode.h"
 
+#include "i18n/TranslatableEnums.h"
+
 namespace zarya {
 
 QString routingModeToString(RoutingMode mode)
@@ -39,19 +41,7 @@ RoutingMode routingModeFromString(const QString& value)
 
 QString routingModeDisplayString(RoutingMode mode)
 {
-    switch (mode) {
-    case RoutingMode::ProxyAll:
-        return QStringLiteral("Proxy All");
-    case RoutingMode::BypassLan:
-        return QStringLiteral("Bypass LAN");
-    case RoutingMode::BypassRu:
-        return QStringLiteral("Bypass RU");
-    case RoutingMode::BypassLanAndRu:
-        return QStringLiteral("Bypass LAN + RU");
-    case RoutingMode::Custom:
-        return QStringLiteral("Custom");
-    }
-    return QStringLiteral("Custom");
+    return TranslatableEnums::trRoutingMode(mode);
 }
 
 QString routingActionToString(RoutingAction action)
@@ -81,15 +71,7 @@ RoutingAction routingActionFromString(const QString& value)
 
 QString routingActionDisplayString(RoutingAction action)
 {
-    switch (action) {
-    case RoutingAction::Proxy:
-        return QStringLiteral("Proxy");
-    case RoutingAction::Direct:
-        return QStringLiteral("Direct");
-    case RoutingAction::Block:
-        return QStringLiteral("Block");
-    }
-    return QStringLiteral("Proxy");
+    return TranslatableEnums::trRoutingAction(action);
 }
 
 QString routingRuleTypeToString(RoutingRuleType type)

@@ -19,7 +19,7 @@ RoutingRuleEditorDialog::RoutingRuleEditorDialog(const RoutingRule& rule, bool r
     , m_rule(rule)
     , m_readOnly(readOnly)
 {
-    setWindowTitle(readOnly ? QStringLiteral("View Rule") : QStringLiteral("Edit Rule"));
+    setWindowTitle(readOnly ? tr("View Rule") : tr("Edit Rule"));
 
     m_actionCombo = new QComboBox(this);
     m_actionCombo->addItem(routingActionDisplayString(RoutingAction::Proxy),
@@ -43,7 +43,7 @@ RoutingRuleEditorDialog::RoutingRuleEditorDialog(const RoutingRule& rule, bool r
 
     m_valuesEdit = new QPlainTextEdit(this);
     m_valuesEdit->setPlaceholderText(
-        QStringLiteral("One value per line\ngeosite:private\ndomain:example.com"));
+        tr("One value per line\ngeosite:private\ndomain:example.com"));
     m_valuesEdit->setPlainText(rule.values.join(QStringLiteral("\n")));
 
     m_noteEdit = new QLineEdit(rule.note, this);
@@ -56,10 +56,10 @@ RoutingRuleEditorDialog::RoutingRuleEditorDialog(const RoutingRule& rule, bool r
     }
 
     auto* form = new QFormLayout;
-    form->addRow(QStringLiteral("Action"), m_actionCombo);
-    form->addRow(QStringLiteral("Type"), m_typeCombo);
-    form->addRow(QStringLiteral("Values"), m_valuesEdit);
-    form->addRow(QStringLiteral("Note"), m_noteEdit);
+    form->addRow(tr("Action"), m_actionCombo);
+    form->addRow(tr("Type"), m_typeCombo);
+    form->addRow(tr("Values"), m_valuesEdit);
+    form->addRow(tr("Note"), m_noteEdit);
 
     auto* buttons = new QDialogButtonBox(
         readOnly ? QDialogButtonBox::Close : (QDialogButtonBox::Ok | QDialogButtonBox::Cancel),
@@ -104,8 +104,8 @@ bool RoutingRuleEditorDialog::validateRule()
         }
     }
     if (values.isEmpty()) {
-        QMessageBox::warning(this, QStringLiteral("Rule"),
-                             QStringLiteral("At least one value is required."));
+        QMessageBox::warning(this, tr("Rule"),
+                             tr("At least one value is required."));
         return false;
     }
     m_rule.values = values;

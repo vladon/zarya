@@ -239,4 +239,26 @@ QString AppPaths::backupsDir()
     return path;
 }
 
+QString AppPaths::translationsDir()
+{
+    const QString besideExe = QDir(applicationDir()).filePath(QStringLiteral("translations"));
+    if (QDir(besideExe).exists()) {
+        return besideExe;
+    }
+#if defined(Q_OS_MACOS)
+    const QString bundleResources =
+        QDir(applicationDir()).filePath(QStringLiteral("../Resources/translations"));
+    if (QDir(bundleResources).exists()) {
+        return bundleResources;
+    }
+#endif
+    const QString sharePath =
+        QDir(applicationDir()).filePath(QStringLiteral("../share/zarya/translations"));
+    if (QDir(sharePath).exists()) {
+        return sharePath;
+    }
+    ensureDir(besideExe);
+    return besideExe;
+}
+
 } // namespace zarya

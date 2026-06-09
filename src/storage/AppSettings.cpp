@@ -624,4 +624,14 @@ void AppSettings::setDismissBetaBanner(bool dismissed)
     settings().setValue(QStringLiteral("onboarding/dismissBetaBanner"), dismissed);
 }
 
+QString AppSettings::languageCode() const
+{
+    return settings().value(QStringLiteral("desktop/languageCode"), QStringLiteral("system")).toString();
+}
+
+void AppSettings::setLanguageCode(const QString& code)
+{
+    settings().setValue(QStringLiteral("desktop/languageCode"), code);
+}
+
 } // namespace zarya

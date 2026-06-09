@@ -174,6 +174,9 @@ public:
     bool dismissBetaBanner() const;
     void setDismissBetaBanner(bool dismissed);
 
+    QString languageCode() const;
+    void setLanguageCode(const QString& code);
+
     static bool defaultAutoEnableSystemProxyOnStart();
     static bool defaultMinimizeToTrayOnClose();
 

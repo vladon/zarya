@@ -25,13 +25,12 @@ CoreManagerDialog::CoreManagerDialog(CoreBinaryManager& manager,
     , m_manager(manager)
     , m_logCallback(logCallback)
 {
-    setWindowTitle(QStringLiteral("Core Manager"));
+    setWindowTitle(tr("Core Manager"));
     resize(900, 560);
 
     m_table = new QTableWidget(0, 5, this);
     m_table->setHorizontalHeaderLabels(
-        {QStringLiteral("Core"), QStringLiteral("Installed"), QStringLiteral("Latest"),
-         QStringLiteral("Status"), QStringLiteral("Path")});
+        {tr("Core"), tr("Installed"), tr("Latest"), tr("Status"), tr("Path")});
     m_table->horizontalHeader()->setStretchLastSection(true);
     m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_table->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -44,13 +43,13 @@ CoreManagerDialog::CoreManagerDialog(CoreBinaryManager& manager,
     m_logView->setReadOnly(true);
     m_logView->setMaximumBlockCount(500);
 
-    m_checkButton = new QPushButton(QStringLiteral("Check Versions"), this);
-    m_updateButton = new QPushButton(QStringLiteral("Update Selected"), this);
-    m_updateAllButton = new QPushButton(QStringLiteral("Update All"), this);
-    m_rollbackButton = new QPushButton(QStringLiteral("Rollback"), this);
-    m_openFolderButton = new QPushButton(QStringLiteral("Open Core Folder"), this);
-    m_resetPathButton = new QPushButton(QStringLiteral("Reset to Managed Path"), this);
-    m_cancelButton = new QPushButton(QStringLiteral("Cancel Download"), this);
+    m_checkButton = new QPushButton(tr("Check Versions"), this);
+    m_updateButton = new QPushButton(tr("Update Selected"), this);
+    m_updateAllButton = new QPushButton(tr("Update All"), this);
+    m_rollbackButton = new QPushButton(tr("Rollback"), this);
+    m_openFolderButton = new QPushButton(tr("Open Core Folder"), this);
+    m_resetPathButton = new QPushButton(tr("Reset to Managed Path"), this);
+    m_cancelButton = new QPushButton(tr("Cancel Download"), this);
 
     connect(m_checkButton, &QPushButton::clicked, this, &CoreManagerDialog::onCheckVersions);
     connect(m_updateButton, &QPushButton::clicked, this, &CoreManagerDialog::onUpdateSelected);
@@ -74,7 +73,7 @@ CoreManagerDialog::CoreManagerDialog(CoreBinaryManager& manager,
     layout->addWidget(m_table);
     layout->addWidget(m_detailsLabel);
     layout->addLayout(buttons);
-    layout->addWidget(new QLabel(QStringLiteral("Log"), this));
+    layout->addWidget(new QLabel(tr("Log"), this));
     layout->addWidget(m_logView, 1);
 
     connect(&m_manager, &CoreBinaryManager::coresChanged, this, &CoreManagerDialog::onCoresChanged);
@@ -162,8 +161,8 @@ void CoreManagerDialog::onUpdateSelected()
 {
     const CoreInfo info = m_manager.infoFor(selectedCoreType());
     if (info.status == CoreInstallStatus::External) {
-        QMessageBox::warning(this, QStringLiteral("Core Manager"),
-                               QStringLiteral("This core is outside Zarya-managed directory."));
+        QMessageBox::warning(this, tr("Core Manager"),
+                               tr("This core is outside Zarya-managed directory."));
         return;
     }
     const bool allowWithoutChecksum = AppSettings::instance().allowCoreUpdateWithoutChecksum();
@@ -221,9 +220,9 @@ void CoreManagerDialog::onOperationFinished(bool ok, const QString& message)
     setBusy(false);
     if (!message.isEmpty()) {
         if (ok) {
-            QMessageBox::information(this, QStringLiteral("Core Manager"), message);
+            QMessageBox::information(this, tr("Core Manager"), message);
         } else {
-            QMessageBox::warning(this, QStringLiteral("Core Manager"), message);
+            QMessageBox::warning(this, tr("Core Manager"), message);
         }
     }
     m_manager.refreshLocalState();

@@ -139,6 +139,13 @@ set(ZARYA_LOGGING_SOURCES
     src/logging/LogBuffer.cpp
 )
 
+set(ZARYA_I18N_SOURCES
+    src/i18n/ZaryaTr.cpp
+    src/i18n/LanguageInfo.cpp
+    src/i18n/LanguageManager.cpp
+    src/i18n/TranslatableEnums.cpp
+)
+
 set(ZARYA_MIGRATION_SOURCES
     src/migration/MigrationResult.cpp
     src/migration/JsonFileMigrator.cpp
@@ -327,6 +334,7 @@ set(ZARYA_SOURCES
     ${ZARYA_CORE_UPDATE_SOURCES}
     ${ZARYA_BACKUP_SOURCES}
     ${ZARYA_LOGGING_SOURCES}
+    ${ZARYA_I18N_SOURCES}
     ${ZARYA_MIGRATION_SOURCES}
     ${ZARYA_ERROR_SOURCES}
     ${ZARYA_RECOVERY_SOURCES}
@@ -415,6 +423,7 @@ if(ZARYA_STATIC_QT AND WIN32)
     message(STATUS "zarya Release will be a single portable executable (Qt linked statically, /MT runtime)")
 endif()
 
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ZaryaTranslations.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ZaryaDeploy.cmake)
 
 set(ZARYA_HELPER_SOURCES
@@ -456,13 +465,19 @@ add_executable(zarya_xray_config_test
     ${ZARYA_ROUTING_SOURCES}
     ${ZARYA_DNS_SOURCES}
     ${ZARYA_DOMAIN_SOURCES}
+    ${ZARYA_I18N_SOURCES}
     src/storage/RoutingStore.cpp
     src/storage/DnsStore.cpp
+    src/storage/SafeJsonWriter.cpp
     src/testing/TestStatus.cpp
     src/storage/ProfileStore.cpp
     src/storage/AppSettings.cpp
     src/storage/AppPaths.cpp
     src/runtime/RuntimeBackendType.cpp
+    src/migration/JsonFileMigrator.cpp
+    src/killswitch/KillSwitchMode.cpp
+    src/app/StartupOptions.cpp
+    src/packaging/PackagingInfo.cpp
     src/platform/Platform.cpp
     src/import/VlessUriParser.cpp
     src/subscription/ShareLinkParser.cpp

@@ -2,6 +2,7 @@
 
 #include "domain/ProfileSourceType.h"
 #include "domain/Subscription.h"
+#include "i18n/ZaryaTr.h"
 #include "storage/ProfileStore.h"
 #include "storage/SubscriptionStore.h"
 #include "subscription/SubscriptionManager.h"
@@ -32,7 +33,7 @@ SubscriptionManagerDialog::SubscriptionManagerDialog(
     , m_logCallback(logCallback)
     , m_profilesChangedCallback(profilesChangedCallback)
 {
-    setWindowTitle(QStringLiteral("Subscriptions"));
+    setWindowTitle(tr("Subscriptions"));
     resize(900, 480);
 
     m_tableModel = new SubscriptionTableModel(this);
@@ -44,12 +45,12 @@ SubscriptionManagerDialog::SubscriptionManagerDialog(
     m_tableView->setAlternatingRowColors(true);
     refreshTable();
 
-    auto* addButton = new QPushButton(QStringLiteral("Add"), this);
-    auto* editButton = new QPushButton(QStringLiteral("Edit"), this);
-    auto* deleteButton = new QPushButton(QStringLiteral("Delete"), this);
-    auto* updateButton = new QPushButton(QStringLiteral("Update"), this);
-    auto* updateAllButton = new QPushButton(QStringLiteral("Update All"), this);
-    auto* closeButton = new QPushButton(QStringLiteral("Close"), this);
+    auto* addButton = new QPushButton(tr("Add"), this);
+    auto* editButton = new QPushButton(tr("Edit"), this);
+    auto* deleteButton = new QPushButton(tr("Delete"), this);
+    auto* updateButton = new QPushButton(tr("Update"), this);
+    auto* updateAllButton = new QPushButton(tr("Update All"), this);
+    auto* closeButton = new QPushButton(tr("Close"), this);
 
     connect(addButton, &QPushButton::clicked, this, &SubscriptionManagerDialog::onAdd);
     connect(editButton, &QPushButton::clicked, this, &SubscriptionManagerDialog::onEdit);
@@ -71,7 +72,7 @@ SubscriptionManagerDialog::SubscriptionManagerDialog(
 
     m_updateSummaryLabel = new QLabel(this);
     m_updateSummaryLabel->setWordWrap(true);
-    m_updateSummaryLabel->setText(QStringLiteral("Last update: —"));
+    m_updateSummaryLabel->setText(tr("Last update: —"));
 
     auto* layout = new QVBoxLayout(this);
     layout->addWidget(m_tableView);
@@ -85,7 +86,7 @@ void SubscriptionManagerDialog::showUpdateSummary(const SubscriptionUpdateStats&
         return;
     }
     m_updateSummaryLabel->setText(
-        QStringLiteral("Last update — Added: %1, Updated: %2, Missing: %3, Skipped: %4")
+        tr("Last update — Added: %1, Updated: %2, Missing: %3, Skipped: %4")
             .arg(stats.addedProfiles)
             .arg(stats.updatedProfiles)
             .arg(stats.markedMissingProfiles)
@@ -146,8 +147,8 @@ void SubscriptionManagerDialog::onEdit()
 {
     const int row = selectedRow();
     if (row < 0) {
-        QMessageBox::information(this, QStringLiteral("Edit subscription"),
-                                 QStringLiteral("Select a subscription first."));
+        QMessageBox::information(this, tr("Edit subscription"),
+                                 tr("Select a subscription first."));
         return;
     }
 
@@ -165,18 +166,18 @@ void SubscriptionManagerDialog::onDelete()
 {
     const int row = selectedRow();
     if (row < 0) {
-        QMessageBox::information(this, QStringLiteral("Delete subscription"),
-                                 QStringLiteral("Select a subscription first."));
+        QMessageBox::information(this, tr("Delete subscription"),
+                                 tr("Select a subscription first."));
         return;
     }
 
     const Subscription subscription = m_tableModel->subscriptionAt(row);
     const auto answer = QMessageBox::question(
-        this, QStringLiteral("Delete subscription"),
-        QStringLiteral("Delete subscription \"%1\"?\n\n"
-                       "Yes = delete subscription and imported profiles\n"
-                       "No = delete subscription only (keep profiles as manual)\n"
-                       "Cancel = abort")
+        this, tr("Delete subscription"),
+        tr("Delete subscription \"%1\"?\n\n"
+           "Yes = delete subscription and imported profiles\n"
+           "No = delete subscription only (keep profiles as manual)\n"
+           "Cancel = abort")
             .arg(subscription.name),
         QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Cancel);
 
@@ -208,7 +209,7 @@ void SubscriptionManagerDialog::onDelete()
     refreshTable();
     QString error;
     if (!persistAll(&error)) {
-        QMessageBox::warning(this, QStringLiteral("Save failed"), error);
+        QMessageBox::warning(this, tr("Save failed"), error);
     }
     notifyProfilesChanged();
 }
@@ -217,8 +218,8 @@ void SubscriptionManagerDialog::onUpdateSelected()
 {
     const int row = selectedRow();
     if (row < 0) {
-        QMessageBox::information(this, QStringLiteral("Update subscription"),
-                                 QStringLiteral("Select a subscription first."));
+        QMessageBox::information(this, tr("Update subscription"),
+                                 tr("Select a subscription first."));
         return;
     }
 
@@ -226,13 +227,13 @@ void SubscriptionManagerDialog::onUpdateSelected()
     refreshTable();
     QString error;
     if (!persistAll(&error)) {
-        QMessageBox::warning(this, QStringLiteral("Save failed"), error);
+        QMessageBox::warning(this, tr("Save failed"), error);
     }
     notifyProfilesChanged();
 
     showUpdateSummary(result.stats);
     if (!result.success) {
-        QMessageBox::warning(this, QStringLiteral("Update failed"), result.errorMessage);
+        QMessageBox::warning(this, tr("Update failed"), result.errorMessage);
     }
 }
 
@@ -243,7 +244,7 @@ void SubscriptionManagerDialog::onUpdateAll()
     refreshTable();
     QString error;
     if (!persistAll(&error)) {
-        QMessageBox::warning(this, QStringLiteral("Save failed"), error);
+        QMessageBox::warning(this, tr("Save failed"), error);
     }
     notifyProfilesChanged();
 
@@ -260,8 +261,8 @@ void SubscriptionManagerDialog::onUpdateAll()
     }
     showUpdateSummary(total);
     if (failed > 0) {
-        QMessageBox::warning(this, QStringLiteral("Update all"),
-                             QStringLiteral("%1 subscription(s) failed to update.").arg(failed));
+        QMessageBox::warning(this, tr("Update all"),
+                             ZaryaTr::plural("%n subscription(s) failed to update.", failed));
     }
 }
 

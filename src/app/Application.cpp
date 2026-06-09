@@ -1,6 +1,7 @@
 #include "app/Application.h"
 
 #include "app/StartupOptions.h"
+#include "i18n/LanguageManager.h"
 #include "packaging/PackagingInfo.h"
 #include "storage/AppPaths.h"
 
@@ -19,6 +20,7 @@ Application::Application(int& argc, char** argv)
     setApplicationVersion(PackagingInfo::versionString());
 
     AppPaths::initialize(m_startupOptions.portable);
+    LanguageManager::instance().installTranslators();
 
     if (QSystemTrayIcon::isSystemTrayAvailable()) {
         setQuitOnLastWindowClosed(false);

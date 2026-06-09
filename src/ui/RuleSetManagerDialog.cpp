@@ -32,16 +32,16 @@ RuleSetManagerDialog::RuleSetManagerDialog(RuleSetManager& manager, RoutingManag
     , m_dnsManager(dnsManager)
     , m_logCallback(logCallback)
 {
-    setWindowTitle(QStringLiteral("sing-box Rule Sets"));
+    setWindowTitle(tr("sing-box Rule Sets"));
     resize(960, 620);
 
     auto* targetLabel = new QLabel(
-        QStringLiteral("Target directory: %1").arg(m_manager.targetDirectory()), this);
+        tr("Target directory: %1").arg(m_manager.targetDirectory()), this);
     targetLabel->setWordWrap(true);
     targetLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
   auto* singBoxLabel = new QLabel(
-        QStringLiteral("sing-box executable: %1")
+        tr("sing-box executable: %1")
             .arg(AppSettings::instance().resolvedSingBoxPath()),
         this);
     singBoxLabel->setWordWrap(true);
@@ -49,8 +49,8 @@ RuleSetManagerDialog::RuleSetManagerDialog(RuleSetManager& manager, RoutingManag
     m_requiredTable = new QTableWidget(this);
     m_requiredTable->setColumnCount(4);
     m_requiredTable->setHorizontalHeaderLabels(
-        {QStringLiteral("Tag"), QStringLiteral("Source"), QStringLiteral("Status"),
-         QStringLiteral("Path")});
+        {tr("Tag"), tr("Source"), tr("Status"),
+         tr("Path")});
     m_requiredTable->horizontalHeader()->setStretchLastSection(true);
     m_requiredTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_requiredTable->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -58,8 +58,8 @@ RuleSetManagerDialog::RuleSetManagerDialog(RuleSetManager& manager, RoutingManag
     m_allTable = new QTableWidget(this);
     m_allTable->setColumnCount(6);
     m_allTable->setHorizontalHeaderLabels(
-        {QStringLiteral("Tag"), QStringLiteral("Kind"), QStringLiteral("Status"),
-         QStringLiteral("Source"), QStringLiteral("Size"), QStringLiteral("Modified")});
+        {tr("Tag"), tr("Kind"), tr("Status"),
+         tr("Source"), tr("Size"), tr("Modified")});
     m_allTable->horizontalHeader()->setStretchLastSection(true);
     m_allTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_allTable->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -68,11 +68,11 @@ RuleSetManagerDialog::RuleSetManagerDialog(RuleSetManager& manager, RoutingManag
     m_logView->setReadOnly(true);
     m_logView->setMaximumBlockCount(300);
 
-    auto* checkButton = new QPushButton(QStringLiteral("Check Status"), this);
-    m_importButton = new QPushButton(QStringLiteral("Import Local .srs"), this);
-    m_compileButton = new QPushButton(QStringLiteral("Compile JSON"), this);
-    auto* openFolderButton = new QPushButton(QStringLiteral("Open Folder"), this);
-    auto* closeButton = new QPushButton(QStringLiteral("Close"), this);
+    auto* checkButton = new QPushButton(tr("Check Status"), this);
+    m_importButton = new QPushButton(tr("Import Local .srs"), this);
+    m_compileButton = new QPushButton(tr("Compile JSON"), this);
+    auto* openFolderButton = new QPushButton(tr("Open Folder"), this);
+    auto* closeButton = new QPushButton(tr("Close"), this);
 
     connect(checkButton, &QPushButton::clicked, this, &RuleSetManagerDialog::onCheckStatus);
     connect(m_importButton, &QPushButton::clicked, this, &RuleSetManagerDialog::onImportSrs);
@@ -95,11 +95,11 @@ RuleSetManagerDialog::RuleSetManagerDialog(RuleSetManager& manager, RoutingManag
     buttonRow->addStretch();
     buttonRow->addWidget(closeButton);
 
-    auto* requiredGroup = new QGroupBox(QStringLiteral("Required by active TUN config"), this);
+    auto* requiredGroup = new QGroupBox(tr("Required by active TUN config"), this);
     auto* requiredLayout = new QVBoxLayout(requiredGroup);
     requiredLayout->addWidget(m_requiredTable);
 
-    auto* allGroup = new QGroupBox(QStringLiteral("All rule sets"), this);
+    auto* allGroup = new QGroupBox(tr("All rule sets"), this);
     auto* allLayout = new QVBoxLayout(allGroup);
     allLayout->addWidget(m_allTable);
 
@@ -138,7 +138,7 @@ void RuleSetManagerDialog::refreshTables()
         m_requiredTable->setItem(row, 1, new QTableWidgetItem(entry.sourceArea));
         m_requiredTable->setItem(
             row, 2,
-            new QTableWidgetItem(entry.available ? QStringLiteral("present")
+            new QTableWidgetItem(entry.available ? tr("present")
                                                  : ruleSetStatusDisplayName(entry.catalogStatus)));
         m_requiredTable->setItem(row, 3, new QTableWidgetItem(entry.localPath));
     }
@@ -151,8 +151,8 @@ void RuleSetManagerDialog::refreshTables()
         m_allTable->setItem(row, 1, new QTableWidgetItem(ruleSetKindToString(item.kind)));
         m_allTable->setItem(row, 2, new QTableWidgetItem(ruleSetStatusDisplayName(item.status)));
         m_allTable->setItem(row, 3,
-                            new QTableWidgetItem(item.builtIn ? QStringLiteral("Built-in")
-                                                              : QStringLiteral("Custom")));
+                            new QTableWidgetItem(item.builtIn ? tr("Built-in")
+                                                              : tr("Custom")));
         m_allTable->setItem(row, 4,
                             new QTableWidgetItem(item.sizeBytes > 0 ? formatBytes(item.sizeBytes)
                                                                     : QStringLiteral("-")));
@@ -167,31 +167,31 @@ void RuleSetManagerDialog::refreshTables()
 QString RuleSetManagerDialog::formatBytes(qint64 bytes) const
 {
     if (bytes < 1024) {
-        return QStringLiteral("%1 B").arg(bytes);
+        return tr("%1 B").arg(bytes);
     }
     if (bytes < 1024 * 1024) {
-        return QStringLiteral("%1 KB").arg(bytes / 1024);
+        return tr("%1 KB").arg(bytes / 1024);
     }
-    return QStringLiteral("%1 MB").arg(bytes / (1024 * 1024));
+    return tr("%1 MB").arg(bytes / (1024 * 1024));
 }
 
 void RuleSetManagerDialog::onImportSrs()
 {
     const int row = m_allTable->currentRow();
     if (row < 0) {
-        QMessageBox::information(this, QStringLiteral("Import"),
-                                 QStringLiteral("Select a rule set row first."));
+        QMessageBox::information(this, tr("Import"),
+                                 tr("Select a rule set row first."));
         return;
     }
     const QString tag = m_allTable->item(row, 0)->text();
     const QString path = QFileDialog::getOpenFileName(
-        this, QStringLiteral("Import .srs"), {}, QStringLiteral("sing-box rule set (*.srs)"));
+        this, tr("Import .srs"), {}, tr("sing-box rule set (*.srs)"));
     if (path.isEmpty()) {
         return;
     }
     QString error;
     if (!m_manager.importLocalSrs(tag, path, &error)) {
-        QMessageBox::warning(this, QStringLiteral("Import"), error);
+        QMessageBox::warning(this, tr("Import"), error);
         return;
     }
     refreshTables();
@@ -201,20 +201,20 @@ void RuleSetManagerDialog::onCompileJson()
 {
     const int row = m_allTable->currentRow();
     if (row < 0) {
-        QMessageBox::information(this, QStringLiteral("Compile"),
-                                 QStringLiteral("Select a rule set row first."));
+        QMessageBox::information(this, tr("Compile"),
+                                 tr("Select a rule set row first."));
         return;
     }
     const QString tag = m_allTable->item(row, 0)->text();
     const QString path = QFileDialog::getOpenFileName(
-        this, QStringLiteral("Select source JSON"), AppPaths::singBoxRuleSetSourceDir(),
-        QStringLiteral("JSON (*.json)"));
+        this, tr("Select source JSON"), AppPaths::singBoxRuleSetSourceDir(),
+        tr("JSON (*.json)"));
     if (path.isEmpty()) {
         return;
     }
     QString error;
     if (!m_manager.importLocalJson(tag, path, &error)) {
-        QMessageBox::warning(this, QStringLiteral("Compile"), error);
+        QMessageBox::warning(this, tr("Compile"), error);
         return;
     }
     refreshTables();

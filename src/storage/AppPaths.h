@@ -42,6 +42,7 @@ public:
     static QString xrayResourceDir();
     static QString xrayCoreDir();
     static QString backupsDir();
+    static QString translationsDir();
 
 private:
     static void ensureDir(const QString& path);

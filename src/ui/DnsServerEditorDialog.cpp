@@ -15,7 +15,7 @@ DnsServerEditorDialog::DnsServerEditorDialog(const DnsServer& server, QWidget* p
     : QDialog(parent)
     , m_server(server)
 {
-    setWindowTitle(QStringLiteral("DNS Server"));
+    setWindowTitle(tr("DNS Server"));
     resize(520, 420);
 
     m_addressEdit = new QLineEdit(server.address, this);
@@ -40,20 +40,20 @@ DnsServerEditorDialog::DnsServerEditorDialog(const DnsServer& server, QWidget* p
     m_timeoutSpin = new QSpinBox(this);
     m_timeoutSpin->setRange(0, 600000);
     m_timeoutSpin->setValue(server.timeoutMs);
-    m_skipFallbackCheck = new QCheckBox(QStringLiteral("Skip fallback"), this);
+    m_skipFallbackCheck = new QCheckBox(tr("Skip fallback"), this);
     m_skipFallbackCheck->setChecked(server.skipFallback);
     m_noteEdit = new QLineEdit(server.note, this);
 
     auto* form = new QFormLayout;
-    form->addRow(QStringLiteral("Address"), m_addressEdit);
-    form->addRow(QStringLiteral("Kind"), m_kindCombo);
-    form->addRow(QStringLiteral("Port"), m_portSpin);
-    form->addRow(QStringLiteral("Domains"), m_domainsEdit);
-    form->addRow(QStringLiteral("Expect IPs"), m_expectIpsEdit);
-    form->addRow(QStringLiteral("Tag"), m_tagEdit);
-    form->addRow(QStringLiteral("Timeout (ms)"), m_timeoutSpin);
+    form->addRow(tr("Address"), m_addressEdit);
+    form->addRow(tr("Kind"), m_kindCombo);
+    form->addRow(tr("Port"), m_portSpin);
+    form->addRow(tr("Domains"), m_domainsEdit);
+    form->addRow(tr("Expect IPs"), m_expectIpsEdit);
+    form->addRow(tr("Tag"), m_tagEdit);
+    form->addRow(tr("Timeout (ms)"), m_timeoutSpin);
     form->addRow(QString(), m_skipFallbackCheck);
-    form->addRow(QStringLiteral("Note"), m_noteEdit);
+    form->addRow(tr("Note"), m_noteEdit);
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);

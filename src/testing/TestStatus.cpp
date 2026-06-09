@@ -1,5 +1,7 @@
 #include "testing/TestStatus.h"
 
+#include "i18n/TranslatableEnums.h"
+
 namespace zarya {
 
 QString testStatusToString(TestStatus status)
@@ -49,23 +51,7 @@ TestStatus testStatusFromString(const QString& value)
 
 QString testStatusDisplayString(TestStatus status)
 {
-    switch (status) {
-    case TestStatus::NeverTested:
-        return QStringLiteral("Never tested");
-    case TestStatus::Testing:
-        return QStringLiteral("Testing");
-    case TestStatus::Available:
-        return QStringLiteral("Available");
-    case TestStatus::Timeout:
-        return QStringLiteral("Timeout");
-    case TestStatus::Failed:
-        return QStringLiteral("Failed");
-    case TestStatus::Unsupported:
-        return QStringLiteral("Unsupported");
-    case TestStatus::Canceled:
-        return QStringLiteral("Canceled");
-    }
-    return QStringLiteral("Never tested");
+    return TranslatableEnums::trTestStatus(status);
 }
 
 } // namespace zarya
