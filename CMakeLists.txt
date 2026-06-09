@@ -4,6 +4,8 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ZaryaVersion.cmake)
 
 project(zarya VERSION ${ZARYA_VERSION_MAJOR}.${ZARYA_VERSION_MINOR}.${ZARYA_VERSION_PATCH} LANGUAGES CXX)
 
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ZaryaBuildInfo.cmake)
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -273,6 +275,7 @@ endif()
 set(ZARYA_SOURCES
     src/app/main.cpp
     src/app/Application.cpp
+    src/app/BuildInfo.cpp
     src/app/StartupOptions.cpp
     src/app/AppController.cpp
     src/packaging/PackagingInfo.cpp
@@ -399,7 +402,7 @@ set(ZARYA_HEADERS
 
 add_executable(zarya ${ZARYA_SOURCES} ${ZARYA_HEADERS})
 
-target_include_directories(zarya PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_include_directories(zarya PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${ZARYA_GENERATED_DIR})
 
 target_compile_definitions(zarya PRIVATE ZARYA_VERSION_STRING="${ZARYA_VERSION_STRING}")
 
@@ -428,6 +431,9 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ZaryaDeploy.cmake)
 
 set(ZARYA_HELPER_SOURCES
     src/helper/main.cpp
+    src/app/BuildInfo.cpp
+    src/app/StartupOptions.cpp
+    src/i18n/TranslatableEnums.cpp
     src/helper/HelperApplication.cpp
     src/helper/HelperCommandServer.cpp
     src/helper/HelperRuntimeManager.cpp
@@ -450,13 +456,20 @@ if(WIN32)
 endif()
 
 add_executable(zarya-helper ${ZARYA_HELPER_SOURCES})
-target_include_directories(zarya-helper PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_include_directories(zarya-helper PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${ZARYA_GENERATED_DIR})
 target_compile_definitions(zarya-helper PRIVATE ZARYA_VERSION_STRING="${ZARYA_VERSION_STRING}")
 zarya_link_qt_core(zarya-helper)
 target_link_libraries(zarya-helper PRIVATE Qt6::Network)
 if(WIN32)
     target_link_libraries(zarya-helper PRIVATE Fwpuclnt Ws2_32 iphlpapi)
 endif()
+
+add_custom_command(TARGET zarya POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:zarya-helper>
+        $<TARGET_FILE_DIR:zarya>/
+    COMMENT "Copy zarya-helper next to zarya"
+)
 
 # Config generation checks (unit-like; uses shared or static Qt Core)
 add_executable(zarya_xray_config_test
@@ -477,6 +490,7 @@ add_executable(zarya_xray_config_test
     src/migration/JsonFileMigrator.cpp
     src/killswitch/KillSwitchMode.cpp
     src/app/StartupOptions.cpp
+    src/app/BuildInfo.cpp
     src/packaging/PackagingInfo.cpp
     src/platform/Platform.cpp
     src/import/VlessUriParser.cpp
@@ -484,7 +498,7 @@ add_executable(zarya_xray_config_test
     src/subscription/SubscriptionParser.cpp
 )
 
-target_include_directories(zarya_xray_config_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_include_directories(zarya_xray_config_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${ZARYA_GENERATED_DIR})
 
 target_compile_definitions(zarya_xray_config_test PRIVATE
     ZARYA_EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/examples"

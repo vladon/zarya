@@ -1,15 +1,14 @@
 #include "packaging/PackagingInfo.h"
 
-#include <QCoreApplication>
+#include "app/BuildInfo.h"
+
+#include <QtGlobal>
 
 namespace zarya {
 
 QString PackagingInfo::versionString()
 {
-#ifndef ZARYA_VERSION_STRING
-#define ZARYA_VERSION_STRING "0.21.0"
-#endif
-    return QStringLiteral(ZARYA_VERSION_STRING);
+    return BuildInfo::appVersion();
 }
 
 QString PackagingInfo::platformName()
@@ -31,7 +30,8 @@ bool PackagingInfo::isBetaBuild()
     if (version.contains(QStringLiteral("beta")) || version.contains(QStringLiteral("dev"))) {
         return true;
     }
-    return version.startsWith(QStringLiteral("0."));
+    return BuildInfo::buildChannel().compare(QStringLiteral("beta"), Qt::CaseInsensitive) == 0
+           || version.startsWith(QStringLiteral("0."));
 }
 
 QString PackagingInfo::artifactPlatformTag()
@@ -39,9 +39,17 @@ QString PackagingInfo::artifactPlatformTag()
 #if defined(Q_OS_WIN)
     return QStringLiteral("windows-x64");
 #elif defined(Q_OS_MACOS)
-    return QStringLiteral("macos");
+#if defined(__aarch64__) || defined(__arm64__)
+    return QStringLiteral("macos-arm64");
+#else
+    return QStringLiteral("macos-x64");
+#endif
 #elif defined(Q_OS_LINUX)
+#if defined(__aarch64__)
+    return QStringLiteral("linux-arm64");
+#else
     return QStringLiteral("linux-x64");
+#endif
 #else
     return QStringLiteral("unknown");
 #endif

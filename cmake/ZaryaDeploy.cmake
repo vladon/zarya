@@ -2,7 +2,7 @@ install(TARGETS zarya
     BUNDLE DESTINATION .
     RUNTIME DESTINATION bin)
 
-install(FILES README.md LICENSE DESTINATION share/zarya OPTIONAL)
+install(FILES README.md LICENSE THIRD_PARTY_NOTICES.md RELEASE_NOTES.md DESTINATION share/zarya OPTIONAL)
 
 install(DIRECTORY DESTINATION share/zarya/cores/xray)
 install(FILES packaging/windows/cores-xray-README.txt

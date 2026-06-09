@@ -1,6 +1,6 @@
 # Zarya
 
-Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). Milestones 0.1–0.24: profiles, subscriptions, Xray, routing, geo data, DNS, system proxy, experimental TUN, sing-box rule sets, core update manager, backup import/export, diagnostics bundle, beta hardening (schema migrations, startup recovery, settings validation, safe writes, smoke tests), privileged helper, experimental kill switch (Linux nft / Windows WFP PoC), tray, autostart, packaging, and UI localization (English/Russian).
+Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). Milestones 0.1–0.25: profiles, subscriptions, Xray, routing, geo data, DNS, system proxy, experimental TUN, sing-box rule sets, core update manager, backup import/export, diagnostics bundle, beta hardening, privileged helper, experimental kill switch (Linux nft / Windows WFP PoC), tray, autostart, English/Russian UI, and release packaging (portable ZIP / macOS bundle / Linux tarball with manifests and checksums).
 
 Zarya supports **English** and **Russian** UI. Change language in **Settings → General → Language** (restart required for full effect). See [docs/localization.md](docs/localization.md).
 
@@ -390,11 +390,16 @@ Non-portable mode continues to use the OS app data directory.
 
 | Platform | Artifact | Script |
 |----------|----------|--------|
-| Windows | `Zarya-0.12.0-windows-x64-portable.zip` | `scripts/package-windows.ps1` |
-| macOS | `Zarya.app` / zip | `scripts/package-macos.sh` |
-| Linux | `Zarya-0.12.0-linux-x64.tar.gz` | `scripts/package-linux.sh` |
+| Windows | `Zarya-0.25.0-beta-windows-x64-portable.zip` | `scripts/package-windows.ps1` |
+| macOS | `Zarya-0.25.0-beta-macos-<arch>.zip` | `scripts/package-macos.sh` |
+| Linux | `Zarya-0.25.0-beta-linux-<arch>.tar.gz` | `scripts/package-linux.sh` |
 
-See `packaging/windows/portable-layout.md` for the portable ZIP layout. Signed installers, notarization, and in-app auto-update are not included in 0.11.
+```powershell
+.\scripts\package-windows.ps1 -Configuration Release -OutputDir .\dist
+.\scripts\smoke-windows.ps1 -ArtifactDir .\dist
+```
+
+See [docs/release-packaging.md](docs/release-packaging.md) and `packaging/windows/portable-layout.md`. Artifacts include `release-manifest.json`, SHA256 checksums, translations, docs, and core placeholders. Xray/sing-box are not bundled. Signed installers, notarization, and in-app auto-update are not included.
 
 ## Supported runnable protocols (Xray)
 
@@ -468,7 +473,7 @@ src/
 - **System proxy**: Windows (full), macOS `networksetup` (full), Linux GNOME `gsettings` (full); KDE partial; no TUN/PAC.
 - **Subscriptions**: no scheduled auto-update; no Clash/sing-box subscription formats.
 - No DNS editor, adblock rule providers, TUN mode, speedtest/download benchmark, or auto best-node selection.
-- No packaging/installer in this milestone.
+- Beta packaging scripts exist; signed installers and store publishing are not included.
 - Milestone 0.1 `profiles.json` files still load; missing fields get safe defaults.
 
 Expected log after **Start** (with auto system proxy on Windows):

@@ -12,6 +12,7 @@
 #include "errors/ErrorCode.h"
 #include "errors/ErrorPresenter.h"
 #include "migration/MigrationManager.h"
+#include "app/BuildInfo.h"
 #include "packaging/PackagingInfo.h"
 #include "recovery/StartupRecovery.h"
 #include "storage/SettingsValidator.h"
@@ -1135,8 +1136,12 @@ void MainWindow::logStartupContext(const StartupOptions& options)
     }
     appendLog(QStringLiteral("Data dir: %1").arg(AppPaths::dataDir()));
     appendLog(QStringLiteral("Runtime dir: %1").arg(AppPaths::runtimeDir()));
-    appendLog(QStringLiteral("Packaging: %1 %2")
-                  .arg(PackagingInfo::versionString(), PackagingInfo::platformName()));
+    appendLog(QStringLiteral("Zarya %1 (%2) commit %3 built %4 Qt %5")
+                  .arg(BuildInfo::appVersion(),
+                       BuildInfo::buildChannel(),
+                       BuildInfo::buildCommit(),
+                       BuildInfo::buildDateUtc(),
+                       BuildInfo::qtVersion()));
     appendLog(QStringLiteral("Log level: %1")
                   .arg(StartupOptionsParser::logLevelToString(options.logLevel)));
 }
@@ -2086,11 +2091,7 @@ void MainWindow::onAllTestsFinished()
 
 void MainWindow::onAbout()
 {
-    QMessageBox::about(
-        this, tr("About Zarya"),
-        tr(
-            "Zarya 0.7\n\nNative proxy profile manager with system tray, Xray multi-protocol "
-            "support, Windows system proxy, subscriptions, and node testing."));
+    QMessageBox::about(this, tr("About Zarya"), BuildInfo::aboutText());
 }
 
 } // namespace zarya

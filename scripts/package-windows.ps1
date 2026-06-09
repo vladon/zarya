@@ -1,55 +1,100 @@
 #Requires -Version 5.1
 param(
+    [string]$Configuration = "Release",
     [string]$BuildDir = "build",
-    [string]$Config = "Release"
+    [string]$OutputDir = "dist",
+    [string]$StagingDir = "",
+    [switch]$SkipBuild,
+    [switch]$SkipTests
 )
 
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
-$Version = "0.21.0"
-$Staging = Join-Path $Root "dist\Zarya-$Version-windows-x64-portable"
-$BuildOutput = Join-Path $Root "$BuildDir\$Config"
+$Meta = & python -c "import sys; sys.path.insert(0, r'$Root\scripts'); from release_common import read_cmake_version; import json; print(json.dumps(read_cmake_version()))"
+$VersionInfo = $Meta | ConvertFrom-Json
+$Version = $VersionInfo.version
 
-Write-Host "Building zarya ($Config)..."
-cmake --build (Join-Path $Root $BuildDir) --config $Config --target zarya zarya-helper
+$DistDir = if ([System.IO.Path]::IsPathRooted($OutputDir)) { $OutputDir } else { Join-Path $Root $OutputDir }
+$BuildRoot = Join-Path $Root $BuildDir
+$BuildOutput = Join-Path $BuildRoot $Configuration
+$ArtifactBase = "Zarya-$Version-windows-x64-portable"
+$Staging = if ($StagingDir) { $StagingDir } else { Join-Path $DistDir $ArtifactBase }
+$ZipPath = Join-Path $DistDir "$ArtifactBase.zip"
 
-$ExeName = "zarya.exe"
-$ExePath = Join-Path $BuildOutput $ExeName
-if (-not (Test-Path $ExePath)) {
-    throw "Executable not found: $ExePath"
+if (-not $SkipBuild) {
+    Write-Host "Configuring and building ($Configuration)..."
+    if (-not (Test-Path (Join-Path $BuildRoot "CMakeCache.txt"))) {
+        & (Join-Path $Root "scripts\configure-msvc2026.ps1") -BuildDir $BuildDir
+    }
+    cmake --build $BuildRoot --config $Configuration --target zarya_lrelease zarya zarya-helper
 }
 
-if (Test-Path $Staging) {
-    Remove-Item -Recurse -Force $Staging
+$GuiExe = Join-Path $BuildOutput "Zarya.exe"
+if (-not (Test-Path $GuiExe)) {
+    $GuiExe = Join-Path $BuildOutput "zarya.exe"
 }
+if (-not (Test-Path $GuiExe)) {
+    throw "Zarya executable not found under $BuildOutput"
+}
+
+$HelperExe = Join-Path $BuildOutput "zarya-helper.exe"
+if (-not (Test-Path $HelperExe)) {
+    throw "zarya-helper.exe not found under $BuildOutput"
+}
+
+if (Test-Path $Staging) { Remove-Item -Recurse -Force $Staging }
 New-Item -ItemType Directory -Path $Staging | Out-Null
 
-Copy-Item $ExePath (Join-Path $Staging "Zarya.exe")
-$HelperExePath = Join-Path $BuildOutput "zarya-helper.exe"
-if (Test-Path $HelperExePath) {
-    Copy-Item $HelperExePath (Join-Path $Staging "zarya-helper.exe")
-}
+Copy-Item $GuiExe (Join-Path $Staging "Zarya.exe")
+Copy-Item $HelperExe (Join-Path $Staging "zarya-helper.exe")
 New-Item -ItemType File -Path (Join-Path $Staging "portable.flag") | Out-Null
-New-Item -ItemType Directory -Path (Join-Path $Staging "data") | Out-Null
-New-Item -ItemType Directory -Path (Join-Path $Staging "runtime") | Out-Null
-$coresDir = Join-Path $Staging "cores\xray"
-New-Item -ItemType Directory -Path $coresDir -Force | Out-Null
-Copy-Item (Join-Path $Root "packaging\windows\cores-xray-README.txt") (Join-Path $coresDir "README.txt")
-$singBoxDir = Join-Path $Staging "cores\sing-box"
-New-Item -ItemType Directory -Path $singBoxDir -Force | Out-Null
-Copy-Item (Join-Path $Root "packaging\windows\cores-sing-box-README.txt") (Join-Path $singBoxDir "README.txt")
+
+python -c @"
+import sys
+from pathlib import Path
+sys.path.insert(0, r'$Root\scripts')
+from release_common import (
+    copy_top_level_legal_files,
+    copy_docs,
+    copy_translations,
+    create_placeholder_layout,
+    write_release_manifest,
+    verify_clean_staging,
+    write_checksum_sidecars,
+)
+
+staging = Path(r'$Staging')
+build_translations = Path(r'$BuildRoot') / 'translations'
+copy_top_level_legal_files(staging)
+copy_docs(staging)
+copy_translations(staging, build_translations)
+create_placeholder_layout(staging)
+write_release_manifest(
+    staging,
+    platform='windows',
+    architecture='x64',
+    portable=True,
+    gui_artifact='Zarya.exe',
+    helper_artifact='zarya-helper.exe',
+)
+errors = verify_clean_staging(staging)
+if errors:
+    raise SystemExit('\n'.join(errors))
+"@
 
 $WinDeployQt = Get-Command windeployqt -ErrorAction SilentlyContinue
 if ($WinDeployQt) {
-    & windeployqt (Join-Path $Staging "Zarya.exe")
+    & windeployqt --release --no-translations (Join-Path $Staging "Zarya.exe")
 } else {
-    Write-Warning "windeployqt not found; copy Qt runtime DLLs manually."
+    Write-Warning "windeployqt not found; static Qt or manual Qt deployment assumed."
 }
 
-Copy-Item (Join-Path $Root "README.md") $Staging -ErrorAction SilentlyContinue
-Copy-Item (Join-Path $Root "LICENSE") $Staging -ErrorAction SilentlyContinue
-
-$ZipPath = Join-Path $Root "dist\Zarya-$Version-windows-x64-portable.zip"
+New-Item -ItemType Directory -Path $DistDir -Force | Out-Null
 if (Test-Path $ZipPath) { Remove-Item $ZipPath }
 Compress-Archive -Path $Staging -DestinationPath $ZipPath
+python -c "import sys; sys.path.insert(0, r'$Root\scripts'); from pathlib import Path; from release_common import write_checksum_sidecars; write_checksum_sidecars(Path(r'$DistDir'), Path(r'$ZipPath'))"
 Write-Host "Created $ZipPath"
+
+if (-not $SkipTests) {
+    & python (Join-Path $Root "scripts\smoke-package.py") --artifact $ZipPath
+}

@@ -43,6 +43,7 @@
 build/
 Build/
 build-*/
+dist/
 
 # CMake generated files
 CMakeFiles/
@@ -68,3 +69,5 @@ vcpkg_installed/
 # CMake test output at repo root (not src/testing/)
 /Testing/
 .cache/
+__pycache__/
+*.pyc
