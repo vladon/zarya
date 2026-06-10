@@ -32,8 +32,9 @@ TunSupportResult SingBoxTunSupportChecker::check(const QString& singBoxExecutabl
 
     const PrivilegeCheckResult privileges = PlatformPrivilege::currentProcessPrivileges();
     result.hasRequiredPrivileges = privileges.elevated;
-    result.warnings.append(
-        QStringLiteral("TUN mode is experimental; kill switch is not implemented."));
+    result.warnings.append(QStringLiteral(
+        "TUN mode is experimental. Kill switch support varies by platform and requires "
+        "zarya-helper."));
     result.warnings.append(QStringLiteral(
         "Some Xray routing/DNS features may not map exactly to sing-box; see warnings before "
         "start."));

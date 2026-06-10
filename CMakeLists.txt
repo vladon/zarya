@@ -247,6 +247,7 @@ set(ZARYA_PLATFORM_SOURCES
     src/platform/PlatformProcessUtils.cpp
     src/platform/SystemProxyManagerFactory.cpp
     src/platform/SystemProxyController.cpp
+    src/platform/SystemProxyStateStore.cpp
     src/platform/SystemProxyDebug.cpp
     src/platform/stub/StubSystemProxyManager.cpp
 )
@@ -601,6 +602,7 @@ zarya_link_qt_core(zarya_geodata_verifier_test)
 add_executable(zarya_smoke_test
     tests/smoke/smoke_test.cpp
     src/app/StartupOptions.cpp
+    src/app/BuildInfo.cpp
     src/storage/SettingsValidator.cpp
     src/storage/DefaultSettings.cpp
     src/storage/AppSettings.cpp
@@ -609,13 +611,14 @@ add_executable(zarya_smoke_test
     src/backup/BackupExportOptions.cpp
     src/subscription/ShareLinkParser.cpp
     ${ZARYA_DOMAIN_SOURCES}
+    ${ZARYA_I18N_SOURCES}
     src/runtime/RuntimeBackendType.cpp
     src/killswitch/KillSwitchMode.cpp
     src/platform/Platform.cpp
     src/packaging/PackagingInfo.cpp
 )
 
-target_include_directories(zarya_smoke_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_include_directories(zarya_smoke_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${ZARYA_GENERATED_DIR})
 zarya_link_qt_core(zarya_smoke_test)
 
 enable_testing()

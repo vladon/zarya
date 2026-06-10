@@ -6,6 +6,7 @@
 #include "killswitch/KillSwitchMode.h"
 #include "packaging/PackagingInfo.h"
 #include "storage/AppPaths.h"
+#include "storage/AppSettings.h"
 #include "storage/HelperSession.h"
 
 #include <QFileInfo>
@@ -136,13 +137,21 @@ QString HelperProcessManager::helperExecutablePath() const
 QStringList HelperProcessManager::helperArguments() const
 {
     AppPaths::initialize(AppPaths::isPortableMode());
+    QString allowedCoreDir = AppPaths::singBoxCoreDir();
+    const QString configured = AppSettings::instance().singBoxExecutablePath().trimmed();
+    if (!configured.isEmpty()) {
+        const QFileInfo info(configured);
+        if (info.exists()) {
+            allowedCoreDir = info.absolutePath();
+        }
+    }
     return {QStringLiteral("--dev"),
             QStringLiteral("--token-file"),
             HelperSession::tokenFilePath(),
             QStringLiteral("--allowed-runtime-dir"),
             AppPaths::runtimeDir(),
             QStringLiteral("--allowed-core-dir"),
-            AppPaths::singBoxCoreDir()};
+            allowedCoreDir};
 }
 
 bool HelperProcessManager::startHelperDevMode(QString* errorMessage)

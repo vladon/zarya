@@ -5,7 +5,10 @@
 If Zarya was killed while a profile was running, the next startup may show **Startup Recovery**:
 
 - Restore system proxy (when Zarya-owned proxy restore on exit is enabled)
+- Recover kill switch (when marker is present)
 - Clean runtime temp config files (`xray.json`, `sing-box.json`)
+
+Zarya persists the **pre-enable system proxy snapshot** to `data/proxy-previous-state.json` when it first enables system proxy. After a crash, startup recovery can restore that snapshot or clear a Zarya-owned `127.0.0.1:<http-port>` proxy if no snapshot exists.
 
 Use **Recover** to apply selected actions, **Skip** to continue without changes, or follow kill-switch / TUN sections below if networking is still broken.
 

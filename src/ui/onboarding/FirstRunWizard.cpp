@@ -13,6 +13,7 @@
 #include <QGroupBox>
 #include <QLabel>
 #include <QLineEdit>
+#include <QMessageBox>
 #include <QPushButton>
 #include <QRadioButton>
 #include <QUuid>
@@ -273,6 +274,21 @@ bool FirstRunWizard::validateCurrentPage()
             const CoreInfo xray = m_coreManager->infoFor(CoreType::Xray);
             int profileCount = m_state.importedProfiles.size();
             checklist->updateFromState(m_state, profileCount, xray.exists, xray.installedVersion);
+        }
+        auto* startCheck = findChild<QCheckBox*>(QStringLiteral("startProfileNowCheck"));
+        if (startCheck && startCheck->isChecked() && m_coreManager) {
+            const CoreInfo xray = m_coreManager->infoFor(CoreType::Xray);
+            if (!xray.exists) {
+                QMessageBox::warning(
+                    this, tr("Core required"),
+                    tr("Install or choose an Xray binary before starting a profile."));
+                return false;
+            }
+            if (m_state.importedProfiles.isEmpty()) {
+                QMessageBox::warning(this, tr("Profile required"),
+                                     tr("Import or add at least one profile before starting."));
+                return false;
+            }
         }
     }
     return QWizard::validateCurrentPage();

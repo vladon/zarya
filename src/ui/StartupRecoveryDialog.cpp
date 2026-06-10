@@ -37,6 +37,10 @@ StartupRecoveryDialog::StartupRecoveryDialog(const StartupRecoveryPlan& plan, QW
     m_cleanRuntimeCheck->setChecked(plan.runtimeTempFilesPresent);
     m_cleanRuntimeCheck->setEnabled(plan.runtimeTempFilesPresent);
 
+    m_disableKillSwitchCheck = new QCheckBox(tr("Recover kill switch"), this);
+    m_disableKillSwitchCheck->setChecked(plan.killSwitchMarkerPresent);
+    m_disableKillSwitchCheck->setEnabled(plan.killSwitchMarkerPresent);
+
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     auto* skipButton = buttons->addButton(tr("Skip"), QDialogButtonBox::RejectRole);
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
@@ -47,6 +51,7 @@ StartupRecoveryDialog::StartupRecoveryDialog(const StartupRecoveryPlan& plan, QW
     layout->addWidget(m_detectedLabel);
     layout->addWidget(m_restoreProxyCheck);
     layout->addWidget(m_cleanRuntimeCheck);
+    layout->addWidget(m_disableKillSwitchCheck);
     layout->addWidget(buttons);
 }
 
@@ -55,6 +60,7 @@ StartupRecoveryPlan StartupRecoveryDialog::selectedPlan() const
     StartupRecoveryPlan plan = m_plan;
     plan.restoreSystemProxy = m_restoreProxyCheck->isChecked();
     plan.cleanRuntimeTempFiles = m_cleanRuntimeCheck->isChecked();
+    plan.disableKillSwitch = m_disableKillSwitchCheck->isChecked();
     return plan;
 }
 

@@ -1,6 +1,6 @@
 # Zarya
 
-Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). Milestones 0.1–0.25: profiles, subscriptions, Xray, routing, geo data, DNS, system proxy, experimental TUN, sing-box rule sets, core update manager, backup import/export, diagnostics bundle, beta hardening, privileged helper, experimental kill switch (Linux nft / Windows WFP PoC), tray, autostart, English/Russian UI, and release packaging (portable ZIP / macOS bundle / Linux tarball with manifests and checksums).
+Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). Milestones 0.1–0.26: profiles, subscriptions, Xray, routing, geo data, DNS, system proxy, experimental TUN, sing-box rule sets, core update manager, backup import/export, diagnostics bundle, beta hardening, privileged helper, experimental kill switch (Linux nft / Windows WFP PoC), tray, autostart, English/Russian UI, release packaging, and **0.26.0-beta** bugfix pass (recovery, triage docs, smoke tests).
 
 Zarya supports **English** and **Russian** UI. Change language in **Settings → General → Language** (restart required for full effect). See [docs/localization.md](docs/localization.md).
 
@@ -390,13 +390,13 @@ Non-portable mode continues to use the OS app data directory.
 
 | Platform | Artifact | Script |
 |----------|----------|--------|
-| Windows | `Zarya-0.25.0-beta-windows-x64-portable.zip` | `scripts/package-windows.ps1` |
-| macOS | `Zarya-0.25.0-beta-macos-<arch>.zip` | `scripts/package-macos.sh` |
-| Linux | `Zarya-0.25.0-beta-linux-<arch>.tar.gz` | `scripts/package-linux.sh` |
+| Windows | `Zarya-0.26.0-beta-windows-x64-portable.zip` | `scripts/package-windows.ps1` |
+| macOS | `Zarya-0.26.0-beta-macos-<arch>.zip` | `scripts/package-macos.sh` |
+| Linux | `Zarya-0.26.0-beta-linux-<arch>.tar.gz` | `scripts/package-linux.sh` |
 
 ```powershell
 .\scripts\package-windows.ps1 -Configuration Release -OutputDir .\dist
-.\scripts\smoke-windows.ps1 -ArtifactDir .\dist
+python scripts\run-smoke-tests.py --artifact .\dist\Zarya-0.26.0-beta-windows-x64-portable.zip --build-dir build
 ```
 
 See [docs/release-packaging.md](docs/release-packaging.md) and `packaging/windows/portable-layout.md`. Artifacts include `release-manifest.json`, SHA256 checksums, translations, docs, and core placeholders. Xray/sing-box are not bundled. Signed installers, notarization, and in-app auto-update are not included.
