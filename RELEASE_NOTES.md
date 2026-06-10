@@ -1,30 +1,44 @@
-# Zarya 0.25.0 Beta
+# Zarya 0.26.0 Beta
 
-## Highlights
+## Beta status
 
-- Xray system-proxy mode
-- Profile and subscription management
+This is the first beta-quality build. Use Xray system-proxy mode for the stable path.
+
+## Recommended path
+
+1. Install Xray via Core Manager (or choose an existing binary)
+2. Import a profile or subscription
+3. Start with system proxy enabled
+4. Stop and verify proxy restore before testing experimental features
+
+## Stable enough for testing
+
+- Xray system proxy
+- Profiles and subscriptions
 - Routing and DNS profiles
 - Core Manager
 - Backup import/export
-- Diagnostics bundle
+- Diagnostics bundle (strict redaction)
 - English and Russian UI
 
 ## Experimental
 
 - sing-box TUN mode
-- zarya-helper privileged helper
+- zarya-helper
 - Linux nftables kill switch PoC
 - Windows WFP kill switch PoC
 
 ## Known limitations
 
-- macOS kill switch is unsupported
-- No in-app self-update
-- No signed installers or macOS notarization in this beta channel
-- Xray and sing-box are not bundled by default
+- No signed builds or notarization
+- No app self-update
+- macOS kill switch unsupported
 - TUN mode is experimental
+- Xray and sing-box are not bundled in release artifacts
+- No production service installer
 
-## Before reporting issues
+## Reporting issues
 
-Use **Help → Create Diagnostics Bundle** and include the generated archive with your report.
+Use **Help → Create Diagnostics Bundle** and attach the archive with your report.
+
+See [docs/beta-bug-triage.md](docs/beta-bug-triage.md) and [docs/beta-regression-checklist.md](docs/beta-regression-checklist.md).

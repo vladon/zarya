@@ -21,6 +21,7 @@ private:
     StartupRecoveryPlan m_plan;
     QCheckBox* m_restoreProxyCheck = nullptr;
     QCheckBox* m_cleanRuntimeCheck = nullptr;
+    QCheckBox* m_disableKillSwitchCheck = nullptr;
     QLabel* m_detectedLabel = nullptr;
 };
 

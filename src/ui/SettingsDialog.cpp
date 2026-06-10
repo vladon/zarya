@@ -499,7 +499,7 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     m_killSwitchWarningLabel->setWordWrap(true);
 
     m_testKillSwitchButton = new QPushButton(tr("Test Support"), this);
-    m_enableKillSwitchButton = new QPushButton(tr("Enable Now"), this);
+    m_enableKillSwitchButton = new QPushButton(tr("How it works"), this);
     m_disableKillSwitchButton = new QPushButton(tr("Disable Now"), this);
     m_killSwitchRecoveryButton =
         new QPushButton(tr("Show Recovery Instructions"), this);

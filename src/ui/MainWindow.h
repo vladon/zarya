@@ -167,6 +167,7 @@ private:
     Profile* resolveProfileForStart();
     bool lineMatchesLogFilter(const QString& line) const;
     void handleErrorAction(ErrorAction action, const AppError& error);
+    bool chooseCoreBinary(CoreType coreType);
     void checkKillSwitchRecoveryOnStartup();
     QString killSwitchStatusText() const;
     QString trayStatusText() const;

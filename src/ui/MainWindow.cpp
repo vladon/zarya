@@ -60,6 +60,7 @@
 #include <QSettings>
 #include <QTimer>
 #include <QFile>
+#include <QFileDialog>
 #include <QFileInfo>
 #include <QHeaderView>
 #include <QJsonDocument>
@@ -652,16 +653,10 @@ void MainWindow::runFirstRunWizard(bool force)
     Q_UNUSED(force);
     FirstRunWizard wizard(&m_coreBinaryManager, &m_routingManager, &m_dnsManager, this);
     connect(&wizard, &FirstRunWizard::openCoreManagerRequested, this, &MainWindow::onCoreManager);
-    connect(&wizard, &FirstRunWizard::chooseXrayBinaryRequested, this, [this]() {
-        if (m_coreBinaryManager.setManagedExecutablePath(CoreType::Xray)) {
-            m_coreBinaryManager.refreshLocalState();
-        }
-    });
-    connect(&wizard, &FirstRunWizard::chooseSingBoxBinaryRequested, this, [this]() {
-        if (m_coreBinaryManager.setManagedExecutablePath(CoreType::SingBox)) {
-            m_coreBinaryManager.refreshLocalState();
-        }
-    });
+    connect(&wizard, &FirstRunWizard::chooseXrayBinaryRequested, this,
+            [this]() { chooseCoreBinary(CoreType::Xray); });
+    connect(&wizard, &FirstRunWizard::chooseSingBoxBinaryRequested, this,
+            [this]() { chooseCoreBinary(CoreType::SingBox); });
     connect(&wizard, &FirstRunWizard::installXrayRequested, this, [this]() {
         onCoreManager();
         m_coreBinaryManager.updateCore(CoreType::Xray);
@@ -697,10 +692,17 @@ void MainWindow::applyFirstRunState(const FirstRunState& state)
         refreshProfileView();
     }
     if (!state.addedSubscriptions.isEmpty()) {
+        const int beforeCount = m_subscriptions.size();
         for (const Subscription& sub : state.addedSubscriptions) {
             m_subscriptions.append(sub);
         }
         m_subscriptionStore.save(m_subscriptions);
+        for (int index = beforeCount; index < m_subscriptions.size(); ++index) {
+            m_subscriptionManager.updateSubscription(m_subscriptions[index], m_allProfiles);
+        }
+        m_subscriptionStore.save(m_subscriptions);
+        saveAll();
+        refreshProfileView();
     }
     m_routingManager.setActiveProfileId(state.routingProfileId);
     m_dnsManager.setActiveProfileId(state.dnsProfileId);
@@ -826,9 +828,7 @@ void MainWindow::handleErrorAction(ErrorAction action, const AppError& error)
         onCoreManager();
         break;
     case ErrorAction::ChooseExistingBinary:
-        if (m_coreBinaryManager.setManagedExecutablePath(CoreType::Xray)) {
-            m_coreBinaryManager.refreshLocalState();
-        }
+        chooseCoreBinary(CoreType::Xray);
         break;
     case ErrorAction::CreateDiagnostics:
         onCreateDiagnosticsBundle();
@@ -2092,6 +2092,28 @@ void MainWindow::onAllTestsFinished()
 void MainWindow::onAbout()
 {
     QMessageBox::about(this, tr("About Zarya"), BuildInfo::aboutText());
+}
+
+bool MainWindow::chooseCoreBinary(CoreType coreType)
+{
+    const QString title = coreType == CoreType::SingBox ? tr("Select sing-box executable")
+                                                        : tr("Select Xray executable");
+    const QString path = QFileDialog::getOpenFileName(
+        this, title, {},
+        QStringLiteral("Executables (*.exe);;All files (*.*)"));
+    if (path.isEmpty()) {
+        return false;
+    }
+
+    AppSettings& settings = AppSettings::instance();
+    if (coreType == CoreType::SingBox) {
+        settings.setSingBoxExecutablePath(path);
+    } else {
+        settings.setXrayExecutablePath(path);
+    }
+    m_coreBinaryManager.refreshLocalState();
+    updateStatusDashboard();
+    return true;
 }
 
 } // namespace zarya

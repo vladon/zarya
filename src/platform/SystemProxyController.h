@@ -43,6 +43,11 @@ public:
     bool restorePreviousProxy(SystemProxyRestoreMode mode,
                               const std::function<void(const QString&)>& logLine,
                               QString* errorMessage = nullptr);
+    bool restorePersistedPreviousProxy(const std::function<void(const QString&)>& logLine,
+                                       QString* errorMessage = nullptr);
+    bool tryClearZaryaOwnedProxy(int httpPort,
+                                 const std::function<void(const QString&)>& logLine,
+                                 QString* errorMessage = nullptr);
 
     void clearRuntimeState();
 

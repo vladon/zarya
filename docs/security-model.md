@@ -8,6 +8,11 @@ The main `zarya` process runs as the logged-in user. It manages profiles, settin
 
 `zarya-helper` runs elevated on platforms that require it (Linux TUN/kill switch, Windows WFP). It exposes a local IPC API for TUN and kill-switch operations only.
 
+The helper accepts only:
+
+- Runtime configs under the allowed runtime directory
+- sing-box binaries under the allowed core directory (default `cores/sing-box/`, or the parent directory of a user-configured sing-box path in Settings)
+
 ## Local IPC
 
 GUI ↔ helper communication uses a local socket/named pipe with a token file stored in the runtime data directory. The token is not included in diagnostics exports by default.

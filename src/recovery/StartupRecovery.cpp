@@ -1,7 +1,10 @@
 #include "recovery/StartupRecovery.h"
 
 #include "helperclient/HelperProcessManager.h"
+#include "killswitch/KillSwitchManager.h"
+#include "platform/PlatformPrivilege.h"
 #include "platform/SystemProxyController.h"
+#include "platform/SystemProxyStateStore.h"
 #include "storage/AppPaths.h"
 #include "storage/AppSettings.h"
 
@@ -23,7 +26,8 @@ StartupRecoveryPlan StartupRecovery::detect()
 
     plan.systemProxyMayBeEnabled =
         settings.restoreProxyOnExit()
-        && (plan.tunMayHaveBeenRunning || plan.runtimeTempFilesPresent);
+        && (plan.tunMayHaveBeenRunning || plan.runtimeTempFilesPresent
+            || SystemProxyStateStore::exists());
 
     if (plan.tunMayHaveBeenRunning) {
         plan.detectedLines.append(QStringLiteral("TUN mode may have been running"));
@@ -39,7 +43,7 @@ StartupRecoveryPlan StartupRecovery::detect()
     }
 
     plan.uncleanShutdown = !plan.detectedLines.isEmpty();
-    plan.disableKillSwitch = false;
+    plan.disableKillSwitch = plan.killSwitchMarkerPresent;
     return plan;
 }
 
@@ -49,18 +53,35 @@ bool StartupRecovery::apply(const StartupRecoveryPlan& plan, QStringList* logLin
     if (plan.restoreSystemProxy && plan.systemProxyMayBeEnabled) {
         SystemProxyController proxy;
         QString proxyError;
-        if (proxy.restorePreviousProxy(SystemProxyRestoreMode::Automatic,
-                                       [&](const QString& line) {
-                                           if (logLines) {
-                                               logLines->append(line);
-                                           }
-                                       },
-                                       &proxyError)) {
+        const auto logLine = [&](const QString& line) {
             if (logLines) {
-                logLines->append(QStringLiteral("System proxy restored during recovery"));
+                logLines->append(line);
             }
-        } else if (!proxyError.isEmpty() && logLines) {
-            logLines->append(QStringLiteral("System proxy restore: %1").arg(proxyError));
+        };
+
+        bool restored = proxy.restorePersistedPreviousProxy(logLine, &proxyError);
+        if (!restored) {
+            restored = proxy.tryClearZaryaOwnedProxy(AppSettings::instance().httpPort(), logLine,
+                                                     &proxyError);
+        }
+        if (restored) {
+            logLine(QStringLiteral("System proxy restored during recovery"));
+        } else if (!proxyError.isEmpty()) {
+            logLine(QStringLiteral("System proxy restore: %1").arg(proxyError));
+        }
+    }
+
+    if (plan.disableKillSwitch && plan.killSwitchMarkerPresent) {
+        const PrivilegeCheckResult privileges = PlatformPrivilege::currentProcessPrivileges();
+        KillSwitchManager manager;
+        manager.refreshStartupState(privileges.elevated);
+        QString killSwitchError;
+        if (manager.recover(true, &killSwitchError)) {
+            if (logLines) {
+                logLines->append(QStringLiteral("Kill switch recovered"));
+            }
+        } else if (!killSwitchError.isEmpty() && logLines) {
+            logLines->append(QStringLiteral("Kill switch recovery: %1").arg(killSwitchError));
         }
     }
 

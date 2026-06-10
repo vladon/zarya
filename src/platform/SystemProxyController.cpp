@@ -2,6 +2,7 @@
 
 #include "platform/SystemProxyDebug.h"
 #include "platform/SystemProxyManagerFactory.h"
+#include "platform/SystemProxyStateStore.h"
 
 namespace zarya {
 
@@ -142,6 +143,7 @@ bool SystemProxyController::ensurePreviousStateSaved(
     }
 
     m_hasSavedState = true;
+    SystemProxyStateStore::save(m_savedState);
     logLine(QStringLiteral("Previous proxy state saved."));
     logLine(formatSystemProxyStateForLog(m_savedState));
     return true;
@@ -275,12 +277,72 @@ bool SystemProxyController::restorePreviousProxy(SystemProxyRestoreMode mode,
     return true;
 }
 
+bool SystemProxyController::restorePersistedPreviousProxy(
+    const std::function<void(const QString&)>& logLine, QString* errorMessage)
+{
+    SystemProxyState persisted;
+    if (!SystemProxyStateStore::load(&persisted)) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("No persisted previous proxy state.");
+        }
+        return false;
+    }
+
+    m_savedState = persisted;
+    m_hasSavedState = true;
+    m_enabledByZarya = true;
+    return restorePreviousProxy(SystemProxyRestoreMode::Manual, logLine, errorMessage);
+}
+
+bool SystemProxyController::tryClearZaryaOwnedProxy(
+    int httpPort, const std::function<void(const QString&)>& logLine, QString* errorMessage)
+{
+    if (!m_manager || !m_manager->isSupported()) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("System proxy unsupported on this platform.");
+        }
+        return false;
+    }
+
+    QString readError;
+    const SystemProxyState current = m_manager->readCurrentState(&readError);
+    if (!readError.isEmpty()) {
+        if (errorMessage) {
+            *errorMessage = readError;
+        }
+        return false;
+    }
+
+    const QString expected = QStringLiteral("127.0.0.1:%1").arg(httpPort);
+    if (!current.proxyEnabled || current.proxyServer.trimmed() != expected) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("Current proxy does not match Zarya HTTP endpoint.");
+        }
+        return false;
+    }
+
+    SystemProxyState disabled = current;
+    disabled.proxyEnabled = false;
+    disabled.proxyServer.clear();
+    logLine(QStringLiteral("Clearing Zarya-owned proxy %1").arg(expected));
+    QString applyError;
+    if (!m_manager->restoreState(disabled, &applyError)) {
+        if (errorMessage) {
+            *errorMessage = applyError;
+        }
+        return false;
+    }
+    clearRuntimeState();
+    return true;
+}
+
 void SystemProxyController::clearRuntimeState()
 {
     m_hasSavedState = false;
     m_enabledByZarya = false;
     m_savedState = {};
     m_lastError.clear();
+    SystemProxyStateStore::clear();
     m_uiStatus = initialUiStatus(m_manager.get());
 }
 
