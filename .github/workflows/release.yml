@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.8.3"
+          host: windows
+          target: desktop
+          arch: win64_msvc2022_64
+          modules: qtbase
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release --target zarya_lrelease zarya zarya-helper
+      - name: Package (unsigned by default)
+        run: .\scripts\package-windows.ps1 -Configuration Release -OutputDir dist -SkipBuild -SkipSigning
+      - name: Verify release artifact
+        run: python scripts/verify-release-artifacts.py --artifact dist/Zarya-0.27.0-beta-windows-x64-portable.zip --expected-version 0.27.0-beta --require-checksum --allow-unsigned
+      - name: Sign release (optional)
+        if: ${{ secrets.SIGNING_ENABLED == 'true' }}
+        env:
+          ZARYA_WINDOWS_CERT_THUMBPRINT: ${{ secrets.WINDOWS_CERT_THUMBPRINT }}
+        run: |
+          Write-Host "Signing enabled for tag release"
+          .\scripts\package-windows.ps1 -Configuration Release -OutputDir dist -SkipBuild -Sign -SigningIdentity $env:ZARYA_WINDOWS_CERT_THUMBPRINT
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: zarya-windows-release
+          path: |
+            dist/*.zip
+            dist/*.sha256
+            dist/SHA256SUMS.txt

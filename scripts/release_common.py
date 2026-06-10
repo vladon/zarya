@@ -134,6 +134,65 @@ def write_checksum_sidecars(output_dir: Path, artifact: Path) -> str:
     return digest
 
 
+def default_unsigned_signing() -> dict[str, Any]:
+    return {
+        "signed": False,
+        "signatureType": None,
+        "notarized": False,
+        "timestamped": False,
+        "verification": {
+            "windowsAuthenticode": None,
+            "macosCodesign": None,
+            "macosNotarization": None,
+            "linuxGpg": None,
+            "linuxMinisign": None,
+        },
+    }
+
+
+def build_signing_manifest(
+    *,
+    signed: bool = False,
+    signature_type: str | None = None,
+    notarized: bool = False,
+    timestamped: bool = False,
+    verification: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    manifest = default_unsigned_signing()
+    manifest["signed"] = signed
+    manifest["signatureType"] = signature_type
+    manifest["notarized"] = notarized
+    manifest["timestamped"] = timestamped
+    if verification:
+        manifest["verification"].update(verification)
+    return manifest
+
+
+def write_build_integrity(staging: Path, signing: dict[str, Any] | None = None) -> Path:
+    payload = {
+        "version": read_cmake_version()["version"],
+        "signed": False,
+        "signatureType": None,
+        "notarized": False,
+        "timestamped": False,
+        "note": "This beta build is unsigned. Use SHA256 checksums from the release page.",
+    }
+    if signing:
+        payload.update(
+            {
+                "signed": signing.get("signed", False),
+                "signatureType": signing.get("signatureType"),
+                "notarized": signing.get("notarized", False),
+                "timestamped": signing.get("timestamped", False),
+            }
+        )
+        if signing.get("signed"):
+            payload["note"] = ""
+    path = staging / "build-integrity.json"
+    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return path
+
+
 def file_sha256_map(staging: Path, names: list[str]) -> dict[str, str]:
     result: dict[str, str] = {}
     for name in names:
@@ -154,6 +213,7 @@ def write_release_manifest(
     version: str | None = None,
     channel: str | None = None,
     build_commit: str | None = None,
+    signing: dict[str, Any] | None = None,
 ) -> Path:
     meta = read_cmake_version()
     version = version or meta["version"]
@@ -193,9 +253,29 @@ def write_release_manifest(
     if helper_artifact:
         manifest["artifacts"]["helper"] = helper_artifact
 
+    manifest["signing"] = signing if signing is not None else default_unsigned_signing()
+
     path = staging / "release-manifest.json"
     path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     return path
+
+
+def find_release_manifest(staging: Path) -> Path | None:
+    direct = staging / "release-manifest.json"
+    if direct.is_file():
+        return direct
+    matches = sorted(staging.rglob("release-manifest.json"))
+    return matches[0] if matches else None
+
+
+def update_manifest_signing(staging: Path, signing: dict[str, Any]) -> Path | None:
+    manifest_path = find_release_manifest(staging)
+    if manifest_path is None:
+        return None
+    data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    data["signing"] = signing
+    manifest_path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    return manifest_path
 
 
 def verify_clean_staging(staging: Path) -> list[str]:

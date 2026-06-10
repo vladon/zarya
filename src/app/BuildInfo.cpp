@@ -1,10 +1,41 @@
 #include "app/BuildInfo.h"
 
 #include "BuildInfo_config.h"
+#include "storage/AppPaths.h"
 
+#include <QDir>
+#include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QSysInfo>
 
 namespace zarya {
+
+namespace {
+
+QJsonObject loadBuildIntegrity()
+{
+    const QString appDir = AppPaths::applicationDir();
+    const QStringList candidates = {
+        appDir + QStringLiteral("/build-integrity.json"),
+#if defined(Q_OS_MACOS)
+        QDir(appDir).filePath(QStringLiteral("../Resources/build-integrity.json")),
+#endif
+    };
+    for (const QString& path : candidates) {
+        QFile file(path);
+        if (!file.open(QIODevice::ReadOnly)) {
+            continue;
+        }
+        const QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
+        if (doc.isObject()) {
+            return doc.object();
+        }
+    }
+    return {};
+}
+
+} // namespace
 
 QString BuildInfo::appVersion()
 {
@@ -50,10 +81,39 @@ QString BuildInfo::compilerInfo()
 #endif
 }
 
+bool BuildInfo::isSigned()
+{
+    return loadBuildIntegrity().value(QStringLiteral("signed")).toBool(false);
+}
+
+QString BuildInfo::integrityNote()
+{
+    const QJsonObject integrity = loadBuildIntegrity();
+    const QString note = integrity.value(QStringLiteral("note")).toString();
+    if (!note.isEmpty()) {
+        return note;
+    }
+    if (isSigned()) {
+        const QString signatureType = integrity.value(QStringLiteral("signatureType")).toString();
+        if (!signatureType.isEmpty()) {
+            return QStringLiteral("Signed build (%1).").arg(signatureType);
+        }
+        return QStringLiteral("Signed build.");
+    }
+    return QStringLiteral(
+        "This beta build is unsigned.\n"
+        "Use SHA256 checksums from the release page to verify the archive.");
+}
+
 QString BuildInfo::cliVersionText()
 {
-    return QStringLiteral("Zarya %1\nCommit: %2\nBuilt: %3\nChannel: %4\nQt: %5")
-        .arg(appVersion(), buildCommit(), buildDateUtc(), buildChannel(), qtVersion());
+    return QStringLiteral("Zarya %1\nCommit: %2\nBuilt: %3\nChannel: %4\nSigned: %5\nQt: %6")
+        .arg(appVersion(),
+             buildCommit(),
+             buildDateUtc(),
+             buildChannel(),
+             isSigned() ? QStringLiteral("yes") : QStringLiteral("no"),
+             qtVersion());
 }
 
 QString BuildInfo::helperCliVersionText()
@@ -63,14 +123,29 @@ QString BuildInfo::helperCliVersionText()
 
 QString BuildInfo::aboutText()
 {
-    return QStringLiteral(
-               "Zarya %1 (%2)\n"
-               "Commit: %3\n"
-               "Built: %4\n"
-               "Qt %5\n\n"
-               "Cross-platform proxy profile manager with Xray system proxy, "
-               "subscriptions, routing, DNS, backup, and diagnostics.")
-        .arg(appVersion(), buildChannel(), buildCommit(), buildDateUtc(), qtVersion());
+    QString text = QStringLiteral(
+                       "Zarya %1 (%2)\n"
+                       "Build:\n"
+                       "  Version: %1\n"
+                       "  Channel: %2\n"
+                       "  Commit: %3\n"
+                       "  Signed: %4\n"
+                       "Built: %5\n"
+                       "Qt %6\n\n"
+                       "Cross-platform proxy profile manager with Xray system proxy, "
+                       "subscriptions, routing, DNS, backup, and diagnostics.")
+                       .arg(appVersion(),
+                            buildChannel(),
+                            buildCommit(),
+                            isSigned() ? QStringLiteral("yes") : QStringLiteral("no"),
+                            buildDateUtc(),
+                            qtVersion());
+
+    const QString note = integrityNote();
+    if (!note.isEmpty()) {
+        text += QStringLiteral("\n\n%1").arg(note);
+    }
+    return text;
 }
 
 } // namespace zarya
