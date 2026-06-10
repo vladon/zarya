@@ -1,8 +1,10 @@
-# Zarya 0.26.0 Beta
+# Zarya 0.27.0 Beta
 
 ## Beta status
 
-This is the first beta-quality build. Use Xray system-proxy mode for the stable path.
+This is a beta-quality build with signing-ready packaging hooks. Artifacts are **unsigned by default** unless you explicitly enable signing with credentials.
+
+Use SHA256 checksums from the release page to verify downloads. See [docs/signing/README.md](docs/signing/README.md).
 
 ## Recommended path
 
@@ -30,7 +32,7 @@ This is the first beta-quality build. Use Xray system-proxy mode for the stable 
 
 ## Known limitations
 
-- No signed builds or notarization
+- Signed builds are optional in 0.27; notarization is not a release gate
 - No app self-update
 - macOS kill switch unsupported
 - TUN mode is experimental
@@ -39,6 +41,4 @@ This is the first beta-quality build. Use Xray system-proxy mode for the stable 
 
 ## Reporting issues
 
-Use **Help → Create Diagnostics Bundle** and attach the archive with your report.
-
-See [docs/beta-bug-triage.md](docs/beta-bug-triage.md) and [docs/beta-regression-checklist.md](docs/beta-regression-checklist.md).
+See [docs/beta-bug-triage.md](docs/beta-bug-triage.md).

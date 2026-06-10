@@ -16,6 +16,9 @@ public:
     static QString cliVersionText();
     static QString helperCliVersionText();
     static QString aboutText();
+
+    static bool isSigned();
+    static QString integrityNote();
 };
 
 } // namespace zarya
