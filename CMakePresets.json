@@ -16,14 +16,7 @@
       "name": "windows-msvc2026",
       "displayName": "Windows MSVC 2026 (Qt shared)",
       "inherits": "windows-base",
-      "environment": {
-        "QT_MSVC_DIR": "C:/Qt/6.8.3/msvc2022_64"
-      },
       "cacheVariables": {
-        "CMAKE_PREFIX_PATH": {
-          "type": "PATH",
-          "value": "$env{QT_MSVC_DIR}"
-        },
         "ZARYA_STATIC_QT": "OFF"
       }
     },
@@ -31,14 +24,7 @@
       "name": "windows-msvc2026-static",
       "displayName": "Windows MSVC 2026 (Qt static)",
       "inherits": "windows-base",
-      "environment": {
-        "QT_STATIC_DIR": "C:/Qt/Static/6.8.3/msvc2022_64"
-      },
       "cacheVariables": {
-        "CMAKE_PREFIX_PATH": {
-          "type": "PATH",
-          "value": "$env{QT_STATIC_DIR}"
-        },
         "ZARYA_STATIC_QT": "ON"
       }
     }

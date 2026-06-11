@@ -1,0 +1,60 @@
+# Resolve Qt 6 MSVC prefix on Windows when CMAKE_PREFIX_PATH is unset or invalid.
+# Mirrors scripts/configure-msvc2026.ps1: QT_MSVC_DIR / QT_STATIC_DIR, then QT_ROOT + QT_VERSION, then defaults.
+
+function(zarya_resolve_qt_prefix_path out_var)
+    if(ZARYA_STATIC_QT)
+        if(DEFINED ENV{QT_STATIC_DIR} AND NOT "$ENV{QT_STATIC_DIR}" STREQUAL "")
+            list(APPEND _zarya_qt_candidates "$ENV{QT_STATIC_DIR}")
+        endif()
+    elseif(DEFINED ENV{QT_MSVC_DIR} AND NOT "$ENV{QT_MSVC_DIR}" STREQUAL "")
+        list(APPEND _zarya_qt_candidates "$ENV{QT_MSVC_DIR}")
+    endif()
+
+    set(_zarya_qt_version "6.8.3")
+    if(DEFINED ENV{QT_VERSION} AND NOT "$ENV{QT_VERSION}" STREQUAL "")
+        set(_zarya_qt_version "$ENV{QT_VERSION}")
+    endif()
+
+    set(_zarya_qt_root "C:/Qt")
+    if(DEFINED ENV{QT_ROOT} AND NOT "$ENV{QT_ROOT}" STREQUAL "")
+        set(_zarya_qt_root "$ENV{QT_ROOT}")
+    endif()
+    file(TO_CMAKE_PATH "${_zarya_qt_root}" _zarya_qt_root)
+
+    if(ZARYA_STATIC_QT)
+        list(APPEND _zarya_qt_candidates "${_zarya_qt_root}/Static/${_zarya_qt_version}/msvc2022_64")
+    else()
+        list(APPEND _zarya_qt_candidates "${_zarya_qt_root}/${_zarya_qt_version}/msvc2022_64")
+    endif()
+
+    foreach(_zarya_qt_candidate IN LISTS _zarya_qt_candidates)
+        if(EXISTS "${_zarya_qt_candidate}/lib/cmake/Qt6/Qt6Config.cmake")
+            set(${out_var} "${_zarya_qt_candidate}" PARENT_SCOPE)
+            return()
+        endif()
+    endforeach()
+
+    if(ZARYA_STATIC_QT)
+        set(_zarya_qt_hint "Set CMAKE_PREFIX_PATH, QT_STATIC_DIR, or build static Qt with scripts/build-qt-static-msvc2026.ps1")
+    else()
+        set(_zarya_qt_hint "Set CMAKE_PREFIX_PATH, QT_MSVC_DIR, or QT_ROOT (see scripts/configure-msvc2026.ps1)")
+    endif()
+    message(FATAL_ERROR "Qt6 MSVC kit not found. ${_zarya_qt_hint}")
+endfunction()
+
+function(zarya_apply_qt_prefix_path)
+    if(NOT WIN32)
+        return()
+    endif()
+
+    foreach(_zarya_qt_prefix IN LISTS CMAKE_PREFIX_PATH)
+        if(_zarya_qt_prefix AND EXISTS "${_zarya_qt_prefix}/lib/cmake/Qt6/Qt6Config.cmake")
+            return()
+        endif()
+    endforeach()
+
+    zarya_resolve_qt_prefix_path(_zarya_qt_prefix)
+    list(PREPEND CMAKE_PREFIX_PATH "${_zarya_qt_prefix}")
+    set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH}" CACHE PATH "Qt installation prefix" FORCE)
+    message(STATUS "Resolved Qt prefix: ${_zarya_qt_prefix}")
+endfunction()

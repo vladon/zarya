@@ -19,6 +19,9 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 option(ZARYA_STATIC_QT "Link Qt statically into zarya (requires a static Qt build)" OFF)
 set(ZARYA_PROJECT_ISSUES_URL "" CACHE STRING "Optional GitHub issues URL for Help menu (empty = bundled docs only)")
 
+include(ZaryaQtPaths)
+zarya_apply_qt_prefix_path()
+
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Network)
 include(ZaryaQt)
 
