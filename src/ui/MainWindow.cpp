@@ -14,6 +14,7 @@
 #include "migration/MigrationManager.h"
 #include "app/BuildInfo.h"
 #include "packaging/PackagingInfo.h"
+#include "packaging/InstallationMode.h"
 #include "packaging/PortableMigration.h"
 #include "packaging/PublicBetaDocs.h"
 #include "diagnostics/SupportSummary.h"

@@ -92,15 +92,15 @@ QString redactSensitiveKeysInText(const QString& text, DiagnosticsRedactionMode 
         QStringLiteral(R"(\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b)"));
     result.replace(uuidPattern, kRedacted);
 
+    if (result.contains(QStringLiteral("helper.token"), Qt::CaseInsensitive)) {
+        result.replace(QRegularExpression(QStringLiteral(R"(helper\.token[^\n]*)")),
+                       QStringLiteral("helper.token <redacted>"));
+    }
+
     if (mode == DiagnosticsRedactionMode::Strict) {
         static const QRegularExpression hostPattern(
             QStringLiteral(R"((https?://)?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})"));
         result.replace(hostPattern, kRedactedHost);
-    }
-
-    if (result.contains(QStringLiteral("helper.token"), Qt::CaseInsensitive)) {
-        result.replace(QRegularExpression(QStringLiteral(R"(helper\.token[^\n]*)")),
-                       QStringLiteral("helper.token <redacted>"));
     }
     return result;
 }
