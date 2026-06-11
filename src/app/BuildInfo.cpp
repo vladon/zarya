@@ -120,6 +120,11 @@ QString BuildInfo::integrityNote()
         }
         return QStringLiteral("Signed build.");
     }
+    if (buildChannel() == QStringLiteral("stable")) {
+        return QStringLiteral(
+            "This stable build may be unsigned.\n"
+            "Use SHA256 checksums from the release page to verify the archive.");
+    }
     if (buildChannel() == QStringLiteral("rc")) {
         return QStringLiteral(
             "This release-candidate build may be unsigned.\n"
@@ -153,12 +158,21 @@ QString BuildInfo::updaterCliVersionText()
 
 QString BuildInfo::aboutText()
 {
+    const bool isStable = buildChannel() == QStringLiteral("stable");
     const bool isRc = buildChannel() == QStringLiteral("rc");
-    const QString channelLabel =
-        isRc ? QStringLiteral("rc (release candidate)") : buildChannel();
-    QString header = isRc ? QStringLiteral("Zarya %1\nRelease candidate\n\n")
-                          : QStringLiteral("Zarya %1 (%2)\n\n");
-    QString text = header.arg(appVersion(), channelLabel)
+    const QString channelLabel = isStable ? QStringLiteral("stable")
+                               : isRc     ? QStringLiteral("rc (release candidate)")
+                                          : buildChannel();
+    QString header;
+    if (isStable) {
+        header = QStringLiteral("Zarya %1\nStable release\n\n");
+    } else if (isRc) {
+        header = QStringLiteral("Zarya %1\nRelease candidate\n\n");
+    } else {
+        header = QStringLiteral("Zarya %1 (%2)\n\n");
+    }
+    QString text = ((isStable || isRc) ? header.arg(appVersion())
+                                      : header.arg(appVersion(), channelLabel))
                    + QStringLiteral(
                          "Build:\n"
                          "  Version: %1\n"

@@ -1,6 +1,6 @@
 # Zarya 1.0 Release Criteria
 
-0.36.0-rc1 validates these criteria on the stable candidate path. See [docs/rc/rc-go-no-go.md](../rc/rc-go-no-go.md) and [docs/rc/rc-blockers.md](../rc/rc-blockers.md).
+**1.0.0 stable** validates these criteria on the recommended path. See [docs/release/go-no-go.md](../release/go-no-go.md) and [docs/release/blockers.md](../release/blockers.md).
 
 ## Must pass
 

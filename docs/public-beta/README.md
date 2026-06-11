@@ -1,8 +1,8 @@
-# Zarya Public Beta / Release Candidate
+# Zarya Public Beta / Stable
 
 Zarya is a cross-platform desktop proxy client for Windows, macOS, and Linux.
 
-**0.36.0-rc1** is the first release candidate. Experimental features are disabled by default in RC builds.
+**1.0.0** is the first stable release. Experimental features are disabled by default in stable builds.
 
 ## Recommended path
 

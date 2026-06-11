@@ -156,6 +156,17 @@ RC_DOC_FILES = (
     "recovery-audit.md",
 )
 
+STABLE_RELEASE_DOC_FILES = (
+    "README.md",
+    "release-scope.md",
+    "known-issues.md",
+    "blockers.md",
+    "go-no-go.md",
+    "regression-matrix.md",
+    "release-process.md",
+    "recovery-audit.md",
+)
+
 
 def copy_stable_docs(staging: Path) -> None:
     dest = staging / "docs" / "stable"
@@ -174,6 +185,20 @@ def copy_rc_docs(staging: Path) -> None:
         if src.is_file():
             shutil.copy2(src, dest / name)
     release_notes = ROOT / "docs" / "release-notes" / "0.36-rc1.md"
+    if release_notes.is_file():
+        dest_notes = staging / "docs" / "release-notes"
+        dest_notes.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(release_notes, dest_notes / release_notes.name)
+
+
+def copy_stable_release_docs(staging: Path) -> None:
+    dest = staging / "docs" / "release"
+    dest.mkdir(parents=True, exist_ok=True)
+    for name in STABLE_RELEASE_DOC_FILES:
+        src = ROOT / "docs" / "release" / name
+        if src.is_file():
+            shutil.copy2(src, dest / name)
+    release_notes = ROOT / "docs" / "release-notes" / "1.0.0.md"
     if release_notes.is_file():
         dest_notes = staging / "docs" / "release-notes"
         dest_notes.mkdir(parents=True, exist_ok=True)
@@ -311,7 +336,9 @@ def write_build_integrity(staging: Path, signing: dict[str, Any] | None = None) 
         "notarized": False,
         "timestamped": False,
         "note": (
-            "This release-candidate build may be unsigned. Use SHA256 checksums from the release page."
+            "This stable build may be unsigned. Use SHA256 checksums from the release page."
+            if read_cmake_version()["channel"] == "stable"
+            else "This release-candidate build may be unsigned. Use SHA256 checksums from the release page."
             if read_cmake_version()["channel"] == "rc"
             else "This beta build is unsigned. Use SHA256 checksums from the release page."
         ),

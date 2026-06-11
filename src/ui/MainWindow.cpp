@@ -1949,19 +1949,21 @@ void MainWindow::warnIfExperimentalRuntimeDisabledOnStartup()
     if (settings.effectiveRuntimeMode() == RuntimeMode::TunSingBoxExperimental) {
         return;
     }
-    const bool isRc = PackagingInfo::isReleaseCandidateBuild()
-                      || FeaturePolicy::releaseChannelFromString(settings.releaseChannelKey())
-                             == ReleaseChannel::Rc;
-    const QString logLine = isRc
-                                ? QStringLiteral("Experimental TUN mode is disabled in "
-                                                 "release-candidate builds by default. "
-                                                 "Effective runtime: Xray system proxy.")
-                                : QStringLiteral("Experimental runtime is disabled. "
-                                                 "Effective runtime: Xray system proxy.");
+    const ReleaseChannel channel =
+        FeaturePolicy::releaseChannelFromString(settings.releaseChannelKey());
+    const bool isStableLike = PackagingInfo::isStableBuild()
+                              || PackagingInfo::isReleaseCandidateBuild()
+                              || FeaturePolicy::isStableLikeChannel(channel);
+    const QString logLine =
+        isStableLike
+            ? QStringLiteral("Experimental TUN mode is disabled in stable builds by default. "
+                             "Effective runtime: Xray system proxy.")
+            : QStringLiteral("Experimental runtime is disabled. "
+                             "Effective runtime: Xray system proxy.");
     appendLog(logLine);
     const QString dialogText =
-        isRc
-            ? tr("Experimental TUN mode is disabled in release-candidate builds by default.\n"
+        isStableLike
+            ? tr("Experimental TUN mode is disabled in stable builds by default.\n"
                  "Effective runtime: Xray system proxy.\n\n"
                  "Enable experimental features in Settings → Release channel if you intend to "
                  "use TUN.")
