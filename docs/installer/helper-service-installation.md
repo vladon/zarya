@@ -22,9 +22,9 @@ Windows Service:
 - service name: `ZaryaHelper`
 - start type: manual by default
 - account: LocalSystem for PoC — review before production
-- installed by MSI/installer in a future milestone
+- optional MSI install when `INSTALLHELPERSERVICE=1` (0.34 PoC; off by default)
 
-See `packaging/windows/wix/Service.wxs` skeleton.
+See `packaging/windows/wix/README.md` and `scripts/generate-wix-components.py` (optional `ServiceInstall` on `zarya-helper.exe`).
 
 ## Linux
 

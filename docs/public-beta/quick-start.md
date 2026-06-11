@@ -2,13 +2,15 @@
 
 ## Windows
 
-1. Download `Zarya-0.30.0-beta-windows-x64-portable.zip`.
+1. Download `Zarya-0.34.0-beta-windows-x64-portable.zip` (recommended).
 2. Extract it to a folder you control.
 3. Run `Zarya.exe`.
 4. Complete the setup wizard.
 5. Install Xray through **Tools → Core Manager**.
 6. Paste a profile link or add a subscription.
 7. Click **Start**.
+
+Optional: Windows MSI installer PoC (`Zarya-0.34.0-beta-windows-x64-installer-poc.msi`) installs to Program Files. See [docs/installer/windows-msi-poc.md](../installer/windows-msi-poc.md).
 
 ## macOS
 

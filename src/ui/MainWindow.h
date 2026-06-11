@@ -157,6 +157,7 @@ private:
     void checkCoreUpdatesOnStartup();
     void checkAppUpdatesOnStartup();
     void warnIfExperimentalRuntimeDisabledOnStartup();
+    void maybeShowInstalledPortableImportPrompt();
     bool startProfileById(const QString& profileId, bool fromAutostart);
     Profile* profileById(const QString& profileId);
     void tryRestoreSystemProxy(SystemProxyRestoreMode mode, bool showFailureDialog);

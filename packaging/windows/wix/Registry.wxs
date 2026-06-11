@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <ComponentGroup Id="ZaryaRegistryComponent" Directory="INSTALLFOLDER">
+      <Component Id="ZaryaInstallRegistry" Guid="E1A8C6D5-7F9B-4C4D-0A5E-6B7C8D9E0F1A">
+        <RegistryKey Root="HKLM" Key="Software\Zarya">
+          <RegistryValue Name="InstallDir" Type="string" Value="[INSTALLFOLDER]" />
+          <RegistryValue Name="Version" Type="string" Value="$(var.ProductVersion)" />
+          <RegistryValue Name="InstallerType" Type="string" Value="WiX MSI PoC" KeyPath="yes" />
+        </RegistryKey>
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

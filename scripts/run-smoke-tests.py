@@ -48,8 +48,8 @@ def run_cpp_smoke(build_dir: Path) -> tuple[bool, str]:
 def verify_source_tree(source_root: Path) -> list[str]:
     errors: list[str] = []
     version = read_cmake_version()
-    if version["version"] != "0.33.0-beta":
-        errors.append(f"expected version 0.33.0-beta, found {version['version']}")
+    if version["version"] != "0.34.0-beta":
+        errors.append(f"expected version 0.34.0-beta, found {version['version']}")
 
     for relative in (
         "LICENSE",
@@ -72,6 +72,11 @@ def verify_source_tree(source_root: Path) -> list[str]:
         "src/packaging/InstallationMode.cpp",
         "src/updater/AppUpdateChecker.cpp",
         "scripts/generate-update-manifest.py",
+        "scripts/package-windows-msi.ps1",
+        "scripts/smoke-windows-msi.ps1",
+        "docs/installer/windows-msi-poc.md",
+        "packaging/windows/wix/Product.wxs",
+        "packaging/windows/wix/Registry.wxs",
         ".github/ISSUE_TEMPLATE/bug_report.yml",
         "translations/zarya_ru.qm",
         "translations/zarya_en.qm",

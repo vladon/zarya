@@ -29,7 +29,10 @@ from release_common import (  # noqa: E402
 
 INSTALLER_SKELETON_PATHS = (
     "packaging/windows/wix/Product.wxs",
-    "packaging/windows/wix/Zarya.wxs",
+    "packaging/windows/wix/Registry.wxs",
+    "packaging/windows/wix/Directories.wxs",
+    "scripts/package-windows-msi.ps1",
+    "docs/installer/windows-msi-poc.md",
     "packaging/linux/deb/DEBIAN/control.in",
     "packaging/linux/rpm/zarya.spec.in",
     "packaging/metadata/app-id.txt",
