@@ -1,0 +1,4 @@
+{
+  "cmake.configurePreset": "windows-msvc2026",
+  "cmake.buildPreset": "windows-msvc2026-release"
+}
