@@ -7,6 +7,7 @@
 #include "domain/CoreType.h"
 #include "helperclient/HelperProcessManager.h"
 #include "killswitch/KillSwitchMode.h"
+#include "packaging/InstallationMode.h"
 #include "packaging/PackagingInfo.h"
 #include "platform/SystemProxyController.h"
 #include "runtime/RuntimeBackendType.h"
@@ -98,6 +99,7 @@ QString SupportSummary::buildClipboardText(const DiagnosticsContext& context)
 
     QStringList lines;
     lines << QStringLiteral("Zarya: %1").arg(BuildInfo::appVersion());
+    lines << QStringLiteral("Installation: %1").arg(InstallationInfo::currentModeString());
     lines << QStringLiteral("Platform: %1").arg(redactSummaryLine(platform));
     lines << QStringLiteral("Runtime: %1").arg(runtime);
     lines << QStringLiteral("Core:");

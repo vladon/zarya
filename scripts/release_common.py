@@ -100,6 +100,28 @@ PUBLIC_BETA_DOC_FILES = (
 )
 
 
+INSTALLER_DOC_FILES = (
+    "README.md",
+    "installed-layout.md",
+    "windows-installer-strategy.md",
+    "macos-installer-strategy.md",
+    "linux-packaging-strategy.md",
+    "portable-to-installed-migration.md",
+    "uninstall-repair.md",
+    "helper-service-installation.md",
+    "installer-security.md",
+)
+
+
+def copy_installer_docs(staging: Path) -> None:
+    dest = staging / "docs" / "installer"
+    dest.mkdir(parents=True, exist_ok=True)
+    for name in INSTALLER_DOC_FILES:
+        src = ROOT / "docs" / "installer" / name
+        if src.is_file():
+            shutil.copy2(src, dest / name)
+
+
 def copy_public_beta_docs(staging: Path) -> None:
     dest = staging / "docs" / "public-beta"
     dest.mkdir(parents=True, exist_ok=True)

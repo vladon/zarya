@@ -1,6 +1,7 @@
 #include "app/BuildInfo.h"
 
 #include "BuildInfo_config.h"
+#include "packaging/InstallationMode.h"
 #include "storage/AppPaths.h"
 
 #include <QDir>
@@ -130,6 +131,7 @@ QString BuildInfo::aboutText()
                        "  Channel: %2\n"
                        "  Commit: %3\n"
                        "  Signed: %4\n"
+                       "  Installation: %7\n"
                        "Built: %5\n"
                        "Qt %6\n\n"
                        "Cross-platform proxy profile manager with Xray system proxy, "
@@ -139,7 +141,8 @@ QString BuildInfo::aboutText()
                             buildCommit(),
                             isSigned() ? QStringLiteral("yes") : QStringLiteral("no"),
                             buildDateUtc(),
-                            qtVersion());
+                            qtVersion(),
+                            InstallationInfo::currentModeString());
 
     const QString note = integrityNote();
     if (!note.isEmpty()) {

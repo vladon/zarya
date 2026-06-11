@@ -17,11 +17,27 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from release_common import (  # noqa: E402
     FORBIDDEN_ARTIFACT_NAMES,
+    INSTALLER_DOC_FILES,
     PUBLIC_BETA_DOC_FILES,
     extract_tar_gz,
     extract_zip,
     read_cmake_version,
     sha256_file,
+)
+
+INSTALLER_SKELETON_PATHS = (
+    "packaging/windows/wix/Product.wxs",
+    "packaging/windows/wix/Zarya.wxs",
+    "packaging/linux/deb/DEBIAN/control.in",
+    "packaging/linux/rpm/zarya.spec.in",
+    "packaging/metadata/app-id.txt",
+)
+
+PRODUCTION_INSTALLER_CLAIMS = (
+    "production msi",
+    "production pkg",
+    "production deb",
+    "replaces portable beta artifacts",
 )
 
 ISSUE_TEMPLATE_FILES = (
@@ -62,6 +78,42 @@ def checksum_for_artifact(output_dir: Path, artifact: Path) -> str | None:
             if len(parts) >= 2 and parts[-1] == artifact.name:
                 return parts[0]
     return None
+
+
+def verify_installer_docs(staging: Path) -> list[str]:
+    errors: list[str] = []
+    for name in INSTALLER_DOC_FILES:
+        if not (staging / "docs" / "installer" / name).is_file():
+            errors.append(f"missing installer doc: docs/installer/{name}")
+    return errors
+
+
+def verify_installer_skeletons(source_root: Path) -> list[str]:
+    errors: list[str] = []
+    for relative in INSTALLER_SKELETON_PATHS:
+        if not (source_root / relative).is_file():
+            errors.append(f"missing installer skeleton: {relative}")
+    if not (source_root / "src" / "packaging" / "InstallationMode.cpp").is_file():
+        errors.append("missing InstallationMode implementation")
+    return errors
+
+
+def verify_no_production_installer_claims(staging: Path) -> list[str]:
+    errors: list[str] = []
+    scan_paths = [staging / "RELEASE_NOTES.md", staging / "docs" / "installer" / "README.md"]
+    for path in scan_paths:
+        if not path.is_file():
+            continue
+        lowered = path.read_text(encoding="utf-8", errors="replace").lower()
+        for phrase in PRODUCTION_INSTALLER_CLAIMS:
+            if phrase in lowered:
+                errors.append(f"forbidden production installer claim in {path.name}: {phrase}")
+    installer_readme = staging / "docs" / "installer" / "README.md"
+    if installer_readme.is_file():
+        text = installer_readme.read_text(encoding="utf-8", errors="replace")
+        if "No production MSI/PKG/DEB yet" not in text and "no production MSI" not in text.lower():
+            errors.append("installer README must state no production installer yet")
+    return errors
 
 
 def verify_public_beta_docs(staging: Path) -> list[str]:
@@ -298,8 +350,11 @@ def main() -> int:
         errors.extend(verify_forbidden_files(staging))
         if args.public_beta:
             errors.extend(verify_public_beta_docs(staging))
+            errors.extend(verify_installer_docs(staging))
             errors.extend(verify_public_beta_artifact(staging))
             errors.extend(verify_issue_templates(ROOT))
+            errors.extend(verify_installer_skeletons(ROOT))
+            errors.extend(verify_no_production_installer_claims(staging))
             errors.extend(verify_release_notes_version(staging, expected_version))
             errors.extend(verify_no_stale_versions(staging, expected_version))
             errors.extend(verify_executable_version(staging, expected_version))

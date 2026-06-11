@@ -66,6 +66,7 @@ from release_common import (
     copy_top_level_legal_files,
     copy_docs,
     copy_public_beta_docs,
+    copy_installer_docs,
     copy_service_packaging_templates,
     copy_translations,
     create_placeholder_layout,
@@ -79,6 +80,7 @@ build_translations = Path(r'$BuildRoot') / 'translations'
 copy_top_level_legal_files(staging)
 copy_docs(staging)
 copy_public_beta_docs(staging)
+copy_installer_docs(staging)
 copy_service_packaging_templates(staging)
 copy_translations(staging, build_translations)
 create_placeholder_layout(staging)

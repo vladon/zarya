@@ -1,0 +1,3 @@
+#!/bin/sh
+# PKG postinstall placeholder — 0.31 skeleton only. Do not use in production.
+exit 0

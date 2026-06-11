@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- WiX variables skeleton — 0.31 planning only -->
+<Include xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <?define ProductName = "Zarya" ?>
+  <?define ProductVersion = "0.31.0.0" ?>
+  <?define Manufacturer = "Zarya" ?>
+  <?define UpgradeCode = "00000000-0000-0000-0000-000000000031" ?>
+  <!-- TODO: replace UpgradeCode before production -->
+  <?define InstallFolder = "Zarya" ?>
+</Include>
