@@ -20,6 +20,7 @@ from release_common import (  # noqa: E402
     INSTALLER_DOC_FILES,
     PUBLIC_BETA_DOC_FILES,
     UPDATER_DOC_FILES,
+    STABLE_DOC_FILES,
     extract_tar_gz,
     extract_zip,
     read_cmake_version,
@@ -100,6 +101,27 @@ def verify_updater_docs(staging: Path) -> list[str]:
     for name in UPDATER_DOC_FILES:
         if not (staging / "docs" / "updater" / name).is_file():
             errors.append(f"missing updater doc: docs/updater/{name}")
+    return errors
+
+
+def verify_stable_docs(staging: Path) -> list[str]:
+    errors: list[str] = []
+    for name in STABLE_DOC_FILES:
+        if not (staging / "docs" / "stable" / name).is_file():
+            errors.append(f"missing stable doc: docs/stable/{name}")
+    return errors
+
+
+def verify_stable_source(source_root: Path) -> list[str]:
+    errors: list[str] = []
+    required = (
+        "src/features/FeatureGate.cpp",
+        "docs/stable/stable-scope.md",
+        "docs/stable/release-criteria.md",
+    )
+    for relative in required:
+        if not (source_root / relative).is_file():
+            errors.append(f"missing stable hardening source/doc: {relative}")
     return errors
 
 
@@ -400,10 +422,12 @@ def main() -> int:
             errors.extend(verify_public_beta_docs(staging))
             errors.extend(verify_installer_docs(staging))
             errors.extend(verify_updater_docs(staging))
+            errors.extend(verify_stable_docs(staging))
             errors.extend(verify_public_beta_artifact(staging))
             errors.extend(verify_issue_templates(ROOT))
             errors.extend(verify_installer_skeletons(ROOT))
             errors.extend(verify_updater_source(ROOT))
+            errors.extend(verify_stable_source(ROOT))
             errors.extend(verify_no_production_installer_claims(staging))
             errors.extend(verify_no_production_self_update_claims(staging))
             errors.extend(verify_release_notes_version(staging, expected_version))

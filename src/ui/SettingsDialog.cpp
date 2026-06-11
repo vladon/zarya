@@ -19,6 +19,8 @@
 #include "domain/DnsProfile.h"
 #include "routing/RoutingManager.h"
 #include "runtime/RuntimeBackendType.h"
+#include "features/FeatureGate.h"
+#include "features/FeaturePolicy.h"
 #include "storage/AppSettings.h"
 #include "ui/DnsManagerDialog.h"
 #include "ui/RoutingManagerDialog.h"
@@ -456,9 +458,60 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     experimentalForm->addRow(QString(), ruleSetNote);
     experimentalForm->addRow(QString(), tunWarnings);
 
-    auto* experimentalGroup = new QGroupBox(
-        tr("Experimental (TUN · helper · kill switch)"), this);
-    experimentalGroup->setLayout(experimentalForm);
+    m_experimentalGroup = new QGroupBox(tr("Experimental (TUN · helper · kill switch)"), this);
+    m_experimentalGroup->setLayout(experimentalForm);
+
+    m_releaseChannelCombo = new QComboBox(this);
+    m_releaseChannelCombo->addItem(tr("Dev"), QStringLiteral("dev"));
+    m_releaseChannelCombo->addItem(tr("Beta"), QStringLiteral("beta"));
+    m_releaseChannelCombo->addItem(tr("Stable"), QStringLiteral("stable"));
+    const int releaseChannelIndex =
+        m_releaseChannelCombo->findData(settings.releaseChannelKey());
+    if (releaseChannelIndex >= 0) {
+        m_releaseChannelCombo->setCurrentIndex(releaseChannelIndex);
+    }
+
+    m_showExperimentalFeaturesCheck =
+        new QCheckBox(tr("Show experimental features (TUN, helper, kill switch)"), this);
+    m_showExperimentalFeaturesCheck->setChecked(settings.showExperimentalFeatures());
+
+    m_experimentalGatePanel = new QWidget(this);
+    auto* gateLabel = new QLabel(
+        tr("Experimental features are hidden in stable mode.\n"
+           "Xray system-proxy mode is the recommended stable path."),
+        m_experimentalGatePanel);
+    gateLabel->setWordWrap(true);
+    m_showExperimentalFeaturesButton =
+        new QPushButton(tr("Show Experimental Features…"), m_experimentalGatePanel);
+    connect(m_showExperimentalFeaturesButton, &QPushButton::clicked, this,
+            &SettingsDialog::onShowExperimentalFeatures);
+    auto* gateLayout = new QVBoxLayout(m_experimentalGatePanel);
+    gateLayout->setContentsMargins(0, 0, 0, 0);
+    gateLayout->addWidget(gateLabel);
+    gateLayout->addWidget(m_showExperimentalFeaturesButton);
+
+    auto* releaseForm = new QFormLayout;
+    releaseForm->addRow(tr("Release channel"), m_releaseChannelCombo);
+    releaseForm->addRow(QString(), m_showExperimentalFeaturesCheck);
+    releaseForm->addRow(QString(), m_experimentalGatePanel);
+    auto* releaseGroup = new QGroupBox(tr("Release channel"), this);
+    releaseGroup->setLayout(releaseForm);
+
+    connect(m_releaseChannelCombo, &QComboBox::currentIndexChanged, this, [this](int index) {
+        Q_UNUSED(index);
+        const QString channel = m_releaseChannelCombo->currentData().toString();
+        const ReleaseChannel releaseChannel =
+            FeaturePolicy::releaseChannelFromString(channel);
+        if (releaseChannel == ReleaseChannel::Stable) {
+            m_showExperimentalFeaturesCheck->setChecked(false);
+        } else {
+            m_showExperimentalFeaturesCheck->setChecked(
+                FeaturePolicy::defaultShowExperimentalFeatures(releaseChannel));
+        }
+        updateExperimentalVisibility();
+    });
+    connect(m_showExperimentalFeaturesCheck, &QCheckBox::toggled, this,
+            &SettingsDialog::updateExperimentalVisibility);
 
     m_appUpdateChannelCombo = new QComboBox(this);
     m_appUpdateChannelCombo->addItem(tr("Dev"), QStringLiteral("dev"));
@@ -628,9 +681,9 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     killSwitchForm->addRow(QString(), m_killSwitchWarningLabel);
     killSwitchForm->addRow(QString(), killSwitchButtonsRow);
 
-    auto* killSwitchGroup = new QGroupBox(
+    m_killSwitchGroup = new QGroupBox(
         tr("Kill Switch — Experimental · Requires helper · Linux/Windows PoC"), this);
-    killSwitchGroup->setLayout(killSwitchForm);
+    m_killSwitchGroup->setLayout(killSwitchForm);
 
     const auto updateRuntimeControls = [this]() {
         const bool enabled = m_enableExperimentalTunCheck->isChecked();
@@ -688,10 +741,12 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     layout->addWidget(appUpdatesGroup);
     layout->addWidget(coreUpdatesGroup);
     layout->addWidget(testingGroup);
-    layout->addWidget(experimentalGroup);
-    layout->addWidget(killSwitchGroup);
+    layout->addWidget(releaseGroup);
+    layout->addWidget(m_experimentalGroup);
+    layout->addWidget(m_killSwitchGroup);
     layout->addWidget(buttons);
-    resize(620, 1080);
+    updateExperimentalVisibility();
+    resize(620, 1120);
 }
 
 void SettingsDialog::onBrowseSingBox()
@@ -940,6 +995,13 @@ bool SettingsDialog::validateAndSave()
     settings.setKillSwitchAutoDisableOnCleanStop(
         m_killSwitchAutoDisableOnStopCheck->isChecked());
 
+    const QString previousReleaseChannel = settings.releaseChannelKey();
+    const bool previousShowExperimental = settings.showExperimentalFeatures();
+    const RuntimeMode previousEffective = settings.effectiveRuntimeMode();
+
+    settings.setReleaseChannelKey(m_releaseChannelCombo->currentData().toString());
+    settings.setShowExperimentalFeatures(m_showExperimentalFeaturesCheck->isChecked());
+
     settings.setAppUpdateChannelKey(m_appUpdateChannelCombo->currentData().toString());
     settings.setCheckAppUpdatesOnStartup(m_checkAppUpdatesOnStartupCheck->isChecked());
     settings.setAppUpdateManifestUrl(m_appUpdateManifestUrlEdit->text());
@@ -955,6 +1017,25 @@ bool SettingsDialog::validateAndSave()
         QMessageBox::information(
             this, tr("Settings"),
             tr("Language will be fully applied after restart."));
+    }
+
+    const RuntimeMode newEffective = settings.effectiveRuntimeMode();
+    if ((previousShowExperimental && !settings.showExperimentalFeatures())
+        || (previousEffective == RuntimeMode::TunSingBoxExperimental
+            && newEffective == RuntimeMode::SystemProxyXray
+            && settings.configuredRuntimeMode() == RuntimeMode::TunSingBoxExperimental)) {
+        QMessageBox::warning(
+            this, tr("Experimental features disabled"),
+            tr("Experimental features are disabled in stable mode. Runtime will use Xray "
+               "system-proxy mode."));
+    } else if (previousReleaseChannel != settings.releaseChannelKey()
+               && FeaturePolicy::releaseChannelFromString(settings.releaseChannelKey())
+                      == ReleaseChannel::Stable
+               && !settings.showExperimentalFeatures()) {
+        QMessageBox::information(
+            this, tr("Stable mode"),
+            tr("Experimental TUN, helper, and kill switch controls are hidden. Recovery actions "
+               "remain available when needed."));
     }
 
     return true;
@@ -1216,6 +1297,35 @@ void SettingsDialog::onShowServiceRecovery()
     box.setText(text);
     box.setStandardButtons(QMessageBox::Close);
     box.exec();
+}
+
+void SettingsDialog::updateExperimentalVisibility()
+{
+    const ReleaseChannel channel = FeaturePolicy::releaseChannelFromString(
+        m_releaseChannelCombo->currentData().toString());
+    const bool visible = m_showExperimentalFeaturesCheck->isChecked();
+    m_experimentalGroup->setVisible(visible);
+    m_killSwitchGroup->setVisible(visible);
+    m_experimentalGatePanel->setVisible(!visible);
+    m_showExperimentalFeaturesCheck->setVisible(channel != ReleaseChannel::Stable);
+}
+
+void SettingsDialog::onShowExperimentalFeatures()
+{
+    QMessageBox box(this);
+    box.setIcon(QMessageBox::Warning);
+    box.setWindowTitle(tr("Experimental features"));
+    box.setText(tr("Experimental features may break networking and are not part of stable "
+                   "support."));
+    box.setInformativeText(
+        tr("TUN, zarya-helper, and kill switch are experimental. Use Xray system-proxy mode for "
+           "the recommended stable path."));
+    box.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+    if (box.exec() != QMessageBox::Ok) {
+        return;
+    }
+    m_showExperimentalFeaturesCheck->setChecked(true);
+    updateExperimentalVisibility();
 }
 
 } // namespace zarya

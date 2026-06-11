@@ -132,6 +132,27 @@ UPDATER_DOC_FILES = (
 )
 
 
+STABLE_DOC_FILES = (
+    "README.md",
+    "stable-scope.md",
+    "release-criteria.md",
+    "risk-register.md",
+    "1.0-backlog.md",
+    "feature-gating.md",
+    "regression-matrix.md",
+    "go-no-go-checklist.md",
+)
+
+
+def copy_stable_docs(staging: Path) -> None:
+    dest = staging / "docs" / "stable"
+    dest.mkdir(parents=True, exist_ok=True)
+    for name in STABLE_DOC_FILES:
+        src = ROOT / "docs" / "stable" / name
+        if src.is_file():
+            shutil.copy2(src, dest / name)
+
+
 def copy_updater_docs(staging: Path) -> None:
     dest = staging / "docs" / "updater"
     dest.mkdir(parents=True, exist_ok=True)

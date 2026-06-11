@@ -36,7 +36,14 @@ public:
 
     RuntimeMode runtimeMode() const;
     void setRuntimeMode(RuntimeMode mode);
+    RuntimeMode configuredRuntimeMode() const;
     RuntimeMode effectiveRuntimeMode() const;
+
+    QString releaseChannelKey() const;
+    void setReleaseChannelKey(const QString& channel);
+
+    bool showExperimentalFeatures() const;
+    void setShowExperimentalFeatures(bool visible);
 
     bool tunWarningAccepted() const;
     void setTunWarningAccepted(bool accepted);

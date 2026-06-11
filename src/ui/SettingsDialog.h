@@ -57,6 +57,8 @@ private slots:
     void refreshRoutingCombo();
     void refreshDnsCombo();
     void refreshHelperServiceUi();
+    void updateExperimentalVisibility();
+    void onShowExperimentalFeatures();
 
 private:
     bool validateAndSave();
@@ -136,6 +138,13 @@ private:
     QCheckBox* m_checkAppUpdatesOnStartupCheck = nullptr;
     QLineEdit* m_appUpdateManifestUrlEdit = nullptr;
     QCheckBox* m_allowUnsignedAppUpdatesCheck = nullptr;
+
+    QComboBox* m_releaseChannelCombo = nullptr;
+    QCheckBox* m_showExperimentalFeaturesCheck = nullptr;
+    QWidget* m_experimentalGatePanel = nullptr;
+    QPushButton* m_showExperimentalFeaturesButton = nullptr;
+    QGroupBox* m_experimentalGroup = nullptr;
+    QGroupBox* m_killSwitchGroup = nullptr;
 
     QCheckBox* m_allowCoreUpdateWithoutChecksumCheck = nullptr;
     QCheckBox* m_allowManageExternalCorePathsCheck = nullptr;
