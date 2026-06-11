@@ -1,4 +1,4 @@
-# Zarya 0.30.0 Beta
+# Zarya 0.30.0-beta
 
 ## Public beta feedback update
 
