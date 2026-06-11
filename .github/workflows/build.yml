@@ -36,7 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Qt
-        run: sudo apt-get update && sudo apt-get install -y qt6-base-dev qttools6-dev cmake build-essential
+        run: sudo apt-get update && sudo apt-get install -y qt6-base-dev cmake build-essential
       - name: Check translations
         run: python scripts/check-translations.py
       - name: Configure
