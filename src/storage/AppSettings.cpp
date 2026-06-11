@@ -1,5 +1,6 @@
 #include "storage/AppSettings.h"
 
+#include "app/BuildInfo.h"
 #include "app/StartupOptions.h"
 #include "platform/Platform.h"
 #include "storage/AppPaths.h"
@@ -613,6 +614,51 @@ bool AppSettings::checkCoreUpdatesOnStartup() const
 void AppSettings::setCheckCoreUpdatesOnStartup(bool enabled)
 {
     settings().setValue(QStringLiteral("cores/checkUpdatesOnStartup"), enabled);
+}
+
+QString AppSettings::appUpdateChannelKey() const
+{
+    const QString configured =
+        settings().value(QStringLiteral("app/updateChannel")).toString().trimmed();
+    if (!configured.isEmpty()) {
+        return configured;
+    }
+    return BuildInfo::buildChannel();
+}
+
+void AppSettings::setAppUpdateChannelKey(const QString& channel)
+{
+    settings().setValue(QStringLiteral("app/updateChannel"), channel.trimmed().toLower());
+}
+
+bool AppSettings::checkAppUpdatesOnStartup() const
+{
+    return settings().value(QStringLiteral("app/checkUpdatesOnStartup"), false).toBool();
+}
+
+void AppSettings::setCheckAppUpdatesOnStartup(bool enabled)
+{
+    settings().setValue(QStringLiteral("app/checkUpdatesOnStartup"), enabled);
+}
+
+QString AppSettings::appUpdateManifestUrl() const
+{
+    return settings().value(QStringLiteral("app/updateManifestUrl")).toString().trimmed();
+}
+
+void AppSettings::setAppUpdateManifestUrl(const QString& url)
+{
+    settings().setValue(QStringLiteral("app/updateManifestUrl"), url.trimmed());
+}
+
+bool AppSettings::allowUnsignedAppUpdates() const
+{
+    return settings().value(QStringLiteral("app/allowUnsignedAppUpdates"), false).toBool();
+}
+
+void AppSettings::setAllowUnsignedAppUpdates(bool enabled)
+{
+    settings().setValue(QStringLiteral("app/allowUnsignedAppUpdates"), enabled);
 }
 
 bool AppSettings::firstRunCompleted() const

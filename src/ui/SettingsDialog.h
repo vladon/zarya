@@ -132,6 +132,11 @@ private:
     QPushButton* m_disableKillSwitchButton = nullptr;
     QPushButton* m_killSwitchRecoveryButton = nullptr;
 
+    QComboBox* m_appUpdateChannelCombo = nullptr;
+    QCheckBox* m_checkAppUpdatesOnStartupCheck = nullptr;
+    QLineEdit* m_appUpdateManifestUrlEdit = nullptr;
+    QCheckBox* m_allowUnsignedAppUpdatesCheck = nullptr;
+
     QCheckBox* m_allowCoreUpdateWithoutChecksumCheck = nullptr;
     QCheckBox* m_allowManageExternalCorePathsCheck = nullptr;
     QSpinBox* m_coreBackupRetentionSpin = nullptr;

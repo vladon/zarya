@@ -24,6 +24,7 @@
 #include "migration/MigrationManager.h"
 #include "app/BuildInfo.h"
 #include "packaging/InstallationMode.h"
+#include "updater/AppUpdateStatus.h"
 #include "packaging/PackagingInfo.h"
 #include "dns/DnsManager.h"
 #include "platform/PlatformPrivilege.h"
@@ -715,6 +716,7 @@ QJsonObject collectPackagingStatus()
     packaging.insert(QStringLiteral("docsPresent"), docsPresent);
     root.insert(QStringLiteral("packaging"), packaging);
     root.insert(QStringLiteral("installation"), InstallationInfo::diagnosticsJson());
+    root.insert(QStringLiteral("appUpdater"), AppUpdateStatus::instance().diagnosticsJson());
     return root;
 }
 

@@ -460,6 +460,43 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
         tr("Experimental (TUN · helper · kill switch)"), this);
     experimentalGroup->setLayout(experimentalForm);
 
+    m_appUpdateChannelCombo = new QComboBox(this);
+    m_appUpdateChannelCombo->addItem(tr("Dev"), QStringLiteral("dev"));
+    m_appUpdateChannelCombo->addItem(tr("Beta"), QStringLiteral("beta"));
+    m_appUpdateChannelCombo->addItem(tr("Stable"), QStringLiteral("stable"));
+    const QString channelKey = settings.appUpdateChannelKey();
+    const int channelIndex = m_appUpdateChannelCombo->findData(channelKey);
+    if (channelIndex >= 0) {
+        m_appUpdateChannelCombo->setCurrentIndex(channelIndex);
+    }
+
+    m_checkAppUpdatesOnStartupCheck =
+        new QCheckBox(tr("Check app updates on startup"), this);
+    m_checkAppUpdatesOnStartupCheck->setChecked(settings.checkAppUpdatesOnStartup());
+
+    m_appUpdateManifestUrlEdit = new QLineEdit(settings.appUpdateManifestUrl(), this);
+    m_appUpdateManifestUrlEdit->setPlaceholderText(
+        tr("Leave empty to use Help → Check for App Updates with a local manifest"));
+
+    m_allowUnsignedAppUpdatesCheck =
+        new QCheckBox(tr("Allow unsigned app update download (no checksum)"), this);
+    m_allowUnsignedAppUpdatesCheck->setChecked(settings.allowUnsignedAppUpdates());
+
+    auto* appUpdatesNote = new QLabel(
+        tr("App updates update Zarya itself. Core updates (below) update Xray and sing-box."),
+        this);
+    appUpdatesNote->setWordWrap(true);
+
+    auto* appUpdatesForm = new QFormLayout;
+    appUpdatesForm->addRow(tr("Channel"), m_appUpdateChannelCombo);
+    appUpdatesForm->addRow(QString(), m_checkAppUpdatesOnStartupCheck);
+    appUpdatesForm->addRow(tr("Manifest URL"), m_appUpdateManifestUrlEdit);
+    appUpdatesForm->addRow(QString(), m_allowUnsignedAppUpdatesCheck);
+    appUpdatesForm->addRow(QString(), appUpdatesNote);
+
+    auto* appUpdatesGroup = new QGroupBox(tr("App updates"), this);
+    appUpdatesGroup->setLayout(appUpdatesForm);
+
     m_allowCoreUpdateWithoutChecksumCheck =
         new QCheckBox(tr("Allow installing core archives without checksum verification"),
                       this);
@@ -648,6 +685,7 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     layout->addWidget(dnsGroup);
     layout->addWidget(startupGroup);
     layout->addWidget(desktopGroup);
+    layout->addWidget(appUpdatesGroup);
     layout->addWidget(coreUpdatesGroup);
     layout->addWidget(testingGroup);
     layout->addWidget(experimentalGroup);
@@ -901,6 +939,11 @@ bool SettingsDialog::validateAndSave()
     settings.setKillSwitchBlockWhenTunStopped(true);
     settings.setKillSwitchAutoDisableOnCleanStop(
         m_killSwitchAutoDisableOnStopCheck->isChecked());
+
+    settings.setAppUpdateChannelKey(m_appUpdateChannelCombo->currentData().toString());
+    settings.setCheckAppUpdatesOnStartup(m_checkAppUpdatesOnStartupCheck->isChecked());
+    settings.setAppUpdateManifestUrl(m_appUpdateManifestUrlEdit->text());
+    settings.setAllowUnsignedAppUpdates(m_allowUnsignedAppUpdatesCheck->isChecked());
 
     settings.setAllowCoreUpdateWithoutChecksum(m_allowCoreUpdateWithoutChecksumCheck->isChecked());
     settings.setAllowManageExternalCorePaths(m_allowManageExternalCorePathsCheck->isChecked());

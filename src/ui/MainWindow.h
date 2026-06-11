@@ -90,6 +90,7 @@ private slots:
     void onImportFromPortableFolder();
     void onCreateDiagnosticsBundle();
     void onCopySupportSummary();
+    void onCheckAppUpdates();
     DiagnosticsContext buildDiagnosticsContext();
     void onRuleSetManager();
     void onDnsProfiles();
@@ -154,6 +155,7 @@ private:
     void tryAutoEnableSystemProxy(bool fromAutostart = false);
     void checkGeoDataOnStartup();
     void checkCoreUpdatesOnStartup();
+    void checkAppUpdatesOnStartup();
     bool startProfileById(const QString& profileId, bool fromAutostart);
     Profile* profileById(const QString& profileId);
     void tryRestoreSystemProxy(SystemProxyRestoreMode mode, bool showFailureDialog);

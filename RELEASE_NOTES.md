@@ -1,19 +1,18 @@
-# Zarya 0.31.0-beta
+# Zarya 0.32.0-beta
 
-## Installer planning
+## App self-update design
 
-0.31 defines the path from portable beta artifacts to future production installers.
+0.32 adds update manifest checking, download-and-verify, and updater docs. **The app does not replace itself yet.**
 
-**Still shipping as portable/bundle artifacts** — no production MSI/PKG/DEB in this release.
+Core Manager still updates Xray/sing-box. App updates update Zarya itself.
 
 ## What's new
 
-- Installer strategy and installed layout docs
-- Windows WiX, macOS DMG/PKG, Linux AppImage/deb/rpm skeletons
-- **File → Import from Portable Zarya Folder…** for explicit portable migration
-- Installation mode in About, diagnostics, and support summary
+- **Help → Check for App Updates…** — manifest check, asset selection, SHA-256 verify
+- Settings → **App updates** (separate from Core updates)
+- `docs/updater/` design docs and `scripts/generate-update-manifest.py`
 
-See [docs/release-notes/0.31-beta.md](docs/release-notes/0.31-beta.md) and [docs/installer/README.md](docs/installer/README.md).
+See [docs/release-notes/0.32-beta.md](docs/release-notes/0.32-beta.md) and [docs/updater/README.md](docs/updater/README.md).
 
 ## Recommended mode
 

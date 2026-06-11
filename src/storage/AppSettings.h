@@ -171,6 +171,18 @@ public:
     bool checkCoreUpdatesOnStartup() const;
     void setCheckCoreUpdatesOnStartup(bool enabled);
 
+    QString appUpdateChannelKey() const;
+    void setAppUpdateChannelKey(const QString& channel);
+
+    bool checkAppUpdatesOnStartup() const;
+    void setCheckAppUpdatesOnStartup(bool enabled);
+
+    QString appUpdateManifestUrl() const;
+    void setAppUpdateManifestUrl(const QString& url);
+
+    bool allowUnsignedAppUpdates() const;
+    void setAllowUnsignedAppUpdates(bool enabled);
+
     bool firstRunCompleted() const;
     void setFirstRunCompleted(bool completed);
 
