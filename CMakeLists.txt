@@ -17,6 +17,7 @@ set(CMAKE_AUTOUIC ON)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 option(ZARYA_STATIC_QT "Link Qt statically into zarya (requires a static Qt build)" OFF)
+set(ZARYA_PROJECT_ISSUES_URL "" CACHE STRING "Optional GitHub issues URL for Help menu (empty = bundled docs only)")
 
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Network)
 include(ZaryaQt)
@@ -298,6 +299,7 @@ set(ZARYA_SOURCES
     src/app/StartupOptions.cpp
     src/app/AppController.cpp
     src/packaging/PackagingInfo.cpp
+    src/packaging/PublicBetaDocs.cpp
     src/ui/MainWindow.cpp
     src/ui/TrayController.cpp
     src/ui/ProfileDialog.cpp
@@ -425,6 +427,9 @@ add_executable(zarya ${ZARYA_SOURCES} ${ZARYA_HEADERS})
 target_include_directories(zarya PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${ZARYA_GENERATED_DIR})
 
 target_compile_definitions(zarya PRIVATE ZARYA_VERSION_STRING="${ZARYA_VERSION_STRING}")
+if(ZARYA_PROJECT_ISSUES_URL)
+    target_compile_definitions(zarya PRIVATE ZARYA_PROJECT_ISSUES_URL="${ZARYA_PROJECT_ISSUES_URL}")
+endif()
 
 zarya_link_qt_widgets_app(zarya)
 target_link_libraries(zarya PRIVATE Qt6::Network)

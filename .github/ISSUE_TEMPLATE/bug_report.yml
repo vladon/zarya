@@ -1,0 +1,58 @@
+name: Bug report
+description: Report a Zarya bug
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not paste raw proxy links, subscription URLs, passwords, or helper tokens.
+  - type: input
+    id: version
+    attributes:
+      label: Zarya version
+      placeholder: 0.29.0-beta
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Windows
+        - macOS
+        - Linux
+    validations:
+      required: true
+  - type: dropdown
+    id: runtime
+    attributes:
+      label: Runtime mode
+      options:
+        - Xray system proxy
+        - sing-box TUN experimental
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics bundle
+      description: Attach a redacted diagnostics bundle if possible.

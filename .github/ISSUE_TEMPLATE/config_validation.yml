@@ -1,0 +1,60 @@
+name: Config validation issue
+description: Report profile, routing, or DNS validation problems
+labels: ["bug", "config", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not paste raw proxy links, subscription URLs, or full configs.
+        Use redacted diagnostics or describe the profile type only.
+  - type: input
+    id: version
+    attributes:
+      label: Zarya version
+      placeholder: 0.29.0-beta
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Windows
+        - macOS
+        - Linux
+    validations:
+      required: true
+  - type: dropdown
+    id: protocol
+    attributes:
+      label: Protocol or profile type
+      options:
+        - VLESS
+        - VMess
+        - Trojan
+        - Shadowsocks
+        - SOCKS
+        - Subscription import
+        - Routing profile
+        - DNS profile
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result / validation error
+    validations:
+      required: true

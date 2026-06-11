@@ -17,7 +17,6 @@ jobs:
           host: windows
           target: desktop
           arch: win64_msvc2022_64
-          modules: qtbase
       - name: Configure
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
       - name: Build
@@ -25,7 +24,7 @@ jobs:
       - name: Package (unsigned by default)
         run: .\scripts\package-windows.ps1 -Configuration Release -OutputDir dist -SkipBuild -SkipSigning
       - name: Verify release artifact
-        run: python scripts/verify-release-artifacts.py --artifact dist/Zarya-0.27.0-beta-windows-x64-portable.zip --expected-version 0.27.0-beta --require-checksum --allow-unsigned
+        run: python scripts/verify-release-artifacts.py --artifact dist/Zarya-0.29.0-beta-windows-x64-portable.zip --expected-version 0.29.0-beta --public-beta --require-checksum --allow-unsigned
       - name: Sign release (optional)
         if: ${{ secrets.SIGNING_ENABLED == 'true' }}
         env:

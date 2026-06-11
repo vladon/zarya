@@ -1,24 +1,30 @@
-# Zarya 0.28.0 Beta
+# Zarya 0.29.0 Beta
 
-## Beta status
+## Public beta
 
-0.28 adds helper service installation design. System-proxy mode does **not** require the helper service.
+Zarya is ready for public beta testing preparation.
 
-## Helper service
+**Recommended mode:** Xray system-proxy mode.
 
-- Windows: optional `ZaryaHelper` service PoC
-- Linux: systemd/polkit skeleton (manual install)
-- macOS: SMAppService design only
+**Experimental:** TUN, zarya-helper, kill switch — not production-ready.
 
-See [docs/service/README.md](docs/service/README.md).
+## Quick start
 
-## Recommended path
+1. Download and verify SHA256 checksum.
+2. Start Zarya and complete the setup wizard.
+3. Install Xray via Core Manager.
+4. Import a profile or subscription.
+5. Use Routing: Bypass LAN, DNS: System DNS.
+6. Click Start.
 
-1. Install Xray via Core Manager
-2. Import a profile or subscription
-3. Start with system proxy enabled
-4. Use experimental TUN/helper only when needed
+See [docs/public-beta/quick-start.md](docs/public-beta/quick-start.md).
 
 ## Reporting issues
 
-See [docs/beta-bug-triage.md](docs/beta-bug-triage.md).
+**Help → Create Diagnostics Bundle**, then follow [docs/public-beta/reporting-issues.md](docs/public-beta/reporting-issues.md).
+
+Do not post raw proxy links, subscription URLs, or passwords.
+
+## Known limitations
+
+See [docs/public-beta/known-limitations.md](docs/public-beta/known-limitations.md).

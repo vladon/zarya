@@ -48,8 +48,8 @@ def run_cpp_smoke(build_dir: Path) -> tuple[bool, str]:
 def verify_source_tree(source_root: Path) -> list[str]:
     errors: list[str] = []
     version = read_cmake_version()
-    if version["version"] != "0.28.0-beta":
-        errors.append(f"expected version 0.28.0-beta, found {version['version']}")
+    if version["version"] != "0.29.0-beta":
+        errors.append(f"expected version 0.29.0-beta, found {version['version']}")
 
     for relative in (
         "LICENSE",
@@ -58,6 +58,10 @@ def verify_source_tree(source_root: Path) -> list[str]:
         "docs/beta-bug-triage.md",
         "docs/beta-regression-checklist.md",
         "docs/platform-test-matrix.md",
+        "docs/public-beta/README.md",
+        "docs/public-beta/quick-start.md",
+        "docs/public-beta/reporting-issues.md",
+        ".github/ISSUE_TEMPLATE/bug_report.yml",
         "translations/zarya_ru.qm",
         "translations/zarya_en.qm",
     ):

@@ -1,0 +1,39 @@
+name: Diagnostics issue
+description: Report a problem with diagnostics bundle creation or content
+labels: ["bug", "diagnostics", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not attach unredacted configs, proxy links, or subscription URLs.
+        Review your diagnostics bundle before sharing.
+  - type: input
+    id: version
+    attributes:
+      label: Zarya version
+      placeholder: 0.29.0-beta
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Windows
+        - macOS
+        - Linux
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What went wrong with diagnostics?
+      description: e.g. bundle failed to create, missing section, unexpected content
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true

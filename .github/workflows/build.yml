@@ -18,7 +18,6 @@ jobs:
           host: windows
           target: desktop
           arch: win64_msvc2022_64
-          modules: qtbase
       - name: Check translations
         run: python scripts/check-translations.py
       - name: Configure
@@ -30,14 +29,14 @@ jobs:
       - name: Package (unsigned)
         run: .\scripts\package-windows.ps1 -Configuration Release -OutputDir dist -SkipBuild -SkipSigning
       - name: Verify release artifact
-        run: python scripts/verify-release-artifacts.py --artifact dist/Zarya-0.28.0-beta-windows-x64-portable.zip --expected-version 0.28.0-beta --require-checksum --allow-unsigned
+        run: python scripts/verify-release-artifacts.py --artifact dist/Zarya-0.29.0-beta-windows-x64-portable.zip --expected-version 0.29.0-beta --public-beta --require-checksum --allow-unsigned
 
   build-ubuntu:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Install Qt
-        run: sudo apt-get update && sudo apt-get install -y qt6-base-dev qttools6-dev-tools cmake build-essential
+        run: sudo apt-get update && sudo apt-get install -y qt6-base-dev qttools6-dev cmake build-essential
       - name: Check translations
         run: python scripts/check-translations.py
       - name: Configure
