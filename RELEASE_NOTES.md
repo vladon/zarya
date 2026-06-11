@@ -1,22 +1,18 @@
-# Zarya 0.32.0-beta
+# Zarya 0.33.0-beta
 
-## App self-update design
+## Stable release hardening
 
-0.32 adds update manifest checking, download-and-verify, and updater docs. **The app does not replace itself yet.**
+0.33 defines stable vs experimental scope and gates experimental features by release channel in preparation for 1.0.
 
-Core Manager still updates Xray/sing-box. App updates update Zarya itself.
+**Recommended path:** Xray system-proxy mode.
 
 ## What's new
 
-- **Help → Check for App Updates…** — manifest check, asset selection, SHA-256 verify
-- Settings → **App updates** (separate from Core updates)
-- `docs/updater/` design docs and `scripts/generate-update-manifest.py`
+- `docs/stable/` — scope, release criteria, risk register, regression matrix, go/no-go checklist
+- **Settings → Release channel** — hide or show TUN/helper/kill switch
+- Diagnostics include experimental feature state and configured vs effective runtime
 
-See [docs/release-notes/0.32-beta.md](docs/release-notes/0.32-beta.md) and [docs/updater/README.md](docs/updater/README.md).
-
-## Recommended mode
-
-Xray system-proxy mode.
+See [docs/release-notes/0.33-beta.md](docs/release-notes/0.33-beta.md) and [docs/stable/README.md](docs/stable/README.md).
 
 ## Reporting issues
 

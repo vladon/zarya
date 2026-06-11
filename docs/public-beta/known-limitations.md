@@ -1,5 +1,11 @@
 # Known Limitations
 
+## Recommended stable path
+
+**Xray system-proxy mode** is the recommended path for beta and future stable releases.
+
+sing-box TUN, zarya-helper, and kill switch are **experimental** and may be hidden when using the stable release channel. See [docs/stable/stable-scope.md](../stable/stable-scope.md).
+
 ## System proxy is not VPN mode
 
 System proxy mode only affects applications that respect OS proxy settings.

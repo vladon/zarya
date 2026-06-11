@@ -26,5 +26,6 @@ bool DefaultSettings::checkCoreUpdatesOnStartup() { return false; }
 bool DefaultSettings::checkAppUpdatesOnStartup() { return false; }
 bool DefaultSettings::allowCoreUpdateWithoutChecksum() { return false; }
 bool DefaultSettings::allowUnsignedAppUpdates() { return false; }
+bool DefaultSettings::showExperimentalFeatures() { return true; }
 
 } // namespace zarya

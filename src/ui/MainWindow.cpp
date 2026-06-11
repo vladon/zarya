@@ -46,6 +46,7 @@
 #include "ui/SettingsDialog.h"
 #include "ui/AppUpdateDialog.h"
 #include "updater/AppUpdateChecker.h"
+#include "features/FeatureGate.h"
 #include "updater/AppUpdatePlanner.h"
 #include "geodata/GeoDataFileStatus.h"
 #include "runtime/RuntimeBackendType.h"
@@ -313,6 +314,9 @@ void MainWindow::setupMenuBar()
     m_dnsProfilesAction = toolsMenu->addAction(tr("DNS &Profiles…"));
     m_previewSingBoxTunConfigAction =
         toolsMenu->addAction(tr("Preview sing-box TUN config…"));
+    const bool experimentalVisible = FeatureGate::showExperimentalFeatures();
+    m_ruleSetManagerAction->setVisible(experimentalVisible);
+    m_previewSingBoxTunConfigAction->setVisible(experimentalVisible);
     toolsMenu->addSeparator();
     m_enableSystemProxyAction =
         toolsMenu->addAction(tr("Enable &System Proxy"));
@@ -800,6 +804,9 @@ void MainWindow::updateStatusDashboard()
         selected = &m_allProfiles.first();
     }
     model.profileName = selected ? selected->name : QString();
+    model.runtimeText = runtimeStatusText();
+    model.recommendedRuntimeText = tr("Xray system proxy");
+    model.experimentalRuntimeActive = FeatureGate::experimentalRuntimeEffective();
 
     m_statusDashboard->updateModel(model);
 }
@@ -1206,6 +1213,7 @@ void MainWindow::finishStartup(const StartupOptions& options)
     maybeShowFirstRunWizard();
     checkCoreUpdatesOnStartup();
     checkAppUpdatesOnStartup();
+    warnIfExperimentalRuntimeDisabledOnStartup();
 
     const AppSettings& settings = AppSettings::instance();
     const bool startMinimized =
@@ -1882,6 +1890,25 @@ void MainWindow::onCheckAppUpdates()
 {
     AppUpdateDialog dialog(this);
     dialog.exec();
+}
+
+void MainWindow::warnIfExperimentalRuntimeDisabledOnStartup()
+{
+    const AppSettings& settings = AppSettings::instance();
+    if (settings.configuredRuntimeMode() != RuntimeMode::TunSingBoxExperimental
+        || !settings.enableExperimentalTun()) {
+        return;
+    }
+    if (settings.effectiveRuntimeMode() == RuntimeMode::TunSingBoxExperimental) {
+        return;
+    }
+    appendLog(QStringLiteral(
+        "Experimental runtime is disabled in stable mode. Effective runtime: Xray system proxy."));
+    QMessageBox::warning(
+        this, tr("Experimental runtime disabled"),
+        tr("Experimental runtime is disabled in stable mode.\n"
+           "Effective runtime: Xray system proxy.\n\n"
+           "Enable experimental features in Settings → Release channel if you intend to use TUN."));
 }
 
 void MainWindow::checkAppUpdatesOnStartup()

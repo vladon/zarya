@@ -1,6 +1,9 @@
 #include "storage/AppSettings.h"
 
 #include "app/BuildInfo.h"
+#include "features/FeatureGate.h"
+#include "features/FeatureId.h"
+#include "features/FeaturePolicy.h"
 #include "app/StartupOptions.h"
 #include "platform/Platform.h"
 #include "storage/AppPaths.h"
@@ -114,12 +117,50 @@ void AppSettings::setRuntimeMode(RuntimeMode mode)
     settings().setValue(QStringLiteral("runtime/mode"), runtimeModeToString(mode));
 }
 
+RuntimeMode AppSettings::configuredRuntimeMode() const
+{
+    return runtimeMode();
+}
+
 RuntimeMode AppSettings::effectiveRuntimeMode() const
 {
+    if (!FeatureGate::isEnabled(FeatureId::SingBoxTunExperimental)) {
+        return RuntimeMode::SystemProxyXray;
+    }
     if (!enableExperimentalTun()) {
         return RuntimeMode::SystemProxyXray;
     }
     return runtimeMode();
+}
+
+QString AppSettings::releaseChannelKey() const
+{
+    const QString configured =
+        settings().value(QStringLiteral("release/channel")).toString().trimmed();
+    if (!configured.isEmpty()) {
+        return configured;
+    }
+    return BuildInfo::buildChannel();
+}
+
+void AppSettings::setReleaseChannelKey(const QString& channel)
+{
+    settings().setValue(QStringLiteral("release/channel"), channel.trimmed().toLower());
+}
+
+bool AppSettings::showExperimentalFeatures() const
+{
+    if (settings().contains(QStringLiteral("release/showExperimentalFeatures"))) {
+        return settings().value(QStringLiteral("release/showExperimentalFeatures")).toBool();
+    }
+    const ReleaseChannel channel =
+        FeaturePolicy::releaseChannelFromString(releaseChannelKey());
+    return FeaturePolicy::defaultShowExperimentalFeatures(channel);
+}
+
+void AppSettings::setShowExperimentalFeatures(bool visible)
+{
+    settings().setValue(QStringLiteral("release/showExperimentalFeatures"), visible);
 }
 
 bool AppSettings::tunWarningAccepted() const

@@ -105,10 +105,20 @@ void StatusDashboardWidget::showConfigured(const StatusDashboardModel& model)
     m_unconfiguredPanel->hide();
     m_configuredPanel->show();
 
+    if (model.experimentalRuntimeActive) {
+        m_runtimeBadge->setKind(StatusBadgeKind::Warning);
+        m_runtimeBadge->setBadgeText(tr("Experimental runtime active"));
+    } else if (!model.recommendedRuntimeText.isEmpty()) {
+        m_runtimeBadge->setKind(StatusBadgeKind::Ok);
+        m_runtimeBadge->setBadgeText(tr("Recommended: %1").arg(model.recommendedRuntimeText));
+    }
+
     if (model.running) {
-        m_titleLabel->setText(tr("Runtime: Running"));
-        m_runtimeBadge->setKind(StatusBadgeKind::Running);
-        m_runtimeBadge->setBadgeText(tr("Running"));
+        m_titleLabel->setText(tr("Runtime: Running — %1").arg(model.runtimeText));
+        if (!model.experimentalRuntimeActive) {
+            m_runtimeBadge->setKind(StatusBadgeKind::Running);
+            m_runtimeBadge->setBadgeText(tr("Running"));
+        }
         m_detailLabel->setText(
             tr("Profile: %1\nLocal HTTP: %2\nLocal SOCKS: %3\nSystem proxy: %4\n"
                "Routing: %5")
@@ -132,9 +142,11 @@ void StatusDashboardWidget::showConfigured(const StatusDashboardModel& model)
         if (auto* diagBtn = findChild<QPushButton*>(QStringLiteral("diagBtn"))) {
             diagBtn->hide();
         }
-        m_titleLabel->setText(tr("Runtime: Stopped"));
-        m_runtimeBadge->setKind(StatusBadgeKind::Stopped);
-        m_runtimeBadge->setBadgeText(tr("Stopped"));
+        m_titleLabel->setText(tr("Runtime: Stopped — %1").arg(model.runtimeText));
+        if (!model.experimentalRuntimeActive) {
+            m_runtimeBadge->setKind(StatusBadgeKind::Stopped);
+            m_runtimeBadge->setBadgeText(tr("Stopped"));
+        }
         m_detailLabel->setText(
             tr("Selected profile: %1\nRouting: %2\nDNS: %3\nSystem proxy: %4\nCore: %5")
                 .arg(model.profileName.isEmpty() ? QStringLiteral("—") : model.profileName,

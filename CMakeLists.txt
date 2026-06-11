@@ -211,6 +211,11 @@ set(ZARYA_BACKUP_SOURCES
     src/backup/BackupManager.cpp
 )
 
+set(ZARYA_FEATURE_SOURCES
+    src/features/FeaturePolicy.cpp
+    src/features/FeatureGate.cpp
+)
+
 set(ZARYA_APP_UPDATE_SOURCES
     src/updater/AppVersion.cpp
     src/updater/AppUpdateChannel.cpp
@@ -373,6 +378,7 @@ set(ZARYA_SOURCES
     ${ZARYA_KILLSWITCH_PLATFORM}
     ${ZARYA_KILLSWITCH_GUI_SOURCES}
     ${ZARYA_GEODATA_SOURCES}
+    ${ZARYA_FEATURE_SOURCES}
     ${ZARYA_APP_UPDATE_SOURCES}
     ${ZARYA_CORE_UPDATE_SOURCES}
     ${ZARYA_BACKUP_SOURCES}
@@ -679,3 +685,22 @@ zarya_link_qt_core(zarya_version_test)
 enable_testing()
 add_test(NAME smoke COMMAND zarya_smoke_test)
 add_test(NAME version COMMAND zarya_version_test)
+
+add_executable(zarya_stable_hardening_test
+    tests/stable/stable_hardening_test.cpp
+    src/features/FeaturePolicy.cpp
+    src/features/FeatureGate.cpp
+    src/storage/AppSettings.cpp
+    src/storage/AppPaths.cpp
+    src/storage/DefaultSettings.cpp
+    src/app/BuildInfo.cpp
+    src/app/StartupOptions.cpp
+    src/packaging/PackagingInfo.cpp
+    src/runtime/RuntimeBackendType.cpp
+    src/killswitch/KillSwitchMode.cpp
+    src/platform/Platform.cpp
+    src/diagnostics/DiagnosticsRedactor.cpp
+)
+target_include_directories(zarya_stable_hardening_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${ZARYA_GENERATED_DIR})
+zarya_link_qt_core(zarya_stable_hardening_test)
+add_test(NAME stable_hardening COMMAND zarya_stable_hardening_test)

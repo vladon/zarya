@@ -24,6 +24,7 @@
 #include "migration/MigrationManager.h"
 #include "app/BuildInfo.h"
 #include "packaging/InstallationMode.h"
+#include "features/FeatureGate.h"
 #include "updater/AppUpdateStatus.h"
 #include "packaging/PackagingInfo.h"
 #include "dns/DnsManager.h"
@@ -108,8 +109,13 @@ QJsonObject collectAppInfo(const DiagnosticsContext& context)
 #endif
     object.insert(QStringLiteral("qtVersion"), QString::fromLatin1(QT_VERSION_STR));
     object.insert(QStringLiteral("portableMode"), AppPaths::isPortableMode());
+    object.insert(QStringLiteral("configuredRuntimeMode"),
+                  runtimeModeToString(AppSettings::instance().configuredRuntimeMode()));
     object.insert(QStringLiteral("runtimeMode"),
                   runtimeModeToString(AppSettings::instance().effectiveRuntimeMode()));
+    object.insert(QStringLiteral("effectiveRuntimeMode"),
+                  runtimeModeToString(AppSettings::instance().effectiveRuntimeMode()));
+    object.insert(QStringLiteral("stableHardening"), FeatureGate::diagnosticsJson());
     if (context.appStartedAt.isValid()) {
         object.insert(QStringLiteral("startedAt"), context.appStartedAt.toString(Qt::ISODate));
         object.insert(QStringLiteral("uptimeSeconds"),
