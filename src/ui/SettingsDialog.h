@@ -18,6 +18,7 @@ namespace zarya {
 
 class DnsManager;
 class HelperProcessManager;
+class IHelperServiceManager;
 class ISystemProxyManager;
 class RoutingManager;
 
@@ -27,6 +28,7 @@ class SettingsDialog : public QDialog {
 public:
     explicit SettingsDialog(RoutingManager& routingManager, DnsManager& dnsManager,
                             HelperProcessManager* helperManager = nullptr,
+                            IHelperServiceManager* serviceManager = nullptr,
                             QWidget* parent = nullptr);
 
 private slots:
@@ -35,17 +37,28 @@ private slots:
     void onStartHelper();
     void onConnectHelper();
     void onCheckHelperStatus();
+    void onInstallService();
+    void onUninstallService();
+    void onStartService();
+    void onStopService();
+    void onRestartService();
+    void onServiceSelfTest();
+    void onShowServiceRecovery();
     void onTestKillSwitchSupport();
     void onEnableKillSwitchNow();
     void onDisableKillSwitchNow();
     void onShowKillSwitchRecovery();
     bool confirmTunWarningIfNeeded();
+    bool confirmKillSwitchWarningIfNeeded();
     void updateKillSwitchControls();
     void onManageRoutingProfiles();
     void onManageDnsProfiles();
     void updateHttpEndpointLabel();
     void refreshRoutingCombo();
     void refreshDnsCombo();
+    void refreshHelperServiceUi();
+    void updateExperimentalVisibility();
+    void onShowExperimentalFeatures();
 
 private:
     bool validateAndSave();
@@ -88,10 +101,21 @@ private:
     QComboBox* m_tunDnsHijackModeCombo = nullptr;
     QRadioButton* m_tunDirectGuiRadio = nullptr;
     QRadioButton* m_tunHelperRadio = nullptr;
+    QLabel* m_helperBackendLabel = nullptr;
+    QLabel* m_helperServiceStatusLabel = nullptr;
     QLabel* m_helperStatusLabel = nullptr;
+    QLabel* m_helperServiceWarningLabel = nullptr;
+    QPushButton* m_installServiceButton = nullptr;
+    QPushButton* m_uninstallServiceButton = nullptr;
+    QPushButton* m_startServiceButton = nullptr;
+    QPushButton* m_stopServiceButton = nullptr;
+    QPushButton* m_restartServiceButton = nullptr;
     QPushButton* m_startHelperButton = nullptr;
     QPushButton* m_connectHelperButton = nullptr;
     QPushButton* m_checkHelperStatusButton = nullptr;
+    QPushButton* m_serviceSelfTestButton = nullptr;
+    QPushButton* m_serviceRecoveryButton = nullptr;
+    QCheckBox* m_recoverKillSwitchOnUninstallCheck = nullptr;
 
     QCheckBox* m_tunRequireLocalRuleSetsCheck = nullptr;
     QLabel* m_ruleSetDirLabel = nullptr;
@@ -110,6 +134,18 @@ private:
     QPushButton* m_disableKillSwitchButton = nullptr;
     QPushButton* m_killSwitchRecoveryButton = nullptr;
 
+    QComboBox* m_appUpdateChannelCombo = nullptr;
+    QCheckBox* m_checkAppUpdatesOnStartupCheck = nullptr;
+    QLineEdit* m_appUpdateManifestUrlEdit = nullptr;
+    QCheckBox* m_allowUnsignedAppUpdatesCheck = nullptr;
+
+    QComboBox* m_releaseChannelCombo = nullptr;
+    QCheckBox* m_showExperimentalFeaturesCheck = nullptr;
+    QWidget* m_experimentalGatePanel = nullptr;
+    QPushButton* m_showExperimentalFeaturesButton = nullptr;
+    QGroupBox* m_experimentalGroup = nullptr;
+    QGroupBox* m_killSwitchGroup = nullptr;
+
     QCheckBox* m_allowCoreUpdateWithoutChecksumCheck = nullptr;
     QCheckBox* m_allowManageExternalCorePathsCheck = nullptr;
     QSpinBox* m_coreBackupRetentionSpin = nullptr;
@@ -126,6 +162,7 @@ private:
     RoutingManager& m_routingManager;
     DnsManager& m_dnsManager;
     HelperProcessManager* m_helperManager = nullptr;
+    IHelperServiceManager* m_serviceManager = nullptr;
     std::unique_ptr<IAutostartManager> m_autostartManager;
 };
 

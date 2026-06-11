@@ -1,0 +1,17 @@
+# RPM spec skeleton — 0.31 planning only
+Name:           zarya
+Version:        @VERSION@
+Release:        1%{?dist}
+Summary:        Zarya proxy client
+License:        TODO
+URL:            TODO
+
+%description
+Cross-platform desktop proxy client (Xray system-proxy beta).
+
+%files
+# /usr/bin/zarya
+# /usr/lib/zarya/zarya-helper
+# /usr/share/zarya/translations/
+
+%changelog

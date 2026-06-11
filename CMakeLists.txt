@@ -17,6 +17,7 @@ set(CMAKE_AUTOUIC ON)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 option(ZARYA_STATIC_QT "Link Qt statically into zarya (requires a static Qt build)" OFF)
+set(ZARYA_PROJECT_ISSUES_URL "" CACHE STRING "Optional GitHub issues URL for Help menu (empty = bundled docs only)")
 
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Network)
 include(ZaryaQt)
@@ -76,6 +77,24 @@ set(ZARYA_HELPERCLIENT_SOURCES
     src/helperclient/HelperProcessManager.cpp
     src/storage/HelperSession.cpp
 )
+
+set(ZARYA_SERVICE_SOURCES
+    src/service/IHelperServiceManager.cpp
+    src/service/HelperServiceIdentity.cpp
+    src/service/HelperServiceStatus.cpp
+    src/service/HelperServiceInstallOptions.cpp
+    src/service/HelperServiceCommandLine.cpp
+    src/service/HelperServiceManagerFactory.cpp
+    src/service/stub/StubHelperServiceManager.cpp
+)
+
+if(WIN32)
+    list(APPEND ZARYA_SERVICE_SOURCES src/service/windows/WindowsHelperServiceManager.cpp)
+elseif(APPLE)
+    list(APPEND ZARYA_SERVICE_SOURCES src/service/macos/MacHelperServiceManager.cpp)
+elseif(UNIX)
+    list(APPEND ZARYA_SERVICE_SOURCES src/service/linux/LinuxHelperServiceManager.cpp)
+endif()
 
 set(ZARYA_KILLSWITCH_COMMON
     src/killswitch/KillSwitchMode.cpp
@@ -176,6 +195,7 @@ set(ZARYA_DIAGNOSTICS_SOURCES
     src/diagnostics/DiagnosticsCollector.cpp
     src/diagnostics/DiagnosticsBundleWriter.cpp
     src/diagnostics/DiagnosticsManager.cpp
+    src/diagnostics/SupportSummary.cpp
 )
 
 set(ZARYA_BACKUP_SOURCES
@@ -189,6 +209,24 @@ set(ZARYA_BACKUP_SOURCES
     src/backup/BackupExporter.cpp
     src/backup/BackupImporter.cpp
     src/backup/BackupManager.cpp
+)
+
+set(ZARYA_FEATURE_SOURCES
+    src/features/FeaturePolicy.cpp
+    src/features/FeatureGate.cpp
+)
+
+set(ZARYA_APP_UPDATE_SOURCES
+    src/updater/AppVersion.cpp
+    src/updater/AppUpdateChannel.cpp
+    src/updater/AppUpdateAsset.cpp
+    src/updater/AppUpdateManifest.cpp
+    src/updater/AppUpdateStatus.cpp
+    src/updater/AppUpdatePaths.cpp
+    src/updater/AppUpdatePolicy.cpp
+    src/updater/AppUpdatePlanner.cpp
+    src/updater/AppUpdateChecker.cpp
+    src/updater/AppUpdateVerifier.cpp
 )
 
 set(ZARYA_CORE_UPDATE_SOURCES
@@ -280,6 +318,10 @@ set(ZARYA_SOURCES
     src/app/StartupOptions.cpp
     src/app/AppController.cpp
     src/packaging/PackagingInfo.cpp
+    src/packaging/PublicBetaDocs.cpp
+    src/packaging/InstallationMode.cpp
+    src/packaging/WindowsInstallInfo.cpp
+    src/packaging/PortableMigration.cpp
     src/ui/MainWindow.cpp
     src/ui/TrayController.cpp
     src/ui/ProfileDialog.cpp
@@ -295,6 +337,7 @@ set(ZARYA_SOURCES
     src/ui/RuleSetManagerDialog.cpp
     src/ui/GeoDataManagerDialog.cpp
     src/ui/CoreManagerDialog.cpp
+    src/ui/AppUpdateDialog.cpp
     src/ui/BackupExportDialog.cpp
     src/ui/BackupImportDialog.cpp
     src/ui/DiagnosticsDialog.cpp
@@ -331,10 +374,13 @@ set(ZARYA_SOURCES
     ${ZARYA_RUNTIME_SOURCES}
     ${ZARYA_IPC_SOURCES}
     ${ZARYA_HELPERCLIENT_SOURCES}
+    ${ZARYA_SERVICE_SOURCES}
     ${ZARYA_KILLSWITCH_COMMON}
     ${ZARYA_KILLSWITCH_PLATFORM}
     ${ZARYA_KILLSWITCH_GUI_SOURCES}
     ${ZARYA_GEODATA_SOURCES}
+    ${ZARYA_FEATURE_SOURCES}
+    ${ZARYA_APP_UPDATE_SOURCES}
     ${ZARYA_CORE_UPDATE_SOURCES}
     ${ZARYA_BACKUP_SOURCES}
     ${ZARYA_LOGGING_SOURCES}
@@ -406,13 +452,16 @@ add_executable(zarya ${ZARYA_SOURCES} ${ZARYA_HEADERS})
 target_include_directories(zarya PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${ZARYA_GENERATED_DIR})
 
 target_compile_definitions(zarya PRIVATE ZARYA_VERSION_STRING="${ZARYA_VERSION_STRING}")
+if(ZARYA_PROJECT_ISSUES_URL)
+    target_compile_definitions(zarya PRIVATE ZARYA_PROJECT_ISSUES_URL="${ZARYA_PROJECT_ISSUES_URL}")
+endif()
 
 zarya_link_qt_widgets_app(zarya)
 target_link_libraries(zarya PRIVATE Qt6::Network)
 
 if(WIN32)
     set_target_properties(zarya PROPERTIES WIN32_EXECUTABLE TRUE)
-    target_link_libraries(zarya PRIVATE wininet)
+    target_link_libraries(zarya PRIVATE wininet shell32)
 elseif(APPLE)
     set_target_properties(zarya PROPERTIES
         MACOSX_BUNDLE TRUE
@@ -432,6 +481,10 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ZaryaDeploy.cmake)
 
 set(ZARYA_HELPER_SOURCES
     src/helper/main.cpp
+    src/service/HelperServiceIdentity.cpp
+    src/service/HelperServiceInstallOptions.cpp
+    src/service/HelperServiceCommandLine.cpp
+    src/storage/HelperSession.cpp
     src/app/BuildInfo.cpp
     src/app/StartupOptions.cpp
     src/i18n/TranslatableEnums.cpp
@@ -452,7 +505,9 @@ set(ZARYA_HELPER_SOURCES
 )
 
 if(WIN32)
-    list(APPEND ZARYA_HELPER_SOURCES ${ZARYA_KILLSWITCH_WINDOWS_WFP_SOURCES})
+    list(APPEND ZARYA_HELPER_SOURCES
+        ${ZARYA_KILLSWITCH_WINDOWS_WFP_SOURCES}
+        src/helper/WindowsServiceRunner.cpp)
     list(REMOVE_ITEM ZARYA_HELPER_SOURCES src/killswitch/windows/WindowsWfpKillSwitchManager_stub.cpp)
 endif()
 
@@ -621,5 +676,32 @@ add_executable(zarya_smoke_test
 target_include_directories(zarya_smoke_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${ZARYA_GENERATED_DIR})
 zarya_link_qt_core(zarya_smoke_test)
 
+add_executable(zarya_version_test
+    tests/version_test.cpp
+    src/updater/AppVersion.cpp
+)
+target_include_directories(zarya_version_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${ZARYA_GENERATED_DIR})
+zarya_link_qt_core(zarya_version_test)
+
 enable_testing()
 add_test(NAME smoke COMMAND zarya_smoke_test)
+add_test(NAME version COMMAND zarya_version_test)
+
+add_executable(zarya_stable_hardening_test
+    tests/stable/stable_hardening_test.cpp
+    src/features/FeaturePolicy.cpp
+    src/features/FeatureGate.cpp
+    src/storage/AppSettings.cpp
+    src/storage/AppPaths.cpp
+    src/storage/DefaultSettings.cpp
+    src/app/BuildInfo.cpp
+    src/app/StartupOptions.cpp
+    src/packaging/PackagingInfo.cpp
+    src/runtime/RuntimeBackendType.cpp
+    src/killswitch/KillSwitchMode.cpp
+    src/platform/Platform.cpp
+    src/diagnostics/DiagnosticsRedactor.cpp
+)
+target_include_directories(zarya_stable_hardening_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${ZARYA_GENERATED_DIR})
+zarya_link_qt_core(zarya_stable_hardening_test)
+add_test(NAME stable_hardening COMMAND zarya_stable_hardening_test)

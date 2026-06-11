@@ -1,6 +1,7 @@
 #pragma once
 
 #include "domain/Profile.h"
+#include "domain/Subscription.h"
 
 #include <QDateTime>
 #include <QVector>
@@ -13,6 +14,7 @@ class CoreManager;
 class DnsManager;
 class GeoDataManager;
 class HelperProcessManager;
+class IHelperServiceManager;
 class RoutingManager;
 class RuleSetManager;
 class SystemProxyController;
@@ -20,6 +22,7 @@ class XrayAdapter;
 
 struct DiagnosticsContext {
     QVector<Profile> profiles;
+    QVector<Subscription> subscriptions;
     Profile selectedProfile;
     bool hasSelectedProfile = false;
 
@@ -32,6 +35,7 @@ struct DiagnosticsContext {
     GeoDataManager* geoDataManager = nullptr;
     RuleSetManager* ruleSetManager = nullptr;
     HelperProcessManager* helper = nullptr;
+    IHelperServiceManager* helperService = nullptr;
     XrayAdapter* xrayAdapter = nullptr;
 
     QDateTime appStartedAt;

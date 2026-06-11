@@ -1,0 +1,1 @@
+TODO: define public homepage URL before production installer release

@@ -1,0 +1,5 @@
+#!/bin/sh
+# deb postinst placeholder — 0.31 skeleton only
+set -e
+# Future: optional zarya-helper systemd enable with user consent
+exit 0

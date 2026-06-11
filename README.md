@@ -1,6 +1,6 @@
 # Zarya
 
-Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). Milestones 0.1–0.27: profiles, subscriptions, Xray, routing, geo data, DNS, system proxy, experimental TUN, sing-box rule sets, core update manager, backup import/export, diagnostics bundle, beta hardening, privileged helper, experimental kill switch (Linux nft / Windows WFP PoC), tray, autostart, English/Russian UI, release packaging, **0.26.0-beta** bugfix pass, and **0.27.0-beta** signing-ready packaging hooks (optional Authenticode/codesign/GPG, verification scripts, signing docs).
+Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). Milestones 0.1–0.28: profiles, subscriptions, Xray, routing, geo data, DNS, system proxy, experimental TUN, sing-box rule sets, core update manager, backup import/export, diagnostics bundle, beta hardening, privileged helper, experimental kill switch (Linux nft / Windows WFP PoC), tray, autostart, English/Russian UI, release packaging, signing-ready hooks, and **0.28.0-beta** helper service design. **0.29.0-beta** adds public beta docs and issue templates. **0.30.0-beta** adds feedback triage, richer diagnostics, and Copy Support Summary. **0.31.0-beta** adds production installer planning and portable-to-installed migration skeleton. **0.32.0-beta** adds app self-update design (manifest check, download-and-verify; no auto-install). **0.33.0-beta** adds stable release hardening — feature gating, 1.0 scope, and release criteria. **0.34.0-beta** adds a Windows MSI installer PoC (WiX); portable ZIP remains recommended.
 
 Zarya supports **English** and **Russian** UI. Change language in **Settings → General → Language** (restart required for full effect). See [docs/localization.md](docs/localization.md).
 
@@ -90,6 +90,59 @@ zarya/
 In **Settings**, you can use a relative path such as `.\cores\xray\xray.exe` (from the working directory when you launch Zarya) or an absolute path.
 
 The app **starts and runs without** Xray installed. Profile management, import, and config generation work offline. Starting a profile runs `xray run -test` first; if Xray is missing or validation fails, the core is not started and the log panel shows details.
+
+## Beta status
+
+Zarya is in **public beta** (`0.34.0-beta`).
+
+**Recommended mode:** Xray system-proxy mode (Routing: Bypass LAN, DNS: System DNS).
+
+**Experimental:** sing-box TUN, zarya-helper, and kill switch — not production-ready. See [docs/public-beta/experimental-features.md](docs/public-beta/experimental-features.md).
+
+Full onboarding: [docs/public-beta/quick-start.md](docs/public-beta/quick-start.md).
+
+## Installation status
+
+Zarya beta is still distributed primarily as **portable/bundle artifacts** (ZIP, tarball, `.app` archive).
+
+Production installers are being designed:
+
+- Windows — WiX MSI **PoC** ([docs/installer/windows-msi-poc.md](docs/installer/windows-msi-poc.md)); strategy ([docs/installer/windows-installer-strategy.md](docs/installer/windows-installer-strategy.md))
+- macOS — DMG/PKG path ([docs/installer/macos-installer-strategy.md](docs/installer/macos-installer-strategy.md))
+- Linux — AppImage/deb/rpm path ([docs/installer/linux-packaging-strategy.md](docs/installer/linux-packaging-strategy.md))
+
+Portable mode remains supported. **File → Import from Portable Zarya Folder…** helps migrate data explicitly when moving to an installed layout later.
+
+## App self-update (0.32 design)
+
+Zarya can **check** update manifests and **download/verify** artifacts. It does **not** replace the running app yet.
+
+- **Help → Check for App Updates…** — local manifest or configured URL
+- **Settings → App updates** — channel, manifest URL (separate from Core updates)
+- Design docs: [docs/updater/README.md](docs/updater/README.md)
+
+Core Manager updates Xray/sing-box. App updates update Zarya itself.
+
+## Stable release hardening (0.33)
+
+0.33 prepares the path to **1.0** with a clear stable scope:
+
+- **Stable 1.0 target:** Xray system-proxy desktop client
+- **Experimental (beta/dev):** TUN, helper, kill switch
+
+**Settings → Release channel** controls whether experimental features are shown. On stable channel, effective runtime falls back to Xray system-proxy even if TUN was previously configured.
+
+Docs: [docs/stable/README.md](docs/stable/README.md)
+
+## Windows MSI PoC (0.34)
+
+WiX-based installer proof of concept. **Portable ZIP remains the recommended beta distribution.**
+
+```powershell
+.\scripts\package-windows-msi.ps1 -Configuration Release -OutputDir .\dist -SkipSigning
+```
+
+See [docs/installer/windows-msi-poc.md](docs/installer/windows-msi-poc.md).
 
 ## Quick start
 
@@ -390,21 +443,22 @@ Non-portable mode continues to use the OS app data directory.
 
 | Platform | Artifact | Script |
 |----------|----------|--------|
-| Windows | `Zarya-0.27.0-beta-windows-x64-portable.zip` | `scripts/package-windows.ps1` |
-| macOS | `Zarya-0.27.0-beta-macos-<arch>.zip` | `scripts/package-macos.sh` |
-| Linux | `Zarya-0.27.0-beta-linux-<arch>.tar.gz` | `scripts/package-linux.sh` |
+| Windows (portable) | `Zarya-0.34.0-beta-windows-x64-portable.zip` | `scripts/package-windows.ps1` |
+| Windows (MSI PoC) | `Zarya-0.34.0-beta-windows-x64-installer-poc.msi` | `scripts/package-windows-msi.ps1` |
+| macOS | `Zarya-0.34.0-beta-macos-<arch>.zip` | `scripts/package-macos.sh` |
+| Linux | `Zarya-0.34.0-beta-linux-<arch>.tar.gz` | `scripts/package-linux.sh` |
 
 ```powershell
 .\scripts\package-windows.ps1 -Configuration Release -OutputDir .\dist -SkipSigning
-python scripts\run-smoke-tests.py --artifact .\dist\Zarya-0.27.0-beta-windows-x64-portable.zip --build-dir build
-python scripts\verify-release-artifacts.py --artifact .\dist\Zarya-0.27.0-beta-windows-x64-portable.zip --expected-version 0.27.0-beta --require-checksum --allow-unsigned
+python scripts\run-smoke-tests.py --artifact .\dist\Zarya-0.34.0-beta-windows-x64-portable.zip --build-dir build
+python scripts\verify-release-artifacts.py --artifact .\dist\Zarya-0.34.0-beta-windows-x64-portable.zip --expected-version 0.34.0-beta --public-beta --require-checksum --allow-unsigned
 ```
 
-See [docs/release-packaging.md](docs/release-packaging.md), [docs/signing/README.md](docs/signing/README.md), and `packaging/windows/portable-layout.md`. Artifacts include `release-manifest.json`, SHA256 checksums, translations, docs, and core placeholders. Xray/sing-box are not bundled. Signing is optional in 0.27; in-app auto-update is not included.
+See [docs/release-packaging.md](docs/release-packaging.md), [docs/public-beta/download-verification.md](docs/public-beta/download-verification.md), [docs/signing/README.md](docs/signing/README.md), and `packaging/windows/portable-layout.md`. Artifacts include `release-manifest.json`, SHA256 checksums, translations, docs (including `docs/public-beta/`), and core placeholders. Xray/sing-box are not bundled. Signing is optional; in-app auto-update is not included.
 
 ## Verifying downloads
 
-Each release artifact includes a SHA256 checksum.
+Each release artifact includes a SHA256 checksum. See [docs/public-beta/download-verification.md](docs/public-beta/download-verification.md).
 
 ### Windows/macOS/Linux
 
@@ -414,7 +468,17 @@ Use `SHA256SUMS.txt` or the per-artifact `.sha256` file.
 sha256sum -c SHA256SUMS.txt
 ```
 
-Signed builds are not required for 0.27 beta. Optional signing hooks are documented in [docs/signing/](docs/signing/).
+Signed builds are not required for beta. Optional signing hooks are documented in [docs/signing/](docs/signing/).
+
+## Diagnostics
+
+**Help → Create Diagnostics Bundle** creates a redacted archive for troubleshooting. **Help → Copy Support Summary** copies a short redacted summary. Review before sharing. See [docs/public-beta/privacy-and-diagnostics.md](docs/public-beta/privacy-and-diagnostics.md).
+
+## Reporting issues
+
+1. Create a diagnostics bundle (**Help → Create Diagnostics Bundle**) or copy a support summary (**Help → Copy Support Summary**).
+2. Follow [docs/public-beta/reporting-issues.md](docs/public-beta/reporting-issues.md).
+3. Do not post raw proxy links, subscription URLs, passwords, or helper tokens in public issues.
 
 ## Supported runnable protocols (Xray)
 

@@ -194,13 +194,21 @@ from pathlib import Path
 
 sys.path.insert(0, "$ROOT/scripts")
 
-from release_common import copy_docs, copy_translations, create_placeholder_layout, write_build_integrity
+from release_common import copy_docs, copy_installer_docs, copy_public_beta_docs, copy_stable_docs, copy_translations, copy_updater_docs, create_placeholder_layout, write_build_integrity
 
 
 
 resources = Path("$RESOURCES_DIR")
 
 copy_docs(resources)
+
+copy_public_beta_docs(resources)
+
+copy_installer_docs(resources)
+
+copy_updater_docs(resources)
+
+copy_stable_docs(resources)
 
 copy_translations(resources, Path("$BUILD_DIR/translations"))
 

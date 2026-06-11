@@ -1,44 +1,22 @@
-# Zarya 0.27.0 Beta
+# Zarya 0.34.0-beta
 
-## Beta status
+## Windows installer PoC
 
-This is a beta-quality build with signing-ready packaging hooks. Artifacts are **unsigned by default** unless you explicitly enable signing with credentials.
+0.34 adds a **WiX MSI proof of concept** for Windows. Portable ZIP remains the recommended beta distribution.
 
-Use SHA256 checksums from the release page to verify downloads. See [docs/signing/README.md](docs/signing/README.md).
+## What's new
+
+- `scripts/package-windows-msi.ps1` — build `Zarya-0.34.0-beta-windows-x64-installer-poc.msi`
+- Installed mode under `C:\Program Files\Zarya\` with Start Menu shortcut
+- User data preserved on uninstall (`%AppData%\Zarya`, `%LocalAppData%\Zarya`)
+- Optional helper service via `INSTALLHELPERSERVICE=1` (off by default)
+
+See [docs/release-notes/0.34-beta.md](docs/release-notes/0.34-beta.md) and [docs/installer/windows-msi-poc.md](docs/installer/windows-msi-poc.md).
 
 ## Recommended path
 
-1. Install Xray via Core Manager (or choose an existing binary)
-2. Import a profile or subscription
-3. Start with system proxy enabled
-4. Stop and verify proxy restore before testing experimental features
-
-## Stable enough for testing
-
-- Xray system proxy
-- Profiles and subscriptions
-- Routing and DNS profiles
-- Core Manager
-- Backup import/export
-- Diagnostics bundle (strict redaction)
-- English and Russian UI
-
-## Experimental
-
-- sing-box TUN mode
-- zarya-helper
-- Linux nftables kill switch PoC
-- Windows WFP kill switch PoC
-
-## Known limitations
-
-- Signed builds are optional in 0.27; notarization is not a release gate
-- No app self-update
-- macOS kill switch unsupported
-- TUN mode is experimental
-- Xray and sing-box are not bundled in release artifacts
-- No production service installer
+Xray system-proxy mode (stable scope).
 
 ## Reporting issues
 
-See [docs/beta-bug-triage.md](docs/beta-bug-triage.md).
+**Help → Create Diagnostics Bundle** or **Help → Copy Support Summary**.

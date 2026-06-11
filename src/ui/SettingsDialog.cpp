@@ -1,7 +1,11 @@
 #include "ui/SettingsDialog.h"
 
 #include "i18n/LanguageManager.h"
+#include "app/BuildInfo.h"
 #include "helperclient/HelperProcessManager.h"
+#include "service/HelperServiceInstallOptions.h"
+#include "service/HelperServiceStatus.h"
+#include "service/IHelperServiceManager.h"
 #include "storage/AppPaths.h"
 #include "killswitch/KillSwitchMode.h"
 #include "killswitch/KillSwitchState.h"
@@ -15,6 +19,10 @@
 #include "domain/DnsProfile.h"
 #include "routing/RoutingManager.h"
 #include "runtime/RuntimeBackendType.h"
+#include "features/FeatureGate.h"
+#include "features/FeaturePolicy.h"
+#include "packaging/InstallationMode.h"
+#include "packaging/WindowsInstallInfo.h"
 #include "storage/AppSettings.h"
 #include "ui/DnsManagerDialog.h"
 #include "ui/RoutingManagerDialog.h"
@@ -36,19 +44,23 @@
 #include <QPushButton>
 #include <QRadioButton>
 #include <QSpinBox>
+#include <QJsonDocument>
 #include <QJsonObject>
 #include <QMessageBox>
+#include <QProcess>
 #include <QUrl>
 #include <QVBoxLayout>
 
 namespace zarya {
 
 SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsManager,
-                             HelperProcessManager* helperManager, QWidget* parent)
+                               HelperProcessManager* helperManager,
+                               IHelperServiceManager* serviceManager, QWidget* parent)
     : QDialog(parent)
     , m_routingManager(routingManager)
     , m_dnsManager(dnsManager)
     , m_helperManager(helperManager)
+    , m_serviceManager(serviceManager)
 {
     setWindowTitle(tr("Settings"));
 
@@ -335,30 +347,78 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
         m_tunDirectGuiRadio->setChecked(true);
     }
 
+    m_helperBackendLabel = new QLabel(this);
+    m_helperServiceStatusLabel = new QLabel(this);
     m_helperStatusLabel = new QLabel(m_helperManager ? m_helperManager->statusText()
                                                      : tr("Helper unavailable"),
                                      this);
-    m_startHelperButton = new QPushButton(tr("Start Helper"), this);
+    m_installServiceButton = new QPushButton(tr("Install"), this);
+    m_uninstallServiceButton = new QPushButton(tr("Uninstall"), this);
+    m_startServiceButton = new QPushButton(tr("Start Service"), this);
+    m_stopServiceButton = new QPushButton(tr("Stop Service"), this);
+    m_restartServiceButton = new QPushButton(tr("Restart Service"), this);
+    m_startHelperButton = new QPushButton(tr("Start Manual Helper"), this);
     m_connectHelperButton = new QPushButton(tr("Connect"), this);
     m_checkHelperStatusButton = new QPushButton(tr("Check Status"), this);
+    m_serviceSelfTestButton = new QPushButton(tr("Run Self-Test"), this);
+    m_serviceRecoveryButton = new QPushButton(tr("Show Recovery Instructions"), this);
+    m_recoverKillSwitchOnUninstallCheck =
+        new QCheckBox(tr("Also recover/remove Zarya kill switch rules on uninstall"), this);
+
+    connect(m_installServiceButton, &QPushButton::clicked, this, &SettingsDialog::onInstallService);
+    connect(m_uninstallServiceButton, &QPushButton::clicked, this, &SettingsDialog::onUninstallService);
+    connect(m_startServiceButton, &QPushButton::clicked, this, &SettingsDialog::onStartService);
+    connect(m_stopServiceButton, &QPushButton::clicked, this, &SettingsDialog::onStopService);
+    connect(m_restartServiceButton, &QPushButton::clicked, this, &SettingsDialog::onRestartService);
     connect(m_startHelperButton, &QPushButton::clicked, this, &SettingsDialog::onStartHelper);
     connect(m_connectHelperButton, &QPushButton::clicked, this, &SettingsDialog::onConnectHelper);
     connect(m_checkHelperStatusButton, &QPushButton::clicked, this,
             &SettingsDialog::onCheckHelperStatus);
+    connect(m_serviceSelfTestButton, &QPushButton::clicked, this, &SettingsDialog::onServiceSelfTest);
+    connect(m_serviceRecoveryButton, &QPushButton::clicked, this,
+            &SettingsDialog::onShowServiceRecovery);
     if (m_helperManager) {
         connect(m_helperManager, &HelperProcessManager::connectionStateChanged, this,
-                [this]() { m_helperStatusLabel->setText(m_helperManager->statusText()); });
+                [this]() {
+                    m_helperStatusLabel->setText(m_helperManager->statusText());
+                    refreshHelperServiceUi();
+                });
     }
+    if (m_serviceManager) {
+        connect(m_serviceManager, &IHelperServiceManager::statusChanged, this,
+                &SettingsDialog::refreshHelperServiceUi);
+    }
+
+    auto* serviceButtonsRow = new QHBoxLayout;
+    serviceButtonsRow->addWidget(m_installServiceButton);
+    serviceButtonsRow->addWidget(m_uninstallServiceButton);
+    serviceButtonsRow->addWidget(m_startServiceButton);
+    serviceButtonsRow->addWidget(m_stopServiceButton);
+    serviceButtonsRow->addWidget(m_restartServiceButton);
 
     auto* helperButtonsRow = new QHBoxLayout;
     helperButtonsRow->addWidget(m_startHelperButton);
     helperButtonsRow->addWidget(m_connectHelperButton);
     helperButtonsRow->addWidget(m_checkHelperStatusButton);
+    helperButtonsRow->addWidget(m_serviceSelfTestButton);
+    helperButtonsRow->addWidget(m_serviceRecoveryButton);
+
+    QString helperWarningText =
+        tr("Installing the helper requires administrator/root privileges.\n"
+           "The helper can start TUN mode and manage kill switch rules.\n"
+           "Only install it from a trusted Zarya build.");
+    if (!BuildInfo::isSigned()) {
+        helperWarningText +=
+            QLatin1Char('\n')
+            + tr("This build is unsigned. Installing privileged helper from unsigned builds is "
+                 "not recommended for production use.");
+    }
+    m_helperServiceWarningLabel = new QLabel(helperWarningText, this);
+    m_helperServiceWarningLabel->setWordWrap(true);
 
     auto* tunWarnings = new QLabel(
-        tr("TUN mode changes system routes and may require administrator/root permissions. "
-           "zarya-helper is experimental and is not installed as a privileged service in this "
-           "milestone."),
+        tr("TUN mode requires sing-box and may require zarya-helper. System-proxy mode does not "
+           "require the helper service."),
         this);
     tunWarnings->setWordWrap(true);
 
@@ -373,8 +433,13 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     experimentalForm->addRow(tr("TUN DNS hijack mode"), m_tunDnsHijackModeCombo);
     experimentalForm->addRow(tr("TUN privilege mode"), m_tunDirectGuiRadio);
     experimentalForm->addRow(QString(), m_tunHelperRadio);
-    experimentalForm->addRow(tr("Helper status"), m_helperStatusLabel);
+    experimentalForm->addRow(tr("Privileged helper backend"), m_helperBackendLabel);
+    experimentalForm->addRow(tr("Service status"), m_helperServiceStatusLabel);
+    experimentalForm->addRow(tr("IPC connection"), m_helperStatusLabel);
+    experimentalForm->addRow(QString(), serviceButtonsRow);
+    experimentalForm->addRow(QString(), m_recoverKillSwitchOnUninstallCheck);
     experimentalForm->addRow(QString(), helperButtonsRow);
+    experimentalForm->addRow(QString(), m_helperServiceWarningLabel);
 
     m_tunRequireLocalRuleSetsCheck =
         new QCheckBox(tr("Require local .srs rule sets before starting TUN"), this);
@@ -395,9 +460,97 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     experimentalForm->addRow(QString(), ruleSetNote);
     experimentalForm->addRow(QString(), tunWarnings);
 
-    auto* experimentalGroup = new QGroupBox(
-        tr("Experimental (TUN · helper · kill switch)"), this);
-    experimentalGroup->setLayout(experimentalForm);
+    m_experimentalGroup = new QGroupBox(tr("Experimental (TUN · helper · kill switch)"), this);
+    m_experimentalGroup->setLayout(experimentalForm);
+
+    m_releaseChannelCombo = new QComboBox(this);
+    m_releaseChannelCombo->addItem(tr("Dev"), QStringLiteral("dev"));
+    m_releaseChannelCombo->addItem(tr("Beta"), QStringLiteral("beta"));
+    m_releaseChannelCombo->addItem(tr("Stable"), QStringLiteral("stable"));
+    const int releaseChannelIndex =
+        m_releaseChannelCombo->findData(settings.releaseChannelKey());
+    if (releaseChannelIndex >= 0) {
+        m_releaseChannelCombo->setCurrentIndex(releaseChannelIndex);
+    }
+
+    m_showExperimentalFeaturesCheck =
+        new QCheckBox(tr("Show experimental features (TUN, helper, kill switch)"), this);
+    m_showExperimentalFeaturesCheck->setChecked(settings.showExperimentalFeatures());
+
+    m_experimentalGatePanel = new QWidget(this);
+    auto* gateLabel = new QLabel(
+        tr("Experimental features are hidden in stable mode.\n"
+           "Xray system-proxy mode is the recommended stable path."),
+        m_experimentalGatePanel);
+    gateLabel->setWordWrap(true);
+    m_showExperimentalFeaturesButton =
+        new QPushButton(tr("Show Experimental Features…"), m_experimentalGatePanel);
+    connect(m_showExperimentalFeaturesButton, &QPushButton::clicked, this,
+            &SettingsDialog::onShowExperimentalFeatures);
+    auto* gateLayout = new QVBoxLayout(m_experimentalGatePanel);
+    gateLayout->setContentsMargins(0, 0, 0, 0);
+    gateLayout->addWidget(gateLabel);
+    gateLayout->addWidget(m_showExperimentalFeaturesButton);
+
+    auto* releaseForm = new QFormLayout;
+    releaseForm->addRow(tr("Release channel"), m_releaseChannelCombo);
+    releaseForm->addRow(QString(), m_showExperimentalFeaturesCheck);
+    releaseForm->addRow(QString(), m_experimentalGatePanel);
+    auto* releaseGroup = new QGroupBox(tr("Release channel"), this);
+    releaseGroup->setLayout(releaseForm);
+
+    connect(m_releaseChannelCombo, &QComboBox::currentIndexChanged, this, [this](int index) {
+        Q_UNUSED(index);
+        const QString channel = m_releaseChannelCombo->currentData().toString();
+        const ReleaseChannel releaseChannel =
+            FeaturePolicy::releaseChannelFromString(channel);
+        if (releaseChannel == ReleaseChannel::Stable) {
+            m_showExperimentalFeaturesCheck->setChecked(false);
+        } else {
+            m_showExperimentalFeaturesCheck->setChecked(
+                FeaturePolicy::defaultShowExperimentalFeatures(releaseChannel));
+        }
+        updateExperimentalVisibility();
+    });
+    connect(m_showExperimentalFeaturesCheck, &QCheckBox::toggled, this,
+            &SettingsDialog::updateExperimentalVisibility);
+
+    m_appUpdateChannelCombo = new QComboBox(this);
+    m_appUpdateChannelCombo->addItem(tr("Dev"), QStringLiteral("dev"));
+    m_appUpdateChannelCombo->addItem(tr("Beta"), QStringLiteral("beta"));
+    m_appUpdateChannelCombo->addItem(tr("Stable"), QStringLiteral("stable"));
+    const QString channelKey = settings.appUpdateChannelKey();
+    const int channelIndex = m_appUpdateChannelCombo->findData(channelKey);
+    if (channelIndex >= 0) {
+        m_appUpdateChannelCombo->setCurrentIndex(channelIndex);
+    }
+
+    m_checkAppUpdatesOnStartupCheck =
+        new QCheckBox(tr("Check app updates on startup"), this);
+    m_checkAppUpdatesOnStartupCheck->setChecked(settings.checkAppUpdatesOnStartup());
+
+    m_appUpdateManifestUrlEdit = new QLineEdit(settings.appUpdateManifestUrl(), this);
+    m_appUpdateManifestUrlEdit->setPlaceholderText(
+        tr("Leave empty to use Help → Check for App Updates with a local manifest"));
+
+    m_allowUnsignedAppUpdatesCheck =
+        new QCheckBox(tr("Allow unsigned app update download (no checksum)"), this);
+    m_allowUnsignedAppUpdatesCheck->setChecked(settings.allowUnsignedAppUpdates());
+
+    auto* appUpdatesNote = new QLabel(
+        tr("App updates update Zarya itself. Core updates (below) update Xray and sing-box."),
+        this);
+    appUpdatesNote->setWordWrap(true);
+
+    auto* appUpdatesForm = new QFormLayout;
+    appUpdatesForm->addRow(tr("Channel"), m_appUpdateChannelCombo);
+    appUpdatesForm->addRow(QString(), m_checkAppUpdatesOnStartupCheck);
+    appUpdatesForm->addRow(tr("Manifest URL"), m_appUpdateManifestUrlEdit);
+    appUpdatesForm->addRow(QString(), m_allowUnsignedAppUpdatesCheck);
+    appUpdatesForm->addRow(QString(), appUpdatesNote);
+
+    auto* appUpdatesGroup = new QGroupBox(tr("App updates"), this);
+    appUpdatesGroup->setLayout(appUpdatesForm);
 
     m_allowCoreUpdateWithoutChecksumCheck =
         new QCheckBox(tr("Allow installing core archives without checksum verification"),
@@ -530,9 +683,9 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     killSwitchForm->addRow(QString(), m_killSwitchWarningLabel);
     killSwitchForm->addRow(QString(), killSwitchButtonsRow);
 
-    auto* killSwitchGroup = new QGroupBox(
+    m_killSwitchGroup = new QGroupBox(
         tr("Kill Switch — Experimental · Requires helper · Linux/Windows PoC"), this);
-    killSwitchGroup->setLayout(killSwitchForm);
+    m_killSwitchGroup->setLayout(killSwitchForm);
 
     const auto updateRuntimeControls = [this]() {
         const bool enabled = m_enableExperimentalTunCheck->isChecked();
@@ -547,13 +700,23 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
         m_tunHelperRadio->setEnabled(enabled);
         m_tunRequireLocalRuleSetsCheck->setEnabled(enabled);
         const bool helperUi = enabled && m_helperManager != nullptr;
+        const bool serviceUi = enabled && m_serviceManager != nullptr;
         m_startHelperButton->setEnabled(helperUi);
         m_connectHelperButton->setEnabled(helperUi);
         m_checkHelperStatusButton->setEnabled(helperUi);
+        m_installServiceButton->setEnabled(serviceUi);
+        m_uninstallServiceButton->setEnabled(serviceUi);
+        m_startServiceButton->setEnabled(serviceUi);
+        m_stopServiceButton->setEnabled(serviceUi);
+        m_restartServiceButton->setEnabled(serviceUi);
+        m_serviceSelfTestButton->setEnabled(serviceUi || helperUi);
+        m_serviceRecoveryButton->setEnabled(serviceUi || helperUi);
+        m_recoverKillSwitchOnUninstallCheck->setEnabled(serviceUi);
         updateKillSwitchControls();
     };
     connect(m_tunEnableDnsHijackCheck, &QCheckBox::toggled, this, updateRuntimeControls);
     updateRuntimeControls();
+    refreshHelperServiceUi();
     connect(m_enableExperimentalTunCheck, &QCheckBox::toggled, this, updateRuntimeControls);
     connect(m_enableKillSwitchCheck, &QCheckBox::toggled, this,
             &SettingsDialog::updateKillSwitchControls);
@@ -577,12 +740,15 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     layout->addWidget(dnsGroup);
     layout->addWidget(startupGroup);
     layout->addWidget(desktopGroup);
+    layout->addWidget(appUpdatesGroup);
     layout->addWidget(coreUpdatesGroup);
     layout->addWidget(testingGroup);
-    layout->addWidget(experimentalGroup);
-    layout->addWidget(killSwitchGroup);
+    layout->addWidget(releaseGroup);
+    layout->addWidget(m_experimentalGroup);
+    layout->addWidget(m_killSwitchGroup);
     layout->addWidget(buttons);
-    resize(620, 1080);
+    updateExperimentalVisibility();
+    resize(620, 1120);
 }
 
 void SettingsDialog::onBrowseSingBox()
@@ -597,26 +763,58 @@ void SettingsDialog::onBrowseSingBox()
 
 bool SettingsDialog::confirmTunWarningIfNeeded()
 {
-    if (AppSettings::instance().tunWarningAccepted()) {
+    AppSettings& settings = AppSettings::instance();
+    if (settings.experimentalTunWarningAccepted() || settings.tunWarningAccepted()) {
         return true;
     }
 
     QMessageBox box(this);
     box.setIcon(QMessageBox::Warning);
     box.setWindowTitle(tr("Experimental TUN mode"));
-    box.setText(tr(
-        "TUN mode is experimental. It may change network routes and DNS behavior.\n\n"
-        "If it fails, Zarya will attempt to stop sing-box and restore state, but this mode is "
-        "not production-ready yet.\n\n"
-        "Kill switch is experimental and requires zarya-helper mode."));
-    QPushButton* enableButton = box.addButton(tr("Enable Experimental TUN"),
-                                              QMessageBox::AcceptRole);
+    box.setText(tr("TUN mode is experimental and is not the recommended beta path."));
+    box.setInformativeText(
+        tr("Recommended for beta:\nXray system-proxy mode.\n\n"
+           "Continue with experimental TUN?"));
+    QPushButton* continueButton = box.addButton(tr("Continue"), QMessageBox::AcceptRole);
+    QPushButton* switchButton =
+        box.addButton(tr("Switch to Xray system proxy"), QMessageBox::ActionRole);
     box.addButton(QMessageBox::Cancel);
     box.exec();
+
+    if (box.clickedButton() == switchButton) {
+        m_enableExperimentalTunCheck->setChecked(false);
+        m_systemProxyRuntimeRadio->setChecked(true);
+        return false;
+    }
+    if (box.clickedButton() != continueButton) {
+        return false;
+    }
+    settings.setExperimentalTunWarningAccepted(true);
+    settings.setTunWarningAccepted(true);
+    return true;
+}
+
+bool SettingsDialog::confirmKillSwitchWarningIfNeeded()
+{
+    QMessageBox box(this);
+    box.setIcon(QMessageBox::Warning);
+    box.setWindowTitle(tr("Experimental kill switch"));
+    box.setText(tr("Kill switch is experimental and may block networking if it fails."));
+    box.setInformativeText(
+        tr("Make sure you know the recovery procedure before enabling it."));
+    QPushButton* recoveryButton =
+        box.addButton(tr("Show Recovery Instructions"), QMessageBox::ActionRole);
+    QPushButton* enableButton = box.addButton(tr("Enable"), QMessageBox::AcceptRole);
+    box.addButton(QMessageBox::Cancel);
+    box.exec();
+
+    if (box.clickedButton() == recoveryButton) {
+        onShowKillSwitchRecovery();
+        return false;
+    }
     if (box.clickedButton() != enableButton) {
         return false;
     }
-    AppSettings::instance().setTunWarningAccepted(true);
     return true;
 }
 
@@ -785,6 +983,11 @@ bool SettingsDialog::validateAndSave()
     settings.setTunRequireLocalRuleSets(m_tunRequireLocalRuleSetsCheck->isChecked());
 
     const bool killSwitchEnabled = m_enableKillSwitchCheck->isChecked();
+    if (killSwitchEnabled && !AppSettings::instance().enableExperimentalKillSwitch()) {
+        if (!confirmKillSwitchWarningIfNeeded()) {
+            return false;
+        }
+    }
     settings.setEnableExperimentalKillSwitch(killSwitchEnabled);
     settings.setKillSwitchMode(killSwitchEnabled ? KillSwitchMode::TunOnlyExperimental
                                                  : KillSwitchMode::Disabled);
@@ -793,6 +996,18 @@ bool SettingsDialog::validateAndSave()
     settings.setKillSwitchBlockWhenTunStopped(true);
     settings.setKillSwitchAutoDisableOnCleanStop(
         m_killSwitchAutoDisableOnStopCheck->isChecked());
+
+    const QString previousReleaseChannel = settings.releaseChannelKey();
+    const bool previousShowExperimental = settings.showExperimentalFeatures();
+    const RuntimeMode previousEffective = settings.effectiveRuntimeMode();
+
+    settings.setReleaseChannelKey(m_releaseChannelCombo->currentData().toString());
+    settings.setShowExperimentalFeatures(m_showExperimentalFeaturesCheck->isChecked());
+
+    settings.setAppUpdateChannelKey(m_appUpdateChannelCombo->currentData().toString());
+    settings.setCheckAppUpdatesOnStartup(m_checkAppUpdatesOnStartupCheck->isChecked());
+    settings.setAppUpdateManifestUrl(m_appUpdateManifestUrlEdit->text());
+    settings.setAllowUnsignedAppUpdates(m_allowUnsignedAppUpdatesCheck->isChecked());
 
     settings.setAllowCoreUpdateWithoutChecksum(m_allowCoreUpdateWithoutChecksumCheck->isChecked());
     settings.setAllowManageExternalCorePaths(m_allowManageExternalCorePathsCheck->isChecked());
@@ -804,6 +1019,25 @@ bool SettingsDialog::validateAndSave()
         QMessageBox::information(
             this, tr("Settings"),
             tr("Language will be fully applied after restart."));
+    }
+
+    const RuntimeMode newEffective = settings.effectiveRuntimeMode();
+    if ((previousShowExperimental && !settings.showExperimentalFeatures())
+        || (previousEffective == RuntimeMode::TunSingBoxExperimental
+            && newEffective == RuntimeMode::SystemProxyXray
+            && settings.configuredRuntimeMode() == RuntimeMode::TunSingBoxExperimental)) {
+        QMessageBox::warning(
+            this, tr("Experimental features disabled"),
+            tr("Experimental features are disabled in stable mode. Runtime will use Xray "
+               "system-proxy mode."));
+    } else if (previousReleaseChannel != settings.releaseChannelKey()
+               && FeaturePolicy::releaseChannelFromString(settings.releaseChannelKey())
+                      == ReleaseChannel::Stable
+               && !settings.showExperimentalFeatures()) {
+        QMessageBox::information(
+            this, tr("Stable mode"),
+            tr("Experimental TUN, helper, and kill switch controls are hidden. Recovery actions "
+               "remain available when needed."));
     }
 
     return true;
@@ -934,6 +1168,180 @@ void SettingsDialog::onCheckHelperStatus()
         tr("running=%1, pid=%2")
             .arg(payload.value(QStringLiteral("running")).toBool() ? tr("yes") : tr("no"))
             .arg(payload.value(QStringLiteral("pid")).toInt()));
+}
+
+void SettingsDialog::refreshHelperServiceUi()
+{
+    if (!m_helperBackendLabel || !m_helperServiceStatusLabel) {
+        return;
+    }
+    if (!m_serviceManager) {
+        m_helperBackendLabel->setText(tr("Manual helper"));
+#if defined(Q_OS_WIN)
+        if (InstallationInfo::detect() == InstallationMode::Installed
+            && WindowsInstallInfo::isAvailable()) {
+            if (WindowsInstallInfo::helperServiceInstalled()) {
+                m_helperServiceStatusLabel->setText(
+                    tr("Helper service: %1").arg(WindowsInstallInfo::helperServiceState()));
+            } else {
+                m_helperServiceStatusLabel->setText(
+                    tr("Helper service is not installed. Optional — only needed for experimental "
+                       "TUN/kill switch."));
+            }
+            return;
+        }
+#endif
+        m_helperServiceStatusLabel->setText(tr("Unavailable"));
+        return;
+    }
+
+    const HelperServiceStatus status = m_serviceManager->status();
+    m_helperBackendLabel->setText(status.backend);
+    QString statusText = helperServiceInstallStateToString(status.state);
+    if (m_helperManager
+        && m_helperManager->connectionState() == HelperConnectionState::Connected) {
+        statusText += tr(" · Connected");
+    }
+    if (!status.lastError.isEmpty()) {
+        statusText += QStringLiteral(" — %1").arg(status.lastError);
+    }
+    m_helperServiceStatusLabel->setText(statusText);
+}
+
+void SettingsDialog::onInstallService()
+{
+    if (!m_serviceManager || !m_helperManager) {
+        return;
+    }
+    HelperServiceInstallOptions options =
+        HelperServiceInstallOptions::defaultsForCurrentApp(m_helperManager->helperExecutablePath());
+    QString error;
+    if (!m_serviceManager->install(options, &error)) {
+        QMessageBox msg(this);
+        msg.setWindowTitle(tr("Install helper service"));
+        msg.setText(tr("Installing Zarya Helper service requires Administrator privileges."));
+        msg.setInformativeText(error);
+        msg.setStandardButtons(QMessageBox::Close);
+        msg.exec();
+        refreshHelperServiceUi();
+        return;
+    }
+    refreshHelperServiceUi();
+}
+
+void SettingsDialog::onUninstallService()
+{
+    if (!m_serviceManager) {
+        return;
+    }
+    if (m_recoverKillSwitchOnUninstallCheck->isChecked() && m_helperManager) {
+        QString recoverError;
+        m_helperManager->killSwitchRecover(true, &recoverError);
+    }
+    QString error;
+    if (!m_serviceManager->uninstall(m_recoverKillSwitchOnUninstallCheck->isChecked(), &error)) {
+        QMessageBox::warning(this, tr("Uninstall helper service"), error);
+    }
+    refreshHelperServiceUi();
+}
+
+void SettingsDialog::onStartService()
+{
+    if (!m_serviceManager) {
+        return;
+    }
+    QString error;
+    if (!m_serviceManager->start(&error)) {
+        QMessageBox::warning(this, tr("Start helper service"), error);
+    }
+    refreshHelperServiceUi();
+}
+
+void SettingsDialog::onStopService()
+{
+    if (!m_serviceManager) {
+        return;
+    }
+    QString error;
+    if (!m_serviceManager->stop(&error)) {
+        QMessageBox::warning(this, tr("Stop helper service"), error);
+    }
+    refreshHelperServiceUi();
+}
+
+void SettingsDialog::onRestartService()
+{
+    if (!m_serviceManager) {
+        return;
+    }
+    QString error;
+    if (!m_serviceManager->restart(&error)) {
+        QMessageBox::warning(this, tr("Restart helper service"), error);
+    }
+    refreshHelperServiceUi();
+}
+
+void SettingsDialog::onServiceSelfTest()
+{
+    if (!m_helperManager) {
+        return;
+    }
+    QProcess process;
+    process.start(m_helperManager->helperExecutablePath(),
+                  {QStringLiteral("--service-self-test"),
+                   QStringLiteral("--allowed-runtime-dir"),
+                   AppPaths::runtimeDir(),
+                   QStringLiteral("--allowed-core-dir"),
+                   AppPaths::singBoxCoreDir()});
+    process.waitForFinished(15000);
+    QMessageBox box(this);
+    box.setWindowTitle(tr("Helper self-test"));
+    box.setText(QString::fromUtf8(process.readAllStandardOutput()));
+    if (process.exitCode() != 0) {
+        box.setInformativeText(QString::fromUtf8(process.readAllStandardError()));
+    }
+    box.setStandardButtons(QMessageBox::Close);
+    box.exec();
+}
+
+void SettingsDialog::onShowServiceRecovery()
+{
+    const QString text = m_serviceManager ? m_serviceManager->recoveryInstructions()
+                                          : HelperProcessManager::recoveryInstructionsText();
+    QMessageBox box(this);
+    box.setWindowTitle(tr("Helper service recovery"));
+    box.setText(text);
+    box.setStandardButtons(QMessageBox::Close);
+    box.exec();
+}
+
+void SettingsDialog::updateExperimentalVisibility()
+{
+    const ReleaseChannel channel = FeaturePolicy::releaseChannelFromString(
+        m_releaseChannelCombo->currentData().toString());
+    const bool visible = m_showExperimentalFeaturesCheck->isChecked();
+    m_experimentalGroup->setVisible(visible);
+    m_killSwitchGroup->setVisible(visible);
+    m_experimentalGatePanel->setVisible(!visible);
+    m_showExperimentalFeaturesCheck->setVisible(channel != ReleaseChannel::Stable);
+}
+
+void SettingsDialog::onShowExperimentalFeatures()
+{
+    QMessageBox box(this);
+    box.setIcon(QMessageBox::Warning);
+    box.setWindowTitle(tr("Experimental features"));
+    box.setText(tr("Experimental features may break networking and are not part of stable "
+                   "support."));
+    box.setInformativeText(
+        tr("TUN, zarya-helper, and kill switch are experimental. Use Xray system-proxy mode for "
+           "the recommended stable path."));
+    box.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+    if (box.exec() != QMessageBox::Ok) {
+        return;
+    }
+    m_showExperimentalFeaturesCheck->setChecked(true);
+    updateExperimentalVisibility();
 }
 
 } // namespace zarya

@@ -1,0 +1,60 @@
+name: Experimental TUN issue
+description: Report TUN, helper, or kill switch problems
+labels: ["bug", "experimental", "tun", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **TUN, zarya-helper, and kill switch are experimental.**
+
+        Attach a redacted diagnostics bundle and state whether kill switch was enabled.
+        Do not paste raw proxy links or subscription URLs.
+  - type: input
+    id: version
+    attributes:
+      label: Zarya version
+      placeholder: 0.34.0-beta
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Windows
+        - macOS
+        - Linux
+    validations:
+      required: true
+  - type: checkboxes
+    id: features
+    attributes:
+      label: Experimental features involved
+      options:
+        - label: sing-box TUN mode
+        - label: zarya-helper
+        - label: kill switch enabled
+        - label: Windows helper service
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+    validations:
+      required: true
+  - type: textarea
+    id: recovery
+    attributes:
+      label: Recovery steps tried
+      description: e.g. stop profile, kill switch recovery, helper service stop

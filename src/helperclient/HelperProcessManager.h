@@ -16,15 +16,21 @@ enum class HelperConnectionState {
     Error,
 };
 
+class IHelperServiceManager;
+
 class HelperProcessManager : public QObject {
     Q_OBJECT
 
 public:
     explicit HelperProcessManager(QObject* parent = nullptr);
 
+    void setServiceManager(IHelperServiceManager* serviceManager);
+
     HelperConnectionState connectionState() const;
     QString statusText() const;
     QString lastError() const;
+
+    QString helperExecutablePath() const;
 
     bool startHelperDevMode(QString* errorMessage = nullptr);
     bool connectToHelper(QString* errorMessage = nullptr);
@@ -57,9 +63,11 @@ signals:
 
 private:
     bool ensureToken(QString* errorMessage);
-    QString helperExecutablePath() const;
     QStringList helperArguments() const;
+    QString preferredServerName() const;
+    bool shouldUseInstalledService() const;
 
+    IHelperServiceManager* m_serviceManager = nullptr;
     QProcess m_helperProcess;
     IpcClient m_client;
     QString m_token;

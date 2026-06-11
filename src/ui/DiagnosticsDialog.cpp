@@ -1,6 +1,7 @@
 #include "ui/DiagnosticsDialog.h"
 
 #include "diagnostics/DiagnosticsCategory.h"
+#include "packaging/PublicBetaDocs.h"
 #include "ui/DiagnosticsPreviewDialog.h"
 
 #include <QCheckBox>
@@ -132,15 +133,27 @@ void DiagnosticsDialog::onCreate()
         m_logCallback(tr("Diagnostics bundle created: %1").arg(outputPath));
     }
 
-    const auto answer = QMessageBox::information(
-        this, tr("Diagnostics Bundle"),
-        tr("Diagnostics bundle created:\n%1\n\nThis bundle is redacted, but review it "
-           "before sharing.")
-            .arg(outputPath),
-        QMessageBox::Open | QMessageBox::Close, QMessageBox::Close);
+    QMessageBox box(this);
+    box.setIcon(QMessageBox::Information);
+    box.setWindowTitle(tr("Diagnostics Bundle"));
+    box.setText(tr("Diagnostics bundle created:\n%1").arg(outputPath));
+    box.setInformativeText(
+        tr("This bundle is redacted, but review the diagnostics archive before sharing it "
+           "publicly."));
+    QPushButton* openFolderButton = box.addButton(tr("Open Folder"), QMessageBox::ActionRole);
+    QPushButton* issueTemplateButton =
+        box.addButton(tr("Open Issue Template"), QMessageBox::ActionRole);
+    box.addButton(QMessageBox::Close);
+    box.exec();
 
-    if (answer == QMessageBox::Open) {
+    if (box.clickedButton() == openFolderButton) {
         QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(outputPath).absolutePath()));
+    } else if (box.clickedButton() == issueTemplateButton) {
+        if (!PublicBetaDocs::openIssueReporting()) {
+            QMessageBox::warning(this, tr("Diagnostics Bundle"),
+                                 tr("Issue reporting instructions are not bundled with this "
+                                    "build."));
+        }
     }
     accept();
 }

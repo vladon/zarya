@@ -1,5 +1,9 @@
 #include "storage/AppSettings.h"
 
+#include "app/BuildInfo.h"
+#include "features/FeatureGate.h"
+#include "features/FeatureId.h"
+#include "features/FeaturePolicy.h"
 #include "app/StartupOptions.h"
 #include "platform/Platform.h"
 #include "storage/AppPaths.h"
@@ -113,12 +117,50 @@ void AppSettings::setRuntimeMode(RuntimeMode mode)
     settings().setValue(QStringLiteral("runtime/mode"), runtimeModeToString(mode));
 }
 
+RuntimeMode AppSettings::configuredRuntimeMode() const
+{
+    return runtimeMode();
+}
+
 RuntimeMode AppSettings::effectiveRuntimeMode() const
 {
+    if (!FeatureGate::isEnabled(FeatureId::SingBoxTunExperimental)) {
+        return RuntimeMode::SystemProxyXray;
+    }
     if (!enableExperimentalTun()) {
         return RuntimeMode::SystemProxyXray;
     }
     return runtimeMode();
+}
+
+QString AppSettings::releaseChannelKey() const
+{
+    const QString configured =
+        settings().value(QStringLiteral("release/channel")).toString().trimmed();
+    if (!configured.isEmpty()) {
+        return configured;
+    }
+    return BuildInfo::buildChannel();
+}
+
+void AppSettings::setReleaseChannelKey(const QString& channel)
+{
+    settings().setValue(QStringLiteral("release/channel"), channel.trimmed().toLower());
+}
+
+bool AppSettings::showExperimentalFeatures() const
+{
+    if (settings().contains(QStringLiteral("release/showExperimentalFeatures"))) {
+        return settings().value(QStringLiteral("release/showExperimentalFeatures")).toBool();
+    }
+    const ReleaseChannel channel =
+        FeaturePolicy::releaseChannelFromString(releaseChannelKey());
+    return FeaturePolicy::defaultShowExperimentalFeatures(channel);
+}
+
+void AppSettings::setShowExperimentalFeatures(bool visible)
+{
+    settings().setValue(QStringLiteral("release/showExperimentalFeatures"), visible);
 }
 
 bool AppSettings::tunWarningAccepted() const
@@ -129,6 +171,17 @@ bool AppSettings::tunWarningAccepted() const
 void AppSettings::setTunWarningAccepted(bool accepted)
 {
     settings().setValue(QStringLiteral("runtime/tunWarningAccepted"), accepted);
+}
+
+bool AppSettings::experimentalTunWarningAccepted() const
+{
+    return settings().value(QStringLiteral("runtime/experimentalTunWarningAccepted"), false)
+        .toBool();
+}
+
+void AppSettings::setExperimentalTunWarningAccepted(bool accepted)
+{
+    settings().setValue(QStringLiteral("runtime/experimentalTunWarningAccepted"), accepted);
 }
 
 void AppSettings::markTunSessionStarted()
@@ -604,6 +657,62 @@ void AppSettings::setCheckCoreUpdatesOnStartup(bool enabled)
     settings().setValue(QStringLiteral("cores/checkUpdatesOnStartup"), enabled);
 }
 
+QString AppSettings::appUpdateChannelKey() const
+{
+    const QString configured =
+        settings().value(QStringLiteral("app/updateChannel")).toString().trimmed();
+    if (!configured.isEmpty()) {
+        return configured;
+    }
+    return BuildInfo::buildChannel();
+}
+
+void AppSettings::setAppUpdateChannelKey(const QString& channel)
+{
+    settings().setValue(QStringLiteral("app/updateChannel"), channel.trimmed().toLower());
+}
+
+bool AppSettings::checkAppUpdatesOnStartup() const
+{
+    return settings().value(QStringLiteral("app/checkUpdatesOnStartup"), false).toBool();
+}
+
+void AppSettings::setCheckAppUpdatesOnStartup(bool enabled)
+{
+    settings().setValue(QStringLiteral("app/checkUpdatesOnStartup"), enabled);
+}
+
+QString AppSettings::appUpdateManifestUrl() const
+{
+    return settings().value(QStringLiteral("app/updateManifestUrl")).toString().trimmed();
+}
+
+void AppSettings::setAppUpdateManifestUrl(const QString& url)
+{
+    settings().setValue(QStringLiteral("app/updateManifestUrl"), url.trimmed());
+}
+
+bool AppSettings::allowUnsignedAppUpdates() const
+{
+    return settings().value(QStringLiteral("app/allowUnsignedAppUpdates"), false).toBool();
+}
+
+void AppSettings::setAllowUnsignedAppUpdates(bool enabled)
+{
+    settings().setValue(QStringLiteral("app/allowUnsignedAppUpdates"), enabled);
+}
+
+bool AppSettings::installedPortableImportPromptShown() const
+{
+    return settings().value(QStringLiteral("onboarding/installedPortableImportPromptShown"), false)
+        .toBool();
+}
+
+void AppSettings::setInstalledPortableImportPromptShown(bool shown)
+{
+    settings().setValue(QStringLiteral("onboarding/installedPortableImportPromptShown"), shown);
+}
+
 bool AppSettings::firstRunCompleted() const
 {
     return settings().value(QStringLiteral("onboarding/firstRunCompleted"), false).toBool();
@@ -612,6 +721,28 @@ bool AppSettings::firstRunCompleted() const
 void AppSettings::setFirstRunCompleted(bool completed)
 {
     settings().setValue(QStringLiteral("onboarding/firstRunCompleted"), completed);
+}
+
+bool AppSettings::firstRunCoreInstalled() const
+{
+    return settings().value(QStringLiteral("onboarding/firstRunCoreInstalled"), false).toBool();
+}
+
+void AppSettings::setFirstRunCoreInstalled(bool installed)
+{
+    settings().setValue(QStringLiteral("onboarding/firstRunCoreInstalled"), installed);
+}
+
+bool AppSettings::firstRunProfilesImported() const
+{
+    return settings()
+        .value(QStringLiteral("onboarding/firstRunProfilesImported"), false)
+        .toBool();
+}
+
+void AppSettings::setFirstRunProfilesImported(bool imported)
+{
+    settings().setValue(QStringLiteral("onboarding/firstRunProfilesImported"), imported);
 }
 
 bool AppSettings::dismissBetaBanner() const

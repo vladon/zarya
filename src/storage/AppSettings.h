@@ -36,10 +36,20 @@ public:
 
     RuntimeMode runtimeMode() const;
     void setRuntimeMode(RuntimeMode mode);
+    RuntimeMode configuredRuntimeMode() const;
     RuntimeMode effectiveRuntimeMode() const;
+
+    QString releaseChannelKey() const;
+    void setReleaseChannelKey(const QString& channel);
+
+    bool showExperimentalFeatures() const;
+    void setShowExperimentalFeatures(bool visible);
 
     bool tunWarningAccepted() const;
     void setTunWarningAccepted(bool accepted);
+
+    bool experimentalTunWarningAccepted() const;
+    void setExperimentalTunWarningAccepted(bool accepted);
 
     void markTunSessionStarted();
     void markCleanShutdown();
@@ -168,8 +178,29 @@ public:
     bool checkCoreUpdatesOnStartup() const;
     void setCheckCoreUpdatesOnStartup(bool enabled);
 
+    QString appUpdateChannelKey() const;
+    void setAppUpdateChannelKey(const QString& channel);
+
+    bool checkAppUpdatesOnStartup() const;
+    void setCheckAppUpdatesOnStartup(bool enabled);
+
+    QString appUpdateManifestUrl() const;
+    void setAppUpdateManifestUrl(const QString& url);
+
+    bool allowUnsignedAppUpdates() const;
+    void setAllowUnsignedAppUpdates(bool enabled);
+
+    bool installedPortableImportPromptShown() const;
+    void setInstalledPortableImportPromptShown(bool shown);
+
     bool firstRunCompleted() const;
     void setFirstRunCompleted(bool completed);
+
+    bool firstRunCoreInstalled() const;
+    void setFirstRunCoreInstalled(bool installed);
+
+    bool firstRunProfilesImported() const;
+    void setFirstRunProfilesImported(bool imported);
 
     bool dismissBetaBanner() const;
     void setDismissBetaBanner(bool dismissed);

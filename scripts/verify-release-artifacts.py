@@ -17,10 +17,47 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from release_common import (  # noqa: E402
     FORBIDDEN_ARTIFACT_NAMES,
+    INSTALLER_DOC_FILES,
+    PUBLIC_BETA_DOC_FILES,
+    UPDATER_DOC_FILES,
+    STABLE_DOC_FILES,
     extract_tar_gz,
     extract_zip,
     read_cmake_version,
     sha256_file,
+)
+
+INSTALLER_SKELETON_PATHS = (
+    "packaging/windows/wix/Product.wxs",
+    "packaging/windows/wix/Registry.wxs",
+    "packaging/windows/wix/Directories.wxs",
+    "scripts/package-windows-msi.ps1",
+    "docs/installer/windows-msi-poc.md",
+    "packaging/linux/deb/DEBIAN/control.in",
+    "packaging/linux/rpm/zarya.spec.in",
+    "packaging/metadata/app-id.txt",
+)
+
+PRODUCTION_INSTALLER_CLAIMS = (
+    "production msi",
+    "production pkg",
+    "production deb",
+    "replaces portable beta artifacts",
+)
+
+PRODUCTION_SELF_UPDATE_CLAIMS = (
+    "production self-update",
+    "automatic app replacement enabled",
+    "silent auto-update",
+)
+
+ISSUE_TEMPLATE_FILES = (
+    "bug_report.yml",
+    "diagnostics_issue.yml",
+    "feature_request.yml",
+    "config_validation.yml",
+    "experimental_tun_issue.yml",
+    "security.md",
 )
 
 
@@ -54,12 +91,199 @@ def checksum_for_artifact(output_dir: Path, artifact: Path) -> str | None:
     return None
 
 
+def verify_installer_docs(staging: Path) -> list[str]:
+    errors: list[str] = []
+    for name in INSTALLER_DOC_FILES:
+        if not (staging / "docs" / "installer" / name).is_file():
+            errors.append(f"missing installer doc: docs/installer/{name}")
+    return errors
+
+
+def verify_updater_docs(staging: Path) -> list[str]:
+    errors: list[str] = []
+    for name in UPDATER_DOC_FILES:
+        if not (staging / "docs" / "updater" / name).is_file():
+            errors.append(f"missing updater doc: docs/updater/{name}")
+    return errors
+
+
+def verify_stable_docs(staging: Path) -> list[str]:
+    errors: list[str] = []
+    for name in STABLE_DOC_FILES:
+        if not (staging / "docs" / "stable" / name).is_file():
+            errors.append(f"missing stable doc: docs/stable/{name}")
+    return errors
+
+
+def verify_stable_source(source_root: Path) -> list[str]:
+    errors: list[str] = []
+    required = (
+        "src/features/FeatureGate.cpp",
+        "docs/stable/stable-scope.md",
+        "docs/stable/release-criteria.md",
+    )
+    for relative in required:
+        if not (source_root / relative).is_file():
+            errors.append(f"missing stable hardening source/doc: {relative}")
+    return errors
+
+
+def verify_updater_source(source_root: Path) -> list[str]:
+    errors: list[str] = []
+    required = (
+        "src/updater/AppUpdateChecker.cpp",
+        "src/updater/AppUpdatePlanner.cpp",
+        "src/updater/AppVersion.cpp",
+        "scripts/generate-update-manifest.py",
+        "docs/updater/README.md",
+    )
+    for relative in required:
+        if not (source_root / relative).is_file():
+            errors.append(f"missing updater source/doc: {relative}")
+    return errors
+
+
+def verify_no_production_self_update_claims(staging: Path) -> list[str]:
+    errors: list[str] = []
+    scan_paths = [staging / "RELEASE_NOTES.md", staging / "docs" / "updater" / "README.md"]
+    for path in scan_paths:
+        if not path.is_file():
+            continue
+        lowered = path.read_text(encoding="utf-8", errors="replace").lower()
+        for phrase in PRODUCTION_SELF_UPDATE_CLAIMS:
+            if phrase in lowered:
+                errors.append(f"forbidden self-update claim in {path.name}: {phrase}")
+    updater_readme = staging / "docs" / "updater" / "README.md"
+    if updater_readme.is_file():
+        text = updater_readme.read_text(encoding="utf-8", errors="replace").lower()
+        if "does not replace" not in text and "not replace" not in text:
+            errors.append("updater README must state app is not replaced automatically")
+    return errors
+
+
+def verify_installer_skeletons(source_root: Path) -> list[str]:
+    errors: list[str] = []
+    for relative in INSTALLER_SKELETON_PATHS:
+        if not (source_root / relative).is_file():
+            errors.append(f"missing installer skeleton: {relative}")
+    if not (source_root / "src" / "packaging" / "InstallationMode.cpp").is_file():
+        errors.append("missing InstallationMode implementation")
+    return errors
+
+
+def verify_no_production_installer_claims(staging: Path) -> list[str]:
+    errors: list[str] = []
+    scan_paths = [staging / "RELEASE_NOTES.md", staging / "docs" / "installer" / "README.md"]
+    for path in scan_paths:
+        if not path.is_file():
+            continue
+        lowered = path.read_text(encoding="utf-8", errors="replace").lower()
+        for phrase in PRODUCTION_INSTALLER_CLAIMS:
+            if phrase in lowered:
+                errors.append(f"forbidden production installer claim in {path.name}: {phrase}")
+    installer_readme = staging / "docs" / "installer" / "README.md"
+    if installer_readme.is_file():
+        text = installer_readme.read_text(encoding="utf-8", errors="replace")
+        if "No production MSI/PKG/DEB yet" not in text and "no production MSI" not in text.lower():
+            errors.append("installer README must state no production installer yet")
+    return errors
+
+
+def verify_public_beta_docs(staging: Path) -> list[str]:
+    errors: list[str] = []
+    for name in PUBLIC_BETA_DOC_FILES:
+        if not (staging / "docs" / "public-beta" / name).is_file():
+            errors.append(f"missing public-beta doc: docs/public-beta/{name}")
+    return errors
+
+
+def verify_issue_templates(source_root: Path) -> list[str]:
+    errors: list[str] = []
+    for name in ISSUE_TEMPLATE_FILES:
+        if not (source_root / ".github" / "ISSUE_TEMPLATE" / name).is_file():
+            errors.append(f"missing issue template: .github/ISSUE_TEMPLATE/{name}")
+    if not (source_root / ".github" / "pull_request_template.md").is_file():
+        errors.append("missing .github/pull_request_template.md")
+    return errors
+
+
+def verify_public_beta_artifact(staging: Path) -> list[str]:
+    errors: list[str] = []
+    if not (staging / "RELEASE_NOTES.md").is_file():
+        errors.append("RELEASE_NOTES.md is missing from artifact")
+    if not list(staging.rglob("zarya_en.qm")) or not list(staging.rglob("zarya_ru.qm")):
+        errors.append("translations (zarya_en.qm, zarya_ru.qm) are missing from artifact")
+    helper_names = ("zarya-helper.exe", "zarya-helper")
+    if not any(staging.rglob(name) for name in helper_names):
+        errors.append("zarya-helper binary is missing from artifact")
+    return errors
+
+
 def verify_forbidden_files(staging: Path) -> list[str]:
     errors: list[str] = []
     for path in staging.rglob("*"):
-        if path.is_file() and path.name in FORBIDDEN_ARTIFACT_NAMES:
+        if not path.is_file():
+            continue
+        if path.name in FORBIDDEN_ARTIFACT_NAMES:
             errors.append(f"forbidden file included: {path.relative_to(staging)}")
+        if path.suffix in {".download", ".tmp"}:
+            errors.append(f"forbidden temp file included: {path.relative_to(staging)}")
     return errors
+
+
+def verify_release_notes_version(staging: Path, expected_version: str) -> list[str]:
+    notes = staging / "RELEASE_NOTES.md"
+    if not notes.is_file():
+        return ["RELEASE_NOTES.md is missing from artifact"]
+    if expected_version not in notes.read_text(encoding="utf-8"):
+        return [f"RELEASE_NOTES.md does not mention {expected_version}"]
+    return []
+
+
+def verify_no_stale_versions(staging: Path, expected_version: str) -> list[str]:
+    errors: list[str] = []
+    parts = expected_version.split(".")
+    stale_versions: list[str] = []
+    if len(parts) >= 2 and parts[1].isdigit():
+        previous_minor = int(parts[1]) - 1
+        if previous_minor >= 0:
+            stale_versions.append(f"0.{previous_minor}.0-beta")
+
+    scan_paths = [staging / "RELEASE_NOTES.md"]
+    public_beta = staging / "docs" / "public-beta"
+    if public_beta.is_dir():
+        scan_paths.extend(sorted(public_beta.glob("*.md")))
+
+    for path in scan_paths:
+        if not path.is_file():
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        for stale in stale_versions:
+            if stale in text:
+                errors.append(f"stale version {stale} found in {path.relative_to(staging)}")
+    return errors
+
+
+def verify_executable_version(staging: Path, expected_version: str) -> list[str]:
+    candidates = list(staging.rglob("Zarya.exe")) + list(staging.rglob("zarya"))
+    exe = next((path for path in candidates if path.is_file()), None)
+    if exe is None:
+        return []
+    try:
+        proc = subprocess.run(
+            [str(exe), "--version"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        output = (proc.stdout or "") + (proc.stderr or "")
+        if proc.returncode != 0:
+            return [f"executable --version failed for {exe.name}"]
+        if expected_version not in output:
+            return [f"executable --version does not report {expected_version}"]
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return [f"executable --version check failed: {exc}"]
+    return []
 
 
 def detect_platform(artifact: Path, manifest: dict | None) -> str:
@@ -156,6 +380,11 @@ def main() -> int:
     parser.add_argument("--require-checksum", action="store_true", help="Require matching SHA256")
     parser.add_argument("--allow-unsigned", action="store_true", help="Allow unsigned artifacts")
     parser.add_argument("--require-signed", action="store_true", help="Fail if artifact is unsigned")
+    parser.add_argument(
+        "--public-beta",
+        action="store_true",
+        help="Verify public beta docs, release notes, translations, helper, and issue templates",
+    )
     args = parser.parse_args()
 
     if args.require_signed and args.allow_unsigned:
@@ -192,6 +421,21 @@ def main() -> int:
 
         staging = find_staging_root(temp_dir)
         errors.extend(verify_forbidden_files(staging))
+        if args.public_beta:
+            errors.extend(verify_public_beta_docs(staging))
+            errors.extend(verify_installer_docs(staging))
+            errors.extend(verify_updater_docs(staging))
+            errors.extend(verify_stable_docs(staging))
+            errors.extend(verify_public_beta_artifact(staging))
+            errors.extend(verify_issue_templates(ROOT))
+            errors.extend(verify_installer_skeletons(ROOT))
+            errors.extend(verify_updater_source(ROOT))
+            errors.extend(verify_stable_source(ROOT))
+            errors.extend(verify_no_production_installer_claims(staging))
+            errors.extend(verify_no_production_self_update_claims(staging))
+            errors.extend(verify_release_notes_version(staging, expected_version))
+            errors.extend(verify_no_stale_versions(staging, expected_version))
+            errors.extend(verify_executable_version(staging, expected_version))
         manifest = load_manifest(staging)
         if manifest is None:
             errors.append("release-manifest.json is missing")

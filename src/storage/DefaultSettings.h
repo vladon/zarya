@@ -19,7 +19,10 @@ public:
     static bool enableExperimentalTun();
     static bool enableExperimentalKillSwitch();
     static bool checkCoreUpdatesOnStartup();
+    static bool checkAppUpdatesOnStartup();
     static bool allowCoreUpdateWithoutChecksum();
+    static bool allowUnsignedAppUpdates();
+    static bool showExperimentalFeatures();
 };
 
 } // namespace zarya

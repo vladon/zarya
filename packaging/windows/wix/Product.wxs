@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <?include Variables.wxi ?>
+
+  <Package
+    Name="$(var.ProductName)"
+    Manufacturer="$(var.Manufacturer)"
+    Version="$(var.ProductVersion)"
+    UpgradeCode="$(var.UpgradeCode)"
+    Scope="perMachine">
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Zarya is already installed." />
+
+    <Property Id="INSTALLDESKTOPSHORTCUT" Value="0" Secure="yes" />
+    <Property Id="INSTALLHELPERSERVICE" Value="0" Secure="yes" />
+
+    <Feature Id="MainFeature" Title="Zarya" Level="1">
+      <ComponentGroupRef Id="ZaryaAppComponents" />
+      <ComponentGroupRef Id="ZaryaRegistryComponent" />
+      <ComponentGroupRef Id="ZaryaShortcutComponents" />
+      <ComponentGroupRef Id="ZaryaDesktopShortcutComponents" />
+    </Feature>
+  </Package>
+</Wix>

@@ -20,7 +20,8 @@ class BackupImportDialog : public QDialog {
 public:
     explicit BackupImportDialog(BackupManager& manager, bool coreRunning, bool killSwitchActive,
                                 const std::function<void(const QString&)>& logCallback,
-                                QWidget* parent = nullptr);
+                                QWidget* parent = nullptr,
+                                const QString& initialArchivePath = {});
 
     bool importApplied() const { return m_importApplied; }
 

@@ -12,6 +12,8 @@ Zarya persists the **pre-enable system proxy snapshot** to `data/proxy-previous-
 
 Use **Recover** to apply selected actions, **Skip** to continue without changes, or follow kill-switch / TUN sections below if networking is still broken.
 
+Recovery remains available even when experimental features are hidden on the stable release channel.
+
 ## Kill switch (experimental)
 
 ### Linux nftables PoC

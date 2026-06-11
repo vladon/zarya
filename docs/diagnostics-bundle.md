@@ -4,6 +4,8 @@
 
 A diagnostics bundle is a **redacted troubleshooting archive** for support and debugging. It is **not** a backup and cannot restore your configuration.
 
+Diagnostics include release channel, configured vs effective runtime mode, and experimental feature state to separate recommended-path bugs from experimental-path bugs. See `diagnostics/app-info.json` → `stableHardening`.
+
 Use it when investigating:
 
 - Core startup failures

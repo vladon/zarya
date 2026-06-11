@@ -17,10 +17,15 @@
 #include "runtime/singbox/SingBoxConfigGenerator.h"
 #include "geodata/GeoDataManager.h"
 #include "helperclient/HelperProcessManager.h"
+#include "service/HelperServiceStatus.h"
+#include "service/IHelperServiceManager.h"
 #include "killswitch/KillSwitchState.h"
 #include "logging/LogBuffer.h"
 #include "migration/MigrationManager.h"
 #include "app/BuildInfo.h"
+#include "packaging/InstallationMode.h"
+#include "features/FeatureGate.h"
+#include "updater/AppUpdateStatus.h"
 #include "packaging/PackagingInfo.h"
 #include "dns/DnsManager.h"
 #include "platform/PlatformPrivilege.h"
@@ -104,8 +109,13 @@ QJsonObject collectAppInfo(const DiagnosticsContext& context)
 #endif
     object.insert(QStringLiteral("qtVersion"), QString::fromLatin1(QT_VERSION_STR));
     object.insert(QStringLiteral("portableMode"), AppPaths::isPortableMode());
+    object.insert(QStringLiteral("configuredRuntimeMode"),
+                  runtimeModeToString(AppSettings::instance().configuredRuntimeMode()));
     object.insert(QStringLiteral("runtimeMode"),
                   runtimeModeToString(AppSettings::instance().effectiveRuntimeMode()));
+    object.insert(QStringLiteral("effectiveRuntimeMode"),
+                  runtimeModeToString(AppSettings::instance().effectiveRuntimeMode()));
+    object.insert(QStringLiteral("stableHardening"), FeatureGate::diagnosticsJson());
     if (context.appStartedAt.isValid()) {
         object.insert(QStringLiteral("startedAt"), context.appStartedAt.toString(Qt::ISODate));
         object.insert(QStringLiteral("uptimeSeconds"),
@@ -218,6 +228,43 @@ QJsonObject collectRuntimeStatus(const DiagnosticsContext& context)
         object.insert(QStringLiteral("selectedProfileProtocol"),
                       protocolTypeToString(context.selectedProfile.protocol));
     }
+    return object;
+}
+
+QJsonObject collectHelperServiceStatus(const DiagnosticsContext& context)
+{
+    QJsonObject object;
+    IHelperServiceManager* service = context.helperService;
+    if (!service) {
+        object.insert(QStringLiteral("backend"), QStringLiteral("unavailable"));
+        object.insert(QStringLiteral("installed"), false);
+        object.insert(QStringLiteral("running"), false);
+        object.insert(QStringLiteral("connected"), false);
+        return object;
+    }
+
+    const HelperServiceStatus status = service->status();
+    object.insert(QStringLiteral("backend"), status.backend);
+    object.insert(QStringLiteral("serviceName"), status.serviceName);
+    object.insert(QStringLiteral("installed"),
+                  status.state == HelperServiceInstallState::Installed
+                      || status.state == HelperServiceInstallState::Running
+                      || status.state == HelperServiceInstallState::Stopped);
+    object.insert(QStringLiteral("running"), status.state == HelperServiceInstallState::Running);
+  object.insert(QStringLiteral("connected"),
+                  context.helper
+                      && context.helper->connectionState() == HelperConnectionState::Connected);
+    object.insert(QStringLiteral("privileged"), status.privileged);
+    object.insert(QStringLiteral("version"), status.version);
+    object.insert(QStringLiteral("state"), helperServiceInstallStateToString(status.state));
+    if (!status.lastError.isEmpty()) {
+        object.insert(QStringLiteral("lastError"), status.lastError);
+    }
+    QJsonArray warnings;
+    for (const QString& warning : status.warnings) {
+        warnings.append(warning);
+    }
+    object.insert(QStringLiteral("warnings"), warnings);
     return object;
 }
 
@@ -534,6 +581,151 @@ QString collectRedactedLogs(const DiagnosticsOptions& options)
     return lines.join(QStringLiteral("\n"));
 }
 
+QJsonObject coreManagerEntry(const CoreInfo& info, bool requireChecksum)
+{
+    QJsonObject core;
+    core.insert(QStringLiteral("managedPath"),
+                DiagnosticsRedactor::redactPath(info.executablePath,
+                                                DiagnosticsRedactionMode::Strict, false));
+    core.insert(QStringLiteral("externalPath"), !info.managed);
+    if (info.lastReleaseCheckAt.isValid()) {
+        core.insert(QStringLiteral("lastReleaseCheck"),
+                    info.lastReleaseCheckAt.toString(Qt::ISODate));
+    }
+    if (!info.selectedAssetName.isEmpty()) {
+        core.insert(QStringLiteral("lastSelectedAsset"), info.selectedAssetName);
+    }
+    if (!info.lastUpdateError.isEmpty()) {
+        core.insert(QStringLiteral("lastUpdateError"),
+                    DiagnosticsRedactor::redactText(info.lastUpdateError,
+                                                    DiagnosticsRedactionMode::Strict));
+    } else if (!info.lastError.isEmpty() && info.status == CoreInstallStatus::Updating) {
+        core.insert(QStringLiteral("lastUpdateError"),
+                    DiagnosticsRedactor::redactText(info.lastError,
+                                                    DiagnosticsRedactionMode::Strict));
+    } else {
+        core.insert(QStringLiteral("lastUpdateError"), QJsonValue::Null);
+    }
+    if (!info.lastReleaseCheckError.isEmpty()) {
+        core.insert(QStringLiteral("lastReleaseCheckError"),
+                    DiagnosticsRedactor::redactText(info.lastReleaseCheckError,
+                                                    DiagnosticsRedactionMode::Strict));
+    }
+    core.insert(QStringLiteral("checksumPolicy"),
+                requireChecksum ? QStringLiteral("require") : QStringLiteral("allow"));
+    return core;
+}
+
+QJsonObject collectCoreManagerStatus(const DiagnosticsContext& context, DiagnosticsSnapshot* snapshot)
+{
+    QJsonObject root;
+    QJsonObject manager;
+    const bool requireChecksum = !AppSettings::instance().allowCoreUpdateWithoutChecksum();
+    if (!context.coreBinaryManager) {
+        collectorError(snapshot, QStringLiteral("coreManager"),
+                       QStringLiteral("Core binary manager unavailable"));
+        root.insert(QStringLiteral("coreManager"), manager);
+        return root;
+    }
+    context.coreBinaryManager->refreshLocalState();
+    for (const CoreInfo& info : context.coreBinaryManager->coreInfos()) {
+        const QString key =
+            info.type == CoreType::Xray ? QStringLiteral("xray") : QStringLiteral("singBox");
+        manager.insert(key, coreManagerEntry(info, requireChecksum));
+    }
+    root.insert(QStringLiteral("coreManager"), manager);
+    return root;
+}
+
+QJsonObject collectSubscriptionStatus(const DiagnosticsContext& context)
+{
+    QJsonObject root;
+    QJsonObject subscriptions;
+    int enabledCount = 0;
+    QJsonArray errors;
+    for (const Subscription& subscription : context.subscriptions) {
+        if (subscription.enabled) {
+            ++enabledCount;
+        }
+        if (!subscription.lastError.isEmpty()) {
+            QJsonObject item;
+            item.insert(QStringLiteral("name"), subscription.name);
+            item.insert(QStringLiteral("url"), QStringLiteral("<redacted-url>"));
+            item.insert(QStringLiteral("error"),
+                        DiagnosticsRedactor::redactText(subscription.lastError,
+                                                        DiagnosticsRedactionMode::Strict));
+            errors.append(item);
+        }
+    }
+    subscriptions.insert(QStringLiteral("count"), context.subscriptions.size());
+    subscriptions.insert(QStringLiteral("enabled"), enabledCount);
+    subscriptions.insert(QStringLiteral("lastUpdateErrors"), errors);
+    root.insert(QStringLiteral("subscriptions"), subscriptions);
+    return root;
+}
+
+QJsonObject collectFirstRunStatus()
+{
+    const AppSettings& settings = AppSettings::instance();
+    QJsonObject root;
+    QJsonObject firstRun;
+    firstRun.insert(QStringLiteral("completed"), settings.firstRunCompleted());
+    firstRun.insert(QStringLiteral("coreInstalledAtFirstRun"), settings.firstRunCoreInstalled());
+    firstRun.insert(QStringLiteral("profilesImportedAtFirstRun"),
+                    settings.firstRunProfilesImported());
+    root.insert(QStringLiteral("firstRun"), firstRun);
+    return root;
+}
+
+QJsonObject collectPackagingStatus()
+{
+    QJsonObject root;
+    QJsonObject packaging;
+    packaging.insert(QStringLiteral("portableMode"), AppPaths::isPortableMode());
+
+    const QString manifestPath =
+        QDir(AppPaths::applicationDir()).filePath(QStringLiteral("release-manifest.json"));
+    packaging.insert(QStringLiteral("releaseManifestPresent"), QFile::exists(manifestPath));
+
+    QJsonArray translations;
+    const QStringList translationNames = {QStringLiteral("zarya_en.qm"),
+                                          QStringLiteral("zarya_ru.qm")};
+    for (const QString& name : translationNames) {
+        bool present = QFile::exists(
+            QDir(AppPaths::applicationDir()).filePath(QStringLiteral("translations/") + name));
+#if defined(Q_OS_MACOS)
+        present = present
+                  || QFile::exists(QDir(AppPaths::applicationDir()).filePath(
+                         QStringLiteral("../Resources/translations/") + name));
+#endif
+        if (!present) {
+            continue;
+        }
+        if (name.contains(QStringLiteral("_en."))) {
+            translations.append(QStringLiteral("en"));
+        } else {
+            translations.append(QStringLiteral("ru"));
+        }
+    }
+    packaging.insert(QStringLiteral("translationsPresent"), translations);
+
+    const QString publicBetaReadme =
+        QDir(AppPaths::applicationDir()).filePath(QStringLiteral("docs/public-beta/README.md"));
+#if defined(Q_OS_MACOS)
+    const bool docsPresent =
+        QFile::exists(publicBetaReadme)
+        || QFile::exists(QDir(AppPaths::applicationDir()).filePath(
+               QStringLiteral("../Resources/docs/public-beta/README.md")));
+#else
+    const bool docsPresent = QFile::exists(publicBetaReadme);
+#endif
+    packaging.insert(QStringLiteral("docsPresent"), docsPresent);
+    root.insert(QStringLiteral("packaging"), packaging);
+    root.insert(QStringLiteral("installation"), InstallationInfo::diagnosticsJson());
+    root.insert(QStringLiteral("appUpdater"), AppUpdateStatus::instance().diagnosticsJson());
+    return root;
+}
+
 QJsonObject collectRedactionReport(const DiagnosticsOptions& options)
 {
     QJsonObject object;
@@ -575,6 +767,8 @@ DiagnosticsSnapshot DiagnosticsCollector::collect(const DiagnosticsOptions& opti
     if (categoryEnabled(options, DiagnosticsCategory::CoreStatus)) {
         putJson(&snapshot, QStringLiteral("diagnostics/core-status.json"),
                 collectCoreStatus(context, &snapshot));
+        putJson(&snapshot, QStringLiteral("diagnostics/core-manager-status.json"),
+                collectCoreManagerStatus(context, &snapshot));
     }
     if (categoryEnabled(options, DiagnosticsCategory::RuntimeStatus)) {
         putJson(&snapshot, QStringLiteral("diagnostics/runtime-status.json"),
@@ -583,6 +777,8 @@ DiagnosticsSnapshot DiagnosticsCollector::collect(const DiagnosticsOptions& opti
     if (categoryEnabled(options, DiagnosticsCategory::HelperStatus)) {
         putJson(&snapshot, QStringLiteral("diagnostics/helper-status.json"),
                 collectHelperStatus(context, &snapshot));
+        putJson(&snapshot, QStringLiteral("diagnostics/helper-service-status.json"),
+                collectHelperServiceStatus(context));
     }
     if (categoryEnabled(options, DiagnosticsCategory::SystemProxyStatus)) {
         putJson(&snapshot, QStringLiteral("diagnostics/system-proxy-status.json"),
@@ -614,6 +810,14 @@ DiagnosticsSnapshot DiagnosticsCollector::collect(const DiagnosticsOptions& opti
     }
     if (categoryEnabled(options, DiagnosticsCategory::RecentLogs)) {
         putText(&snapshot, QStringLiteral("logs/app.redacted.log"), collectRedactedLogs(options));
+    }
+    if (categoryEnabled(options, DiagnosticsCategory::AppInfo)) {
+        putJson(&snapshot, QStringLiteral("diagnostics/subscription-status.json"),
+                collectSubscriptionStatus(context));
+        putJson(&snapshot, QStringLiteral("diagnostics/first-run-status.json"),
+                collectFirstRunStatus());
+        putJson(&snapshot, QStringLiteral("diagnostics/packaging-status.json"),
+                collectPackagingStatus());
     }
     if (categoryEnabled(options, DiagnosticsCategory::RecentErrors)) {
         QJsonObject errors;

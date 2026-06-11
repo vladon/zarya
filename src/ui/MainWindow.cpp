@@ -14,6 +14,9 @@
 #include "migration/MigrationManager.h"
 #include "app/BuildInfo.h"
 #include "packaging/PackagingInfo.h"
+#include "packaging/PortableMigration.h"
+#include "packaging/PublicBetaDocs.h"
+#include "diagnostics/SupportSummary.h"
 #include "recovery/StartupRecovery.h"
 #include "storage/SettingsValidator.h"
 #include "ui/BetaBannerWidget.h"
@@ -24,6 +27,7 @@
 #include "errors/ErrorCode.h"
 #include "runtime/singbox/SingBoxConfigGenerator.h"
 #include "helperclient/HelperProcessManager.h"
+#include "service/HelperServiceManagerFactory.h"
 #include "killswitch/KillSwitchState.h"
 #include "storage/AppPaths.h"
 #include "storage/AppSettings.h"
@@ -40,6 +44,10 @@
 #include "ui/RuleSetManagerDialog.h"
 #include "ui/RoutingManagerDialog.h"
 #include "ui/SettingsDialog.h"
+#include "ui/AppUpdateDialog.h"
+#include "updater/AppUpdateChecker.h"
+#include "features/FeatureGate.h"
+#include "updater/AppUpdatePlanner.h"
 #include "geodata/GeoDataFileStatus.h"
 #include "runtime/RuntimeBackendType.h"
 #include "storage/GeoDataSettingsStore.h"
@@ -253,6 +261,8 @@ void MainWindow::setupMenuBar()
     fileMenu->addSeparator();
     m_exportBackupAction = fileMenu->addAction(tr("Export &Backup…"));
     m_importBackupAction = fileMenu->addAction(tr("Import &Backup…"));
+    fileMenu->addAction(tr("Import from Portable Zarya &Folder…"), this,
+                        &MainWindow::onImportFromPortableFolder);
     fileMenu->addSeparator();
     m_settingsAction = fileMenu->addAction(tr("&Settings…"));
     fileMenu->addSeparator();
@@ -304,6 +314,9 @@ void MainWindow::setupMenuBar()
     m_dnsProfilesAction = toolsMenu->addAction(tr("DNS &Profiles…"));
     m_previewSingBoxTunConfigAction =
         toolsMenu->addAction(tr("Preview sing-box TUN config…"));
+    const bool experimentalVisible = FeatureGate::showExperimentalFeatures();
+    m_ruleSetManagerAction->setVisible(experimentalVisible);
+    m_previewSingBoxTunConfigAction->setVisible(experimentalVisible);
     toolsMenu->addSeparator();
     m_enableSystemProxyAction =
         toolsMenu->addAction(tr("Enable &System Proxy"));
@@ -311,10 +324,37 @@ void MainWindow::setupMenuBar()
         toolsMenu->addAction(tr("&Restore Previous Proxy"));
 
     auto* helpMenu = menuBar()->addMenu(tr("&Help"));
+    helpMenu->addAction(tr("Public Beta &Guide"), this, [this]() {
+        if (!PublicBetaDocs::openBundledDoc(QStringLiteral("README.md"))) {
+            QMessageBox::warning(this, tr("Help"),
+                                 tr("Public beta guide is not bundled with this build."));
+        }
+    });
+    helpMenu->addAction(tr("&Quick Start"), this, [this]() {
+        if (!PublicBetaDocs::openBundledDoc(QStringLiteral("quick-start.md"))) {
+            QMessageBox::warning(this, tr("Help"),
+                                 tr("Quick start guide is not bundled with this build."));
+        }
+    });
+    helpMenu->addAction(tr("&Known Limitations"), this, [this]() {
+        if (!PublicBetaDocs::openBundledDoc(QStringLiteral("known-limitations.md"))) {
+            QMessageBox::warning(this, tr("Help"),
+                                 tr("Known limitations doc is not bundled with this build."));
+        }
+    });
+    helpMenu->addAction(tr("&Report Issue…"), this, [this]() {
+        if (!PublicBetaDocs::openIssueReporting()) {
+            QMessageBox::warning(this, tr("Help"),
+                                 tr("Issue reporting instructions are not bundled with this build."));
+        }
+    });
+    helpMenu->addSeparator();
     helpMenu->addAction(tr("Run Setup &Wizard…"), this,
                         [this]() { runFirstRunWizard(true); });
     helpMenu->addAction(tr("Create &Diagnostics Bundle…"), this,
                         &MainWindow::onCreateDiagnosticsBundle);
+    helpMenu->addAction(tr("Copy &Support Summary"), this, &MainWindow::onCopySupportSummary);
+    helpMenu->addAction(tr("Check for App &Updates…"), this, &MainWindow::onCheckAppUpdates);
     helpMenu->addSeparator();
     helpMenu->addAction(tr("&About"), this, &MainWindow::onAbout);
 }
@@ -623,6 +663,11 @@ void MainWindow::runStartupRecovery()
 
     appendLog(QStringLiteral("Unclean previous shutdown detected."));
     StartupRecoveryDialog dialog(plan, this);
+    connect(&dialog, &StartupRecoveryDialog::createDiagnosticsRequested, this,
+            &MainWindow::onCreateDiagnosticsBundle);
+    connect(&dialog, &StartupRecoveryDialog::openReportingGuideRequested, this, []() {
+        PublicBetaDocs::openIssueReporting();
+    });
     if (dialog.exec() != QDialog::Accepted) {
         appendLog(QStringLiteral("Startup recovery skipped by user."));
         return;
@@ -670,9 +715,14 @@ void MainWindow::runFirstRunWizard(bool force)
     connect(&wizard, &FirstRunWizard::openDnsProfilesRequested, this, &MainWindow::onDnsProfiles);
     connect(&wizard, &FirstRunWizard::importBackupRequested, this, &MainWindow::onImportBackup);
     connect(&wizard, &FirstRunWizard::addProfileManuallyRequested, this, &MainWindow::onAddProfile);
+    connect(&wizard, &FirstRunWizard::configureHelperRequested, this, &MainWindow::onSettings);
     connect(&wizard, &FirstRunWizard::wizardFinishedState, this, &MainWindow::applyFirstRunState);
 
     if (wizard.exec() == QDialog::Accepted) {
+        AppSettings::instance().setFirstRunCoreInstalled(
+            m_coreBinaryManager.infoFor(CoreType::Xray).exists);
+        AppSettings::instance().setFirstRunProfilesImported(
+            !m_allProfiles.isEmpty() || !m_subscriptions.isEmpty());
         AppSettings::instance().setFirstRunCompleted(true);
     } else if (wizard.wasSkipped()) {
         AppSettings::instance().setFirstRunCompleted(true);
@@ -690,6 +740,9 @@ void MainWindow::applyFirstRunState(const FirstRunState& state)
         }
         saveAll();
         refreshProfileView();
+    }
+    if (!state.importedProfiles.isEmpty() || !state.addedSubscriptions.isEmpty()) {
+        AppSettings::instance().setFirstRunProfilesImported(true);
     }
     if (!state.addedSubscriptions.isEmpty()) {
         const int beforeCount = m_subscriptions.size();
@@ -751,6 +804,9 @@ void MainWindow::updateStatusDashboard()
         selected = &m_allProfiles.first();
     }
     model.profileName = selected ? selected->name : QString();
+    model.runtimeText = runtimeStatusText();
+    model.recommendedRuntimeText = tr("Xray system proxy");
+    model.experimentalRuntimeActive = FeatureGate::experimentalRuntimeEffective();
 
     m_statusDashboard->updateModel(model);
 }
@@ -856,6 +912,11 @@ void MainWindow::handleErrorAction(ErrorAction action, const AppError& error)
 
 void MainWindow::setupAppController()
 {
+    m_helperServiceManager = HelperServiceManagerFactory::create();
+    if (HelperProcessManager* helper = m_appController.helperProcessManager()) {
+        helper->setServiceManager(m_helperServiceManager.get());
+    }
+
     m_appController.setDialogParent(this);
     m_appController.setAfterCoreStartedCallback([this]() {
         tryAutoEnableSystemProxy(m_appController.lastStartWasAutostart());
@@ -1150,7 +1211,10 @@ void MainWindow::finishStartup(const StartupOptions& options)
 {
     checkKillSwitchRecoveryOnStartup();
     maybeShowFirstRunWizard();
+    maybeShowInstalledPortableImportPrompt();
     checkCoreUpdatesOnStartup();
+    checkAppUpdatesOnStartup();
+    warnIfExperimentalRuntimeDisabledOnStartup();
 
     const AppSettings& settings = AppSettings::instance();
     const bool startMinimized =
@@ -1614,7 +1678,7 @@ void MainWindow::onLoadProfiles()
 void MainWindow::onSettings()
 {
     SettingsDialog dialog(m_routingManager, m_dnsManager, m_appController.helperProcessManager(),
-                        this);
+                          m_helperServiceManager.get(), this);
     dialog.exec();
     appendLog(QStringLiteral("Settings updated. Xray path: %1")
                   .arg(AppSettings::instance().resolvedXrayPath()));
@@ -1649,6 +1713,85 @@ void MainWindow::onExportBackup()
     BackupExportDialog dialog(m_backupManager,
                               [this](const QString& line) { appendLog(line); }, this);
     dialog.exec();
+}
+
+void MainWindow::onImportFromPortableFolder()
+{
+    const QString folder = QFileDialog::getExistingDirectory(
+        this, tr("Import from Portable Zarya Folder"));
+    if (folder.isEmpty()) {
+        return;
+    }
+
+    const PortableDataPreview preview = PortableMigration::preview(folder);
+    if (!preview.valid) {
+        QMessageBox::warning(
+            this, tr("Portable Import"),
+            tr("The selected folder does not look like a portable Zarya install.\n\n"
+               "Expected portable.flag or a data/ folder with profiles, subscriptions, or "
+               "settings."));
+        return;
+    }
+
+    const auto answer = QMessageBox::question(
+        this, tr("Portable Import"),
+        tr("Portable Zarya data found:\n\n"
+           "Profiles: %1\n"
+           "Subscriptions: %2\n"
+           "Routing: %3\n"
+           "DNS: %4\n"
+           "Settings: %5\n\n"
+           "A temporary backup archive will be created and opened in the import flow.\n"
+           "The original portable folder will not be modified.\n\n"
+           "Continue?")
+            .arg(preview.profileCount)
+            .arg(preview.subscriptionCount)
+            .arg(preview.hasRouting ? tr("yes") : tr("no"))
+            .arg(preview.hasDns ? tr("yes") : tr("no"))
+            .arg(preview.hasSettings ? tr("yes") : tr("no")));
+    if (answer != QMessageBox::Yes) {
+        return;
+    }
+
+    const QString tempArchive =
+        QDir(QDir::tempPath())
+            .filePath(QStringLiteral("zarya-portable-import-%1.zarya-backup.zip")
+                          .arg(QDateTime::currentDateTime().toString(
+                              QStringLiteral("yyyyMMdd-HHmmss"))));
+    QString error;
+    if (!PortableMigration::createBackupArchive(folder, tempArchive, &error)) {
+        QMessageBox::critical(this, tr("Portable Import"), error);
+        return;
+    }
+
+    const bool coreRunning = m_appController.isCoreRunning();
+    HelperProcessManager* helper = m_appController.helperProcessManager();
+    const bool killSwitchActive = BackupManager::isKillSwitchActive(helper);
+    if (killSwitchActive) {
+        QMessageBox::warning(this, tr("Portable Import"),
+                             BackupManager::runtimeBlockReason(coreRunning, killSwitchActive));
+        return;
+    }
+    if (coreRunning) {
+        const auto proceed = QMessageBox::question(
+            this, tr("Portable Import"),
+            tr("A proxy core is currently running. Import is disabled until the core is stopped.\n\n"
+               "Open import dialog anyway?"));
+        if (proceed != QMessageBox::Yes) {
+            return;
+        }
+    }
+
+    BackupImportDialog dialog(m_backupManager, coreRunning, killSwitchActive,
+                              [this](const QString& line) { appendLog(line); }, this,
+                              tempArchive);
+    if (dialog.exec() != QDialog::Accepted || !dialog.importApplied()) {
+        return;
+    }
+
+    loadAllOnStartup();
+    m_ruleSetManager.reload();
+    appendLog(QStringLiteral("Configuration reloaded after portable folder import."));
 }
 
 void MainWindow::onImportBackup()
@@ -1692,6 +1835,7 @@ DiagnosticsContext MainWindow::buildDiagnosticsContext()
 {
     DiagnosticsContext context;
     context.profiles = m_allProfiles;
+    context.subscriptions = m_subscriptions;
     if (Profile* selected = selectedProfileInStorage()) {
         context.selectedProfile = *selected;
         context.hasSelectedProfile = true;
@@ -1705,6 +1849,7 @@ DiagnosticsContext MainWindow::buildDiagnosticsContext()
     context.geoDataManager = &m_geoDataManager;
     context.ruleSetManager = &m_ruleSetManager;
     context.helper = m_appController.helperProcessManager();
+    context.helperService = m_helperServiceManager.get();
     context.xrayAdapter = &m_xrayAdapter;
     context.appStartedAt = LogBuffer::instance().appStartedAt();
     context.systemTrayAvailable = trayIsAvailable();
@@ -1719,6 +1864,19 @@ void MainWindow::onCreateDiagnosticsBundle()
     dialog.exec();
 }
 
+void MainWindow::onCopySupportSummary()
+{
+    if (!SupportSummary::copyToClipboard(buildDiagnosticsContext())) {
+        QMessageBox::warning(this, tr("Support Summary"),
+                             tr("Could not copy support summary to the clipboard."));
+        return;
+    }
+    QMessageBox::information(
+        this, tr("Support Summary"),
+        tr("Support summary copied to the clipboard.\n\n"
+           "Review it before pasting into an issue. Do not include proxy links or passwords."));
+}
+
 void MainWindow::checkCoreUpdatesOnStartup()
 {
     if (!AppSettings::instance().checkCoreUpdatesOnStartup()) {
@@ -1727,6 +1885,85 @@ void MainWindow::checkCoreUpdatesOnStartup()
     appendLog(QStringLiteral("Checking core updates on startup"));
     m_coreBinaryManager.refreshLocalState();
     m_coreBinaryManager.checkLatestVersions();
+}
+
+void MainWindow::onCheckAppUpdates()
+{
+    AppUpdateDialog dialog(this);
+    dialog.exec();
+}
+
+void MainWindow::maybeShowInstalledPortableImportPrompt()
+{
+    if (InstallationInfo::detect() != InstallationMode::Installed) {
+        return;
+    }
+    AppSettings& settings = AppSettings::instance();
+    if (settings.installedPortableImportPromptShown()) {
+        return;
+    }
+    if (!m_allProfiles.isEmpty() || !m_subscriptions.isEmpty()) {
+        settings.setInstalledPortableImportPromptShown(true);
+        return;
+    }
+
+    const auto answer = QMessageBox::question(
+        this, tr("Portable Zarya data"),
+        tr("Have a portable Zarya folder with profiles or subscriptions?\n\n"
+           "You can import data from a portable Zarya folder without modifying the original "
+           "folder.\n\n"
+           "Import now?"),
+        QMessageBox::Yes | QMessageBox::No);
+    settings.setInstalledPortableImportPromptShown(true);
+    if (answer == QMessageBox::Yes) {
+        onImportFromPortableFolder();
+    }
+}
+
+void MainWindow::warnIfExperimentalRuntimeDisabledOnStartup()
+{
+    const AppSettings& settings = AppSettings::instance();
+    if (settings.configuredRuntimeMode() != RuntimeMode::TunSingBoxExperimental
+        || !settings.enableExperimentalTun()) {
+        return;
+    }
+    if (settings.effectiveRuntimeMode() == RuntimeMode::TunSingBoxExperimental) {
+        return;
+    }
+    appendLog(QStringLiteral(
+        "Experimental runtime is disabled in stable mode. Effective runtime: Xray system proxy."));
+    QMessageBox::warning(
+        this, tr("Experimental runtime disabled"),
+        tr("Experimental runtime is disabled in stable mode.\n"
+           "Effective runtime: Xray system proxy.\n\n"
+           "Enable experimental features in Settings → Release channel if you intend to use TUN."));
+}
+
+void MainWindow::checkAppUpdatesOnStartup()
+{
+    if (!AppSettings::instance().checkAppUpdatesOnStartup()) {
+        return;
+    }
+    if (AppSettings::instance().appUpdateManifestUrl().trimmed().isEmpty()) {
+        return;
+    }
+    appendLog(QStringLiteral("Checking app updates on startup"));
+    auto* checker = new AppUpdateChecker(this);
+    connect(checker, &AppUpdateChecker::updateCheckFinished, this,
+            [this, checker](const AppUpdatePlan& plan) {
+                if (plan.updateAvailable) {
+                    appendLog(QStringLiteral("App update available: %1").arg(plan.latestVersion));
+                } else {
+                    appendLog(QStringLiteral("App update check: already on latest channel version"));
+                }
+                checker->deleteLater();
+            });
+    connect(checker, &AppUpdateChecker::updateCheckFailed, this,
+            [this, checker](const QString& error) {
+                appendLog(QStringLiteral("App update check failed: %1").arg(error));
+                checker->deleteLater();
+            });
+    checker->checkForUpdates();
 }
 
 void MainWindow::onGeoDataManager()

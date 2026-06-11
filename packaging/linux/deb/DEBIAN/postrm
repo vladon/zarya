@@ -1,0 +1,4 @@
+#!/bin/sh
+# deb postrm placeholder — 0.31 skeleton only
+set -e
+exit 0

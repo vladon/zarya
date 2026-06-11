@@ -1,6 +1,8 @@
 #include "app/BuildInfo.h"
 
 #include "BuildInfo_config.h"
+#include "packaging/InstallationMode.h"
+#include "packaging/WindowsInstallInfo.h"
 #include "storage/AppPaths.h"
 
 #include <QDir>
@@ -33,6 +35,24 @@ QJsonObject loadBuildIntegrity()
         }
     }
     return {};
+}
+
+QString installerSummaryLine()
+{
+#if defined(Q_OS_WIN)
+    if (InstallationInfo::detect() == InstallationMode::Installed
+        && WindowsInstallInfo::isAvailable()) {
+        const QString installer = WindowsInstallInfo::installerType();
+        if (!installer.isEmpty() && installer != QStringLiteral("unknown")) {
+            return installer;
+        }
+        return QStringLiteral("Windows installed");
+    }
+#endif
+    if (InstallationInfo::detect() == InstallationMode::Portable) {
+        return QStringLiteral("Portable");
+    }
+    return QStringLiteral("n/a");
 }
 
 } // namespace
@@ -130,6 +150,8 @@ QString BuildInfo::aboutText()
                        "  Channel: %2\n"
                        "  Commit: %3\n"
                        "  Signed: %4\n"
+                       "  Installation: %7\n"
+                       "  Installer: %8\n"
                        "Built: %5\n"
                        "Qt %6\n\n"
                        "Cross-platform proxy profile manager with Xray system proxy, "
@@ -139,7 +161,9 @@ QString BuildInfo::aboutText()
                             buildCommit(),
                             isSigned() ? QStringLiteral("yes") : QStringLiteral("no"),
                             buildDateUtc(),
-                            qtVersion());
+                            qtVersion(),
+                            InstallationInfo::currentModeString(),
+                            installerSummaryLine());
 
     const QString note = integrityNote();
     if (!note.isEmpty()) {

@@ -26,6 +26,8 @@ public:
 
     void setRequestHandler(RequestHandler handler);
     void setAuthToken(const QString& token);
+    void setAllowedClientSid(const QString& sid);
+    void setAllowedClientUid(const QString& uid);
 
     void sendResponse(QLocalSocket* client, const IpcEnvelope& response);
     void sendEvent(QLocalSocket* client, const IpcEnvelope& event);
@@ -41,10 +43,13 @@ private slots:
 
 private:
     void processLine(QLocalSocket* client, const QByteArray& line);
+    bool isClientAllowed(QLocalSocket* client, QString* reason) const;
 
     QLocalServer* m_server = nullptr;
     RequestHandler m_handler;
     QString m_authToken;
+    QString m_allowedClientSid;
+    QString m_allowedClientUid;
     QHash<QLocalSocket*, QByteArray> m_buffers;
 };
 

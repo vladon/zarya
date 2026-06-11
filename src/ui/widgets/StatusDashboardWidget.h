@@ -13,6 +13,8 @@ struct StatusDashboardModel {
     bool configured = false;
     bool running = false;
     QString runtimeText;
+    QString recommendedRuntimeText;
+    bool experimentalRuntimeActive = false;
     QString profileName;
     QString routingText;
     QString dnsText;

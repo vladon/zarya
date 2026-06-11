@@ -14,6 +14,11 @@ QString HelperSession::tokenFilePath()
     return AppPaths::helperTokenPath();
 }
 
+QString HelperSession::serviceTokenPath()
+{
+    return AppPaths::runtimeDir() + QStringLiteral("/helper-service.token");
+}
+
 QString HelperSession::ensureSessionToken(QString* errorMessage)
 {
     const QString path = tokenFilePath();

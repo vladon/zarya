@@ -77,6 +77,115 @@ def copy_docs(staging: Path) -> None:
         src = ROOT / "docs" / name
         if src.is_file():
             shutil.copy2(src, docs_dir / name)
+    service_docs = ROOT / "docs" / "service"
+    if service_docs.is_dir():
+        dest_service = docs_dir / "service"
+        dest_service.mkdir(parents=True, exist_ok=True)
+        for src in service_docs.glob("*.md"):
+            shutil.copy2(src, dest_service / src.name)
+
+
+PUBLIC_BETA_DOC_FILES = (
+    "README.md",
+    "quick-start.md",
+    "download-verification.md",
+    "reporting-issues.md",
+    "known-limitations.md",
+    "experimental-features.md",
+    "privacy-and-diagnostics.md",
+    "security.md",
+    "beta-checklist.md",
+    "feedback-triage.md",
+    "beta-blockers.md",
+)
+
+
+INSTALLER_DOC_FILES = (
+    "README.md",
+    "installed-layout.md",
+    "windows-installer-strategy.md",
+    "macos-installer-strategy.md",
+    "linux-packaging-strategy.md",
+    "portable-to-installed-migration.md",
+    "uninstall-repair.md",
+    "helper-service-installation.md",
+    "installer-security.md",
+    "windows-msi-poc.md",
+)
+
+
+def copy_installer_docs(staging: Path) -> None:
+    dest = staging / "docs" / "installer"
+    dest.mkdir(parents=True, exist_ok=True)
+    for name in INSTALLER_DOC_FILES:
+        src = ROOT / "docs" / "installer" / name
+        if src.is_file():
+            shutil.copy2(src, dest / name)
+
+
+UPDATER_DOC_FILES = (
+    "README.md",
+    "update-manifest.md",
+    "portable-update-flow.md",
+    "installed-update-flow.md",
+    "updater-security.md",
+    "helper-update.md",
+)
+
+
+STABLE_DOC_FILES = (
+    "README.md",
+    "stable-scope.md",
+    "release-criteria.md",
+    "risk-register.md",
+    "1.0-backlog.md",
+    "feature-gating.md",
+    "regression-matrix.md",
+    "go-no-go-checklist.md",
+)
+
+
+def copy_stable_docs(staging: Path) -> None:
+    dest = staging / "docs" / "stable"
+    dest.mkdir(parents=True, exist_ok=True)
+    for name in STABLE_DOC_FILES:
+        src = ROOT / "docs" / "stable" / name
+        if src.is_file():
+            shutil.copy2(src, dest / name)
+
+
+def copy_updater_docs(staging: Path) -> None:
+    dest = staging / "docs" / "updater"
+    dest.mkdir(parents=True, exist_ok=True)
+    for name in UPDATER_DOC_FILES:
+        src = ROOT / "docs" / "updater" / name
+        if src.is_file():
+            shutil.copy2(src, dest / name)
+
+
+def copy_public_beta_docs(staging: Path) -> None:
+    dest = staging / "docs" / "public-beta"
+    dest.mkdir(parents=True, exist_ok=True)
+    for name in PUBLIC_BETA_DOC_FILES:
+        src = ROOT / "docs" / "public-beta" / name
+        if src.is_file():
+            shutil.copy2(src, dest / name)
+
+
+def copy_service_packaging_templates(staging: Path) -> None:
+    packaging_dir = staging / "packaging"
+    packaging_dir.mkdir(parents=True, exist_ok=True)
+    for relative in (
+        "linux/systemd/zarya-helper.service",
+        "linux/polkit/dev.vladon.zarya.helper.policy",
+        "linux/dbus/dev.vladon.zarya.helper.conf",
+        "macos/LaunchDaemon/dev.vladon.zarya.helper.plist",
+    ):
+        src = ROOT / "packaging" / relative
+        if src.is_file():
+            dest = packaging_dir / relative
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dest)
 
 
 def copy_translations(staging: Path, build_translations: Path | None = None) -> None:
@@ -214,6 +323,9 @@ def write_release_manifest(
     channel: str | None = None,
     build_commit: str | None = None,
     signing: dict[str, Any] | None = None,
+    artifact_type: str | None = None,
+    installation_mode: str | None = None,
+    helper_service: dict[str, Any] | None = None,
 ) -> Path:
     meta = read_cmake_version()
     version = version or meta["version"]
@@ -254,6 +366,13 @@ def write_release_manifest(
         manifest["artifacts"]["helper"] = helper_artifact
 
     manifest["signing"] = signing if signing is not None else default_unsigned_signing()
+
+    if artifact_type:
+        manifest["artifactType"] = artifact_type
+    if installation_mode:
+        manifest["installationMode"] = installation_mode
+    if helper_service is not None:
+        manifest["helperService"] = helper_service
 
     path = staging / "release-manifest.json"
     path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")

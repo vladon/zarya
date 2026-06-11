@@ -1,6 +1,7 @@
 #pragma once
 
 #include "app/AppController.h"
+#include "service/IHelperServiceManager.h"
 #include "app/StartupOptions.h"
 #include "errors/ErrorPresenter.h"
 #include "core/CoreManager.h"
@@ -22,6 +23,8 @@
 
 #include <QMainWindow>
 #include <QVector>
+
+#include <memory>
 
 class QAction;
 class QCloseEvent;
@@ -84,7 +87,10 @@ private slots:
     void onCoreManager();
     void onExportBackup();
     void onImportBackup();
+    void onImportFromPortableFolder();
     void onCreateDiagnosticsBundle();
+    void onCopySupportSummary();
+    void onCheckAppUpdates();
     DiagnosticsContext buildDiagnosticsContext();
     void onRuleSetManager();
     void onDnsProfiles();
@@ -149,6 +155,9 @@ private:
     void tryAutoEnableSystemProxy(bool fromAutostart = false);
     void checkGeoDataOnStartup();
     void checkCoreUpdatesOnStartup();
+    void checkAppUpdatesOnStartup();
+    void warnIfExperimentalRuntimeDisabledOnStartup();
+    void maybeShowInstalledPortableImportPrompt();
     bool startProfileById(const QString& profileId, bool fromAutostart);
     Profile* profileById(const QString& profileId);
     void tryRestoreSystemProxy(SystemProxyRestoreMode mode, bool showFailureDialog);
@@ -243,6 +252,8 @@ private:
     bool m_trayCloseNotificationShown = false;
     bool m_subscriptionUpdateBusy = false;
     bool m_quitting = false;
+
+    std::unique_ptr<IHelperServiceManager> m_helperServiceManager;
 };
 
 } // namespace zarya

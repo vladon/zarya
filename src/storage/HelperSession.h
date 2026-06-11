@@ -9,6 +9,7 @@ public:
     static QString ensureSessionToken(QString* errorMessage = nullptr);
     static QString readSessionToken(const QString& tokenPath, QString* errorMessage = nullptr);
     static QString tokenFilePath();
+    static QString serviceTokenPath();
 };
 
 } // namespace zarya

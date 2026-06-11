@@ -1,5 +1,9 @@
 # Security Model
 
+## Stable vs experimental
+
+The recommended stable path uses Xray system-proxy mode in the normal user GUI process. Experimental TUN, helper, and kill-switch features require additional privileges and are gated on stable release channels. See [stable/feature-gating.md](stable/feature-gating.md).
+
 ## GUI process
 
 The main `zarya` process runs as the logged-in user. It manages profiles, settings, UI, and orchestrates proxy cores. It should not require administrator rights for system-proxy mode.

@@ -2,6 +2,9 @@
 
 #include "ipc/IpcMessage.h"
 #include "ipc/IpcTransport.h"
+#include "service/HelperServiceIdentity.h"
+#include "service/HelperServiceStatus.h"
+#include "service/IHelperServiceManager.h"
 #include "killswitch/KillSwitchManager.h"
 #include "killswitch/KillSwitchMode.h"
 #include "packaging/PackagingInfo.h"
@@ -13,6 +16,11 @@
 #include <QJsonObject>
 
 namespace zarya {
+
+void HelperProcessManager::setServiceManager(IHelperServiceManager* serviceManager)
+{
+    m_serviceManager = serviceManager;
+}
 
 HelperProcessManager::HelperProcessManager(QObject* parent)
     : QObject(parent)
@@ -120,11 +128,38 @@ IpcClient* HelperProcessManager::client()
     return &m_client;
 }
 
+bool HelperProcessManager::shouldUseInstalledService() const
+{
+    if (!m_serviceManager) {
+        return false;
+    }
+    const HelperServiceStatus serviceStatus = m_serviceManager->status();
+    return serviceStatus.state == HelperServiceInstallState::Running
+           || serviceStatus.state == HelperServiceInstallState::Stopped
+           || serviceStatus.state == HelperServiceInstallState::Installed;
+}
+
+QString HelperProcessManager::preferredServerName() const
+{
+    if (shouldUseInstalledService()) {
+        return IpcTransport::serviceServerName(HelperServiceIdentity::internalServiceName());
+    }
+    return IpcTransport::defaultServerName();
+}
+
 bool HelperProcessManager::ensureToken(QString* errorMessage)
 {
     if (!m_token.isEmpty()) {
         return true;
     }
+
+    if (shouldUseInstalledService()) {
+        m_token = HelperSession::readSessionToken(HelperSession::serviceTokenPath(), errorMessage);
+        if (!m_token.isEmpty()) {
+            return true;
+        }
+    }
+
     m_token = HelperSession::ensureSessionToken(errorMessage);
     return !m_token.isEmpty();
 }
@@ -161,6 +196,10 @@ bool HelperProcessManager::startHelperDevMode(QString* errorMessage)
         m_lastError = errorMessage ? *errorMessage : QString();
         emit connectionStateChanged();
         return false;
+    }
+
+    if (shouldUseInstalledService()) {
+        return connectToHelper(errorMessage);
     }
 
     if (m_helperProcess.state() != QProcess::NotRunning) {
@@ -204,7 +243,7 @@ bool HelperProcessManager::connectToHelper(QString* errorMessage)
     }
 
     m_client.setAuthToken(m_token);
-    const QString serverName = IpcTransport::defaultServerName();
+    const QString serverName = preferredServerName();
     if (!m_client.connectToServer(serverName, errorMessage)) {
         m_lastError = errorMessage ? *errorMessage : QString();
         m_state = HelperConnectionState::Error;

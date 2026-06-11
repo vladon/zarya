@@ -1,0 +1,2 @@
+Copyright (c) Zarya contributors
+# TODO: align with LICENSE holder for installer metadata

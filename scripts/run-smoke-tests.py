@@ -48,8 +48,8 @@ def run_cpp_smoke(build_dir: Path) -> tuple[bool, str]:
 def verify_source_tree(source_root: Path) -> list[str]:
     errors: list[str] = []
     version = read_cmake_version()
-    if version["version"] != "0.27.0-beta":
-        errors.append(f"expected version 0.27.0-beta, found {version['version']}")
+    if version["version"] != "0.34.0-beta":
+        errors.append(f"expected version 0.34.0-beta, found {version['version']}")
 
     for relative in (
         "LICENSE",
@@ -58,6 +58,26 @@ def verify_source_tree(source_root: Path) -> list[str]:
         "docs/beta-bug-triage.md",
         "docs/beta-regression-checklist.md",
         "docs/platform-test-matrix.md",
+        "docs/public-beta/README.md",
+        "docs/public-beta/quick-start.md",
+        "docs/public-beta/reporting-issues.md",
+        "docs/public-beta/feedback-triage.md",
+        "docs/public-beta/beta-blockers.md",
+        ".github/labels.yml",
+        "docs/installer/README.md",
+        "docs/updater/README.md",
+        "docs/stable/README.md",
+        "src/features/FeatureGate.cpp",
+        "packaging/windows/wix/Product.wxs",
+        "src/packaging/InstallationMode.cpp",
+        "src/updater/AppUpdateChecker.cpp",
+        "scripts/generate-update-manifest.py",
+        "scripts/package-windows-msi.ps1",
+        "scripts/smoke-windows-msi.ps1",
+        "docs/installer/windows-msi-poc.md",
+        "packaging/windows/wix/Product.wxs",
+        "packaging/windows/wix/Registry.wxs",
+        ".github/ISSUE_TEMPLATE/bug_report.yml",
         "translations/zarya_ru.qm",
         "translations/zarya_en.qm",
     ):
