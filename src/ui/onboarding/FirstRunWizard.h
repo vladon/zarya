@@ -30,6 +30,7 @@ signals:
     void openDnsProfilesRequested();
     void importBackupRequested();
     void addProfileManuallyRequested();
+    void configureHelperRequested();
     void wizardFinishedState(const FirstRunState& state);
 
 protected:

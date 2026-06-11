@@ -1,0 +1,12 @@
+[Unit]
+Description=Zarya Helper Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/lib/zarya/zarya-helper --service --service-name zarya-helper --allowed-runtime-dir /var/lib/zarya/runtime --allowed-core-dir /usr/lib/zarya/cores/sing-box
+Restart=on-failure
+RestartSec=2s
+
+[Install]
+WantedBy=multi-user.target

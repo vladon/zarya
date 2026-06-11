@@ -207,15 +207,24 @@ void FirstRunWizard::setupPages()
     tunAcceptCheck->setEnabled(false);
     connect(tunRadio, &QRadioButton::toggled, tunAcceptCheck, &QCheckBox::setEnabled);
     auto* tunWarning = new QLabel(
-        tr("TUN mode is experimental. It may require elevated helper permissions "
-           "and can change routes/firewall behavior."),
+        tr("TUN mode requires sing-box and may require zarya-helper. It is experimental and "
+           "can change routes/firewall behavior."),
         runtimePage);
     tunWarning->setWordWrap(true);
     tunWarning->setStyleSheet(QStringLiteral("color:#b71c1c;"));
+    auto* configureHelperBtn = new QPushButton(tr("Configure Helper"), runtimePage);
+    auto* continueWithoutHelperBtn = new QPushButton(tr("Continue without helper"), runtimePage);
+    connect(configureHelperBtn, &QPushButton::clicked, this,
+            &FirstRunWizard::configureHelperRequested);
+    connect(continueWithoutHelperBtn, &QPushButton::clicked, this, [tunRadio, systemProxyRadio]() {
+        systemProxyRadio->setChecked(true);
+    });
     auto* runtimeLayout = new QVBoxLayout(runtimePage);
     runtimeLayout->addWidget(systemProxyRadio);
     runtimeLayout->addWidget(tunRadio);
     runtimeLayout->addWidget(tunWarning);
+    runtimeLayout->addWidget(configureHelperBtn);
+    runtimeLayout->addWidget(continueWithoutHelperBtn);
     runtimeLayout->addWidget(tunAcceptCheck);
     setPage(kPageRuntime, runtimePage);
 

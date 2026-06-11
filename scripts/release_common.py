@@ -77,6 +77,28 @@ def copy_docs(staging: Path) -> None:
         src = ROOT / "docs" / name
         if src.is_file():
             shutil.copy2(src, docs_dir / name)
+    service_docs = ROOT / "docs" / "service"
+    if service_docs.is_dir():
+        dest_service = docs_dir / "service"
+        dest_service.mkdir(parents=True, exist_ok=True)
+        for src in service_docs.glob("*.md"):
+            shutil.copy2(src, dest_service / src.name)
+
+
+def copy_service_packaging_templates(staging: Path) -> None:
+    packaging_dir = staging / "packaging"
+    packaging_dir.mkdir(parents=True, exist_ok=True)
+    for relative in (
+        "linux/systemd/zarya-helper.service",
+        "linux/polkit/dev.vladon.zarya.helper.policy",
+        "linux/dbus/dev.vladon.zarya.helper.conf",
+        "macos/LaunchDaemon/dev.vladon.zarya.helper.plist",
+    ):
+        src = ROOT / "packaging" / relative
+        if src.is_file():
+            dest = packaging_dir / relative
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dest)
 
 
 def copy_translations(staging: Path, build_translations: Path | None = None) -> None:

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
+<policyconfig>
+  <vendor>Zarya</vendor>
+  <vendor_url>https://github.com/vladon/zarya</vendor_url>
+
+  <action id="dev.vladon.zarya.helper.manage-service">
+    <description>Manage Zarya helper service</description>
+    <message>Authentication is required to manage the Zarya helper service</message>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin</allow_active>
+    </defaults>
+  </action>
+
+  <action id="dev.vladon.zarya.helper.start-tun">
+    <description>Start Zarya TUN mode</description>
+    <message>Authentication is required to start Zarya TUN mode</message>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin</allow_active>
+    </defaults>
+  </action>
+
+  <action id="dev.vladon.zarya.helper.stop-tun">
+    <description>Stop Zarya TUN mode</description>
+    <message>Authentication is required to stop Zarya TUN mode</message>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin</allow_active>
+    </defaults>
+  </action>
+
+  <action id="dev.vladon.zarya.helper.manage-killswitch">
+    <description>Manage Zarya kill switch</description>
+    <message>Authentication is required to manage Zarya kill switch</message>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin</allow_active>
+    </defaults>
+  </action>
+</policyconfig>

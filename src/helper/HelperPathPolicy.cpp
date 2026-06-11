@@ -15,6 +15,26 @@ void HelperPathPolicy::setAllowedCoreDir(const QString& path)
     m_allowedCoreDir = canonicalDir(path);
 }
 
+void HelperPathPolicy::setAllowedClientSid(const QString& sid)
+{
+    m_allowedClientSid = sid.trimmed();
+}
+
+void HelperPathPolicy::setAllowedClientUid(const QString& uid)
+{
+    m_allowedClientUid = uid.trimmed();
+}
+
+QString HelperPathPolicy::allowedClientSid() const
+{
+    return m_allowedClientSid;
+}
+
+QString HelperPathPolicy::allowedClientUid() const
+{
+    return m_allowedClientUid;
+}
+
 QString HelperPathPolicy::canonicalDir(const QString& path)
 {
     if (path.trimmed().isEmpty()) {

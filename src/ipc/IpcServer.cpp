@@ -5,6 +5,16 @@
 #include <QLocalServer>
 #include <QLocalSocket>
 
+#if defined(Q_OS_LINUX)
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
+#endif
+
+#if defined(Q_OS_WIN)
+#include <windows.h>
+#endif
+
 namespace zarya {
 
 IpcServer::IpcServer(QObject* parent)
@@ -49,6 +59,63 @@ void IpcServer::setRequestHandler(RequestHandler handler)
 void IpcServer::setAuthToken(const QString& token)
 {
     m_authToken = token;
+}
+
+void IpcServer::setAllowedClientSid(const QString& sid)
+{
+    m_allowedClientSid = sid.trimmed();
+}
+
+void IpcServer::setAllowedClientUid(const QString& uid)
+{
+    m_allowedClientUid = uid.trimmed();
+}
+
+bool IpcServer::isClientAllowed(QLocalSocket* client, QString* reason) const
+{
+    if (m_allowedClientSid.isEmpty() && m_allowedClientUid.isEmpty()) {
+        return true;
+    }
+    if (!client) {
+        if (reason) {
+            *reason = QStringLiteral("missing client socket");
+        }
+        return false;
+    }
+
+#if defined(Q_OS_LINUX)
+    if (!m_allowedClientUid.isEmpty()) {
+        struct ucred cred{};
+        socklen_t len = sizeof(cred);
+        if (getsockopt(client->socketDescriptor(), SOL_SOCKET, SO_PEERCRED, &cred, &len) != 0) {
+            if (reason) {
+                *reason = QStringLiteral("unable to read peer credentials");
+            }
+            return false;
+        }
+        if (QString::number(static_cast<qulonglong>(cred.uid)) != m_allowedClientUid) {
+            if (reason) {
+                *reason = QStringLiteral("client UID is not authorized");
+            }
+            return false;
+        }
+        return true;
+    }
+#endif
+
+#if defined(Q_OS_WIN)
+    if (!m_allowedClientSid.isEmpty()) {
+        // Windows local socket peer SID verification is limited in 0.28; token auth remains required.
+        Q_UNUSED(client);
+        return true;
+    }
+#endif
+
+    Q_UNUSED(client);
+    if (reason) {
+        *reason = QStringLiteral("client identity verification is not available on this platform");
+    }
+    return m_allowedClientSid.isEmpty() && m_allowedClientUid.isEmpty();
 }
 
 void IpcServer::sendResponse(QLocalSocket* client, const IpcEnvelope& response)
@@ -130,6 +197,18 @@ void IpcServer::processLine(QLocalSocket* client, const QByteArray& line)
         response.ok = false;
         response.payload = QJsonObject{
             {QStringLiteral("error"), QStringLiteral("IPC auth failed: invalid token")}};
+        sendResponse(client, response);
+        return;
+    }
+
+    QString clientReason;
+    if (!isClientAllowed(client, &clientReason)) {
+        IpcEnvelope response;
+        response.id = request.id;
+        response.ok = false;
+        response.payload =
+            QJsonObject{{QStringLiteral("error"),
+                         QStringLiteral("IPC auth failed: %1").arg(clientReason)}};
         sendResponse(client, response);
         return;
     }
