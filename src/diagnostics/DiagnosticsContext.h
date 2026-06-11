@@ -1,6 +1,7 @@
 #pragma once
 
 #include "domain/Profile.h"
+#include "domain/Subscription.h"
 
 #include <QDateTime>
 #include <QVector>
@@ -21,6 +22,7 @@ class XrayAdapter;
 
 struct DiagnosticsContext {
     QVector<Profile> profiles;
+    QVector<Subscription> subscriptions;
     Profile selectedProfile;
     bool hasSelectedProfile = false;
 

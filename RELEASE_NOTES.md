@@ -1,23 +1,22 @@
-# Zarya 0.29.0 Beta
+# Zarya 0.30.0 Beta
 
-## Public beta
+## Public beta feedback update
 
-Zarya is ready for public beta testing preparation.
+First feedback-driven beta release after 0.29 public beta prep.
 
 **Recommended mode:** Xray system-proxy mode.
 
 **Experimental:** TUN, zarya-helper, kill switch — not production-ready.
 
-## Quick start
+## What's new
 
-1. Download and verify SHA256 checksum.
-2. Start Zarya and complete the setup wizard.
-3. Install Xray via Core Manager.
-4. Import a profile or subscription.
-5. Use Routing: Bypass LAN, DNS: System DNS.
-6. Click Start.
+- Feedback triage docs and beta blocker tracking
+- Richer diagnostics (Core Manager, subscriptions, first-run, packaging)
+- **Help → Copy Support Summary** for issue reports
+- Stronger experimental TUN and kill switch warnings
+- Improved startup recovery and reporting workflow
 
-See [docs/public-beta/quick-start.md](docs/public-beta/quick-start.md).
+See [docs/release-notes/0.30-beta.md](docs/release-notes/0.30-beta.md).
 
 ## Reporting issues
 

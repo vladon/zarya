@@ -1,7 +1,6 @@
 #include "ui/StartupRecoveryDialog.h"
 
 #include <QCheckBox>
-#include <QDialogButtonBox>
 #include <QLabel>
 #include <QPushButton>
 #include <QVBoxLayout>
@@ -13,10 +12,15 @@ StartupRecoveryDialog::StartupRecoveryDialog(const StartupRecoveryPlan& plan, QW
     , m_plan(plan)
 {
     setWindowTitle(tr("Startup Recovery"));
-    resize(480, 320);
+    resize(520, 360);
 
     auto* intro = new QLabel(
-        tr("Zarya detected an unclean previous shutdown."), this);
+        tr("Zarya did not shut down cleanly.\n\n"
+           "Recommended:\n"
+           "1. Run recovery actions.\n"
+           "2. Create a Diagnostics Bundle.\n"
+           "3. Attach it to a bug report if the problem repeats."),
+        this);
     intro->setWordWrap(true);
 
     m_detectedLabel = new QLabel(this);
@@ -41,10 +45,26 @@ StartupRecoveryDialog::StartupRecoveryDialog(const StartupRecoveryPlan& plan, QW
     m_disableKillSwitchCheck->setChecked(plan.killSwitchMarkerPresent);
     m_disableKillSwitchCheck->setEnabled(plan.killSwitchMarkerPresent);
 
-    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
-    auto* skipButton = buttons->addButton(tr("Skip"), QDialogButtonBox::RejectRole);
-    connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
+    m_recoverButton = new QPushButton(tr("Recover"), this);
+    m_recoverButton->setDefault(true);
+    auto* diagnosticsButton = new QPushButton(tr("Create Diagnostics"), this);
+    auto* reportingButton = new QPushButton(tr("Open Reporting Guide"), this);
+    auto* skipButton = new QPushButton(tr("Skip"), this);
+
+    connect(m_recoverButton, &QPushButton::clicked, this, &QDialog::accept);
+    connect(diagnosticsButton, &QPushButton::clicked, this, [this]() {
+        emit createDiagnosticsRequested();
+    });
+    connect(reportingButton, &QPushButton::clicked, this, [this]() {
+        emit openReportingGuideRequested();
+    });
     connect(skipButton, &QPushButton::clicked, this, &QDialog::reject);
+
+    auto* buttons = new QVBoxLayout;
+    buttons->addWidget(m_recoverButton);
+    buttons->addWidget(diagnosticsButton);
+    buttons->addWidget(reportingButton);
+    buttons->addWidget(skipButton);
 
     auto* layout = new QVBoxLayout(this);
     layout->addWidget(intro);
@@ -52,7 +72,7 @@ StartupRecoveryDialog::StartupRecoveryDialog(const StartupRecoveryPlan& plan, QW
     layout->addWidget(m_restoreProxyCheck);
     layout->addWidget(m_cleanRuntimeCheck);
     layout->addWidget(m_disableKillSwitchCheck);
-    layout->addWidget(buttons);
+    layout->addLayout(buttons);
 }
 
 StartupRecoveryPlan StartupRecoveryDialog::selectedPlan() const

@@ -88,6 +88,7 @@ private slots:
     void onExportBackup();
     void onImportBackup();
     void onCreateDiagnosticsBundle();
+    void onCopySupportSummary();
     DiagnosticsContext buildDiagnosticsContext();
     void onRuleSetManager();
     void onDnsProfiles();

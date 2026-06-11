@@ -97,9 +97,68 @@ def verify_public_beta_artifact(staging: Path) -> list[str]:
 def verify_forbidden_files(staging: Path) -> list[str]:
     errors: list[str] = []
     for path in staging.rglob("*"):
-        if path.is_file() and path.name in FORBIDDEN_ARTIFACT_NAMES:
+        if not path.is_file():
+            continue
+        if path.name in FORBIDDEN_ARTIFACT_NAMES:
             errors.append(f"forbidden file included: {path.relative_to(staging)}")
+        if path.suffix in {".download", ".tmp"}:
+            errors.append(f"forbidden temp file included: {path.relative_to(staging)}")
     return errors
+
+
+def verify_release_notes_version(staging: Path, expected_version: str) -> list[str]:
+    notes = staging / "RELEASE_NOTES.md"
+    if not notes.is_file():
+        return ["RELEASE_NOTES.md is missing from artifact"]
+    if expected_version not in notes.read_text(encoding="utf-8"):
+        return [f"RELEASE_NOTES.md does not mention {expected_version}"]
+    return []
+
+
+def verify_no_stale_versions(staging: Path, expected_version: str) -> list[str]:
+    errors: list[str] = []
+    parts = expected_version.split(".")
+    stale_versions: list[str] = []
+    if len(parts) >= 2 and parts[1].isdigit():
+        previous_minor = int(parts[1]) - 1
+        if previous_minor >= 0:
+            stale_versions.append(f"0.{previous_minor}.0-beta")
+
+    scan_paths = [staging / "RELEASE_NOTES.md"]
+    public_beta = staging / "docs" / "public-beta"
+    if public_beta.is_dir():
+        scan_paths.extend(sorted(public_beta.glob("*.md")))
+
+    for path in scan_paths:
+        if not path.is_file():
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        for stale in stale_versions:
+            if stale in text:
+                errors.append(f"stale version {stale} found in {path.relative_to(staging)}")
+    return errors
+
+
+def verify_executable_version(staging: Path, expected_version: str) -> list[str]:
+    candidates = list(staging.rglob("Zarya.exe")) + list(staging.rglob("zarya"))
+    exe = next((path for path in candidates if path.is_file()), None)
+    if exe is None:
+        return []
+    try:
+        proc = subprocess.run(
+            [str(exe), "--version"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        output = (proc.stdout or "") + (proc.stderr or "")
+        if proc.returncode != 0:
+            return [f"executable --version failed for {exe.name}"]
+        if expected_version not in output:
+            return [f"executable --version does not report {expected_version}"]
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return [f"executable --version check failed: {exc}"]
+    return []
 
 
 def detect_platform(artifact: Path, manifest: dict | None) -> str:
@@ -241,6 +300,9 @@ def main() -> int:
             errors.extend(verify_public_beta_docs(staging))
             errors.extend(verify_public_beta_artifact(staging))
             errors.extend(verify_issue_templates(ROOT))
+            errors.extend(verify_release_notes_version(staging, expected_version))
+            errors.extend(verify_no_stale_versions(staging, expected_version))
+            errors.extend(verify_executable_version(staging, expected_version))
         manifest = load_manifest(staging)
         if manifest is None:
             errors.append("release-manifest.json is missing")

@@ -18,5 +18,5 @@ Install or run it only from a trusted Zarya build.
 
 ## Unsigned builds
 
-0.29 beta builds may be unsigned.
+Beta builds may be unsigned.
 Verify SHA256 checksums before running.

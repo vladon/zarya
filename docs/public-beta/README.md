@@ -23,6 +23,8 @@ Experimental TUN mode, zarya-helper, and kill switch are available for testing, 
 
 Use **Help → Create Diagnostics Bundle** and attach it to your issue.
 
+If a full bundle is not possible, use **Help → Copy Support Summary** (no secrets included).
+
 Do not paste raw proxy links, passwords, or subscription URLs into public issues.
 
 ## More
@@ -35,3 +37,5 @@ Do not paste raw proxy links, passwords, or subscription URLs into public issues
 - [Privacy and diagnostics](privacy-and-diagnostics.md)
 - [Security](security.md)
 - [Public beta checklist](beta-checklist.md)
+- [Feedback triage](feedback-triage.md)
+- [Beta blockers](beta-blockers.md)

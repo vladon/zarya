@@ -1,0 +1,67 @@
+- name: severity:critical
+  color: b60205
+  description: Data loss, app cannot start, networking cannot recover, secret leak
+
+- name: severity:high
+  color: d93f0b
+  description: Major feature broken, beta-blocking
+
+- name: severity:medium
+  color: fbca04
+  description: Important but not beta-blocking
+
+- name: severity:low
+  color: 0e8a16
+  description: Minor issue
+
+- name: area:runtime
+  color: 1d76db
+  description: Runtime backend and core process
+
+- name: area:system-proxy
+  color: 1d76db
+  description: OS system proxy integration
+
+- name: area:tun
+  color: 5319e7
+  description: Experimental sing-box TUN mode
+
+- name: area:helper
+  color: 5319e7
+  description: zarya-helper privileged process
+
+- name: area:kill-switch
+  color: 5319e7
+  description: Experimental kill switch
+
+- name: area:packaging
+  color: c5def5
+  description: Release artifacts and portable layout
+
+- name: area:diagnostics
+  color: c5def5
+  description: Diagnostics bundle and support tooling
+
+- name: area:backup
+  color: c5def5
+  description: Backup import/export
+
+- name: area:localization
+  color: c5def5
+  description: Translations and UI language
+
+- name: needs:diagnostics
+  color: fef2c0
+  description: Reporter should attach a diagnostics bundle
+
+- name: needs:repro
+  color: fef2c0
+  description: Reproduction steps are missing or unclear
+
+- name: beta-blocker
+  color: b60205
+  description: Blocks public beta release
+
+- name: experimental
+  color: 5319e7
+  description: Experimental feature path
