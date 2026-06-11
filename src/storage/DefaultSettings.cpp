@@ -23,6 +23,8 @@ bool DefaultSettings::minimizeToTrayOnClose() { return AppSettings::defaultMinim
 bool DefaultSettings::enableExperimentalTun() { return false; }
 bool DefaultSettings::enableExperimentalKillSwitch() { return false; }
 bool DefaultSettings::checkCoreUpdatesOnStartup() { return false; }
+bool DefaultSettings::checkAppUpdatesOnStartup() { return false; }
 bool DefaultSettings::allowCoreUpdateWithoutChecksum() { return false; }
+bool DefaultSettings::allowUnsignedAppUpdates() { return false; }
 
 } // namespace zarya

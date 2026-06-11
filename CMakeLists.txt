@@ -211,6 +211,19 @@ set(ZARYA_BACKUP_SOURCES
     src/backup/BackupManager.cpp
 )
 
+set(ZARYA_APP_UPDATE_SOURCES
+    src/updater/AppVersion.cpp
+    src/updater/AppUpdateChannel.cpp
+    src/updater/AppUpdateAsset.cpp
+    src/updater/AppUpdateManifest.cpp
+    src/updater/AppUpdateStatus.cpp
+    src/updater/AppUpdatePaths.cpp
+    src/updater/AppUpdatePolicy.cpp
+    src/updater/AppUpdatePlanner.cpp
+    src/updater/AppUpdateChecker.cpp
+    src/updater/AppUpdateVerifier.cpp
+)
+
 set(ZARYA_CORE_UPDATE_SOURCES
     src/cores/CoreInstallStatus.cpp
     src/cores/CorePlatform.cpp
@@ -318,6 +331,7 @@ set(ZARYA_SOURCES
     src/ui/RuleSetManagerDialog.cpp
     src/ui/GeoDataManagerDialog.cpp
     src/ui/CoreManagerDialog.cpp
+    src/ui/AppUpdateDialog.cpp
     src/ui/BackupExportDialog.cpp
     src/ui/BackupImportDialog.cpp
     src/ui/DiagnosticsDialog.cpp
@@ -359,6 +373,7 @@ set(ZARYA_SOURCES
     ${ZARYA_KILLSWITCH_PLATFORM}
     ${ZARYA_KILLSWITCH_GUI_SOURCES}
     ${ZARYA_GEODATA_SOURCES}
+    ${ZARYA_APP_UPDATE_SOURCES}
     ${ZARYA_CORE_UPDATE_SOURCES}
     ${ZARYA_BACKUP_SOURCES}
     ${ZARYA_LOGGING_SOURCES}
@@ -654,5 +669,13 @@ add_executable(zarya_smoke_test
 target_include_directories(zarya_smoke_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${ZARYA_GENERATED_DIR})
 zarya_link_qt_core(zarya_smoke_test)
 
+add_executable(zarya_version_test
+    tests/version_test.cpp
+    src/updater/AppVersion.cpp
+)
+target_include_directories(zarya_version_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${ZARYA_GENERATED_DIR})
+zarya_link_qt_core(zarya_version_test)
+
 enable_testing()
 add_test(NAME smoke COMMAND zarya_smoke_test)
+add_test(NAME version COMMAND zarya_version_test)

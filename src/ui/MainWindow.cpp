@@ -44,6 +44,9 @@
 #include "ui/RuleSetManagerDialog.h"
 #include "ui/RoutingManagerDialog.h"
 #include "ui/SettingsDialog.h"
+#include "ui/AppUpdateDialog.h"
+#include "updater/AppUpdateChecker.h"
+#include "updater/AppUpdatePlanner.h"
 #include "geodata/GeoDataFileStatus.h"
 #include "runtime/RuntimeBackendType.h"
 #include "storage/GeoDataSettingsStore.h"
@@ -347,6 +350,7 @@ void MainWindow::setupMenuBar()
     helpMenu->addAction(tr("Create &Diagnostics Bundle…"), this,
                         &MainWindow::onCreateDiagnosticsBundle);
     helpMenu->addAction(tr("Copy &Support Summary"), this, &MainWindow::onCopySupportSummary);
+    helpMenu->addAction(tr("Check for App &Updates…"), this, &MainWindow::onCheckAppUpdates);
     helpMenu->addSeparator();
     helpMenu->addAction(tr("&About"), this, &MainWindow::onAbout);
 }
@@ -1201,6 +1205,7 @@ void MainWindow::finishStartup(const StartupOptions& options)
     checkKillSwitchRecoveryOnStartup();
     maybeShowFirstRunWizard();
     checkCoreUpdatesOnStartup();
+    checkAppUpdatesOnStartup();
 
     const AppSettings& settings = AppSettings::instance();
     const bool startMinimized =
@@ -1871,6 +1876,39 @@ void MainWindow::checkCoreUpdatesOnStartup()
     appendLog(QStringLiteral("Checking core updates on startup"));
     m_coreBinaryManager.refreshLocalState();
     m_coreBinaryManager.checkLatestVersions();
+}
+
+void MainWindow::onCheckAppUpdates()
+{
+    AppUpdateDialog dialog(this);
+    dialog.exec();
+}
+
+void MainWindow::checkAppUpdatesOnStartup()
+{
+    if (!AppSettings::instance().checkAppUpdatesOnStartup()) {
+        return;
+    }
+    if (AppSettings::instance().appUpdateManifestUrl().trimmed().isEmpty()) {
+        return;
+    }
+    appendLog(QStringLiteral("Checking app updates on startup"));
+    auto* checker = new AppUpdateChecker(this);
+    connect(checker, &AppUpdateChecker::updateCheckFinished, this,
+            [this, checker](const AppUpdatePlan& plan) {
+                if (plan.updateAvailable) {
+                    appendLog(QStringLiteral("App update available: %1").arg(plan.latestVersion));
+                } else {
+                    appendLog(QStringLiteral("App update check: already on latest channel version"));
+                }
+                checker->deleteLater();
+            });
+    connect(checker, &AppUpdateChecker::updateCheckFailed, this,
+            [this, checker](const QString& error) {
+                appendLog(QStringLiteral("App update check failed: %1").arg(error));
+                checker->deleteLater();
+            });
+    checker->checkForUpdates();
 }
 
 void MainWindow::onGeoDataManager()

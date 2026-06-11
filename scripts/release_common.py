@@ -122,6 +122,25 @@ def copy_installer_docs(staging: Path) -> None:
             shutil.copy2(src, dest / name)
 
 
+UPDATER_DOC_FILES = (
+    "README.md",
+    "update-manifest.md",
+    "portable-update-flow.md",
+    "installed-update-flow.md",
+    "updater-security.md",
+    "helper-update.md",
+)
+
+
+def copy_updater_docs(staging: Path) -> None:
+    dest = staging / "docs" / "updater"
+    dest.mkdir(parents=True, exist_ok=True)
+    for name in UPDATER_DOC_FILES:
+        src = ROOT / "docs" / "updater" / name
+        if src.is_file():
+            shutil.copy2(src, dest / name)
+
+
 def copy_public_beta_docs(staging: Path) -> None:
     dest = staging / "docs" / "public-beta"
     dest.mkdir(parents=True, exist_ok=True)

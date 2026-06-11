@@ -19,6 +19,7 @@ from release_common import (  # noqa: E402
     FORBIDDEN_ARTIFACT_NAMES,
     INSTALLER_DOC_FILES,
     PUBLIC_BETA_DOC_FILES,
+    UPDATER_DOC_FILES,
     extract_tar_gz,
     extract_zip,
     read_cmake_version,
@@ -38,6 +39,12 @@ PRODUCTION_INSTALLER_CLAIMS = (
     "production pkg",
     "production deb",
     "replaces portable beta artifacts",
+)
+
+PRODUCTION_SELF_UPDATE_CLAIMS = (
+    "production self-update",
+    "automatic app replacement enabled",
+    "silent auto-update",
 )
 
 ISSUE_TEMPLATE_FILES = (
@@ -85,6 +92,47 @@ def verify_installer_docs(staging: Path) -> list[str]:
     for name in INSTALLER_DOC_FILES:
         if not (staging / "docs" / "installer" / name).is_file():
             errors.append(f"missing installer doc: docs/installer/{name}")
+    return errors
+
+
+def verify_updater_docs(staging: Path) -> list[str]:
+    errors: list[str] = []
+    for name in UPDATER_DOC_FILES:
+        if not (staging / "docs" / "updater" / name).is_file():
+            errors.append(f"missing updater doc: docs/updater/{name}")
+    return errors
+
+
+def verify_updater_source(source_root: Path) -> list[str]:
+    errors: list[str] = []
+    required = (
+        "src/updater/AppUpdateChecker.cpp",
+        "src/updater/AppUpdatePlanner.cpp",
+        "src/updater/AppVersion.cpp",
+        "scripts/generate-update-manifest.py",
+        "docs/updater/README.md",
+    )
+    for relative in required:
+        if not (source_root / relative).is_file():
+            errors.append(f"missing updater source/doc: {relative}")
+    return errors
+
+
+def verify_no_production_self_update_claims(staging: Path) -> list[str]:
+    errors: list[str] = []
+    scan_paths = [staging / "RELEASE_NOTES.md", staging / "docs" / "updater" / "README.md"]
+    for path in scan_paths:
+        if not path.is_file():
+            continue
+        lowered = path.read_text(encoding="utf-8", errors="replace").lower()
+        for phrase in PRODUCTION_SELF_UPDATE_CLAIMS:
+            if phrase in lowered:
+                errors.append(f"forbidden self-update claim in {path.name}: {phrase}")
+    updater_readme = staging / "docs" / "updater" / "README.md"
+    if updater_readme.is_file():
+        text = updater_readme.read_text(encoding="utf-8", errors="replace").lower()
+        if "does not replace" not in text and "not replace" not in text:
+            errors.append("updater README must state app is not replaced automatically")
     return errors
 
 
@@ -351,10 +399,13 @@ def main() -> int:
         if args.public_beta:
             errors.extend(verify_public_beta_docs(staging))
             errors.extend(verify_installer_docs(staging))
+            errors.extend(verify_updater_docs(staging))
             errors.extend(verify_public_beta_artifact(staging))
             errors.extend(verify_issue_templates(ROOT))
             errors.extend(verify_installer_skeletons(ROOT))
+            errors.extend(verify_updater_source(ROOT))
             errors.extend(verify_no_production_installer_claims(staging))
+            errors.extend(verify_no_production_self_update_claims(staging))
             errors.extend(verify_release_notes_version(staging, expected_version))
             errors.extend(verify_no_stale_versions(staging, expected_version))
             errors.extend(verify_executable_version(staging, expected_version))

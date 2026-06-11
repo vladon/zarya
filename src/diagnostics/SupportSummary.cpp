@@ -100,6 +100,7 @@ QString SupportSummary::buildClipboardText(const DiagnosticsContext& context)
     QStringList lines;
     lines << QStringLiteral("Zarya: %1").arg(BuildInfo::appVersion());
     lines << QStringLiteral("Installation: %1").arg(InstallationInfo::currentModeString());
+    lines << QStringLiteral("App update channel: %1").arg(settings.appUpdateChannelKey());
     lines << QStringLiteral("Platform: %1").arg(redactSummaryLine(platform));
     lines << QStringLiteral("Runtime: %1").arg(runtime);
     lines << QStringLiteral("Core:");
