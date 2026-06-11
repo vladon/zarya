@@ -131,6 +131,17 @@ void AppSettings::setTunWarningAccepted(bool accepted)
     settings().setValue(QStringLiteral("runtime/tunWarningAccepted"), accepted);
 }
 
+bool AppSettings::experimentalTunWarningAccepted() const
+{
+    return settings().value(QStringLiteral("runtime/experimentalTunWarningAccepted"), false)
+        .toBool();
+}
+
+void AppSettings::setExperimentalTunWarningAccepted(bool accepted)
+{
+    settings().setValue(QStringLiteral("runtime/experimentalTunWarningAccepted"), accepted);
+}
+
 void AppSettings::markTunSessionStarted()
 {
     settings().setValue(QStringLiteral("runtime/lastShutdownClean"), false);
@@ -612,6 +623,28 @@ bool AppSettings::firstRunCompleted() const
 void AppSettings::setFirstRunCompleted(bool completed)
 {
     settings().setValue(QStringLiteral("onboarding/firstRunCompleted"), completed);
+}
+
+bool AppSettings::firstRunCoreInstalled() const
+{
+    return settings().value(QStringLiteral("onboarding/firstRunCoreInstalled"), false).toBool();
+}
+
+void AppSettings::setFirstRunCoreInstalled(bool installed)
+{
+    settings().setValue(QStringLiteral("onboarding/firstRunCoreInstalled"), installed);
+}
+
+bool AppSettings::firstRunProfilesImported() const
+{
+    return settings()
+        .value(QStringLiteral("onboarding/firstRunProfilesImported"), false)
+        .toBool();
+}
+
+void AppSettings::setFirstRunProfilesImported(bool imported)
+{
+    settings().setValue(QStringLiteral("onboarding/firstRunProfilesImported"), imported);
 }
 
 bool AppSettings::dismissBetaBanner() const

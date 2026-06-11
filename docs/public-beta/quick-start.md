@@ -2,7 +2,7 @@
 
 ## Windows
 
-1. Download `Zarya-0.29.0-beta-windows-x64-portable.zip`.
+1. Download `Zarya-0.30.0-beta-windows-x64-portable.zip`.
 2. Extract it to a folder you control.
 3. Run `Zarya.exe`.
 4. Complete the setup wizard.

@@ -95,6 +95,8 @@ PUBLIC_BETA_DOC_FILES = (
     "privacy-and-diagnostics.md",
     "security.md",
     "beta-checklist.md",
+    "feedback-triage.md",
+    "beta-blockers.md",
 )
 
 

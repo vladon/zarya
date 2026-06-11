@@ -41,6 +41,9 @@ public:
     bool tunWarningAccepted() const;
     void setTunWarningAccepted(bool accepted);
 
+    bool experimentalTunWarningAccepted() const;
+    void setExperimentalTunWarningAccepted(bool accepted);
+
     void markTunSessionStarted();
     void markCleanShutdown();
     bool shouldWarnUncleanTunShutdown() const;
@@ -170,6 +173,12 @@ public:
 
     bool firstRunCompleted() const;
     void setFirstRunCompleted(bool completed);
+
+    bool firstRunCoreInstalled() const;
+    void setFirstRunCoreInstalled(bool installed);
+
+    bool firstRunProfilesImported() const;
+    void setFirstRunProfilesImported(bool imported);
 
     bool dismissBetaBanner() const;
     void setDismissBetaBanner(bool dismissed);

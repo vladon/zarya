@@ -174,11 +174,22 @@ void CoreBinaryManager::checkLatestVersions()
 {
     m_pendingChecks = 2;
     const int timeoutMs = AppSettings::instance().githubApiTimeoutSeconds() * 1000;
+    const QDateTime now = QDateTime::currentDateTimeUtc();
+    for (CoreInfo& info : m_infos) {
+        info.lastReleaseCheckAt = now;
+        info.lastReleaseCheckError.clear();
+    }
 
     auto* xrayProvider = new GitHubReleaseProvider(CoreType::Xray, QStringLiteral("XTLS/Xray-core"), this);
     connect(xrayProvider, &CoreReleaseProvider::latestReleaseReady, this,
             [this, xrayProvider](const CoreRelease& release) {
                 m_latestReleases.insert(CoreType::Xray, release);
+                for (CoreInfo& info : m_infos) {
+                    if (info.type == CoreType::Xray) {
+                        info.lastReleaseCheckAt = QDateTime::currentDateTimeUtc();
+                        info.lastReleaseCheckError.clear();
+                    }
+                }
                 emit logLine(QStringLiteral("Fetching latest Xray release: %1").arg(release.version));
                 --m_pendingChecks;
                 if (m_pendingChecks <= 0) {
@@ -187,6 +198,11 @@ void CoreBinaryManager::checkLatestVersions()
                 xrayProvider->deleteLater();
             });
     connect(xrayProvider, &CoreReleaseProvider::error, this, [this](const QString& message) {
+        for (CoreInfo& info : m_infos) {
+            if (info.type == CoreType::Xray) {
+                info.lastReleaseCheckError = message;
+            }
+        }
         emit logLine(QStringLiteral("Xray release check failed: %1").arg(message));
         --m_pendingChecks;
         if (m_pendingChecks <= 0) {
@@ -201,6 +217,12 @@ void CoreBinaryManager::checkLatestVersions()
     connect(singBoxProvider, &CoreReleaseProvider::latestReleaseReady, this,
             [this, singBoxProvider](const CoreRelease& release) {
                 m_latestReleases.insert(CoreType::SingBox, release);
+                for (CoreInfo& info : m_infos) {
+                    if (info.type == CoreType::SingBox) {
+                        info.lastReleaseCheckAt = QDateTime::currentDateTimeUtc();
+                        info.lastReleaseCheckError.clear();
+                    }
+                }
                 emit logLine(QStringLiteral("Fetching latest sing-box release: %1").arg(release.version));
                 --m_pendingChecks;
                 if (m_pendingChecks <= 0) {
@@ -209,6 +231,11 @@ void CoreBinaryManager::checkLatestVersions()
                 singBoxProvider->deleteLater();
             });
     connect(singBoxProvider, &CoreReleaseProvider::error, this, [this](const QString& message) {
+        for (CoreInfo& info : m_infos) {
+            if (info.type == CoreType::SingBox) {
+                info.lastReleaseCheckError = message;
+            }
+        }
         emit logLine(QStringLiteral("sing-box release check failed: %1").arg(message));
         --m_pendingChecks;
         if (m_pendingChecks <= 0) {
@@ -426,6 +453,14 @@ void CoreBinaryManager::finishInstall(CoreType type, const CoreRelease& release,
     CoreRollbackManager::pruneBackups(type, AppSettings::instance().coreBackupRetentionCount());
     emit logLine(QStringLiteral("Final verification OK"));
     emit logLine(QStringLiteral("Core update completed"));
+
+    const QDateTime now = QDateTime::currentDateTimeUtc();
+    for (CoreInfo& info : m_infos) {
+        if (info.type == type) {
+            info.lastUpdatedAt = now;
+            info.lastUpdateError.clear();
+        }
+    }
 
     if (type == CoreType::Xray) {
         AppSettings::instance().setXrayExecutablePath({});

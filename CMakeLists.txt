@@ -195,6 +195,7 @@ set(ZARYA_DIAGNOSTICS_SOURCES
     src/diagnostics/DiagnosticsCollector.cpp
     src/diagnostics/DiagnosticsBundleWriter.cpp
     src/diagnostics/DiagnosticsManager.cpp
+    src/diagnostics/SupportSummary.cpp
 )
 
 set(ZARYA_BACKUP_SOURCES

@@ -24,9 +24,12 @@ struct CoreInfo {
 
     CoreInstallStatus status = CoreInstallStatus::Unknown;
     QString lastError;
+    QString lastReleaseCheckError;
+    QString lastUpdateError;
 
     QDateTime lastCheckedAt;
     QDateTime lastUpdatedAt;
+    QDateTime lastReleaseCheckAt;
 
     QString selectedAssetName;
     QString checksumStatus;

@@ -15,6 +15,7 @@
 #include "app/BuildInfo.h"
 #include "packaging/PackagingInfo.h"
 #include "packaging/PublicBetaDocs.h"
+#include "diagnostics/SupportSummary.h"
 #include "recovery/StartupRecovery.h"
 #include "storage/SettingsValidator.h"
 #include "ui/BetaBannerWidget.h"
@@ -342,6 +343,7 @@ void MainWindow::setupMenuBar()
                         [this]() { runFirstRunWizard(true); });
     helpMenu->addAction(tr("Create &Diagnostics Bundle…"), this,
                         &MainWindow::onCreateDiagnosticsBundle);
+    helpMenu->addAction(tr("Copy &Support Summary"), this, &MainWindow::onCopySupportSummary);
     helpMenu->addSeparator();
     helpMenu->addAction(tr("&About"), this, &MainWindow::onAbout);
 }
@@ -650,6 +652,11 @@ void MainWindow::runStartupRecovery()
 
     appendLog(QStringLiteral("Unclean previous shutdown detected."));
     StartupRecoveryDialog dialog(plan, this);
+    connect(&dialog, &StartupRecoveryDialog::createDiagnosticsRequested, this,
+            &MainWindow::onCreateDiagnosticsBundle);
+    connect(&dialog, &StartupRecoveryDialog::openReportingGuideRequested, this, []() {
+        PublicBetaDocs::openIssueReporting();
+    });
     if (dialog.exec() != QDialog::Accepted) {
         appendLog(QStringLiteral("Startup recovery skipped by user."));
         return;
@@ -701,6 +708,10 @@ void MainWindow::runFirstRunWizard(bool force)
     connect(&wizard, &FirstRunWizard::wizardFinishedState, this, &MainWindow::applyFirstRunState);
 
     if (wizard.exec() == QDialog::Accepted) {
+        AppSettings::instance().setFirstRunCoreInstalled(
+            m_coreBinaryManager.infoFor(CoreType::Xray).exists);
+        AppSettings::instance().setFirstRunProfilesImported(
+            !m_allProfiles.isEmpty() || !m_subscriptions.isEmpty());
         AppSettings::instance().setFirstRunCompleted(true);
     } else if (wizard.wasSkipped()) {
         AppSettings::instance().setFirstRunCompleted(true);
@@ -718,6 +729,9 @@ void MainWindow::applyFirstRunState(const FirstRunState& state)
         }
         saveAll();
         refreshProfileView();
+    }
+    if (!state.importedProfiles.isEmpty() || !state.addedSubscriptions.isEmpty()) {
+        AppSettings::instance().setFirstRunProfilesImported(true);
     }
     if (!state.addedSubscriptions.isEmpty()) {
         const int beforeCount = m_subscriptions.size();
@@ -1725,6 +1739,7 @@ DiagnosticsContext MainWindow::buildDiagnosticsContext()
 {
     DiagnosticsContext context;
     context.profiles = m_allProfiles;
+    context.subscriptions = m_subscriptions;
     if (Profile* selected = selectedProfileInStorage()) {
         context.selectedProfile = *selected;
         context.hasSelectedProfile = true;
@@ -1751,6 +1766,19 @@ void MainWindow::onCreateDiagnosticsBundle()
     DiagnosticsDialog dialog(m_diagnosticsManager,
                              [this](const QString& line) { appendLog(line); }, this);
     dialog.exec();
+}
+
+void MainWindow::onCopySupportSummary()
+{
+    if (!SupportSummary::copyToClipboard(buildDiagnosticsContext())) {
+        QMessageBox::warning(this, tr("Support Summary"),
+                             tr("Could not copy support summary to the clipboard."));
+        return;
+    }
+    QMessageBox::information(
+        this, tr("Support Summary"),
+        tr("Support summary copied to the clipboard.\n\n"
+           "Review it before pasting into an issue. Do not include proxy links or passwords."));
 }
 
 void MainWindow::checkCoreUpdatesOnStartup()

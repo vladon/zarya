@@ -668,26 +668,58 @@ void SettingsDialog::onBrowseSingBox()
 
 bool SettingsDialog::confirmTunWarningIfNeeded()
 {
-    if (AppSettings::instance().tunWarningAccepted()) {
+    AppSettings& settings = AppSettings::instance();
+    if (settings.experimentalTunWarningAccepted() || settings.tunWarningAccepted()) {
         return true;
     }
 
     QMessageBox box(this);
     box.setIcon(QMessageBox::Warning);
     box.setWindowTitle(tr("Experimental TUN mode"));
-    box.setText(tr(
-        "TUN mode is experimental. It may change network routes and DNS behavior.\n\n"
-        "If it fails, Zarya will attempt to stop sing-box and restore state, but this mode is "
-        "not production-ready yet.\n\n"
-        "Kill switch is experimental and requires zarya-helper mode."));
-    QPushButton* enableButton = box.addButton(tr("Enable Experimental TUN"),
-                                              QMessageBox::AcceptRole);
+    box.setText(tr("TUN mode is experimental and is not the recommended beta path."));
+    box.setInformativeText(
+        tr("Recommended for beta:\nXray system-proxy mode.\n\n"
+           "Continue with experimental TUN?"));
+    QPushButton* continueButton = box.addButton(tr("Continue"), QMessageBox::AcceptRole);
+    QPushButton* switchButton =
+        box.addButton(tr("Switch to Xray system proxy"), QMessageBox::ActionRole);
     box.addButton(QMessageBox::Cancel);
     box.exec();
+
+    if (box.clickedButton() == switchButton) {
+        m_enableExperimentalTunCheck->setChecked(false);
+        m_systemProxyRuntimeRadio->setChecked(true);
+        return false;
+    }
+    if (box.clickedButton() != continueButton) {
+        return false;
+    }
+    settings.setExperimentalTunWarningAccepted(true);
+    settings.setTunWarningAccepted(true);
+    return true;
+}
+
+bool SettingsDialog::confirmKillSwitchWarningIfNeeded()
+{
+    QMessageBox box(this);
+    box.setIcon(QMessageBox::Warning);
+    box.setWindowTitle(tr("Experimental kill switch"));
+    box.setText(tr("Kill switch is experimental and may block networking if it fails."));
+    box.setInformativeText(
+        tr("Make sure you know the recovery procedure before enabling it."));
+    QPushButton* recoveryButton =
+        box.addButton(tr("Show Recovery Instructions"), QMessageBox::ActionRole);
+    QPushButton* enableButton = box.addButton(tr("Enable"), QMessageBox::AcceptRole);
+    box.addButton(QMessageBox::Cancel);
+    box.exec();
+
+    if (box.clickedButton() == recoveryButton) {
+        onShowKillSwitchRecovery();
+        return false;
+    }
     if (box.clickedButton() != enableButton) {
         return false;
     }
-    AppSettings::instance().setTunWarningAccepted(true);
     return true;
 }
 
@@ -856,6 +888,11 @@ bool SettingsDialog::validateAndSave()
     settings.setTunRequireLocalRuleSets(m_tunRequireLocalRuleSetsCheck->isChecked());
 
     const bool killSwitchEnabled = m_enableKillSwitchCheck->isChecked();
+    if (killSwitchEnabled && !AppSettings::instance().enableExperimentalKillSwitch()) {
+        if (!confirmKillSwitchWarningIfNeeded()) {
+            return false;
+        }
+    }
     settings.setEnableExperimentalKillSwitch(killSwitchEnabled);
     settings.setKillSwitchMode(killSwitchEnabled ? KillSwitchMode::TunOnlyExperimental
                                                  : KillSwitchMode::Disabled);

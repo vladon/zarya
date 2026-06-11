@@ -6,6 +6,7 @@
 
 class QCheckBox;
 class QLabel;
+class QPushButton;
 
 namespace zarya {
 
@@ -17,12 +18,17 @@ public:
 
     StartupRecoveryPlan selectedPlan() const;
 
+signals:
+    void createDiagnosticsRequested();
+    void openReportingGuideRequested();
+
 private:
     StartupRecoveryPlan m_plan;
     QCheckBox* m_restoreProxyCheck = nullptr;
     QCheckBox* m_cleanRuntimeCheck = nullptr;
     QCheckBox* m_disableKillSwitchCheck = nullptr;
     QLabel* m_detectedLabel = nullptr;
+    QPushButton* m_recoverButton = nullptr;
 };
 
 } // namespace zarya

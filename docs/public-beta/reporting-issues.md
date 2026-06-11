@@ -7,6 +7,8 @@
 3. Create a **Diagnostics Bundle**: **Help → Create Diagnostics Bundle**
 4. Review the bundle before sharing.
 
+If you cannot attach a bundle yet, use **Help → Copy Support Summary** and paste the redacted text into your issue.
+
 ## Do not share
 
 - raw `vless://`, `vmess://`, `trojan://`, `ss://` links
