@@ -49,13 +49,15 @@ TARBALL="$OUTPUT_DIR/$ARTIFACT_BASE.tar.gz"
 
 if [[ "$SKIP_BUILD" -eq 0 ]]; then
   cmake -S "$ROOT" -B "$BUILD_DIR"
-  cmake --build "$BUILD_DIR" --target zarya_lrelease zarya zarya-helper
+  cmake --build "$BUILD_DIR" --target zarya_lrelease zarya zarya-helper zarya-updater
 fi
 
 BIN="$BUILD_DIR/zarya"
 [[ -x "$BIN" ]] || BIN="$BUILD_DIR/Release/zarya"
 HELPER_BIN="$BUILD_DIR/zarya-helper"
 [[ -x "$HELPER_BIN" ]] || HELPER_BIN="$BUILD_DIR/Release/zarya-helper"
+UPDATER_BIN="$BUILD_DIR/zarya-updater"
+[[ -x "$UPDATER_BIN" ]] || UPDATER_BIN="$BUILD_DIR/Release/zarya-updater"
 
 rm -rf "$STAGING"
 mkdir -p "$STAGING"
@@ -64,6 +66,8 @@ cp "$BIN" "$STAGING/zarya"
 chmod +x "$STAGING/zarya"
 cp "$HELPER_BIN" "$STAGING/zarya-helper"
 chmod +x "$STAGING/zarya-helper"
+cp "$UPDATER_BIN" "$STAGING/zarya-updater"
+chmod +x "$STAGING/zarya-updater"
 touch "$STAGING/portable.flag"
 
 cp "$ROOT/packaging/linux/zarya.desktop.in" "$STAGING/zarya.desktop"
@@ -106,6 +110,7 @@ write_release_manifest(
     portable=True,
     gui_artifact="zarya",
     helper_artifact="zarya-helper",
+    updater_artifact="zarya-updater",
 )
 write_build_integrity(staging)
 errors = verify_clean_staging(staging)

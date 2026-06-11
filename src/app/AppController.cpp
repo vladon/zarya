@@ -985,6 +985,21 @@ bool AppController::attemptProxyRestoreOnShutdown(QString* error)
     return restored;
 }
 
+bool AppController::safeShutdownForUpdate()
+{
+    return safeShutdownWithOptions(true, true, true, true);
+}
+
+void AppController::requestQuitForUpdate()
+{
+    emit logLine(QStringLiteral("Quit requested for app update"));
+    if (safeShutdownForUpdate()) {
+        emit quitApproved();
+        return;
+    }
+    emit quitBlocked(QStringLiteral("Safe shutdown failed; update was not started."));
+}
+
 bool AppController::safeShutdown(bool proxyExitAnyway)
 {
     return safeShutdownWithOptions(proxyExitAnyway, true, true, true);

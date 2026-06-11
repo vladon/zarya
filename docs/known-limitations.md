@@ -20,9 +20,18 @@ macOS does not install PF firewall rules in current milestones.
 
 sing-box rule sets depend on the installed sing-box version and local `.srs` files. Missing rule sets block TUN start when strict mode is enabled.
 
-## No app self-update yet
+## App self-update (portable PoC)
 
-Core binaries can be updated through Core Manager, but the Zarya application itself has no auto-update channel.
+0.35 adds portable-mode update via external `zarya-updater` after SHA256 verification.
+
+Not available yet:
+
+- installed MSI auto-update
+- macOS `.app` replacement
+- AppImage replacement
+- silent/background update
+
+See [updater/portable-update-implementation.md](updater/portable-update-implementation.md).
 
 ## No signed installer yet
 

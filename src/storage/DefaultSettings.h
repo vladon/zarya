@@ -22,6 +22,7 @@ public:
     static bool checkAppUpdatesOnStartup();
     static bool allowCoreUpdateWithoutChecksum();
     static bool allowUnsignedAppUpdates();
+    static int appUpdateBackupRetentionCount();
     static bool showExperimentalFeatures();
 };
 

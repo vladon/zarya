@@ -29,14 +29,18 @@ def find_staging_root(extracted: Path) -> Path:
     return extracted
 
 
-def locate_executables(staging: Path) -> tuple[Path | None, Path | None]:
+def locate_executables(staging: Path) -> tuple[Path | None, Path | None, Path | None]:
     gui_candidates = list(staging.rglob("Zarya.exe")) + list(staging.rglob("zarya")) + list(
         staging.rglob("Zarya")
     )
     helper_candidates = list(staging.rglob("zarya-helper.exe")) + list(staging.rglob("zarya-helper"))
+    updater_candidates = list(staging.rglob("zarya-updater.exe")) + list(
+        staging.rglob("zarya-updater")
+    )
     gui = next((p for p in gui_candidates if p.is_file()), None)
     helper = next((p for p in helper_candidates if p.is_file()), None)
-    return gui, helper
+    updater = next((p for p in updater_candidates if p.is_file()), None)
+    return gui, helper, updater
 
 
 def main() -> int:
@@ -96,11 +100,13 @@ def main() -> int:
             if any(staging.rglob(forbidden)):
                 errors.append(f"forbidden file present: {forbidden}")
 
-        gui, helper = locate_executables(staging)
+        gui, helper, updater = locate_executables(staging)
         if gui is None:
             errors.append("GUI executable not found")
         if helper is None:
             errors.append("zarya-helper executable not found")
+        if updater is None:
+            errors.append("zarya-updater executable not found")
 
         if gui is not None:
             ok, output = run_version_check(gui)
@@ -115,6 +121,13 @@ def main() -> int:
                 errors.append(f"--version failed for helper: {output}")
             elif "zarya-helper" not in output:
                 errors.append(f"unexpected helper --version output: {output}")
+
+        if updater is not None:
+            ok, output = run_version_check(updater)
+            if not ok:
+                errors.append(f"--version failed for updater: {output}")
+            elif "zarya-updater" not in output:
+                errors.append(f"unexpected updater --version output: {output}")
 
         if errors:
             print("Smoke test failed:", file=sys.stderr)

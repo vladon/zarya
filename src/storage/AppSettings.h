@@ -190,6 +190,21 @@ public:
     bool allowUnsignedAppUpdates() const;
     void setAllowUnsignedAppUpdates(bool enabled);
 
+    bool allowDevLocalAppUpdateInstall() const;
+    void setAllowDevLocalAppUpdateInstall(bool enabled);
+
+    int appUpdateBackupRetentionCount() const;
+    void setAppUpdateBackupRetentionCount(int count);
+
+    QString lastDownloadedAppUpdateArtifact() const;
+    void setLastDownloadedAppUpdateArtifact(const QString& fileName);
+
+    QString lastAppUpdateVerificationStatus() const;
+    void setLastAppUpdateVerificationStatus(const QString& status);
+
+    QString lastAppUpdateInstallAttempt() const;
+    void setLastAppUpdateInstallAttempt(const QString& status);
+
     bool installedPortableImportPromptShown() const;
     void setInstalledPortableImportPromptShown(bool shown);
 

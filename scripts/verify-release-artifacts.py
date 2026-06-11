@@ -134,6 +134,7 @@ def verify_updater_source(source_root: Path) -> list[str]:
         "src/updater/AppUpdateChecker.cpp",
         "src/updater/AppUpdatePlanner.cpp",
         "src/updater/AppVersion.cpp",
+        "src/updater/runner/main.cpp",
         "scripts/generate-update-manifest.py",
         "docs/updater/README.md",
     )
@@ -156,8 +157,8 @@ def verify_no_production_self_update_claims(staging: Path) -> list[str]:
     updater_readme = staging / "docs" / "updater" / "README.md"
     if updater_readme.is_file():
         text = updater_readme.read_text(encoding="utf-8", errors="replace").lower()
-        if "does not replace" not in text and "not replace" not in text:
-            errors.append("updater README must state app is not replaced automatically")
+        if "portable" not in text or "installed" not in text:
+            errors.append("updater README must describe portable vs installed update scope")
     return errors
 
 
@@ -214,8 +215,11 @@ def verify_public_beta_artifact(staging: Path) -> list[str]:
     if not list(staging.rglob("zarya_en.qm")) or not list(staging.rglob("zarya_ru.qm")):
         errors.append("translations (zarya_en.qm, zarya_ru.qm) are missing from artifact")
     helper_names = ("zarya-helper.exe", "zarya-helper")
+    updater_names = ("zarya-updater.exe", "zarya-updater")
     if not any(staging.rglob(name) for name in helper_names):
         errors.append("zarya-helper binary is missing from artifact")
+    if not any(staging.rglob(name) for name in updater_names):
+        errors.append("zarya-updater binary is missing from artifact")
     return errors
 
 

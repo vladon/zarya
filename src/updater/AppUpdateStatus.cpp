@@ -1,6 +1,8 @@
 #include "updater/AppUpdateStatus.h"
 
 #include "packaging/InstallationMode.h"
+#include "storage/AppSettings.h"
+#include "updater/AppUpdateStateManager.h"
 
 namespace zarya {
 
@@ -27,6 +29,17 @@ void AppUpdateStatus::recordCheckFailure(const QString& result)
 {
     m_lastCheckResult = result;
     m_lastCheckAt = QDateTime::currentDateTimeUtc();
+}
+
+void AppUpdateStatus::recordDownloadVerified(const QString& artifactFileName)
+{
+    AppSettings::instance().setLastDownloadedAppUpdateArtifact(artifactFileName);
+    AppSettings::instance().setLastAppUpdateVerificationStatus(QStringLiteral("sha256_ok"));
+}
+
+void AppUpdateStatus::recordInstallAttempt(const QString& status)
+{
+    AppSettings::instance().setLastAppUpdateInstallAttempt(status);
 }
 
 void AppUpdateStatus::reset()
@@ -73,6 +86,8 @@ void AppUpdateStatus::setManifestUrlConfigured(bool configured)
 
 QJsonObject AppUpdateStatus::diagnosticsJson() const
 {
+    const AppSettings& settings = AppSettings::instance();
+
     QJsonObject object;
     object.insert(QStringLiteral("channel"), AppUpdateChannelPolicy::toString(m_channel));
     object.insert(QStringLiteral("manifestUrlConfigured"), m_manifestUrlConfigured);
@@ -88,6 +103,18 @@ QJsonObject AppUpdateStatus::diagnosticsJson() const
         object.insert(QStringLiteral("lastAvailableVersion"), m_lastAvailableVersion);
     }
     object.insert(QStringLiteral("installationMode"), InstallationInfo::currentModeString());
+
+    const QString artifact = settings.lastDownloadedAppUpdateArtifact();
+    object.insert(QStringLiteral("lastDownloadedArtifact"),
+                  artifact.isEmpty() ? QJsonValue::Null : QJsonValue(artifact));
+    object.insert(QStringLiteral("lastVerificationStatus"),
+                  settings.lastAppUpdateVerificationStatus());
+    object.insert(QStringLiteral("lastInstallAttempt"), settings.lastAppUpdateInstallAttempt());
+
+    const QString logSummary = AppUpdateStateManager::readLastUpdaterLogSummary();
+    object.insert(QStringLiteral("lastUpdaterLog"),
+                  logSummary.isEmpty() ? QJsonValue::Null : QJsonValue(logSummary));
+
     return object;
 }
 

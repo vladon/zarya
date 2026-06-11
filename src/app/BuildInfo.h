@@ -15,6 +15,7 @@ public:
 
     static QString cliVersionText();
     static QString helperCliVersionText();
+    static QString updaterCliVersionText();
     static QString aboutText();
 
     static bool isSigned();

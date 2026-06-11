@@ -141,6 +141,11 @@ QString BuildInfo::helperCliVersionText()
     return QStringLiteral("zarya-helper %1").arg(appVersion());
 }
 
+QString BuildInfo::updaterCliVersionText()
+{
+    return QStringLiteral("zarya-updater %1").arg(appVersion());
+}
+
 QString BuildInfo::aboutText()
 {
     QString text = QStringLiteral(

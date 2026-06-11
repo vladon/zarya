@@ -27,9 +27,23 @@ Use recovery instructions if networking is blocked.
 
 macOS kill switch is not available in this beta.
 
-## No app self-update
+## App self-update (portable PoC)
 
-Zarya can update Xray and sing-box cores, but it cannot update the Zarya app itself yet.
+0.35 adds a **portable-mode update PoC** using external `zarya-updater`.
+
+Supported in 0.35:
+
+- Windows portable ZIP in-place update after SHA256 verification
+- Linux portable tarball (best-effort; not AppImage)
+
+Not supported in 0.35:
+
+- installed MSI auto-update
+- macOS `.app` replacement
+- AppImage replacement
+- silent/background update
+
+See [docs/updater/portable-update-implementation.md](../updater/portable-update-implementation.md).
 
 ## Builds may be unsigned
 

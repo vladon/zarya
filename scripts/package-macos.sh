@@ -146,7 +146,7 @@ if [[ "$SKIP_BUILD" -eq 0 ]]; then
 
   cmake -S "$ROOT" -B "$BUILD_DIR"
 
-  cmake --build "$BUILD_DIR" --config Release --target zarya_lrelease zarya zarya-helper
+  cmake --build "$BUILD_DIR" --config Release --target zarya_lrelease zarya zarya-helper zarya-updater
 
 fi
 
@@ -166,6 +166,10 @@ HELPER_BIN="$BUILD_DIR/zarya-helper"
 
 [[ -x "$HELPER_BIN" ]] || HELPER_BIN="$BUILD_DIR/Release/zarya-helper"
 
+UPDATER_BIN="$BUILD_DIR/zarya-updater"
+
+[[ -x "$UPDATER_BIN" ]] || UPDATER_BIN="$BUILD_DIR/Release/zarya-updater"
+
 
 
 MACOS_DIR="$APP_PATH/Contents/MacOS"
@@ -181,6 +185,16 @@ if [[ -x "$HELPER_BIN" ]]; then
   cp "$HELPER_BIN" "$MACOS_DIR/zarya-helper"
 
   chmod +x "$MACOS_DIR/zarya-helper"
+
+fi
+
+
+
+if [[ -x "$UPDATER_BIN" ]]; then
+
+  cp "$UPDATER_BIN" "$MACOS_DIR/zarya-updater"
+
+  chmod +x "$MACOS_DIR/zarya-updater"
 
 fi
 
@@ -261,6 +275,8 @@ write_release_manifest(
     gui_artifact="Zarya.app/Contents/MacOS/Zarya",
 
     helper_artifact="Zarya.app/Contents/MacOS/zarya-helper" if Path("$MACOS_DIR/zarya-helper").exists() else None,
+
+    updater_artifact="Zarya.app/Contents/MacOS/zarya-updater" if Path("$MACOS_DIR/zarya-updater").exists() else None,
 
 )
 

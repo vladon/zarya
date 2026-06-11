@@ -1,6 +1,6 @@
 # Zarya
 
-Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). Milestones 0.1–0.28: profiles, subscriptions, Xray, routing, geo data, DNS, system proxy, experimental TUN, sing-box rule sets, core update manager, backup import/export, diagnostics bundle, beta hardening, privileged helper, experimental kill switch (Linux nft / Windows WFP PoC), tray, autostart, English/Russian UI, release packaging, signing-ready hooks, and **0.28.0-beta** helper service design. **0.29.0-beta** adds public beta docs and issue templates. **0.30.0-beta** adds feedback triage, richer diagnostics, and Copy Support Summary. **0.31.0-beta** adds production installer planning and portable-to-installed migration skeleton. **0.32.0-beta** adds app self-update design (manifest check, download-and-verify; no auto-install). **0.33.0-beta** adds stable release hardening — feature gating, 1.0 scope, and release criteria. **0.34.0-beta** adds a Windows MSI installer PoC (WiX); portable ZIP remains recommended.
+Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). Milestones 0.1–0.28: profiles, subscriptions, Xray, routing, geo data, DNS, system proxy, experimental TUN, sing-box rule sets, core update manager, backup import/export, diagnostics bundle, beta hardening, privileged helper, experimental kill switch (Linux nft / Windows WFP PoC), tray, autostart, English/Russian UI, release packaging, signing-ready hooks, and **0.28.0-beta** helper service design. **0.29.0-beta** adds public beta docs and issue templates. **0.30.0-beta** adds feedback triage, richer diagnostics, and Copy Support Summary. **0.31.0-beta** adds production installer planning and portable-to-installed migration skeleton. **0.32.0-beta** adds app self-update design (manifest check, download-and-verify; no auto-install). **0.33.0-beta** adds stable release hardening — feature gating, 1.0 scope, and release criteria. **0.34.0-beta** adds a Windows MSI installer PoC (WiX); portable ZIP remains recommended. **0.35.0-beta** adds portable app updater PoC via external `zarya-updater` (Windows/Linux portable; installed MSI remains manual).
 
 Zarya supports **English** and **Russian** UI. Change language in **Settings → General → Language** (restart required for full effect). See [docs/localization.md](docs/localization.md).
 
@@ -93,7 +93,7 @@ The app **starts and runs without** Xray installed. Profile management, import, 
 
 ## Beta status
 
-Zarya is in **public beta** (`0.34.0-beta`).
+Zarya is in **public beta** (`0.35.0-beta`).
 
 **Recommended mode:** Xray system-proxy mode (Routing: Bypass LAN, DNS: System DNS).
 
@@ -113,13 +113,15 @@ Production installers are being designed:
 
 Portable mode remains supported. **File → Import from Portable Zarya Folder…** helps migrate data explicitly when moving to an installed layout later.
 
-## App self-update (0.32 design)
+## App self-update (0.35 portable PoC)
 
-Zarya can **check** update manifests and **download/verify** artifacts. It does **not** replace the running app yet.
+Zarya can **check** update manifests, **download/verify** artifacts, and **install portable updates** via external `zarya-updater`.
 
-- **Help → Check for App Updates…** — local manifest or configured URL
+- **Help → Check for App Updates…** — local manifest or configured URL; **Install and Restart** when staging is ready (portable mode only)
 - **Settings → App updates** — channel, manifest URL (separate from Core updates)
-- Design docs: [docs/updater/README.md](docs/updater/README.md)
+- Preserves `data/`, `runtime/`, `portable.flag`, `cores/`
+- Installed MSI / macOS `.app`: download-and-verify only in 0.35
+- Docs: [docs/updater/README.md](docs/updater/README.md), [docs/updater/portable-update-implementation.md](docs/updater/portable-update-implementation.md)
 
 Core Manager updates Xray/sing-box. App updates update Zarya itself.
 
@@ -443,15 +445,15 @@ Non-portable mode continues to use the OS app data directory.
 
 | Platform | Artifact | Script |
 |----------|----------|--------|
-| Windows (portable) | `Zarya-0.34.0-beta-windows-x64-portable.zip` | `scripts/package-windows.ps1` |
-| Windows (MSI PoC) | `Zarya-0.34.0-beta-windows-x64-installer-poc.msi` | `scripts/package-windows-msi.ps1` |
-| macOS | `Zarya-0.34.0-beta-macos-<arch>.zip` | `scripts/package-macos.sh` |
-| Linux | `Zarya-0.34.0-beta-linux-<arch>.tar.gz` | `scripts/package-linux.sh` |
+| Windows (portable) | `Zarya-0.35.0-beta-windows-x64-portable.zip` | `scripts/package-windows.ps1` |
+| Windows (MSI PoC) | `Zarya-0.35.0-beta-windows-x64-installer-poc.msi` | `scripts/package-windows-msi.ps1` |
+| macOS | `Zarya-0.35.0-beta-macos-<arch>.zip` | `scripts/package-macos.sh` |
+| Linux | `Zarya-0.35.0-beta-linux-<arch>.tar.gz` | `scripts/package-linux.sh` |
 
 ```powershell
 .\scripts\package-windows.ps1 -Configuration Release -OutputDir .\dist -SkipSigning
-python scripts\run-smoke-tests.py --artifact .\dist\Zarya-0.34.0-beta-windows-x64-portable.zip --build-dir build
-python scripts\verify-release-artifacts.py --artifact .\dist\Zarya-0.34.0-beta-windows-x64-portable.zip --expected-version 0.34.0-beta --public-beta --require-checksum --allow-unsigned
+python scripts\run-smoke-tests.py --artifact .\dist\Zarya-0.35.0-beta-windows-x64-portable.zip --build-dir build
+python scripts\verify-release-artifacts.py --artifact .\dist\Zarya-0.35.0-beta-windows-x64-portable.zip --expected-version 0.35.0-beta --public-beta --require-checksum --allow-unsigned
 ```
 
 See [docs/release-packaging.md](docs/release-packaging.md), [docs/public-beta/download-verification.md](docs/public-beta/download-verification.md), [docs/signing/README.md](docs/signing/README.md), and `packaging/windows/portable-layout.md`. Artifacts include `release-manifest.json`, SHA256 checksums, translations, docs (including `docs/public-beta/`), and core placeholders. Xray/sing-box are not bundled. Signing is optional; in-app auto-update is not included.

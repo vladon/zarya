@@ -60,7 +60,9 @@ public:
     bool restoreSystemProxyAutomatic();
 
     void requestQuit();
+    void requestQuitForUpdate();
     bool safeShutdown(bool proxyExitAnyway = false);
+    bool safeShutdownForUpdate();
     bool safeShutdownWithOptions(bool proxyExitAnyway, bool stopRuntime, bool restoreProxy,
                                  bool disableKillSwitch);
 

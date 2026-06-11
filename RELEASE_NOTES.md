@@ -1,17 +1,15 @@
-# Zarya 0.34.0-beta
+# Zarya 0.35.0-beta
 
-## Windows installer PoC
+## Portable app updater PoC
 
-0.34 adds a **WiX MSI proof of concept** for Windows. Portable ZIP remains the recommended beta distribution.
+0.35 adds a **portable-mode app update PoC** using external `zarya-updater`.
 
-## What's new
+- Windows portable ZIP: download → SHA256 verify → stage → install → restart
+- Preserves `data/`, `runtime/`, `portable.flag`, `cores/`
+- Automatic rollback if post-update check fails
+- Installed MSI mode: check/download/verify only (no auto-install yet)
 
-- `scripts/package-windows-msi.ps1` — build `Zarya-0.34.0-beta-windows-x64-installer-poc.msi`
-- Installed mode under `C:\Program Files\Zarya\` with Start Menu shortcut
-- User data preserved on uninstall (`%AppData%\Zarya`, `%LocalAppData%\Zarya`)
-- Optional helper service via `INSTALLHELPERSERVICE=1` (off by default)
-
-See [docs/release-notes/0.34-beta.md](docs/release-notes/0.34-beta.md) and [docs/installer/windows-msi-poc.md](docs/installer/windows-msi-poc.md).
+See [docs/release-notes/0.35-beta.md](docs/release-notes/0.35-beta.md) and [docs/updater/portable-update-implementation.md](docs/updater/portable-update-implementation.md).
 
 ## Recommended path
 
