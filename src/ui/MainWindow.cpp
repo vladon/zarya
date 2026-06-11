@@ -14,6 +14,7 @@
 #include "migration/MigrationManager.h"
 #include "app/BuildInfo.h"
 #include "packaging/PackagingInfo.h"
+#include "packaging/PublicBetaDocs.h"
 #include "recovery/StartupRecovery.h"
 #include "storage/SettingsValidator.h"
 #include "ui/BetaBannerWidget.h"
@@ -312,6 +313,31 @@ void MainWindow::setupMenuBar()
         toolsMenu->addAction(tr("&Restore Previous Proxy"));
 
     auto* helpMenu = menuBar()->addMenu(tr("&Help"));
+    helpMenu->addAction(tr("Public Beta &Guide"), this, [this]() {
+        if (!PublicBetaDocs::openBundledDoc(QStringLiteral("README.md"))) {
+            QMessageBox::warning(this, tr("Help"),
+                                 tr("Public beta guide is not bundled with this build."));
+        }
+    });
+    helpMenu->addAction(tr("&Quick Start"), this, [this]() {
+        if (!PublicBetaDocs::openBundledDoc(QStringLiteral("quick-start.md"))) {
+            QMessageBox::warning(this, tr("Help"),
+                                 tr("Quick start guide is not bundled with this build."));
+        }
+    });
+    helpMenu->addAction(tr("&Known Limitations"), this, [this]() {
+        if (!PublicBetaDocs::openBundledDoc(QStringLiteral("known-limitations.md"))) {
+            QMessageBox::warning(this, tr("Help"),
+                                 tr("Known limitations doc is not bundled with this build."));
+        }
+    });
+    helpMenu->addAction(tr("&Report Issue…"), this, [this]() {
+        if (!PublicBetaDocs::openIssueReporting()) {
+            QMessageBox::warning(this, tr("Help"),
+                                 tr("Issue reporting instructions are not bundled with this build."));
+        }
+    });
+    helpMenu->addSeparator();
     helpMenu->addAction(tr("Run Setup &Wizard…"), this,
                         [this]() { runFirstRunWizard(true); });
     helpMenu->addAction(tr("Create &Diagnostics Bundle…"), this,

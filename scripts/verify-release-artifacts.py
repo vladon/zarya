@@ -17,10 +17,20 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from release_common import (  # noqa: E402
     FORBIDDEN_ARTIFACT_NAMES,
+    PUBLIC_BETA_DOC_FILES,
     extract_tar_gz,
     extract_zip,
     read_cmake_version,
     sha256_file,
+)
+
+ISSUE_TEMPLATE_FILES = (
+    "bug_report.yml",
+    "diagnostics_issue.yml",
+    "feature_request.yml",
+    "config_validation.yml",
+    "experimental_tun_issue.yml",
+    "security.md",
 )
 
 
@@ -52,6 +62,36 @@ def checksum_for_artifact(output_dir: Path, artifact: Path) -> str | None:
             if len(parts) >= 2 and parts[-1] == artifact.name:
                 return parts[0]
     return None
+
+
+def verify_public_beta_docs(staging: Path) -> list[str]:
+    errors: list[str] = []
+    for name in PUBLIC_BETA_DOC_FILES:
+        if not (staging / "docs" / "public-beta" / name).is_file():
+            errors.append(f"missing public-beta doc: docs/public-beta/{name}")
+    return errors
+
+
+def verify_issue_templates(source_root: Path) -> list[str]:
+    errors: list[str] = []
+    for name in ISSUE_TEMPLATE_FILES:
+        if not (source_root / ".github" / "ISSUE_TEMPLATE" / name).is_file():
+            errors.append(f"missing issue template: .github/ISSUE_TEMPLATE/{name}")
+    if not (source_root / ".github" / "pull_request_template.md").is_file():
+        errors.append("missing .github/pull_request_template.md")
+    return errors
+
+
+def verify_public_beta_artifact(staging: Path) -> list[str]:
+    errors: list[str] = []
+    if not (staging / "RELEASE_NOTES.md").is_file():
+        errors.append("RELEASE_NOTES.md is missing from artifact")
+    if not list(staging.rglob("zarya_en.qm")) or not list(staging.rglob("zarya_ru.qm")):
+        errors.append("translations (zarya_en.qm, zarya_ru.qm) are missing from artifact")
+    helper_names = ("zarya-helper.exe", "zarya-helper")
+    if not any(staging.rglob(name) for name in helper_names):
+        errors.append("zarya-helper binary is missing from artifact")
+    return errors
 
 
 def verify_forbidden_files(staging: Path) -> list[str]:
@@ -156,6 +196,11 @@ def main() -> int:
     parser.add_argument("--require-checksum", action="store_true", help="Require matching SHA256")
     parser.add_argument("--allow-unsigned", action="store_true", help="Allow unsigned artifacts")
     parser.add_argument("--require-signed", action="store_true", help="Fail if artifact is unsigned")
+    parser.add_argument(
+        "--public-beta",
+        action="store_true",
+        help="Verify public beta docs, release notes, translations, helper, and issue templates",
+    )
     args = parser.parse_args()
 
     if args.require_signed and args.allow_unsigned:
@@ -192,6 +237,10 @@ def main() -> int:
 
         staging = find_staging_root(temp_dir)
         errors.extend(verify_forbidden_files(staging))
+        if args.public_beta:
+            errors.extend(verify_public_beta_docs(staging))
+            errors.extend(verify_public_beta_artifact(staging))
+            errors.extend(verify_issue_templates(ROOT))
         manifest = load_manifest(staging)
         if manifest is None:
             errors.append("release-manifest.json is missing")

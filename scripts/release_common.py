@@ -85,6 +85,28 @@ def copy_docs(staging: Path) -> None:
             shutil.copy2(src, dest_service / src.name)
 
 
+PUBLIC_BETA_DOC_FILES = (
+    "README.md",
+    "quick-start.md",
+    "download-verification.md",
+    "reporting-issues.md",
+    "known-limitations.md",
+    "experimental-features.md",
+    "privacy-and-diagnostics.md",
+    "security.md",
+    "beta-checklist.md",
+)
+
+
+def copy_public_beta_docs(staging: Path) -> None:
+    dest = staging / "docs" / "public-beta"
+    dest.mkdir(parents=True, exist_ok=True)
+    for name in PUBLIC_BETA_DOC_FILES:
+        src = ROOT / "docs" / "public-beta" / name
+        if src.is_file():
+            shutil.copy2(src, dest / name)
+
+
 def copy_service_packaging_templates(staging: Path) -> None:
     packaging_dir = staging / "packaging"
     packaging_dir.mkdir(parents=True, exist_ok=True)
