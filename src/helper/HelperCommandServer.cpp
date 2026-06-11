@@ -60,6 +60,8 @@ bool HelperCommandServer::start(const QString& serverName, const QString& authTo
 {
     m_pathPolicy = pathPolicy;
     m_server.setAuthToken(authToken);
+    m_server.setAllowedClientSid(pathPolicy.allowedClientSid());
+    m_server.setAllowedClientUid(pathPolicy.allowedClientUid());
     m_server.setRequestHandler([this](const IpcEnvelope& request, QLocalSocket* client) {
         handleRequest(request, client);
     });

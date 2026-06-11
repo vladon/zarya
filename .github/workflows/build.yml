@@ -30,7 +30,7 @@ jobs:
       - name: Package (unsigned)
         run: .\scripts\package-windows.ps1 -Configuration Release -OutputDir dist -SkipBuild -SkipSigning
       - name: Verify release artifact
-        run: python scripts/verify-release-artifacts.py --artifact dist/Zarya-0.27.0-beta-windows-x64-portable.zip --expected-version 0.27.0-beta --require-checksum --allow-unsigned
+        run: python scripts/verify-release-artifacts.py --artifact dist/Zarya-0.28.0-beta-windows-x64-portable.zip --expected-version 0.28.0-beta --require-checksum --allow-unsigned
 
   build-ubuntu:
     runs-on: ubuntu-latest

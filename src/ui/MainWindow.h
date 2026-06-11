@@ -1,6 +1,7 @@
 #pragma once
 
 #include "app/AppController.h"
+#include "service/IHelperServiceManager.h"
 #include "app/StartupOptions.h"
 #include "errors/ErrorPresenter.h"
 #include "core/CoreManager.h"
@@ -22,6 +23,8 @@
 
 #include <QMainWindow>
 #include <QVector>
+
+#include <memory>
 
 class QAction;
 class QCloseEvent;
@@ -243,6 +246,8 @@ private:
     bool m_trayCloseNotificationShown = false;
     bool m_subscriptionUpdateBusy = false;
     bool m_quitting = false;
+
+    std::unique_ptr<IHelperServiceManager> m_helperServiceManager;
 };
 
 } // namespace zarya

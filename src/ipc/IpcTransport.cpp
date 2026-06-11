@@ -21,4 +21,9 @@ QString IpcTransport::defaultServerName()
 #endif
 }
 
+QString IpcTransport::serviceServerName(const QString& serviceName)
+{
+    return QStringLiteral("zarya-helper-service-%1").arg(serviceName);
+}
+
 } // namespace zarya

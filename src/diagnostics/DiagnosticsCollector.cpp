@@ -17,6 +17,8 @@
 #include "runtime/singbox/SingBoxConfigGenerator.h"
 #include "geodata/GeoDataManager.h"
 #include "helperclient/HelperProcessManager.h"
+#include "service/HelperServiceStatus.h"
+#include "service/IHelperServiceManager.h"
 #include "killswitch/KillSwitchState.h"
 #include "logging/LogBuffer.h"
 #include "migration/MigrationManager.h"
@@ -218,6 +220,43 @@ QJsonObject collectRuntimeStatus(const DiagnosticsContext& context)
         object.insert(QStringLiteral("selectedProfileProtocol"),
                       protocolTypeToString(context.selectedProfile.protocol));
     }
+    return object;
+}
+
+QJsonObject collectHelperServiceStatus(const DiagnosticsContext& context)
+{
+    QJsonObject object;
+    IHelperServiceManager* service = context.helperService;
+    if (!service) {
+        object.insert(QStringLiteral("backend"), QStringLiteral("unavailable"));
+        object.insert(QStringLiteral("installed"), false);
+        object.insert(QStringLiteral("running"), false);
+        object.insert(QStringLiteral("connected"), false);
+        return object;
+    }
+
+    const HelperServiceStatus status = service->status();
+    object.insert(QStringLiteral("backend"), status.backend);
+    object.insert(QStringLiteral("serviceName"), status.serviceName);
+    object.insert(QStringLiteral("installed"),
+                  status.state == HelperServiceInstallState::Installed
+                      || status.state == HelperServiceInstallState::Running
+                      || status.state == HelperServiceInstallState::Stopped);
+    object.insert(QStringLiteral("running"), status.state == HelperServiceInstallState::Running);
+  object.insert(QStringLiteral("connected"),
+                  context.helper
+                      && context.helper->connectionState() == HelperConnectionState::Connected);
+    object.insert(QStringLiteral("privileged"), status.privileged);
+    object.insert(QStringLiteral("version"), status.version);
+    object.insert(QStringLiteral("state"), helperServiceInstallStateToString(status.state));
+    if (!status.lastError.isEmpty()) {
+        object.insert(QStringLiteral("lastError"), status.lastError);
+    }
+    QJsonArray warnings;
+    for (const QString& warning : status.warnings) {
+        warnings.append(warning);
+    }
+    object.insert(QStringLiteral("warnings"), warnings);
     return object;
 }
 
@@ -583,6 +622,8 @@ DiagnosticsSnapshot DiagnosticsCollector::collect(const DiagnosticsOptions& opti
     if (categoryEnabled(options, DiagnosticsCategory::HelperStatus)) {
         putJson(&snapshot, QStringLiteral("diagnostics/helper-status.json"),
                 collectHelperStatus(context, &snapshot));
+        putJson(&snapshot, QStringLiteral("diagnostics/helper-service-status.json"),
+                collectHelperServiceStatus(context));
     }
     if (categoryEnabled(options, DiagnosticsCategory::SystemProxyStatus)) {
         putJson(&snapshot, QStringLiteral("diagnostics/system-proxy-status.json"),

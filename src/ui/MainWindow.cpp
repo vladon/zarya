@@ -24,6 +24,7 @@
 #include "errors/ErrorCode.h"
 #include "runtime/singbox/SingBoxConfigGenerator.h"
 #include "helperclient/HelperProcessManager.h"
+#include "service/HelperServiceManagerFactory.h"
 #include "killswitch/KillSwitchState.h"
 #include "storage/AppPaths.h"
 #include "storage/AppSettings.h"
@@ -670,6 +671,7 @@ void MainWindow::runFirstRunWizard(bool force)
     connect(&wizard, &FirstRunWizard::openDnsProfilesRequested, this, &MainWindow::onDnsProfiles);
     connect(&wizard, &FirstRunWizard::importBackupRequested, this, &MainWindow::onImportBackup);
     connect(&wizard, &FirstRunWizard::addProfileManuallyRequested, this, &MainWindow::onAddProfile);
+    connect(&wizard, &FirstRunWizard::configureHelperRequested, this, &MainWindow::onSettings);
     connect(&wizard, &FirstRunWizard::wizardFinishedState, this, &MainWindow::applyFirstRunState);
 
     if (wizard.exec() == QDialog::Accepted) {
@@ -856,6 +858,11 @@ void MainWindow::handleErrorAction(ErrorAction action, const AppError& error)
 
 void MainWindow::setupAppController()
 {
+    m_helperServiceManager = HelperServiceManagerFactory::create();
+    if (HelperProcessManager* helper = m_appController.helperProcessManager()) {
+        helper->setServiceManager(m_helperServiceManager.get());
+    }
+
     m_appController.setDialogParent(this);
     m_appController.setAfterCoreStartedCallback([this]() {
         tryAutoEnableSystemProxy(m_appController.lastStartWasAutostart());
@@ -1614,7 +1621,7 @@ void MainWindow::onLoadProfiles()
 void MainWindow::onSettings()
 {
     SettingsDialog dialog(m_routingManager, m_dnsManager, m_appController.helperProcessManager(),
-                        this);
+                          m_helperServiceManager.get(), this);
     dialog.exec();
     appendLog(QStringLiteral("Settings updated. Xray path: %1")
                   .arg(AppSettings::instance().resolvedXrayPath()));
@@ -1705,6 +1712,7 @@ DiagnosticsContext MainWindow::buildDiagnosticsContext()
     context.geoDataManager = &m_geoDataManager;
     context.ruleSetManager = &m_ruleSetManager;
     context.helper = m_appController.helperProcessManager();
+    context.helperService = m_helperServiceManager.get();
     context.xrayAdapter = &m_xrayAdapter;
     context.appStartedAt = LogBuffer::instance().appStartedAt();
     context.systemTrayAvailable = trayIsAvailable();

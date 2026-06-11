@@ -77,6 +77,24 @@ set(ZARYA_HELPERCLIENT_SOURCES
     src/storage/HelperSession.cpp
 )
 
+set(ZARYA_SERVICE_SOURCES
+    src/service/IHelperServiceManager.cpp
+    src/service/HelperServiceIdentity.cpp
+    src/service/HelperServiceStatus.cpp
+    src/service/HelperServiceInstallOptions.cpp
+    src/service/HelperServiceCommandLine.cpp
+    src/service/HelperServiceManagerFactory.cpp
+    src/service/stub/StubHelperServiceManager.cpp
+)
+
+if(WIN32)
+    list(APPEND ZARYA_SERVICE_SOURCES src/service/windows/WindowsHelperServiceManager.cpp)
+elseif(APPLE)
+    list(APPEND ZARYA_SERVICE_SOURCES src/service/macos/MacHelperServiceManager.cpp)
+elseif(UNIX)
+    list(APPEND ZARYA_SERVICE_SOURCES src/service/linux/LinuxHelperServiceManager.cpp)
+endif()
+
 set(ZARYA_KILLSWITCH_COMMON
     src/killswitch/KillSwitchMode.cpp
     src/killswitch/KillSwitchState.cpp
@@ -331,6 +349,7 @@ set(ZARYA_SOURCES
     ${ZARYA_RUNTIME_SOURCES}
     ${ZARYA_IPC_SOURCES}
     ${ZARYA_HELPERCLIENT_SOURCES}
+    ${ZARYA_SERVICE_SOURCES}
     ${ZARYA_KILLSWITCH_COMMON}
     ${ZARYA_KILLSWITCH_PLATFORM}
     ${ZARYA_KILLSWITCH_GUI_SOURCES}
@@ -412,7 +431,7 @@ target_link_libraries(zarya PRIVATE Qt6::Network)
 
 if(WIN32)
     set_target_properties(zarya PROPERTIES WIN32_EXECUTABLE TRUE)
-    target_link_libraries(zarya PRIVATE wininet)
+    target_link_libraries(zarya PRIVATE wininet shell32)
 elseif(APPLE)
     set_target_properties(zarya PROPERTIES
         MACOSX_BUNDLE TRUE
@@ -432,6 +451,10 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ZaryaDeploy.cmake)
 
 set(ZARYA_HELPER_SOURCES
     src/helper/main.cpp
+    src/service/HelperServiceIdentity.cpp
+    src/service/HelperServiceInstallOptions.cpp
+    src/service/HelperServiceCommandLine.cpp
+    src/storage/HelperSession.cpp
     src/app/BuildInfo.cpp
     src/app/StartupOptions.cpp
     src/i18n/TranslatableEnums.cpp
@@ -452,7 +475,9 @@ set(ZARYA_HELPER_SOURCES
 )
 
 if(WIN32)
-    list(APPEND ZARYA_HELPER_SOURCES ${ZARYA_KILLSWITCH_WINDOWS_WFP_SOURCES})
+    list(APPEND ZARYA_HELPER_SOURCES
+        ${ZARYA_KILLSWITCH_WINDOWS_WFP_SOURCES}
+        src/helper/WindowsServiceRunner.cpp)
     list(REMOVE_ITEM ZARYA_HELPER_SOURCES src/killswitch/windows/WindowsWfpKillSwitchManager_stub.cpp)
 endif()
 

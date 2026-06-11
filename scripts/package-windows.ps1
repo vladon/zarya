@@ -65,6 +65,7 @@ sys.path.insert(0, r'$Root\scripts')
 from release_common import (
     copy_top_level_legal_files,
     copy_docs,
+    copy_service_packaging_templates,
     copy_translations,
     create_placeholder_layout,
     write_release_manifest,
@@ -76,6 +77,7 @@ staging = Path(r'$Staging')
 build_translations = Path(r'$BuildRoot') / 'translations'
 copy_top_level_legal_files(staging)
 copy_docs(staging)
+copy_service_packaging_templates(staging)
 copy_translations(staging, build_translations)
 create_placeholder_layout(staging)
 write_release_manifest(

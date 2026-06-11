@@ -13,6 +13,7 @@ class CoreManager;
 class DnsManager;
 class GeoDataManager;
 class HelperProcessManager;
+class IHelperServiceManager;
 class RoutingManager;
 class RuleSetManager;
 class SystemProxyController;
@@ -32,6 +33,7 @@ struct DiagnosticsContext {
     GeoDataManager* geoDataManager = nullptr;
     RuleSetManager* ruleSetManager = nullptr;
     HelperProcessManager* helper = nullptr;
+    IHelperServiceManager* helperService = nullptr;
     XrayAdapter* xrayAdapter = nullptr;
 
     QDateTime appStartedAt;
