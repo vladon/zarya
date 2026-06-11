@@ -219,6 +219,20 @@ set(ZARYA_FEATURE_SOURCES
     src/features/FeatureGate.cpp
 )
 
+# Shared by helper, updater, and unit tests that link AppSettings/BuildInfo.
+set(ZARYA_SETTINGS_SUPPORT_SOURCES
+    ${ZARYA_FEATURE_SOURCES}
+    src/storage/DefaultSettings.cpp
+    src/packaging/InstallationMode.cpp
+    src/packaging/WindowsInstallInfo.cpp
+    src/runtime/RuntimeBackendType.cpp
+    src/killswitch/KillSwitchMode.cpp
+    src/diagnostics/DiagnosticsRedactor.cpp
+    src/i18n/TranslatableEnums.cpp
+    src/domain/ProfileSourceType.cpp
+    src/domain/ProtocolType.cpp
+)
+
 set(ZARYA_APP_UPDATE_SOURCES
     src/updater/AppVersion.cpp
     src/updater/AppUpdateChannel.cpp
@@ -506,8 +520,8 @@ set(ZARYA_HELPER_SOURCES
     src/platform/Platform.cpp
     src/storage/AppPaths.cpp
     src/storage/AppSettings.cpp
-    src/runtime/RuntimeBackendType.cpp
     src/packaging/PackagingInfo.cpp
+    ${ZARYA_SETTINGS_SUPPORT_SOURCES}
     ${ZARYA_KILLSWITCH_SOURCES}
 )
 
@@ -545,11 +559,11 @@ set(ZARYA_UPDATER_SOURCES
     src/app/StartupOptions.cpp
     src/storage/AppPaths.cpp
     src/storage/AppSettings.cpp
-    src/storage/DefaultSettings.cpp
     src/platform/PlatformProcessUtils.cpp
     src/updater/AppUpdatePaths.cpp
     src/updater/AppVersion.cpp
     src/packaging/PackagingInfo.cpp
+    ${ZARYA_SETTINGS_SUPPORT_SOURCES}
     src/platform/Platform.cpp
 )
 
@@ -727,18 +741,13 @@ add_test(NAME version COMMAND zarya_version_test)
 
 add_executable(zarya_stable_hardening_test
     tests/stable/stable_hardening_test.cpp
-    src/features/FeaturePolicy.cpp
-    src/features/FeatureGate.cpp
     src/storage/AppSettings.cpp
     src/storage/AppPaths.cpp
-    src/storage/DefaultSettings.cpp
     src/app/BuildInfo.cpp
     src/app/StartupOptions.cpp
     src/packaging/PackagingInfo.cpp
-    src/runtime/RuntimeBackendType.cpp
-    src/killswitch/KillSwitchMode.cpp
+    ${ZARYA_SETTINGS_SUPPORT_SOURCES}
     src/platform/Platform.cpp
-    src/diagnostics/DiagnosticsRedactor.cpp
 )
 target_include_directories(zarya_stable_hardening_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${ZARYA_GENERATED_DIR})
 zarya_link_qt_core(zarya_stable_hardening_test)

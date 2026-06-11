@@ -7,6 +7,7 @@
 #include "app/StartupOptions.h"
 #include "platform/Platform.h"
 #include "storage/AppPaths.h"
+#include "storage/DefaultSettings.h"
 
 #include <QSettings>
 
@@ -713,6 +714,19 @@ bool AppSettings::allowDevLocalAppUpdateInstall() const
 void AppSettings::setAllowDevLocalAppUpdateInstall(bool enabled)
 {
     settings().setValue(QStringLiteral("app/allowDevLocalAppUpdateInstall"), enabled);
+}
+
+bool AppSettings::enablePortableUpdaterPoC() const
+{
+    if (settings().contains(QStringLiteral("app/enablePortableUpdaterPoC"))) {
+        return settings().value(QStringLiteral("app/enablePortableUpdaterPoC")).toBool();
+    }
+    return DefaultSettings::enablePortableUpdaterPoC();
+}
+
+void AppSettings::setEnablePortableUpdaterPoC(bool enabled)
+{
+    settings().setValue(QStringLiteral("app/enablePortableUpdaterPoC"), enabled);
 }
 
 int AppSettings::appUpdateBackupRetentionCount() const

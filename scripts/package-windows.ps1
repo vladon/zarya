@@ -75,6 +75,7 @@ from release_common import (
     copy_installer_docs,
     copy_updater_docs,
     copy_stable_docs,
+    copy_rc_docs,
     copy_service_packaging_templates,
     copy_translations,
     create_placeholder_layout,
@@ -91,6 +92,7 @@ copy_public_beta_docs(staging)
 copy_installer_docs(staging)
 copy_updater_docs(staging)
 copy_stable_docs(staging)
+copy_rc_docs(staging)
 copy_service_packaging_templates(staging)
 copy_translations(staging, build_translations)
 create_placeholder_layout(staging)

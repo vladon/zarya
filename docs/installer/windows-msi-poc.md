@@ -4,9 +4,9 @@
 
 This is a **proof of concept** installer for milestone 0.34.
 
-**Portable ZIP remains the recommended beta distribution.**
+**Portable ZIP remains the recommended RC and beta distribution.**
 
-0.34 uses WiX Toolset v4. It is not a production-signed MSI release.
+0.34 uses WiX Toolset v4. It is not a production-signed MSI release. In 0.36 RC, MSI is published only as an experimental installer-poc artifact.
 
 ## What it installs
 

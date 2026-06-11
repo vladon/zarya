@@ -193,6 +193,9 @@ public:
     bool allowDevLocalAppUpdateInstall() const;
     void setAllowDevLocalAppUpdateInstall(bool enabled);
 
+    bool enablePortableUpdaterPoC() const;
+    void setEnablePortableUpdaterPoC(bool enabled);
+
     int appUpdateBackupRetentionCount() const;
     void setAppUpdateBackupRetentionCount(int count);
 

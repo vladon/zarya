@@ -146,6 +146,16 @@ STABLE_DOC_FILES = (
     "go-no-go-checklist.md",
 )
 
+RC_DOC_FILES = (
+    "rc-scope.md",
+    "rc-go-no-go.md",
+    "rc-regression-matrix.md",
+    "rc-known-issues.md",
+    "rc-blockers.md",
+    "rc-release-process.md",
+    "recovery-audit.md",
+)
+
 
 def copy_stable_docs(staging: Path) -> None:
     dest = staging / "docs" / "stable"
@@ -154,6 +164,20 @@ def copy_stable_docs(staging: Path) -> None:
         src = ROOT / "docs" / "stable" / name
         if src.is_file():
             shutil.copy2(src, dest / name)
+
+
+def copy_rc_docs(staging: Path) -> None:
+    dest = staging / "docs" / "rc"
+    dest.mkdir(parents=True, exist_ok=True)
+    for name in RC_DOC_FILES:
+        src = ROOT / "docs" / "rc" / name
+        if src.is_file():
+            shutil.copy2(src, dest / name)
+    release_notes = ROOT / "docs" / "release-notes" / "0.36-rc1.md"
+    if release_notes.is_file():
+        dest_notes = staging / "docs" / "release-notes"
+        dest_notes.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(release_notes, dest_notes / release_notes.name)
 
 
 def copy_updater_docs(staging: Path) -> None:
@@ -286,7 +310,11 @@ def write_build_integrity(staging: Path, signing: dict[str, Any] | None = None) 
         "signatureType": None,
         "notarized": False,
         "timestamped": False,
-        "note": "This beta build is unsigned. Use SHA256 checksums from the release page.",
+        "note": (
+            "This release-candidate build may be unsigned. Use SHA256 checksums from the release page."
+            if read_cmake_version()["channel"] == "rc"
+            else "This beta build is unsigned. Use SHA256 checksums from the release page."
+        ),
     }
     if signing:
         payload.update(

@@ -31,17 +31,20 @@ macOS kill switch is not available in this beta.
 
 0.35 adds a **portable-mode update PoC** using external `zarya-updater`.
 
-Supported in 0.35:
+**0.36 RC:** update check and download/verify are available; **install is disabled by default** unless you enable the experimental updater PoC setting (dev/beta builds only by default).
+
+Supported when install is enabled:
 
 - Windows portable ZIP in-place update after SHA256 verification
 - Linux portable tarball (best-effort; not AppImage)
 
-Not supported in 0.35:
+Not supported:
 
 - installed MSI auto-update
 - macOS `.app` replacement
 - AppImage replacement
 - silent/background update
+- production auto-update rollout
 
 See [docs/updater/portable-update-implementation.md](../updater/portable-update-implementation.md).
 
@@ -51,6 +54,6 @@ Use SHA256 checksums to verify downloads.
 
 ## No production installer yet
 
-Portable/bundle artifacts are the **primary beta distribution format**.
+Portable/bundle artifacts are the **primary RC and beta distribution format**.
 
-Windows has an **MSI PoC** (0.34) for testing installed layout — see [docs/installer/windows-msi-poc.md](../installer/windows-msi-poc.md). It is not a production-signed installer.
+Windows has an **MSI PoC** (0.34) for testing installed layout — see [docs/installer/windows-msi-poc.md](../installer/windows-msi-poc.md). It is not a production-signed installer and must not install the helper service by default.

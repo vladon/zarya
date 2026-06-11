@@ -466,6 +466,7 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     m_releaseChannelCombo = new QComboBox(this);
     m_releaseChannelCombo->addItem(tr("Dev"), QStringLiteral("dev"));
     m_releaseChannelCombo->addItem(tr("Beta"), QStringLiteral("beta"));
+    m_releaseChannelCombo->addItem(tr("Release Candidate"), QStringLiteral("rc"));
     m_releaseChannelCombo->addItem(tr("Stable"), QStringLiteral("stable"));
     const int releaseChannelIndex =
         m_releaseChannelCombo->findData(settings.releaseChannelKey());
@@ -479,7 +480,7 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
 
     m_experimentalGatePanel = new QWidget(this);
     auto* gateLabel = new QLabel(
-        tr("Experimental features are hidden in stable mode.\n"
+        tr("Experimental features are hidden in release-candidate and stable builds.\n"
            "Xray system-proxy mode is the recommended stable path."),
         m_experimentalGatePanel);
     gateLabel->setWordWrap(true);
@@ -504,7 +505,7 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
         const QString channel = m_releaseChannelCombo->currentData().toString();
         const ReleaseChannel releaseChannel =
             FeaturePolicy::releaseChannelFromString(channel);
-        if (releaseChannel == ReleaseChannel::Stable) {
+        if (FeaturePolicy::isStableLikeChannel(releaseChannel)) {
             m_showExperimentalFeaturesCheck->setChecked(false);
         } else {
             m_showExperimentalFeaturesCheck->setChecked(
@@ -518,6 +519,7 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     m_appUpdateChannelCombo = new QComboBox(this);
     m_appUpdateChannelCombo->addItem(tr("Dev"), QStringLiteral("dev"));
     m_appUpdateChannelCombo->addItem(tr("Beta"), QStringLiteral("beta"));
+    m_appUpdateChannelCombo->addItem(tr("Release Candidate"), QStringLiteral("rc"));
     m_appUpdateChannelCombo->addItem(tr("Stable"), QStringLiteral("stable"));
     const QString channelKey = settings.appUpdateChannelKey();
     const int channelIndex = m_appUpdateChannelCombo->findData(channelKey);
@@ -1028,14 +1030,13 @@ bool SettingsDialog::validateAndSave()
             && settings.configuredRuntimeMode() == RuntimeMode::TunSingBoxExperimental)) {
         QMessageBox::warning(
             this, tr("Experimental features disabled"),
-            tr("Experimental features are disabled in stable mode. Runtime will use Xray "
-               "system-proxy mode."));
+            tr("Experimental features are disabled. Runtime will use Xray system-proxy mode."));
     } else if (previousReleaseChannel != settings.releaseChannelKey()
-               && FeaturePolicy::releaseChannelFromString(settings.releaseChannelKey())
-                      == ReleaseChannel::Stable
+               && FeaturePolicy::isStableLikeChannel(
+                   FeaturePolicy::releaseChannelFromString(settings.releaseChannelKey()))
                && !settings.showExperimentalFeatures()) {
         QMessageBox::information(
-            this, tr("Stable mode"),
+            this, tr("Stable scope"),
             tr("Experimental TUN, helper, and kill switch controls are hidden. Recovery actions "
                "remain available when needed."));
     }
@@ -1323,7 +1324,7 @@ void SettingsDialog::updateExperimentalVisibility()
     m_experimentalGroup->setVisible(visible);
     m_killSwitchGroup->setVisible(visible);
     m_experimentalGatePanel->setVisible(!visible);
-    m_showExperimentalFeaturesCheck->setVisible(channel != ReleaseChannel::Stable);
+    m_showExperimentalFeaturesCheck->setVisible(!FeaturePolicy::isStableLikeChannel(channel));
 }
 
 void SettingsDialog::onShowExperimentalFeatures()

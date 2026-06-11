@@ -196,7 +196,11 @@ void AppUpdateDialog::updatePlanView(const AppUpdatePlan& plan)
             lines << QStringLiteral("  SHA256: %1").arg(plan.selectedAsset.sha256);
         }
         lines << QString();
-        if (m_artifactVerified && m_stagingReady) {
+        if (!AppSettings::instance().enablePortableUpdaterPoC()
+            && !AppSettings::instance().allowDevLocalAppUpdateInstall()) {
+            lines << tr("Self-update installation is experimental and disabled in this RC build.");
+            lines << tr("You can download and verify updates manually.");
+        } else if (m_artifactVerified && m_stagingReady) {
             lines << tr("Ready to install portable update.");
             lines << tr("Zarya will close and restart.");
         } else if (m_artifactVerified) {

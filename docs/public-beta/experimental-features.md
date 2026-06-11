@@ -1,6 +1,6 @@
 # Experimental Features
 
-These features are **not** part of the stable 1.0 scope. On the stable release channel they are hidden unless you explicitly enable **Show experimental features** in Settings.
+These features are **not** part of the stable 1.0 scope. On **stable** and **release candidate (rc)** channels they are hidden unless you explicitly enable **Show experimental features** in Settings.
 
 ## sing-box TUN mode
 

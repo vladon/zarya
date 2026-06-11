@@ -35,4 +35,4 @@ The following features are candidates for stable support:
 
 Use **Xray system-proxy mode**.
 
-Production TUN is **not** required for 1.0. Experimental networking features remain available on beta/dev channels with explicit opt-in.
+Production TUN is **not** required for 1.0. Experimental networking features remain available on beta/dev channels with explicit opt-in. RC builds hide experimental features by default (same policy as stable).

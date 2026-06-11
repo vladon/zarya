@@ -19,6 +19,7 @@ from release_common import (  # noqa: E402
     FORBIDDEN_ARTIFACT_NAMES,
     INSTALLER_DOC_FILES,
     PUBLIC_BETA_DOC_FILES,
+    RC_DOC_FILES,
     UPDATER_DOC_FILES,
     STABLE_DOC_FILES,
     extract_tar_gz,
@@ -208,6 +209,62 @@ def verify_issue_templates(source_root: Path) -> list[str]:
     return errors
 
 
+def verify_rc_docs(staging: Path) -> list[str]:
+    errors: list[str] = []
+    for name in RC_DOC_FILES:
+        if not (staging / "docs" / "rc" / name).is_file():
+            errors.append(f"missing rc doc: docs/rc/{name}")
+    known_issues = staging / "docs" / "rc" / "rc-known-issues.md"
+    if known_issues.is_file():
+        text = known_issues.read_text(encoding="utf-8", errors="replace").lower()
+        if "msi" not in text or "portable" not in text:
+            errors.append("rc-known-issues.md must mention MSI PoC and portable artifact")
+    release_notes = staging / "docs" / "release-notes" / "0.36-rc1.md"
+    if not release_notes.is_file():
+        errors.append("missing release notes: docs/release-notes/0.36-rc1.md")
+    return errors
+
+
+def verify_rc_source(source_root: Path) -> list[str]:
+    errors: list[str] = []
+    required = (
+        "src/features/FeaturePolicy.cpp",
+        "src/storage/AppSettings.cpp",
+        "scripts/audit-redaction.py",
+        "docs/rc/rc-scope.md",
+        "docs/rc/rc-blockers.md",
+    )
+    for relative in required:
+        if not (source_root / relative).is_file():
+            errors.append(f"missing rc hardening source/doc: {relative}")
+
+    policy = (source_root / "src/features/FeaturePolicy.cpp").read_text(
+        encoding="utf-8", errors="replace"
+    )
+    if "ReleaseChannel::Rc" not in policy:
+        errors.append("FeaturePolicy must define ReleaseChannel::Rc")
+
+    defaults = (source_root / "src/storage/DefaultSettings.cpp").read_text(
+        encoding="utf-8", errors="replace"
+    )
+    if "enablePortableUpdaterPoC" not in defaults:
+        errors.append("DefaultSettings must define enablePortableUpdaterPoC")
+
+    return errors
+
+
+def verify_rc_channel_defaults(source_root: Path) -> list[str]:
+    errors: list[str] = []
+    defaults = (source_root / "src/storage/DefaultSettings.cpp").read_text(
+        encoding="utf-8", errors="replace"
+    )
+    if 'channel == QStringLiteral("rc")' not in defaults:
+        errors.append("rc channel must disable experimental features by default in DefaultSettings")
+    if "enablePortableUpdaterPoC" in defaults and "return false" not in defaults:
+        errors.append("enablePortableUpdaterPoC must default to false for rc/stable")
+    return errors
+
+
 def verify_public_beta_artifact(staging: Path) -> list[str]:
     errors: list[str] = []
     if not (staging / "RELEASE_NOTES.md").is_file():
@@ -252,6 +309,7 @@ def verify_no_stale_versions(staging: Path, expected_version: str) -> list[str]:
         previous_minor = int(parts[1]) - 1
         if previous_minor >= 0:
             stale_versions.append(f"0.{previous_minor}.0-beta")
+            stale_versions.append(f"0.{previous_minor}.0-rc1")
 
     scan_paths = [staging / "RELEASE_NOTES.md"]
     public_beta = staging / "docs" / "public-beta"
@@ -389,6 +447,11 @@ def main() -> int:
         action="store_true",
         help="Verify public beta docs, release notes, translations, helper, and issue templates",
     )
+    parser.add_argument(
+        "--release-candidate",
+        action="store_true",
+        help="Verify RC docs, channel defaults, release notes, and stable-scope gating",
+    )
     args = parser.parse_args()
 
     if args.require_signed and args.allow_unsigned:
@@ -425,7 +488,7 @@ def main() -> int:
 
         staging = find_staging_root(temp_dir)
         errors.extend(verify_forbidden_files(staging))
-        if args.public_beta:
+        if args.public_beta or args.release_candidate:
             errors.extend(verify_public_beta_docs(staging))
             errors.extend(verify_installer_docs(staging))
             errors.extend(verify_updater_docs(staging))
@@ -440,6 +503,12 @@ def main() -> int:
             errors.extend(verify_release_notes_version(staging, expected_version))
             errors.extend(verify_no_stale_versions(staging, expected_version))
             errors.extend(verify_executable_version(staging, expected_version))
+        if args.release_candidate:
+            errors.extend(verify_rc_docs(staging))
+            errors.extend(verify_rc_source(ROOT))
+            errors.extend(verify_rc_channel_defaults(ROOT))
+            if not expected_version.endswith("-rc1") and "-rc" not in expected_version:
+                errors.append(f"expected RC version, got {expected_version}")
         manifest = load_manifest(staging)
         if manifest is None:
             errors.append("release-manifest.json is missing")
@@ -447,6 +516,10 @@ def main() -> int:
             if manifest.get("version") != expected_version:
                 errors.append(
                     f"version mismatch: expected {expected_version}, found {manifest.get('version')}"
+                )
+            if args.release_candidate and manifest.get("channel") != "rc":
+                errors.append(
+                    f"channel mismatch: expected rc, found {manifest.get('channel')}"
                 )
             signing = manifest.get("signing") or {}
             platform = detect_platform(artifact, manifest)

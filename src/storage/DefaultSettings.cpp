@@ -1,5 +1,6 @@
 #include "storage/DefaultSettings.h"
 
+#include "app/BuildInfo.h"
 #include "storage/AppSettings.h"
 
 namespace zarya {
@@ -27,6 +28,22 @@ bool DefaultSettings::checkAppUpdatesOnStartup() { return false; }
 bool DefaultSettings::allowCoreUpdateWithoutChecksum() { return false; }
 bool DefaultSettings::allowUnsignedAppUpdates() { return false; }
 int DefaultSettings::appUpdateBackupRetentionCount() { return 2; }
-bool DefaultSettings::showExperimentalFeatures() { return true; }
+bool DefaultSettings::showExperimentalFeatures()
+{
+    const QString channel = BuildInfo::buildChannel().toLower();
+    if (channel == QStringLiteral("rc") || channel == QStringLiteral("stable")) {
+        return false;
+    }
+    return true;
+}
+
+bool DefaultSettings::enablePortableUpdaterPoC()
+{
+    const QString channel = BuildInfo::buildChannel().toLower();
+    if (channel == QStringLiteral("dev") || channel == QStringLiteral("beta")) {
+        return true;
+    }
+    return false;
+}
 
 } // namespace zarya

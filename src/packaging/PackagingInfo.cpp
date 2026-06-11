@@ -24,14 +24,31 @@ QString PackagingInfo::platformName()
 #endif
 }
 
+bool PackagingInfo::isReleaseCandidateBuild()
+{
+    const QString version = versionString().toLower();
+    if (version.contains(QStringLiteral("rc"))) {
+        return true;
+    }
+    return BuildInfo::buildChannel().compare(QStringLiteral("rc"), Qt::CaseInsensitive) == 0;
+}
+
 bool PackagingInfo::isBetaBuild()
 {
+    if (isReleaseCandidateBuild()) {
+        return false;
+    }
     const QString version = versionString().toLower();
     if (version.contains(QStringLiteral("beta")) || version.contains(QStringLiteral("dev"))) {
         return true;
     }
     return BuildInfo::buildChannel().compare(QStringLiteral("beta"), Qt::CaseInsensitive) == 0
            || version.startsWith(QStringLiteral("0."));
+}
+
+bool PackagingInfo::isPreReleaseBannerBuild()
+{
+    return isBetaBuild() || isReleaseCandidateBuild();
 }
 
 QString PackagingInfo::artifactPlatformTag()

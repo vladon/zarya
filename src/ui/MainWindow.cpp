@@ -48,6 +48,7 @@
 #include "updater/AppUpdateChecker.h"
 #include "updater/AppUpdateStateManager.h"
 #include "features/FeatureGate.h"
+#include "features/FeaturePolicy.h"
 #include "updater/AppUpdatePlanner.h"
 #include "geodata/GeoDataFileStatus.h"
 #include "runtime/RuntimeBackendType.h"
@@ -242,7 +243,7 @@ void MainWindow::setupUi()
     auto* central = new QWidget(this);
     auto* centralLayout = new QVBoxLayout(central);
     centralLayout->setContentsMargins(4, 4, 4, 4);
-    if (PackagingInfo::isBetaBuild() && !AppSettings::instance().dismissBetaBanner()) {
+    if (PackagingInfo::isPreReleaseBannerBuild() && !AppSettings::instance().dismissBetaBanner()) {
         m_betaBanner = new BetaBannerWidget(central);
         centralLayout->addWidget(m_betaBanner);
     }
@@ -1947,13 +1948,27 @@ void MainWindow::warnIfExperimentalRuntimeDisabledOnStartup()
     if (settings.effectiveRuntimeMode() == RuntimeMode::TunSingBoxExperimental) {
         return;
     }
-    appendLog(QStringLiteral(
-        "Experimental runtime is disabled in stable mode. Effective runtime: Xray system proxy."));
-    QMessageBox::warning(
-        this, tr("Experimental runtime disabled"),
-        tr("Experimental runtime is disabled in stable mode.\n"
-           "Effective runtime: Xray system proxy.\n\n"
-           "Enable experimental features in Settings → Release channel if you intend to use TUN."));
+    const bool isRc = PackagingInfo::isReleaseCandidateBuild()
+                      || FeaturePolicy::releaseChannelFromString(settings.releaseChannelKey())
+                             == ReleaseChannel::Rc;
+    const QString logLine = isRc
+                                ? QStringLiteral("Experimental TUN mode is disabled in "
+                                                 "release-candidate builds by default. "
+                                                 "Effective runtime: Xray system proxy.")
+                                : QStringLiteral("Experimental runtime is disabled. "
+                                                 "Effective runtime: Xray system proxy.");
+    appendLog(logLine);
+    const QString dialogText =
+        isRc
+            ? tr("Experimental TUN mode is disabled in release-candidate builds by default.\n"
+                 "Effective runtime: Xray system proxy.\n\n"
+                 "Enable experimental features in Settings → Release channel if you intend to "
+                 "use TUN.")
+            : tr("Experimental runtime is disabled.\n"
+                 "Effective runtime: Xray system proxy.\n\n"
+                 "Enable experimental features in Settings → Release channel if you intend to "
+                 "use TUN.");
+    QMessageBox::warning(this, tr("Experimental runtime disabled"), dialogText);
 }
 
 void MainWindow::checkAppUpdatesOnStartup()

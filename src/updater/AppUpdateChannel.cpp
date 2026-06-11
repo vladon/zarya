@@ -10,6 +10,9 @@ AppUpdateChannel AppUpdateChannelPolicy::fromString(const QString& text)
     if (lower == QStringLiteral("dev")) {
         return AppUpdateChannel::Dev;
     }
+    if (lower == QStringLiteral("rc")) {
+        return AppUpdateChannel::Rc;
+    }
     if (lower == QStringLiteral("stable")) {
         return AppUpdateChannel::Stable;
     }
@@ -21,6 +24,8 @@ QString AppUpdateChannelPolicy::toString(AppUpdateChannel channel)
     switch (channel) {
     case AppUpdateChannel::Dev:
         return QStringLiteral("dev");
+    case AppUpdateChannel::Rc:
+        return QStringLiteral("rc");
     case AppUpdateChannel::Stable:
         return QStringLiteral("stable");
     case AppUpdateChannel::Beta:
@@ -41,6 +46,8 @@ QStringList AppUpdateChannelPolicy::allowedManifestChannelKeys(AppUpdateChannel 
         return {QStringLiteral("dev"), QStringLiteral("beta"), QStringLiteral("stable")};
     case AppUpdateChannel::Beta:
         return {QStringLiteral("beta"), QStringLiteral("stable")};
+    case AppUpdateChannel::Rc:
+        return {QStringLiteral("rc"), QStringLiteral("stable")};
     case AppUpdateChannel::Stable:
         return {QStringLiteral("stable")};
     }

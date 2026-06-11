@@ -10,6 +10,9 @@ ReleaseChannel FeaturePolicy::releaseChannelFromString(const QString& text)
     if (lower == QStringLiteral("dev")) {
         return ReleaseChannel::Dev;
     }
+    if (lower == QStringLiteral("rc")) {
+        return ReleaseChannel::Rc;
+    }
     if (lower == QStringLiteral("stable")) {
         return ReleaseChannel::Stable;
     }
@@ -21,6 +24,8 @@ QString FeaturePolicy::releaseChannelToString(ReleaseChannel channel)
     switch (channel) {
     case ReleaseChannel::Dev:
         return QStringLiteral("dev");
+    case ReleaseChannel::Rc:
+        return QStringLiteral("rc");
     case ReleaseChannel::Stable:
         return QStringLiteral("stable");
     case ReleaseChannel::Beta:
@@ -38,12 +43,18 @@ bool FeaturePolicy::defaultShowExperimentalFeatures(ReleaseChannel channel)
 {
     switch (channel) {
     case ReleaseChannel::Stable:
+    case ReleaseChannel::Rc:
         return false;
     case ReleaseChannel::Beta:
     case ReleaseChannel::Dev:
         return true;
     }
     return true;
+}
+
+bool FeaturePolicy::isStableLikeChannel(ReleaseChannel channel)
+{
+    return channel == ReleaseChannel::Stable || channel == ReleaseChannel::Rc;
 }
 
 bool FeaturePolicy::isExperimentalFeature(FeatureId id)
