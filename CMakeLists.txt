@@ -320,6 +320,7 @@ set(ZARYA_SOURCES
     src/packaging/PackagingInfo.cpp
     src/packaging/PublicBetaDocs.cpp
     src/packaging/InstallationMode.cpp
+    src/packaging/WindowsInstallInfo.cpp
     src/packaging/PortableMigration.cpp
     src/ui/MainWindow.cpp
     src/ui/TrayController.cpp

@@ -1211,6 +1211,7 @@ void MainWindow::finishStartup(const StartupOptions& options)
 {
     checkKillSwitchRecoveryOnStartup();
     maybeShowFirstRunWizard();
+    maybeShowInstalledPortableImportPrompt();
     checkCoreUpdatesOnStartup();
     checkAppUpdatesOnStartup();
     warnIfExperimentalRuntimeDisabledOnStartup();
@@ -1890,6 +1891,33 @@ void MainWindow::onCheckAppUpdates()
 {
     AppUpdateDialog dialog(this);
     dialog.exec();
+}
+
+void MainWindow::maybeShowInstalledPortableImportPrompt()
+{
+    if (InstallationInfo::detect() != InstallationMode::Installed) {
+        return;
+    }
+    AppSettings& settings = AppSettings::instance();
+    if (settings.installedPortableImportPromptShown()) {
+        return;
+    }
+    if (!m_allProfiles.isEmpty() || !m_subscriptions.isEmpty()) {
+        settings.setInstalledPortableImportPromptShown(true);
+        return;
+    }
+
+    const auto answer = QMessageBox::question(
+        this, tr("Portable Zarya data"),
+        tr("Have a portable Zarya folder with profiles or subscriptions?\n\n"
+           "You can import data from a portable Zarya folder without modifying the original "
+           "folder.\n\n"
+           "Import now?"),
+        QMessageBox::Yes | QMessageBox::No);
+    settings.setInstalledPortableImportPromptShown(true);
+    if (answer == QMessageBox::Yes) {
+        onImportFromPortableFolder();
+    }
 }
 
 void MainWindow::warnIfExperimentalRuntimeDisabledOnStartup()

@@ -190,6 +190,9 @@ public:
     bool allowUnsignedAppUpdates() const;
     void setAllowUnsignedAppUpdates(bool enabled);
 
+    bool installedPortableImportPromptShown() const;
+    void setInstalledPortableImportPromptShown(bool shown);
+
     bool firstRunCompleted() const;
     void setFirstRunCompleted(bool completed);
 

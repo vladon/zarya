@@ -110,6 +110,7 @@ INSTALLER_DOC_FILES = (
     "uninstall-repair.md",
     "helper-service-installation.md",
     "installer-security.md",
+    "windows-msi-poc.md",
 )
 
 
@@ -322,6 +323,9 @@ def write_release_manifest(
     channel: str | None = None,
     build_commit: str | None = None,
     signing: dict[str, Any] | None = None,
+    artifact_type: str | None = None,
+    installation_mode: str | None = None,
+    helper_service: dict[str, Any] | None = None,
 ) -> Path:
     meta = read_cmake_version()
     version = version or meta["version"]
@@ -362,6 +366,13 @@ def write_release_manifest(
         manifest["artifacts"]["helper"] = helper_artifact
 
     manifest["signing"] = signing if signing is not None else default_unsigned_signing()
+
+    if artifact_type:
+        manifest["artifactType"] = artifact_type
+    if installation_mode:
+        manifest["installationMode"] = installation_mode
+    if helper_service is not None:
+        manifest["helperService"] = helper_service
 
     path = staging / "release-manifest.json"
     path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")

@@ -21,6 +21,8 @@
 #include "runtime/RuntimeBackendType.h"
 #include "features/FeatureGate.h"
 #include "features/FeaturePolicy.h"
+#include "packaging/InstallationMode.h"
+#include "packaging/WindowsInstallInfo.h"
 #include "storage/AppSettings.h"
 #include "ui/DnsManagerDialog.h"
 #include "ui/RoutingManagerDialog.h"
@@ -1175,6 +1177,20 @@ void SettingsDialog::refreshHelperServiceUi()
     }
     if (!m_serviceManager) {
         m_helperBackendLabel->setText(tr("Manual helper"));
+#if defined(Q_OS_WIN)
+        if (InstallationInfo::detect() == InstallationMode::Installed
+            && WindowsInstallInfo::isAvailable()) {
+            if (WindowsInstallInfo::helperServiceInstalled()) {
+                m_helperServiceStatusLabel->setText(
+                    tr("Helper service: %1").arg(WindowsInstallInfo::helperServiceState()));
+            } else {
+                m_helperServiceStatusLabel->setText(
+                    tr("Helper service is not installed. Optional — only needed for experimental "
+                       "TUN/kill switch."));
+            }
+            return;
+        }
+#endif
         m_helperServiceStatusLabel->setText(tr("Unavailable"));
         return;
     }

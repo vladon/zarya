@@ -1,5 +1,7 @@
 #include "packaging/InstallationMode.h"
 
+#include "diagnostics/DiagnosticsRedactor.h"
+#include "packaging/WindowsInstallInfo.h"
 #include "storage/AppPaths.h"
 
 #include <QCoreApplication>
@@ -16,6 +18,27 @@ QString installedMarkerPath()
     return QDir(AppPaths::applicationDir()).filePath(QStringLiteral(".zarya-installed"));
 }
 
+bool windowsRegistryInstalled()
+{
+#if defined(Q_OS_WIN)
+    if (!WindowsInstallInfo::isAvailable()) {
+        return false;
+    }
+    const QString installDir = WindowsInstallInfo::installDirectory();
+    if (installDir.isEmpty()) {
+        return false;
+    }
+    const QString appDir = QDir::fromNativeSeparators(AppPaths::applicationDir());
+    const QString normalizedInstall =
+        QDir::fromNativeSeparators(QDir(installDir).absolutePath());
+    return appDir.startsWith(normalizedInstall, Qt::CaseInsensitive)
+           || WindowsInstallInfo::installerType().contains(QStringLiteral("MSI"),
+                                                           Qt::CaseInsensitive);
+#else
+    return false;
+#endif
+}
+
 } // namespace
 
 InstallationMode InstallationInfo::detect()
@@ -26,6 +49,11 @@ InstallationMode InstallationInfo::detect()
     if (QFile::exists(installedMarkerPath())) {
         return InstallationMode::Installed;
     }
+#if defined(Q_OS_WIN)
+    if (windowsRegistryInstalled()) {
+        return InstallationMode::Installed;
+    }
+#endif
 
     const QString appDir = AppPaths::applicationDir();
 #if defined(Q_OS_MACOS)
@@ -89,6 +117,25 @@ QJsonObject InstallationInfo::diagnosticsJson()
     object.insert(QStringLiteral("installedMarkerPresent"), installedMarkerPresent());
     object.insert(QStringLiteral("appDirWritable"), appDirWritable());
     object.insert(QStringLiteral("portableModeActive"), AppPaths::isPortableMode());
+
+#if defined(Q_OS_WIN)
+    if (WindowsInstallInfo::isAvailable()) {
+        QJsonObject installer;
+        installer.insert(QStringLiteral("installer"), WindowsInstallInfo::installerType());
+        const QString installDir = WindowsInstallInfo::installDirectory();
+        if (!installDir.isEmpty()) {
+            installer.insert(QStringLiteral("installDir"),
+                             DiagnosticsRedactor::redactText(installDir,
+                                                           DiagnosticsRedactionMode::Strict));
+        }
+        installer.insert(QStringLiteral("registryVersion"), WindowsInstallInfo::registryVersion());
+        installer.insert(QStringLiteral("helperServiceInstalled"),
+                         WindowsInstallInfo::helperServiceInstalled());
+        installer.insert(QStringLiteral("helperServiceState"),
+                         WindowsInstallInfo::helperServiceState());
+        object.insert(QStringLiteral("windowsInstaller"), installer);
+    }
+#endif
     return object;
 }
 

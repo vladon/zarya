@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- WiX variables skeleton — 0.31 planning only -->
+<!-- WiX variables for Zarya Windows MSI PoC (0.34). -->
 <Include xmlns="http://wixtoolset.org/schemas/v4/wxs">
   <?define ProductName = "Zarya" ?>
-  <?define ProductVersion = "0.31.0.0" ?>
-  <?define Manufacturer = "Zarya" ?>
-  <?define UpgradeCode = "00000000-0000-0000-0000-000000000031" ?>
-  <!-- TODO: replace UpgradeCode before production -->
+  <?define Manufacturer = "Zarya Project" ?>
+  <!-- MSI requires 4-part version; override at build via -d ProductVersion=0.34.0.0 -->
+  <?define ProductVersion = "0.34.0.0" ?>
+  <!-- Stable UpgradeCode — do not change between releases -->
+  <?define UpgradeCode = "A7C4E2B1-9F3D-4A6E-B5C8-1D2E3F4A5B6C" ?>
   <?define InstallFolder = "Zarya" ?>
 </Include>

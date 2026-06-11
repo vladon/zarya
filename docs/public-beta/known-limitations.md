@@ -37,4 +37,6 @@ Use SHA256 checksums to verify downloads.
 
 ## No production installer yet
 
-Portable/bundle artifacts are the primary beta distribution format.
+Portable/bundle artifacts are the **primary beta distribution format**.
+
+Windows has an **MSI PoC** (0.34) for testing installed layout — see [docs/installer/windows-msi-poc.md](../installer/windows-msi-poc.md). It is not a production-signed installer.

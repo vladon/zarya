@@ -702,6 +702,17 @@ void AppSettings::setAllowUnsignedAppUpdates(bool enabled)
     settings().setValue(QStringLiteral("app/allowUnsignedAppUpdates"), enabled);
 }
 
+bool AppSettings::installedPortableImportPromptShown() const
+{
+    return settings().value(QStringLiteral("onboarding/installedPortableImportPromptShown"), false)
+        .toBool();
+}
+
+void AppSettings::setInstalledPortableImportPromptShown(bool shown)
+{
+    settings().setValue(QStringLiteral("onboarding/installedPortableImportPromptShown"), shown);
+}
+
 bool AppSettings::firstRunCompleted() const
 {
     return settings().value(QStringLiteral("onboarding/firstRunCompleted"), false).toBool();
