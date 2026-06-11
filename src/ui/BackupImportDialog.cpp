@@ -22,7 +22,7 @@ namespace zarya {
 BackupImportDialog::BackupImportDialog(BackupManager& manager, bool coreRunning,
                                        bool killSwitchActive,
                                        const std::function<void(const QString&)>& logCallback,
-                                       QWidget* parent)
+                                       QWidget* parent, const QString& initialArchivePath)
     : QDialog(parent)
     , m_manager(manager)
     , m_logCallback(logCallback)
@@ -106,6 +106,16 @@ BackupImportDialog::BackupImportDialog(BackupManager& manager, bool coreRunning,
     if (m_killSwitchActive || m_coreRunning) {
         m_importButton->setEnabled(false);
         m_warningsLabel->setText(BackupManager::runtimeBlockReason(m_coreRunning, m_killSwitchActive));
+    }
+
+    if (!initialArchivePath.isEmpty()) {
+        m_archivePath = initialArchivePath;
+        QString error;
+        if (!m_manager.loadPreview(initialArchivePath, &m_manifest, &m_stagingDir, &error)) {
+            QMessageBox::critical(this, tr("Import Backup"), error);
+        } else {
+            showPreview(m_manifest);
+        }
     }
 }
 

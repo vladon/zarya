@@ -1,0 +1,9 @@
+Package: zarya
+Version: @VERSION@
+Section: net
+Priority: optional
+Architecture: amd64
+Maintainer: Zarya <TODO@example.com>
+Description: Zarya proxy client
+ Cross-platform desktop proxy client (Xray system-proxy beta).
+Depends: libqt6core6, libqt6gui6, libqt6widgets6, libqt6network6

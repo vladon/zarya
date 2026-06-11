@@ -23,6 +23,7 @@
 #include "logging/LogBuffer.h"
 #include "migration/MigrationManager.h"
 #include "app/BuildInfo.h"
+#include "packaging/InstallationMode.h"
 #include "packaging/PackagingInfo.h"
 #include "dns/DnsManager.h"
 #include "platform/PlatformPrivilege.h"
@@ -713,6 +714,7 @@ QJsonObject collectPackagingStatus()
 #endif
     packaging.insert(QStringLiteral("docsPresent"), docsPresent);
     root.insert(QStringLiteral("packaging"), packaging);
+    root.insert(QStringLiteral("installation"), InstallationInfo::diagnosticsJson());
     return root;
 }
 

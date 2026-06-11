@@ -14,6 +14,7 @@
 #include "migration/MigrationManager.h"
 #include "app/BuildInfo.h"
 #include "packaging/PackagingInfo.h"
+#include "packaging/PortableMigration.h"
 #include "packaging/PublicBetaDocs.h"
 #include "diagnostics/SupportSummary.h"
 #include "recovery/StartupRecovery.h"
@@ -256,6 +257,8 @@ void MainWindow::setupMenuBar()
     fileMenu->addSeparator();
     m_exportBackupAction = fileMenu->addAction(tr("Export &Backup…"));
     m_importBackupAction = fileMenu->addAction(tr("Import &Backup…"));
+    fileMenu->addAction(tr("Import from Portable Zarya &Folder…"), this,
+                        &MainWindow::onImportFromPortableFolder);
     fileMenu->addSeparator();
     m_settingsAction = fileMenu->addAction(tr("&Settings…"));
     fileMenu->addSeparator();
@@ -1696,6 +1699,85 @@ void MainWindow::onExportBackup()
     BackupExportDialog dialog(m_backupManager,
                               [this](const QString& line) { appendLog(line); }, this);
     dialog.exec();
+}
+
+void MainWindow::onImportFromPortableFolder()
+{
+    const QString folder = QFileDialog::getExistingDirectory(
+        this, tr("Import from Portable Zarya Folder"));
+    if (folder.isEmpty()) {
+        return;
+    }
+
+    const PortableDataPreview preview = PortableMigration::preview(folder);
+    if (!preview.valid) {
+        QMessageBox::warning(
+            this, tr("Portable Import"),
+            tr("The selected folder does not look like a portable Zarya install.\n\n"
+               "Expected portable.flag or a data/ folder with profiles, subscriptions, or "
+               "settings."));
+        return;
+    }
+
+    const auto answer = QMessageBox::question(
+        this, tr("Portable Import"),
+        tr("Portable Zarya data found:\n\n"
+           "Profiles: %1\n"
+           "Subscriptions: %2\n"
+           "Routing: %3\n"
+           "DNS: %4\n"
+           "Settings: %5\n\n"
+           "A temporary backup archive will be created and opened in the import flow.\n"
+           "The original portable folder will not be modified.\n\n"
+           "Continue?")
+            .arg(preview.profileCount)
+            .arg(preview.subscriptionCount)
+            .arg(preview.hasRouting ? tr("yes") : tr("no"))
+            .arg(preview.hasDns ? tr("yes") : tr("no"))
+            .arg(preview.hasSettings ? tr("yes") : tr("no")));
+    if (answer != QMessageBox::Yes) {
+        return;
+    }
+
+    const QString tempArchive =
+        QDir(QDir::tempPath())
+            .filePath(QStringLiteral("zarya-portable-import-%1.zarya-backup.zip")
+                          .arg(QDateTime::currentDateTime().toString(
+                              QStringLiteral("yyyyMMdd-HHmmss"))));
+    QString error;
+    if (!PortableMigration::createBackupArchive(folder, tempArchive, &error)) {
+        QMessageBox::critical(this, tr("Portable Import"), error);
+        return;
+    }
+
+    const bool coreRunning = m_appController.isCoreRunning();
+    HelperProcessManager* helper = m_appController.helperProcessManager();
+    const bool killSwitchActive = BackupManager::isKillSwitchActive(helper);
+    if (killSwitchActive) {
+        QMessageBox::warning(this, tr("Portable Import"),
+                             BackupManager::runtimeBlockReason(coreRunning, killSwitchActive));
+        return;
+    }
+    if (coreRunning) {
+        const auto proceed = QMessageBox::question(
+            this, tr("Portable Import"),
+            tr("A proxy core is currently running. Import is disabled until the core is stopped.\n\n"
+               "Open import dialog anyway?"));
+        if (proceed != QMessageBox::Yes) {
+            return;
+        }
+    }
+
+    BackupImportDialog dialog(m_backupManager, coreRunning, killSwitchActive,
+                              [this](const QString& line) { appendLog(line); }, this,
+                              tempArchive);
+    if (dialog.exec() != QDialog::Accepted || !dialog.importApplied()) {
+        return;
+    }
+
+    loadAllOnStartup();
+    m_ruleSetManager.reload();
+    appendLog(QStringLiteral("Configuration reloaded after portable folder import."));
 }
 
 void MainWindow::onImportBackup()

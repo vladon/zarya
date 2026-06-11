@@ -79,6 +79,7 @@ from release_common import (
     copy_top_level_legal_files,
     copy_docs,
     copy_public_beta_docs,
+    copy_installer_docs,
     copy_translations,
     create_placeholder_layout,
     write_release_manifest,
@@ -91,6 +92,7 @@ build_translations = Path("$BUILD_DIR/translations")
 copy_top_level_legal_files(staging)
 copy_docs(staging)
 copy_public_beta_docs(staging)
+copy_installer_docs(staging)
 copy_translations(staging, build_translations)
 create_placeholder_layout(staging)
 write_release_manifest(

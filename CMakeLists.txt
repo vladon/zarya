@@ -301,6 +301,8 @@ set(ZARYA_SOURCES
     src/app/AppController.cpp
     src/packaging/PackagingInfo.cpp
     src/packaging/PublicBetaDocs.cpp
+    src/packaging/InstallationMode.cpp
+    src/packaging/PortableMigration.cpp
     src/ui/MainWindow.cpp
     src/ui/TrayController.cpp
     src/ui/ProfileDialog.cpp

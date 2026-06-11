@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Application file components — placeholder GUIDs for planning -->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <ComponentGroup Id="ZaryaAppComponents" Directory="INSTALLFOLDER">
+      <!-- Zarya.exe -->
+      <!-- zarya-helper.exe -->
+      <!-- translations\*.qm -->
+      <!-- docs\** -->
+      <!-- .zarya-installed marker -->
+    </ComponentGroup>
+
+    <StandardDirectory Id="ProgramFiles6432Folder">
+      <Directory Id="INSTALLFOLDER" Name="$(var.InstallFolder)" />
+    </StandardDirectory>
+  </Fragment>
+</Wix>

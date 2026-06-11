@@ -87,6 +87,7 @@ private slots:
     void onCoreManager();
     void onExportBackup();
     void onImportBackup();
+    void onImportFromPortableFolder();
     void onCreateDiagnosticsBundle();
     void onCopySupportSummary();
     DiagnosticsContext buildDiagnosticsContext();

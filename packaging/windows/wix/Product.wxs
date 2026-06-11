@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- WiX product skeleton — not built in 0.31 -->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <?include Variables.wxi ?>
+
+  <Package
+    Name="$(var.ProductName)"
+    Manufacturer="$(var.Manufacturer)"
+    Version="$(var.ProductVersion)"
+    UpgradeCode="$(var.UpgradeCode)"
+    Scope="perMachine">
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Zarya is already installed." />
+
+    <Feature Id="MainFeature" Title="Zarya" Level="1">
+      <ComponentGroupRef Id="ZaryaAppComponents" />
+      <!-- Optional helper service — future milestone -->
+      <!-- <ComponentGroupRef Id="ZaryaHelperServiceComponents" /> -->
+    </Feature>
+  </Package>
+</Wix>
