@@ -230,6 +230,10 @@ set(ZARYA_APP_UPDATE_SOURCES
     src/updater/AppUpdatePlanner.cpp
     src/updater/AppUpdateChecker.cpp
     src/updater/AppUpdateVerifier.cpp
+    src/updater/AppUpdateStager.cpp
+    src/updater/AppUpdateStateManager.cpp
+    src/updater/installers/PortableUpdateInstaller.cpp
+    src/updater/runner/UpdatePlanFile.cpp
 )
 
 set(ZARYA_CORE_UPDATE_SOURCES
@@ -528,6 +532,37 @@ add_custom_command(TARGET zarya POST_BUILD
         $<TARGET_FILE:zarya-helper>
         $<TARGET_FILE_DIR:zarya>/
     COMMENT "Copy zarya-helper next to zarya"
+)
+
+set(ZARYA_UPDATER_SOURCES
+    src/updater/runner/main.cpp
+    src/updater/runner/UpdaterApplication.cpp
+    src/updater/runner/UpdatePlanFile.cpp
+    src/updater/runner/PortableUpdateApplier.cpp
+    src/updater/runner/UpdateRollback.cpp
+    src/updater/runner/UpdaterLog.cpp
+    src/app/BuildInfo.cpp
+    src/app/StartupOptions.cpp
+    src/storage/AppPaths.cpp
+    src/storage/AppSettings.cpp
+    src/storage/DefaultSettings.cpp
+    src/platform/PlatformProcessUtils.cpp
+    src/updater/AppUpdatePaths.cpp
+    src/updater/AppVersion.cpp
+    src/packaging/PackagingInfo.cpp
+    src/platform/Platform.cpp
+)
+
+add_executable(zarya-updater ${ZARYA_UPDATER_SOURCES})
+target_include_directories(zarya-updater PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${ZARYA_GENERATED_DIR})
+target_compile_definitions(zarya-updater PRIVATE ZARYA_VERSION_STRING="${ZARYA_VERSION_STRING}")
+zarya_link_qt_core(zarya-updater)
+
+add_custom_command(TARGET zarya POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:zarya-updater>
+        $<TARGET_FILE_DIR:zarya>/
+    COMMENT "Copy zarya-updater next to zarya"
 )
 
 # Config generation checks (unit-like; uses shared or static Qt Core)

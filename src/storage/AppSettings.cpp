@@ -1,6 +1,6 @@
+#include "app/BuildInfo.h"
 #include "storage/AppSettings.h"
 
-#include "app/BuildInfo.h"
 #include "features/FeatureGate.h"
 #include "features/FeatureId.h"
 #include "features/FeaturePolicy.h"
@@ -700,6 +700,66 @@ bool AppSettings::allowUnsignedAppUpdates() const
 void AppSettings::setAllowUnsignedAppUpdates(bool enabled)
 {
     settings().setValue(QStringLiteral("app/allowUnsignedAppUpdates"), enabled);
+}
+
+bool AppSettings::allowDevLocalAppUpdateInstall() const
+{
+    if (BuildInfo::buildChannel() != QStringLiteral("dev")) {
+        return false;
+    }
+    return settings().value(QStringLiteral("app/allowDevLocalAppUpdateInstall"), false).toBool();
+}
+
+void AppSettings::setAllowDevLocalAppUpdateInstall(bool enabled)
+{
+    settings().setValue(QStringLiteral("app/allowDevLocalAppUpdateInstall"), enabled);
+}
+
+int AppSettings::appUpdateBackupRetentionCount() const
+{
+    return settings()
+        .value(QStringLiteral("app/appUpdateBackupRetentionCount"),
+               DefaultSettings::appUpdateBackupRetentionCount())
+        .toInt();
+}
+
+void AppSettings::setAppUpdateBackupRetentionCount(int count)
+{
+    settings().setValue(QStringLiteral("app/appUpdateBackupRetentionCount"), count);
+}
+
+QString AppSettings::lastDownloadedAppUpdateArtifact() const
+{
+    return settings().value(QStringLiteral("app/lastDownloadedAppUpdateArtifact")).toString();
+}
+
+void AppSettings::setLastDownloadedAppUpdateArtifact(const QString& fileName)
+{
+    settings().setValue(QStringLiteral("app/lastDownloadedAppUpdateArtifact"), fileName);
+}
+
+QString AppSettings::lastAppUpdateVerificationStatus() const
+{
+    return settings().value(QStringLiteral("app/lastAppUpdateVerificationStatus"),
+                            QStringLiteral("none"))
+        .toString();
+}
+
+void AppSettings::setLastAppUpdateVerificationStatus(const QString& status)
+{
+    settings().setValue(QStringLiteral("app/lastAppUpdateVerificationStatus"), status);
+}
+
+QString AppSettings::lastAppUpdateInstallAttempt() const
+{
+    return settings().value(QStringLiteral("app/lastAppUpdateInstallAttempt"),
+                            QStringLiteral("none"))
+        .toString();
+}
+
+void AppSettings::setLastAppUpdateInstallAttempt(const QString& status)
+{
+    settings().setValue(QStringLiteral("app/lastAppUpdateInstallAttempt"), status);
 }
 
 bool AppSettings::installedPortableImportPromptShown() const

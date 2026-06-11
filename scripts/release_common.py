@@ -127,6 +127,8 @@ UPDATER_DOC_FILES = (
     "README.md",
     "update-manifest.md",
     "portable-update-flow.md",
+    "portable-update-implementation.md",
+    "recovery.md",
     "installed-update-flow.md",
     "updater-security.md",
     "helper-update.md",
@@ -319,6 +321,7 @@ def write_release_manifest(
     portable: bool,
     gui_artifact: str,
     helper_artifact: str | None,
+    updater_artifact: str | None = None,
     version: str | None = None,
     channel: str | None = None,
     build_commit: str | None = None,
@@ -335,6 +338,8 @@ def write_release_manifest(
     checksum_names = [gui_artifact]
     if helper_artifact:
         checksum_names.append(helper_artifact)
+    if updater_artifact:
+        checksum_names.append(updater_artifact)
 
     manifest: dict[str, Any] = {
         "app": "Zarya",
@@ -364,6 +369,8 @@ def write_release_manifest(
     }
     if helper_artifact:
         manifest["artifacts"]["helper"] = helper_artifact
+    if updater_artifact:
+        manifest["artifacts"]["updater"] = updater_artifact
 
     manifest["signing"] = signing if signing is not None else default_unsigned_signing()
 

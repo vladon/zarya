@@ -51,12 +51,19 @@ StartupOptions StartupOptionsParser::parse(QCoreApplication& app)
     QCommandLineOption logLevelOption(QStringLiteral("log-level"),
                                       QStringLiteral("Log verbosity: debug, info, warn, error"),
                                       QStringLiteral("level"), QStringLiteral("info"));
+    QCommandLineOption postUpdateOption(QStringLiteral("post-update"),
+                                        QStringLiteral("Show update success notice on startup"));
+    QCommandLineOption updateRollbackOption(
+        QStringLiteral("update-rollback"),
+        QStringLiteral("Show update rollback notice on startup"));
 
     parser.addOption(portableOption);
     parser.addOption(minimizedOption);
     parser.addOption(noAutostartProfileOption);
     parser.addOption(startProfileOption);
     parser.addOption(logLevelOption);
+    parser.addOption(postUpdateOption);
+    parser.addOption(updateRollbackOption);
     parser.process(app);
 
     StartupOptions options;
@@ -66,6 +73,8 @@ StartupOptions StartupOptionsParser::parse(QCoreApplication& app)
     options.noAutostartProfile = parser.isSet(noAutostartProfileOption);
     options.startProfileId = parser.value(startProfileOption);
     options.logLevel = logLevelFromString(parser.value(logLevelOption));
+    options.postUpdateNotice = parser.isSet(postUpdateOption);
+    options.updateRollbackNotice = parser.isSet(updateRollbackOption);
     return options;
 }
 

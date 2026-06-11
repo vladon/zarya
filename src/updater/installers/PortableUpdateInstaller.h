@@ -1,18 +1,30 @@
 #pragma once
 
+#include "updater/AppUpdateAsset.h"
+#include "updater/runner/UpdatePlanFile.h"
+
 #include <QString>
 
 namespace zarya {
 
-// Design stub for future portable in-place update (zarya-updater external process).
 class PortableUpdateInstaller {
 public:
-    static bool isImplemented() { return false; }
+    static bool isImplemented();
 
-    static QString statusMessage()
-    {
-        return QStringLiteral("Portable app self-install is not enabled in this beta.");
-    }
+    static QString statusMessage();
+
+    static bool canInstallPortableUpdate(const AppUpdateAsset& asset, bool artifactVerified,
+                                         bool stagingReady, bool runtimeRunning, bool testsRunning,
+                                         bool killSwitchActive, QString* reason = nullptr);
+
+    static bool isAppImageMode();
+
+    static UpdatePlan buildUpdatePlan(const QString& currentVersion, const QString& targetVersion,
+                                      const QString& stagingDir);
+
+    static QString resolvedUpdaterPath();
+
+    static bool launchUpdaterAndQuit(const UpdatePlan& plan, QString* errorMessage = nullptr);
 };
 
 } // namespace zarya

@@ -46,6 +46,7 @@
 #include "ui/SettingsDialog.h"
 #include "ui/AppUpdateDialog.h"
 #include "updater/AppUpdateChecker.h"
+#include "updater/AppUpdateStateManager.h"
 #include "features/FeatureGate.h"
 #include "updater/AppUpdatePlanner.h"
 #include "geodata/GeoDataFileStatus.h"
@@ -1210,6 +1211,22 @@ void MainWindow::logStartupContext(const StartupOptions& options)
 void MainWindow::finishStartup(const StartupOptions& options)
 {
     checkKillSwitchRecoveryOnStartup();
+
+    if (options.updateRollbackNotice) {
+        AppUpdateStartupNotice notice;
+        notice.kind = AppUpdateStartupNotice::Kind::Failed;
+        AppUpdateStateManager::showStartupNotice(this, notice);
+    } else if (options.postUpdateNotice) {
+        AppUpdateStartupNotice notice;
+        notice.kind = AppUpdateStartupNotice::Kind::Success;
+        AppUpdateStateManager::showStartupNotice(this, notice);
+    } else {
+        const AppUpdateStartupNotice notice = AppUpdateStateManager::checkStartupState();
+        if (notice.kind != AppUpdateStartupNotice::Kind::None) {
+            AppUpdateStateManager::showStartupNotice(this, notice);
+        }
+    }
+
     maybeShowFirstRunWizard();
     maybeShowInstalledPortableImportPrompt();
     checkCoreUpdatesOnStartup();
@@ -1889,7 +1906,7 @@ void MainWindow::checkCoreUpdatesOnStartup()
 
 void MainWindow::onCheckAppUpdates()
 {
-    AppUpdateDialog dialog(this);
+    AppUpdateDialog dialog(&m_appController, [this]() { return isTestingBusy(); }, this);
     dialog.exec();
 }
 

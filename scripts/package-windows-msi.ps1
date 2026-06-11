@@ -37,7 +37,7 @@ if (-not $SkipBuild) {
     if (-not (Test-Path (Join-Path $BuildRoot "CMakeCache.txt"))) {
         & (Join-Path $Root "scripts\configure-msvc2026.ps1") -BuildDir $BuildDir
     }
-    cmake --build $BuildRoot --config $Configuration --target zarya_lrelease zarya zarya-helper
+    cmake --build $BuildRoot --config $Configuration --target zarya_lrelease zarya zarya-helper zarya-updater
 }
 
 $GuiExe = Join-Path $BuildOutput "Zarya.exe"
@@ -53,11 +53,17 @@ if (-not (Test-Path $HelperExe)) {
     throw "zarya-helper.exe not found under $BuildOutput"
 }
 
+$UpdaterExe = Join-Path $BuildOutput "zarya-updater.exe"
+if (-not (Test-Path $UpdaterExe)) {
+    throw "zarya-updater.exe not found under $BuildOutput"
+}
+
 if (Test-Path $Staging) { Remove-Item -Recurse -Force $Staging }
 New-Item -ItemType Directory -Path $Staging | Out-Null
 
 Copy-Item $GuiExe (Join-Path $Staging "Zarya.exe")
 Copy-Item $HelperExe (Join-Path $Staging "zarya-helper.exe")
+Copy-Item $UpdaterExe (Join-Path $Staging "zarya-updater.exe")
 New-Item -ItemType File -Path (Join-Path $Staging ".zarya-installed") | Out-Null
 
 python -c @"
@@ -97,6 +103,7 @@ write_release_manifest(
     portable=False,
     gui_artifact='Zarya.exe',
     helper_artifact='zarya-helper.exe',
+    updater_artifact='zarya-updater.exe',
     artifact_type='windows-msi-poc',
     installation_mode='installed',
     helper_service={'included': True, 'installedByDefault': False},

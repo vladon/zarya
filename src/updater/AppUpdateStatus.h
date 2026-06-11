@@ -15,6 +15,8 @@ public:
     void recordCheckStarted();
     void recordCheckSuccess(const QString& latestVersion);
     void recordCheckFailure(const QString& result);
+    void recordDownloadVerified(const QString& artifactFileName);
+    void recordInstallAttempt(const QString& status);
     void reset();
 
     AppUpdateChannel channel() const;
