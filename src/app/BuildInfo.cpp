@@ -120,6 +120,11 @@ QString BuildInfo::integrityNote()
         }
         return QStringLiteral("Signed build.");
     }
+    if (buildChannel() == QStringLiteral("rc")) {
+        return QStringLiteral(
+            "This release-candidate build may be unsigned.\n"
+            "Use SHA256 checksums from the release page to verify the archive.");
+    }
     return QStringLiteral(
         "This beta build is unsigned.\n"
         "Use SHA256 checksums from the release page to verify the archive.");
@@ -148,27 +153,32 @@ QString BuildInfo::updaterCliVersionText()
 
 QString BuildInfo::aboutText()
 {
-    QString text = QStringLiteral(
-                       "Zarya %1 (%2)\n"
-                       "Build:\n"
-                       "  Version: %1\n"
-                       "  Channel: %2\n"
-                       "  Commit: %3\n"
-                       "  Signed: %4\n"
-                       "  Installation: %7\n"
-                       "  Installer: %8\n"
-                       "Built: %5\n"
-                       "Qt %6\n\n"
-                       "Cross-platform proxy profile manager with Xray system proxy, "
-                       "subscriptions, routing, DNS, backup, and diagnostics.")
-                       .arg(appVersion(),
-                            buildChannel(),
-                            buildCommit(),
-                            isSigned() ? QStringLiteral("yes") : QStringLiteral("no"),
-                            buildDateUtc(),
-                            qtVersion(),
-                            InstallationInfo::currentModeString(),
-                            installerSummaryLine());
+    const bool isRc = buildChannel() == QStringLiteral("rc");
+    const QString channelLabel =
+        isRc ? QStringLiteral("rc (release candidate)") : buildChannel();
+    QString header = isRc ? QStringLiteral("Zarya %1\nRelease candidate\n\n")
+                          : QStringLiteral("Zarya %1 (%2)\n\n");
+    QString text = header.arg(appVersion(), channelLabel)
+                   + QStringLiteral(
+                         "Build:\n"
+                         "  Version: %1\n"
+                         "  Channel: %2\n"
+                         "  Commit: %3\n"
+                         "  Signed: %4\n"
+                         "  Installation: %7\n"
+                         "  Installer: %8\n"
+                         "Built: %5\n"
+                         "Qt %6\n\n"
+                         "Cross-platform proxy profile manager with Xray system proxy, "
+                         "subscriptions, routing, DNS, backup, and diagnostics.")
+                         .arg(appVersion(),
+                              channelLabel,
+                              buildCommit(),
+                              isSigned() ? QStringLiteral("yes") : QStringLiteral("no"),
+                              buildDateUtc(),
+                              qtVersion(),
+                              InstallationInfo::currentModeString(),
+                              installerSummaryLine());
 
     const QString note = integrityNote();
     if (!note.isEmpty()) {

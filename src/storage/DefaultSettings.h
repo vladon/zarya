@@ -24,6 +24,7 @@ public:
     static bool allowUnsignedAppUpdates();
     static int appUpdateBackupRetentionCount();
     static bool showExperimentalFeatures();
+    static bool enablePortableUpdaterPoC();
 };
 
 } // namespace zarya

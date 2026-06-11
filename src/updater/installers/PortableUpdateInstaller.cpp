@@ -3,6 +3,7 @@
 #include "app/BuildInfo.h"
 #include "packaging/InstallationMode.h"
 #include "storage/AppPaths.h"
+#include "storage/AppSettings.h"
 #include "updater/AppUpdatePaths.h"
 
 #include <QCoreApplication>
@@ -64,6 +65,18 @@ bool PortableUpdateInstaller::canInstallPortableUpdate(const AppUpdateAsset& ass
         return false;
     };
 
+    if (!AppSettings::instance().enablePortableUpdaterPoC()
+        && !AppSettings::instance().allowDevLocalAppUpdateInstall()) {
+        const QString channel = BuildInfo::buildChannel();
+        if (channel == QStringLiteral("rc")) {
+            return setReason(QStringLiteral(
+                "Self-update installation is experimental and disabled in this RC build.\n"
+                "You can download and verify updates manually."));
+        }
+        return setReason(QStringLiteral(
+            "Self-update installation is experimental and disabled in this build.\n"
+            "You can download and verify updates manually."));
+    }
     if (InstallationInfo::currentMode() != InstallationMode::Portable) {
         return setReason(QStringLiteral(
             "Automatic updates are not available for installed mode yet."));

@@ -1,5 +1,7 @@
 #include "updater/AppVersion.h"
 
+#include <QStringList>
+
 namespace zarya {
 
 namespace {

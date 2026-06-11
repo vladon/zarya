@@ -10,6 +10,8 @@ public:
     static QString platformName();
     static QString artifactPlatformTag();
     static bool isBetaBuild();
+    static bool isPreReleaseBannerBuild();
+    static bool isReleaseCandidateBuild();
 };
 
 } // namespace zarya

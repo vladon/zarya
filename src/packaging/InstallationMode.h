@@ -14,6 +14,7 @@ enum class InstallationMode {
 class InstallationInfo {
 public:
     static InstallationMode detect();
+    static InstallationMode currentMode() { return detect(); }
     static QString modeString(InstallationMode mode);
     static QString currentModeString();
     static bool portableFlagPresent();

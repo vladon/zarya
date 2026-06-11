@@ -8,6 +8,7 @@ namespace zarya {
 enum class AppUpdateChannel {
     Dev,
     Beta,
+    Rc,
     Stable,
 };
 

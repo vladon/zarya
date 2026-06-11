@@ -9,12 +9,13 @@ Settings → **Release channel**:
 | Channel | Experimental UI default |
 |---------|------------------------|
 | Stable | Hidden |
+| RC | Hidden (release candidate) |
 | Beta | Visible (with warnings) |
 | Dev | Visible |
 
 ## Settings key
 
-- `release/channel` — `stable`, `beta`, or `dev`
+- `release/channel` — `stable`, `rc`, `beta`, or `dev`
 - `release/showExperimentalFeatures` — user override
 
 ## Runtime behavior

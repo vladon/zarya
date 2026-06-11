@@ -8,6 +8,7 @@
 
 class QCheckBox;
 class QComboBox;
+class QGroupBox;
 class QLabel;
 class QLineEdit;
 class QPushButton;

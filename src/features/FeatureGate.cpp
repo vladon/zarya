@@ -23,9 +23,9 @@ bool FeatureGate::isVisible(FeatureId id)
         return true;
     }
     if (id == FeatureId::AppSelfUpdate) {
-        return showExperimentalFeatures()
-               || FeaturePolicy::releaseChannelFromString(releaseChannelKey())
-                      != ReleaseChannel::Stable;
+        const ReleaseChannel channel =
+            FeaturePolicy::releaseChannelFromString(releaseChannelKey());
+        return showExperimentalFeatures() || !FeaturePolicy::isStableLikeChannel(channel);
     }
     return showExperimentalFeatures();
 }

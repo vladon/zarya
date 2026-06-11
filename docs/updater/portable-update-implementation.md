@@ -9,6 +9,12 @@
 - rollback on failed post-update check
 - Linux portable tarball (best-effort, when not running as AppImage)
 
+## RC policy (0.36)
+
+- Update check and download/verify are available in RC builds.
+- **Install is disabled by default** via `app/enablePortableUpdaterPoC` (default `false` for rc/stable).
+- Dev and beta builds default install to enabled; RC users can download and verify manually.
+
 ## Not supported
 
 - installed MSI update

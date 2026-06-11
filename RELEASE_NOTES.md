@@ -1,19 +1,19 @@
-# Zarya 0.35.0-beta
+# Zarya 0.36.0-rc1
 
-## Portable app updater PoC
+## Release candidate hardening
 
-0.35 adds a **portable-mode app update PoC** using external `zarya-updater`.
+0.36 is the first release candidate for Zarya's stable Xray system-proxy path.
 
-- Windows portable ZIP: download → SHA256 verify → stage → install → restart
-- Preserves `data/`, `runtime/`, `portable.flag`, `cores/`
-- Automatic rollback if post-update check fails
-- Installed MSI mode: check/download/verify only (no auto-install yet)
+- Experimental features (TUN, helper, kill switch) are **disabled by default**
+- Portable ZIP remains the recommended artifact
+- App update check/download/verify works; **install is disabled by default**
+- Windows MSI remains a PoC (non-default)
 
-See [docs/release-notes/0.35-beta.md](docs/release-notes/0.35-beta.md) and [docs/updater/portable-update-implementation.md](docs/updater/portable-update-implementation.md).
+See [docs/release-notes/0.36-rc1.md](docs/release-notes/0.36-rc1.md) and [docs/rc/rc-scope.md](docs/rc/rc-scope.md).
 
 ## Recommended path
 
-Xray system-proxy mode (stable scope).
+Xray system-proxy mode (stable candidate scope).
 
 ## Reporting issues
 
