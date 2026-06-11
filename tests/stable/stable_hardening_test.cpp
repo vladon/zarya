@@ -51,16 +51,18 @@ int main(int argc, char* argv[])
                    zarya::ReleaseChannel::Beta),
                "beta channel shows experimental by default");
     expectTrue(!zarya::DefaultSettings::enablePortableUpdaterPoC(),
-               "rc build disables portable updater install by default");
+               "stable build disables portable updater install by default");
+    expectTrue(!zarya::DefaultSettings::showExperimentalFeatures(),
+               "stable build hides experimental features by default");
 
     zarya::AppSettings& settings = zarya::AppSettings::instance();
-    settings.setReleaseChannelKey(QStringLiteral("rc"));
+    settings.setReleaseChannelKey(QStringLiteral("stable"));
     settings.setShowExperimentalFeatures(false);
     settings.setEnableExperimentalTun(true);
     settings.setRuntimeMode(zarya::RuntimeMode::TunSingBoxExperimental);
 
     expectTrue(!zarya::FeatureGate::isVisible(zarya::FeatureId::SingBoxTunExperimental),
-               "rc channel hides TUN feature");
+               "stable channel hides TUN feature");
     expectTrue(settings.effectiveRuntimeMode() == zarya::RuntimeMode::SystemProxyXray,
                "effective runtime falls back to Xray when TUN gated");
     expectTrue(settings.configuredRuntimeMode() == zarya::RuntimeMode::TunSingBoxExperimental,

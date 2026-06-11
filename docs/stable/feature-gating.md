@@ -2,6 +2,8 @@
 
 Zarya gates experimental features by **release channel** and the **Show experimental features** setting.
 
+**1.0.0 stable** builds default to the **Stable** channel with experimental features hidden.
+
 ## Release channel
 
 Settings → **Release channel**:

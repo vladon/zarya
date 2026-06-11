@@ -14,7 +14,17 @@ BetaBannerWidget::BetaBannerWidget(QWidget* parent)
 {
     setStyleSheet(QStringLiteral("background:#fff3e0; border-bottom:1px solid #ffcc80;"));
     QString bannerText;
-    if (PackagingInfo::isReleaseCandidateBuild()) {
+    if (PackagingInfo::isStableBuild()) {
+        if (AppSettings::instance().showExperimentalFeatures()) {
+            bannerText =
+                tr("Experimental features are enabled. They are not part of the stable support "
+                   "scope. Use Diagnostics Bundle when reporting issues.");
+        } else {
+            bannerText =
+                tr("Zarya stable release — experimental features are disabled by default. "
+                   "Use Diagnostics Bundle when reporting issues.");
+        }
+    } else if (PackagingInfo::isReleaseCandidateBuild()) {
         if (AppSettings::instance().showExperimentalFeatures()) {
             bannerText =
                 tr("Experimental features are enabled. They are not part of the stable support "

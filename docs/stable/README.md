@@ -1,6 +1,6 @@
 # Zarya Stable Release Hardening
 
-Milestone 0.33 prepares the boundary between beta and stable for a future **1.0** release.
+Milestone 0.33 prepared the boundary between beta and stable. **1.0.0** is the first stable channel release.
 
 ## Documents
 

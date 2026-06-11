@@ -7,7 +7,7 @@ Use before tagging 1.0 or a stable-channel release.
 - [ ] version correct
 - [ ] release notes updated
 - [ ] checksums generated
-- [ ] artifact verification passed (`verify-release-artifacts.py --public-beta`)
+- [ ] artifact verification passed (`verify-release-artifacts.py --stable-release`)
 
 ## Stable features
 

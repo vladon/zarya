@@ -33,9 +33,14 @@ bool PackagingInfo::isReleaseCandidateBuild()
     return BuildInfo::buildChannel().compare(QStringLiteral("rc"), Qt::CaseInsensitive) == 0;
 }
 
+bool PackagingInfo::isStableBuild()
+{
+    return BuildInfo::buildChannel().compare(QStringLiteral("stable"), Qt::CaseInsensitive) == 0;
+}
+
 bool PackagingInfo::isBetaBuild()
 {
-    if (isReleaseCandidateBuild()) {
+    if (isReleaseCandidateBuild() || isStableBuild()) {
         return false;
     }
     const QString version = versionString().toLower();
@@ -48,7 +53,7 @@ bool PackagingInfo::isBetaBuild()
 
 bool PackagingInfo::isPreReleaseBannerBuild()
 {
-    return isBetaBuild() || isReleaseCandidateBuild();
+    return isBetaBuild() || isReleaseCandidateBuild() || isStableBuild();
 }
 
 QString PackagingInfo::artifactPlatformTag()
