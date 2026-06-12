@@ -18,12 +18,14 @@ No other third-party libraries are required for the application itself. **Xray**
 
 Requires **Visual Studio 2026** (or 2022+) with the **Desktop development with C++** workload, plus **Qt 6** built for MSVC (`msvc2022_64` kit — compatible with the VS 2026 toolset).
 
+Local builds default to **static Qt** (portable exe, no Qt DLLs); use `.\scripts\build.ps1` or `.\scripts\configure-msvc2026.ps1 -Static`. Pass `-Shared` to `build.ps1` for shared Qt during faster iteration.
+
 ```powershell
 # One-time: install Qt MSVC kit (if missing)
 python -m aqt install-qt windows desktop 6.8.3 win64_msvc2022_64 -O C:\Qt
 
-# Configure with VS 2026 generator
-.\scripts\configure-msvc2026.ps1
+# Configure with VS 2026 generator (static Qt — see Static Release section below)
+.\scripts\configure-msvc2026.ps1 -Static
 
 # Build and run
 cmake --build build --config Release --target zarya
@@ -47,7 +49,7 @@ cmake --build build --config Release --target zarya
 
 Or use preset `windows-msvc2026-static-release` with `QT_STATIC_DIR=C:/Qt/Static/6.8.3/msvc2022_64`.
 
-Shared Qt remains the default for faster iteration; the unit test target uses shared/static Qt Core matching your prefix.
+Use `-Shared` on `build.ps1` or omit `-Static` on `configure-msvc2026.ps1` for shared Qt when you want faster iteration; the unit test target uses shared/static Qt Core matching your prefix.
 
 ### macOS
 

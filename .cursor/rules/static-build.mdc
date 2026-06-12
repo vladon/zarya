@@ -1,0 +1,34 @@
+---
+description: Default to static Qt builds on Windows — portable Release exe without Qt DLLs
+alwaysApply: true
+---
+
+# Static Qt builds (Windows default)
+
+Zarya local and release builds on Windows should use **static Qt** unless the user explicitly asks for shared Qt.
+
+## Configure and build
+
+```powershell
+.\scripts\configure-msvc2026.ps1 -Static
+cmake --build build --config Release --target zarya
+```
+
+Or use the wrapper (static by default):
+
+```powershell
+.\scripts\build.ps1
+```
+
+Pass `-Shared` to `build.ps1` only when the user wants faster iteration with shared Qt DLLs.
+
+## Static Qt location
+
+- Prefix: `C:\Qt\Static\6.8.3\msvc2022_64`
+- Override with `QT_STATIC_DIR` if installed elsewhere
+- If missing, build once: `.\scripts\build-qt-static-msvc2026.ps1`
+
+## Do not
+
+- Do not configure with shared Qt (`.\scripts\configure-msvc2026.ps1` without `-Static`) for release or local builds unless the user explicitly requests shared Qt
+- Do not change CMake defaults for static linking; use `-Static` on `configure-msvc2026.ps1` and `ZARYA_STATIC_QT=ON` via that script
