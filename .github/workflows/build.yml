@@ -45,6 +45,12 @@ jobs:
         run: cmake --build build --target zarya zarya_xray_config_test
       - name: Test
         run: ./build/zarya_xray_config_test
+      - name: Package (unsigned)
+        if: github.ref == 'refs/heads/main'
+        run: ./scripts/package-linux.sh --skip-build --skip-signing
+      - name: Verify release artifact
+        if: github.ref == 'refs/heads/main'
+        run: python3 scripts/verify-release-artifacts.py --artifact dist/Zarya-1.0.0-linux-x64.tar.gz --expected-version 1.0.0 --stable-release --require-checksum --allow-unsigned
 
   build-macos:
     runs-on: macos-latest
@@ -60,3 +66,9 @@ jobs:
         run: cmake --build build --target zarya zarya_xray_config_test
       - name: Test
         run: ./build/zarya_xray_config_test
+      - name: Package (unsigned)
+        if: github.ref == 'refs/heads/main'
+        run: ./scripts/package-macos.sh --skip-build --skip-signing
+      - name: Verify release artifact
+        if: github.ref == 'refs/heads/main'
+        run: python3 scripts/verify-release-artifacts.py --artifact dist/Zarya-1.0.0-macos-arm64.zip --expected-version 1.0.0 --stable-release --require-checksum --allow-unsigned

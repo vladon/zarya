@@ -8,6 +8,8 @@ on:
 jobs:
   release-windows:
     runs-on: windows-latest
+    env:
+      SIGNING_ENABLED: ${{ secrets.SIGNING_ENABLED }}
     steps:
       - uses: actions/checkout@v4
       - name: Install Qt
@@ -26,7 +28,7 @@ jobs:
       - name: Verify release artifact
         run: python scripts/verify-release-artifacts.py --artifact dist/Zarya-1.0.0-windows-x64-portable.zip --expected-version 1.0.0 --stable-release --require-checksum --allow-unsigned
       - name: Sign release (optional)
-        if: ${{ secrets.SIGNING_ENABLED == 'true' }}
+        if: env.SIGNING_ENABLED == 'true'
         env:
           ZARYA_WINDOWS_CERT_THUMBPRINT: ${{ secrets.WINDOWS_CERT_THUMBPRINT }}
         run: |

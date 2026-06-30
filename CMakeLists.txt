@@ -600,6 +600,11 @@ add_executable(zarya_xray_config_test
     src/app/StartupOptions.cpp
     src/app/BuildInfo.cpp
     src/packaging/PackagingInfo.cpp
+    ${ZARYA_FEATURE_SOURCES}
+    src/storage/DefaultSettings.cpp
+    src/packaging/InstallationMode.cpp
+    src/packaging/WindowsInstallInfo.cpp
+    src/diagnostics/DiagnosticsRedactor.cpp
     src/platform/Platform.cpp
     src/import/VlessUriParser.cpp
     src/subscription/ShareLinkParser.cpp

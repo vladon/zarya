@@ -35,7 +35,7 @@ QString redactManifestUrl(const QString& url)
     QUrl redacted = parsed;
     redacted.setUserName({});
     redacted.setPassword({});
-    redacted.setQuery({});
+    redacted.setQuery(QString());
     return redacted.toString(QUrl::RemoveUserInfo | QUrl::RemoveQuery);
 }
 
