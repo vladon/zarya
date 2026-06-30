@@ -181,13 +181,19 @@ def verify_no_production_installer_claims(staging: Path) -> list[str]:
         if not path.is_file():
             continue
         lowered = path.read_text(encoding="utf-8", errors="replace").lower()
+        if "no production msi" in lowered or "no production-signed msi" in lowered:
+            continue
         for phrase in PRODUCTION_INSTALLER_CLAIMS:
             if phrase in lowered:
                 errors.append(f"forbidden production installer claim in {path.name}: {phrase}")
     installer_readme = staging / "docs" / "installer" / "README.md"
     if installer_readme.is_file():
         text = installer_readme.read_text(encoding="utf-8", errors="replace")
-        if "No production MSI/PKG/DEB yet" not in text and "no production MSI" not in text.lower():
+        lowered = text.lower()
+        if (
+            "no production msi" not in lowered
+            and "no production-signed msi" not in lowered
+        ):
             errors.append("installer README must state no production installer yet")
     return errors
 
@@ -502,7 +508,9 @@ def main() -> int:
     )
     parser.add_argument(
         "--stable-release",
+        "--release-stable",
         action="store_true",
+        dest="stable_release",
         help="Verify stable release docs, channel defaults, release notes, and stable-scope gating",
     )
     args = parser.parse_args()

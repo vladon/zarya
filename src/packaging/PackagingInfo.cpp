@@ -53,7 +53,7 @@ bool PackagingInfo::isBetaBuild()
 
 bool PackagingInfo::isPreReleaseBannerBuild()
 {
-    return isBetaBuild() || isReleaseCandidateBuild() || isStableBuild();
+    return isBetaBuild() || isReleaseCandidateBuild();
 }
 
 QString PackagingInfo::artifactPlatformTag()

@@ -28,4 +28,4 @@ Kill switch is experimental.
 
 ## Recommendation
 
-For normal beta testing, use **Xray system-proxy mode**.
+For normal use on **1.0.0 stable**, use **Xray system-proxy mode**.

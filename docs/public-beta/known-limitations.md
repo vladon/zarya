@@ -2,9 +2,9 @@
 
 ## Recommended stable path
 
-**Xray system-proxy mode** is the recommended path for beta and future stable releases.
+**Zarya 1.0.0 stable path is Xray system-proxy mode.**
 
-sing-box TUN, zarya-helper, and kill switch are **experimental** and may be hidden when using the stable release channel. See [docs/stable/stable-scope.md](../stable/stable-scope.md).
+sing-box TUN, zarya-helper, and kill switch are **experimental** and are hidden/disabled by default in stable builds. See [docs/stable/stable-scope.md](../stable/stable-scope.md).
 
 ## System proxy is not VPN mode
 
@@ -25,15 +25,15 @@ Use recovery instructions if networking is blocked.
 
 ## macOS kill switch is not implemented
 
-macOS kill switch is not available in this beta.
+macOS kill switch is not available in stable 1.0.0.
 
 ## App self-update (portable PoC)
 
-0.35 adds a **portable-mode update PoC** using external `zarya-updater`.
+Zarya includes a **portable-mode update PoC** using external `zarya-updater`.
 
-**0.36 RC:** update check and download/verify are available; **install is disabled by default** unless you enable the experimental updater PoC setting (dev/beta builds only by default).
+On **1.0.0 stable**, update check and download/verify are available; **install is disabled by default**.
 
-Supported when install is enabled:
+Supported when install is explicitly enabled (dev/beta channels by default):
 
 - Windows portable ZIP in-place update after SHA256 verification
 - Linux portable tarball (best-effort; not AppImage)
@@ -54,6 +54,6 @@ Use SHA256 checksums to verify downloads.
 
 ## No production installer yet
 
-Portable/bundle artifacts are the **primary RC and beta distribution format**.
+Portable/bundle artifacts are the **primary 1.0.0 stable distribution format**.
 
-Windows has an **MSI PoC** (0.34) for testing installed layout — see [docs/installer/windows-msi-poc.md](../installer/windows-msi-poc.md). It is not a production-signed installer and must not install the helper service by default.
+Windows has an **MSI PoC** for testing installed layout — see [docs/installer/windows-msi-poc.md](../installer/windows-msi-poc.md). It is not a production-signed installer and must not install the helper service by default.

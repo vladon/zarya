@@ -2,7 +2,9 @@
 
 ## Current state
 
-Zarya currently ships primarily as portable/bundle artifacts (ZIP, tarball, `.app` in archive).
+Zarya **1.0.0** ships primarily as portable/bundle artifacts (ZIP, tarball, `.app` in archive).
+
+**No production-signed MSI/PKG/DEB yet.** Windows has a WiX MSI PoC only.
 
 ## Target state
 
@@ -25,7 +27,7 @@ Zarya currently ships primarily as portable/bundle artifacts (ZIP, tarball, `.ap
 |-----|---------|
 | [installed-layout.md](installed-layout.md) | Target on-disk layout per platform |
 | [windows-installer-strategy.md](windows-installer-strategy.md) | WiX/MSI direction |
-| [windows-msi-poc.md](windows-msi-poc.md) | **0.34** Windows MSI PoC (build/install) |
+| [windows-msi-poc.md](windows-msi-poc.md) | Windows MSI PoC (build/install) |
 | [macos-installer-strategy.md](macos-installer-strategy.md) | DMG/PKG direction |
 | [linux-packaging-strategy.md](linux-packaging-strategy.md) | AppImage/deb/rpm |
 | [portable-to-installed-migration.md](portable-to-installed-migration.md) | Explicit migration flow |
@@ -33,6 +35,4 @@ Zarya currently ships primarily as portable/bundle artifacts (ZIP, tarball, `.ap
 | [helper-service-installation.md](helper-service-installation.md) | Optional helper install |
 | [installer-security.md](installer-security.md) | Threat model and signing |
 
-**0.31–0.33:** planning and stable scope.
-
-**0.34:** Windows WiX MSI **PoC** (`scripts/package-windows-msi.ps1`). Portable ZIP remains recommended. No production-signed MSI yet.
+**1.0.0 stable:** portable ZIP/tarball remain recommended. Windows WiX MSI **PoC** (`scripts/package-windows-msi.ps1`) is experimental and optional.

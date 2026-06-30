@@ -17,7 +17,7 @@
 python scripts/verify-release-artifacts.py \
   --artifact dist/Zarya-1.0.0-windows-x64-portable.zip \
   --expected-version 1.0.0 \
-  --stable-release \
+  --release-stable \
   --allow-unsigned
 
 python scripts/audit-redaction.py --diagnostics zarya-diagnostics.zip

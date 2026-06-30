@@ -1,4 +1,6 @@
-# Known Issues for 0.36 RC
+# Known Issues for 0.36 RC (historical)
+
+> **Note:** Zarya **1.0.0** is the current stable release. See [docs/release/known-issues.md](../release/known-issues.md) for 1.0 stable known issues.
 
 ## Experimental features
 

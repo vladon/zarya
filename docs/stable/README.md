@@ -12,7 +12,8 @@ Milestone 0.33 prepared the boundary between beta and stable. **1.0.0** is the f
 | [risk-register.md](risk-register.md) | Go/no-go risks |
 | [1.0-backlog.md](1.0-backlog.md) | Required vs post-1.0 work |
 | [regression-matrix.md](regression-matrix.md) | Platform test matrix |
-| [go-no-go-checklist.md](go-no-go-checklist.md) | Release decision checklist |
+| [go-no-go-checklist.md](go-no-go-checklist.md) | General release decision checklist |
+| [1.0.0-go-no-go.md](1.0.0-go-no-go.md) | 1.0.0 release decision checklist |
 
 ## 1.0 scope decision
 
