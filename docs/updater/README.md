@@ -1,15 +1,17 @@
 # Zarya App Updater
 
-## Current state (0.35)
+## Current state (1.0.0 stable)
 
 Zarya can:
 
 - check update manifests
 - download and verify portable/installer artifacts
-- **install portable updates on Windows/Linux** using external `zarya-updater`
+- **install portable updates on Windows/Linux** using external `zarya-updater` (when explicitly enabled)
 - roll back automatically if post-update verification fails
 
-Installed MSI mode and macOS `.app` bundles support check/download/verify only in 0.35.
+On **stable** builds, update check and download/verify are available; **install is disabled by default**.
+
+Installed MSI mode and macOS `.app` bundles support check/download/verify only.
 
 Core Manager updates Xray and sing-box. The app updater updates **Zarya itself**. These are separate mechanisms.
 
@@ -24,10 +26,10 @@ Flow:
 3. Launch `zarya-updater --plan runtime/app-updates/pending-update.json`
 4. Preserve `data/`, `runtime/`, `portable.flag`, `cores/`
 
-## Non-goals (0.35)
+## Non-goals (1.0.0)
 
 - Silent updates
-- Unsigned automatic install in beta/stable UI
+- Unsigned automatic install in stable UI
 - Helper service update in the same step
 - Delta updates
 - Mandatory updates

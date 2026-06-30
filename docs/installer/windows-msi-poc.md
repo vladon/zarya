@@ -2,11 +2,11 @@
 
 ## Status
 
-This is a **proof of concept** installer for milestone 0.34.
+This is a **proof of concept** installer.
 
-**Portable ZIP remains the recommended RC and beta distribution.**
+**Portable ZIP remains the recommended 1.0.0 stable distribution.**
 
-0.34 uses WiX Toolset v4. It is not a production-signed MSI release. In 0.36 RC, MSI is published only as an experimental installer-poc artifact.
+The MSI is published only as an experimental installer-poc artifact. It is not a production-signed installer.
 
 ## What it installs
 
@@ -55,7 +55,7 @@ Also build portable ZIP:
 ## Install
 
 ```powershell
-msiexec /i .\dist\Zarya-0.34.0-beta-windows-x64-installer-poc.msi
+msiexec /i .\dist\Zarya-1.0.0-windows-x64-installer-poc.msi
 ```
 
 Optional:
@@ -68,7 +68,7 @@ msiexec /i Zarya-....msi INSTALLHELPERSERVICE=1
 ## Uninstall
 
 ```powershell
-msiexec /x .\dist\Zarya-0.34.0-beta-windows-x64-installer-poc.msi
+msiexec /x .\dist\Zarya-1.0.0-windows-x64-installer-poc.msi
 ```
 
 ## Helper service

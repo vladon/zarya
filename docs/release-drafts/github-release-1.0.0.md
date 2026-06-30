@@ -1,33 +1,42 @@
 # Zarya 1.0.0
 
-This is the first stable release of Zarya's Xray system-proxy desktop client.
-
-## Recommended artifact
-
-Use the portable build for your platform.
+This is the first stable release of Zarya.
 
 ## Recommended mode
 
 Use Xray system-proxy mode.
 
+## Downloads
+
+- Windows x64 portable ZIP
+- macOS arm64 ZIP
+- macOS x64 ZIP if available
+- Linux x64 tar.gz
+- Optional Windows MSI PoC artifact, if published separately
+
+## Verify downloads
+
+Use `SHA256SUMS.txt`.
+
 ## Stable features
 
 - Xray system-proxy runtime
 - Profile and subscription management
-- Routing/DNS profiles
+- Routing and DNS profiles
 - Core Manager
 - Backup/import
 - Diagnostics bundle
+- English/Russian UI
 
 ## Experimental features
 
-TUN/helper/kill switch remain experimental and disabled by default.
+TUN/helper/kill switch remain experimental and are disabled by default.
 
-## Verify downloads
+## Known limitations
 
-Use SHA256SUMS.txt.
+System proxy mode is not VPN mode. Some applications may ignore OS proxy settings.
 
-## Report issues
+## Issue reports
 
-Use Help → Create Diagnostics Bundle.
+Use **Help → Create Diagnostics Bundle**.
 Do not post raw proxy links or subscription URLs.

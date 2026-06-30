@@ -93,21 +93,19 @@ In **Settings**, you can use a relative path such as `.\cores\xray\xray.exe` (fr
 
 The app **starts and runs without** Xray installed. Profile management, import, and config generation work offline. Starting a profile runs `xray run -test` first; if Xray is missing or validation fails, the core is not started and the log panel shows details.
 
-## Beta status
+## Stable status (1.0.0)
 
-Zarya is in **public beta** (`0.35.0-beta`).
+Zarya **1.0.0** is the first stable release. The recommended path is **Xray system-proxy mode** (Routing: Bypass LAN, DNS: System DNS).
 
-**Recommended mode:** Xray system-proxy mode (Routing: Bypass LAN, DNS: System DNS).
+Experimental sing-box TUN, zarya-helper, and kill switch exist but are **disabled/hidden by default** in stable builds. See [docs/stable/stable-scope.md](docs/stable/stable-scope.md) and [docs/public-beta/experimental-features.md](docs/public-beta/experimental-features.md).
 
-**Experimental:** sing-box TUN, zarya-helper, and kill switch — not production-ready. See [docs/public-beta/experimental-features.md](docs/public-beta/experimental-features.md).
-
-Full onboarding: [docs/public-beta/quick-start.md](docs/public-beta/quick-start.md).
+Quick start: [docs/public-beta/quick-start.md](docs/public-beta/quick-start.md).
 
 ## Installation status
 
-Zarya beta is still distributed primarily as **portable/bundle artifacts** (ZIP, tarball, `.app` archive).
+Zarya **1.0.0** is distributed primarily as **portable/bundle artifacts** (ZIP, tarball, `.app` archive).
 
-Production installers are being designed:
+Production installers are planned but not part of stable 1.0.0:
 
 - Windows — WiX MSI **PoC** ([docs/installer/windows-msi-poc.md](docs/installer/windows-msi-poc.md)); strategy ([docs/installer/windows-installer-strategy.md](docs/installer/windows-installer-strategy.md))
 - macOS — DMG/PKG path ([docs/installer/macos-installer-strategy.md](docs/installer/macos-installer-strategy.md))
@@ -115,32 +113,28 @@ Production installers are being designed:
 
 Portable mode remains supported. **File → Import from Portable Zarya Folder…** helps migrate data explicitly when moving to an installed layout later.
 
-## App self-update (0.35 portable PoC)
+## App self-update (portable PoC)
 
-Zarya can **check** update manifests, **download/verify** artifacts, and **install portable updates** via external `zarya-updater`.
+Zarya can **check** update manifests and **download/verify** artifacts. **Install is disabled by default** on stable builds.
 
-- **Help → Check for App Updates…** — local manifest or configured URL; **Install and Restart** when staging is ready (portable mode only)
+- **Help → Check for App Updates…** — local manifest or configured URL
 - **Settings → App updates** — channel, manifest URL (separate from Core updates)
-- Preserves `data/`, `runtime/`, `portable.flag`, `cores/`
-- Installed MSI / macOS `.app`: download-and-verify only in 0.35
+- Portable install via external `zarya-updater` when explicitly enabled (dev/beta default)
 - Docs: [docs/updater/README.md](docs/updater/README.md), [docs/updater/portable-update-implementation.md](docs/updater/portable-update-implementation.md)
 
 Core Manager updates Xray/sing-box. App updates update Zarya itself.
 
-## Stable release hardening (0.33)
+## Stable scope
 
-0.33 prepares the path to **1.0** with a clear stable scope:
+**1.0.0 stable:** Xray system-proxy desktop client.
 
-- **Stable 1.0 target:** Xray system-proxy desktop client
-- **Experimental (beta/dev):** TUN, helper, kill switch
+**Experimental (beta/dev or explicit opt-in):** TUN, helper, kill switch.
 
-**Settings → Release channel** controls whether experimental features are shown. On stable channel, effective runtime falls back to Xray system-proxy even if TUN was previously configured.
+Docs: [docs/stable/README.md](docs/stable/README.md), [docs/release-notes/1.0.0.md](docs/release-notes/1.0.0.md)
 
-Docs: [docs/stable/README.md](docs/stable/README.md)
+## Windows MSI PoC
 
-## Windows MSI PoC (0.34)
-
-WiX-based installer proof of concept. **Portable ZIP remains the recommended beta distribution.**
+WiX-based installer proof of concept. **Portable ZIP remains the recommended 1.0.0 distribution.**
 
 ```powershell
 .\scripts\package-windows-msi.ps1 -Configuration Release -OutputDir .\dist -SkipSigning
@@ -447,22 +441,22 @@ Non-portable mode continues to use the OS app data directory.
 
 | Platform | Artifact | Script |
 |----------|----------|--------|
-| Windows (portable) | `Zarya-0.35.0-beta-windows-x64-portable.zip` | `scripts/package-windows.ps1` |
-| Windows (MSI PoC) | `Zarya-0.35.0-beta-windows-x64-installer-poc.msi` | `scripts/package-windows-msi.ps1` |
-| macOS | `Zarya-0.35.0-beta-macos-<arch>.zip` | `scripts/package-macos.sh` |
-| Linux | `Zarya-0.35.0-beta-linux-<arch>.tar.gz` | `scripts/package-linux.sh` |
+| Windows (portable) | `Zarya-1.0.0-windows-x64-portable.zip` | `scripts/package-windows.ps1` |
+| Windows (MSI PoC) | `Zarya-1.0.0-windows-x64-installer-poc.msi` | `scripts/package-windows-msi.ps1` |
+| macOS | `Zarya-1.0.0-macos-<arch>.zip` | `scripts/package-macos.sh` |
+| Linux | `Zarya-1.0.0-linux-<arch>.tar.gz` | `scripts/package-linux.sh` |
 
 ```powershell
 .\scripts\package-windows.ps1 -Configuration Release -OutputDir .\dist -SkipSigning
-python scripts\run-smoke-tests.py --artifact .\dist\Zarya-0.35.0-beta-windows-x64-portable.zip --build-dir build
-python scripts\verify-release-artifacts.py --artifact .\dist\Zarya-0.35.0-beta-windows-x64-portable.zip --expected-version 0.35.0-beta --public-beta --require-checksum --allow-unsigned
+python scripts\run-smoke-tests.py --artifact .\dist\Zarya-1.0.0-windows-x64-portable.zip --build-dir build
+python scripts\verify-release-artifacts.py --artifact .\dist\Zarya-1.0.0-windows-x64-portable.zip --expected-version 1.0.0 --release-stable --allow-unsigned
 ```
 
-See [docs/release-packaging.md](docs/release-packaging.md), [docs/public-beta/download-verification.md](docs/public-beta/download-verification.md), [docs/signing/README.md](docs/signing/README.md), and `packaging/windows/portable-layout.md`. Artifacts include `release-manifest.json`, SHA256 checksums, translations, docs (including `docs/public-beta/`), and core placeholders. Xray/sing-box are not bundled. Signing is optional; in-app auto-update is not included.
+See [docs/release-packaging.md](docs/release-packaging.md), [docs/release/release-process.md](docs/release/release-process.md), [docs/signing/README.md](docs/signing/README.md), and `packaging/windows/portable-layout.md`. Artifacts include `release-manifest.json`, SHA256 checksums, translations, docs, and core placeholders. Xray/sing-box are not bundled. Signing is optional.
 
 ## Verifying downloads
 
-Each release artifact includes a SHA256 checksum. See [docs/public-beta/download-verification.md](docs/public-beta/download-verification.md).
+Each release artifact includes a SHA256 checksum. See [docs/public-beta/download-verification.md](docs/public-beta/download-verification.md) and [docs/release/release-process.md](docs/release/release-process.md).
 
 ### Windows/macOS/Linux
 
@@ -472,7 +466,7 @@ Use `SHA256SUMS.txt` or the per-artifact `.sha256` file.
 sha256sum -c SHA256SUMS.txt
 ```
 
-Signed builds are not required for beta. Optional signing hooks are documented in [docs/signing/](docs/signing/).
+Signed builds are optional. See [docs/signing/](docs/signing/).
 
 ## Diagnostics
 
