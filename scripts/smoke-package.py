@@ -15,6 +15,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from release_common import (  # noqa: E402
     DOC_FILES,
     FORBIDDEN_ARTIFACT_NAMES,
+    artifact_content_root,
     extract_tar_gz,
     extract_zip,
     run_version_check,
@@ -66,27 +67,28 @@ def main() -> int:
             return 1
 
         staging = find_staging_root(temp_dir)
+        content = artifact_content_root(staging)
         errors.extend(verify_clean_staging(staging))
 
-        manifest = staging / "release-manifest.json"
+        manifest = content / "release-manifest.json"
         if not manifest.is_file():
             manifest = next(staging.rglob("release-manifest.json"), None)
         if manifest is None or not manifest.is_file():
             errors.append("release-manifest.json is missing")
 
-        license_path = staging / "LICENSE"
+        license_path = content / "LICENSE"
         if not license_path.is_file():
             license_path = next(staging.rglob("LICENSE"), None)
         if license_path is None or not license_path.is_file():
             errors.append("LICENSE is missing")
 
-        translations = staging / "translations"
+        translations = content / "translations"
         if not translations.is_dir():
-            translations = next(staging.rglob("translations"), None)
+            translations = next((p for p in staging.rglob("translations") if p.is_dir()), None)
         if translations is None or not any(translations.glob("*.qm")):
             errors.append("translations/*.qm missing")
 
-        docs_dir = staging / "docs"
+        docs_dir = content / "docs"
         if not docs_dir.is_dir():
             docs_dir = next((p for p in staging.rglob("docs") if p.is_dir()), None)
         if docs_dir is None:
@@ -109,7 +111,7 @@ def main() -> int:
             errors.append("zarya-updater executable not found")
 
         if gui is not None:
-            ok, output = run_version_check(gui)
+            ok, output = run_version_check(gui, gui=True)
             if not ok:
                 errors.append(f"--version failed for GUI: {output}")
             elif "Zarya" not in output:
