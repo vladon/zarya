@@ -170,6 +170,24 @@ bool CoreBinaryManager::canManage(CoreType type, QString* reason) const
     return true;
 }
 
+void CoreBinaryManager::finishVersionChecks()
+{
+    refreshLocalState();
+
+    QStringList errors;
+    for (const CoreInfo& info : m_infos) {
+        if (!info.lastReleaseCheckError.isEmpty()) {
+            errors.append(QStringLiteral("%1: %2").arg(info.name, info.lastReleaseCheckError));
+        }
+    }
+
+    if (errors.isEmpty()) {
+        emit operationFinished(true, QString());
+    } else {
+        emit operationFinished(false, errors.join(QStringLiteral("\n")));
+    }
+}
+
 void CoreBinaryManager::checkLatestVersions()
 {
     m_pendingChecks = 2;
@@ -193,11 +211,11 @@ void CoreBinaryManager::checkLatestVersions()
                 emit logLine(QStringLiteral("Fetching latest Xray release: %1").arg(release.version));
                 --m_pendingChecks;
                 if (m_pendingChecks <= 0) {
-                    refreshLocalState();
+                    finishVersionChecks();
                 }
                 xrayProvider->deleteLater();
             });
-    connect(xrayProvider, &CoreReleaseProvider::error, this, [this](const QString& message) {
+    connect(xrayProvider, &CoreReleaseProvider::error, this, [this, xrayProvider](const QString& message) {
         for (CoreInfo& info : m_infos) {
             if (info.type == CoreType::Xray) {
                 info.lastReleaseCheckError = message;
@@ -206,8 +224,9 @@ void CoreBinaryManager::checkLatestVersions()
         emit logLine(QStringLiteral("Xray release check failed: %1").arg(message));
         --m_pendingChecks;
         if (m_pendingChecks <= 0) {
-            refreshLocalState();
+            finishVersionChecks();
         }
+        xrayProvider->deleteLater();
     });
     emit logLine(QStringLiteral("Checking Xray version"));
     xrayProvider->fetchLatestRelease(timeoutMs);
@@ -226,22 +245,24 @@ void CoreBinaryManager::checkLatestVersions()
                 emit logLine(QStringLiteral("Fetching latest sing-box release: %1").arg(release.version));
                 --m_pendingChecks;
                 if (m_pendingChecks <= 0) {
-                    refreshLocalState();
+                    finishVersionChecks();
                 }
                 singBoxProvider->deleteLater();
             });
-    connect(singBoxProvider, &CoreReleaseProvider::error, this, [this](const QString& message) {
-        for (CoreInfo& info : m_infos) {
-            if (info.type == CoreType::SingBox) {
-                info.lastReleaseCheckError = message;
-            }
-        }
-        emit logLine(QStringLiteral("sing-box release check failed: %1").arg(message));
-        --m_pendingChecks;
-        if (m_pendingChecks <= 0) {
-            refreshLocalState();
-        }
-    });
+    connect(singBoxProvider, &CoreReleaseProvider::error, this,
+            [this, singBoxProvider](const QString& message) {
+                for (CoreInfo& info : m_infos) {
+                    if (info.type == CoreType::SingBox) {
+                        info.lastReleaseCheckError = message;
+                    }
+                }
+                emit logLine(QStringLiteral("sing-box release check failed: %1").arg(message));
+                --m_pendingChecks;
+                if (m_pendingChecks <= 0) {
+                    finishVersionChecks();
+                }
+                singBoxProvider->deleteLater();
+            });
     emit logLine(QStringLiteral("Checking sing-box version"));
     singBoxProvider->fetchLatestRelease(timeoutMs);
 

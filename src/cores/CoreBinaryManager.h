@@ -53,6 +53,7 @@ private:
                                       const QVector<CoreAsset>& allAssets,
                                       bool allowMissingChecksum, bool checksumVerified);
     void finishInstall(CoreType type, const CoreRelease& release, const QString& archivePath);
+    void finishVersionChecks();
 
     CoreManager* m_processCoreManager = nullptr;
     std::function<bool()> m_singBoxRunningCallback;
