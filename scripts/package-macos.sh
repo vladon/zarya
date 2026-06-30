@@ -300,6 +300,14 @@ fi
 
 
 
+if [[ -d "$MACOS_DIR" ]]; then
+
+  chmod +x "$MACOS_DIR"/* 2>/dev/null || true
+
+fi
+
+
+
 if [[ "$SIGN" -eq 1 ]]; then
 
   SIGN_ARGS=(--app-path "$APP_PATH")
@@ -395,7 +403,7 @@ echo "Created $ZIP_PATH"
 
 if [[ "$SKIP_TESTS" -eq 0 ]]; then
 
-  python3 "$ROOT/scripts/smoke-package.py" --artifact "$ZIP_PATH" || true
+  python3 "$ROOT/scripts/smoke-package.py" --artifact "$ZIP_PATH"
 
   python3 "$ROOT/scripts/verify-release-artifacts.py" --artifact "$ZIP_PATH" --expected-version "$VERSION" --require-checksum --allow-unsigned
 

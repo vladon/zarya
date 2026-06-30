@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -461,7 +462,8 @@ def update_manifest_signing(staging: Path, signing: dict[str, Any]) -> Path | No
 
 def verify_clean_staging(staging: Path) -> list[str]:
     errors: list[str] = []
-    if not (staging / "LICENSE").is_file():
+    content = artifact_content_root(staging)
+    if not (content / "LICENSE").is_file():
         errors.append("LICENSE is missing from staging")
     for path in staging.rglob("*"):
         if path.is_file() and path.name in FORBIDDEN_ARTIFACT_NAMES:
@@ -474,12 +476,42 @@ def verify_required_paths(staging: Path, required: list[str]) -> list[str]:
     return [f"missing required path: {item}" for item in missing]
 
 
-def run_version_check(executable: Path) -> tuple[bool, str]:
+def artifact_content_root(staging: Path) -> Path:
+    if staging.name.endswith(".app"):
+        resources = staging / "Contents" / "Resources"
+        if resources.is_dir():
+            return resources
+    return staging
+
+
+def artifact_gui_candidates(staging: Path) -> list[Path]:
+    names = ("Zarya.exe", "zarya", "Zarya")
+    if staging.name.endswith(".app"):
+        macos = staging / "Contents" / "MacOS"
+        if macos.is_dir():
+            return [macos / name for name in names if (macos / name).is_file()]
+    return [path for name in names for path in staging.rglob(name) if path.is_file()]
+
+
+def ensure_executable(path: Path) -> None:
+    if path.is_file():
+        path.chmod(path.stat().st_mode | 0o111)
+
+
+def run_version_check(executable: Path, *, gui: bool = False) -> tuple[bool, str]:
     if not executable.is_file():
         return False, f"executable not found: {executable}"
+    if gui and os.environ.get("ZARYA_SKIP_GUI_VERSION") == "1":
+        return True, "skipped (ZARYA_SKIP_GUI_VERSION=1)"
+    ensure_executable(executable)
+    cmd = [str(executable), "--version"]
+    if gui and sys.platform == "linux" and not os.environ.get("DISPLAY"):
+        xvfb = shutil.which("xvfb-run")
+        if xvfb:
+            cmd = [xvfb, "-a", *cmd]
     try:
         result = subprocess.run(
-            [str(executable), "--version"],
+            cmd,
             check=True,
             capture_output=True,
             text=True,

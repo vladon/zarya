@@ -23,9 +23,12 @@ from release_common import (  # noqa: E402
     STABLE_RELEASE_DOC_FILES,
     UPDATER_DOC_FILES,
     STABLE_DOC_FILES,
+    artifact_content_root,
+    artifact_gui_candidates,
     extract_tar_gz,
     extract_zip,
     read_cmake_version,
+    run_version_check,
     sha256_file,
 )
 
@@ -317,9 +320,10 @@ def verify_rc_channel_defaults(source_root: Path) -> list[str]:
     return errors
 
 
-def verify_public_beta_artifact(staging: Path) -> list[str]:
+def verify_public_beta_artifact(staging: Path, content: Path | None = None) -> list[str]:
     errors: list[str] = []
-    if not (staging / "RELEASE_NOTES.md").is_file():
+    root = content if content is not None else artifact_content_root(staging)
+    if not (root / "RELEASE_NOTES.md").is_file():
         errors.append("RELEASE_NOTES.md is missing from artifact")
     if not list(staging.rglob("zarya_en.qm")) or not list(staging.rglob("zarya_ru.qm")):
         errors.append("translations (zarya_en.qm, zarya_ru.qm) are missing from artifact")
@@ -344,8 +348,9 @@ def verify_forbidden_files(staging: Path) -> list[str]:
     return errors
 
 
-def verify_release_notes_version(staging: Path, expected_version: str) -> list[str]:
-    notes = staging / "RELEASE_NOTES.md"
+def verify_release_notes_version(staging: Path, expected_version: str, content: Path | None = None) -> list[str]:
+    root = content if content is not None else artifact_content_root(staging)
+    notes = root / "RELEASE_NOTES.md"
     if not notes.is_file():
         return ["RELEASE_NOTES.md is missing from artifact"]
     if expected_version not in notes.read_text(encoding="utf-8"):
@@ -353,8 +358,9 @@ def verify_release_notes_version(staging: Path, expected_version: str) -> list[s
     return []
 
 
-def verify_no_stale_versions(staging: Path, expected_version: str) -> list[str]:
+def verify_no_stale_versions(staging: Path, expected_version: str, content: Path | None = None) -> list[str]:
     errors: list[str] = []
+    root = content if content is not None else artifact_content_root(staging)
     parts = expected_version.split(".")
     stale_versions: list[str] = []
     if expected_version == "1.0.0":
@@ -365,8 +371,8 @@ def verify_no_stale_versions(staging: Path, expected_version: str) -> list[str]:
             stale_versions.append(f"0.{previous_minor}.0-beta")
             stale_versions.append(f"0.{previous_minor}.0-rc1")
 
-    scan_paths = [staging / "RELEASE_NOTES.md"]
-    public_beta = staging / "docs" / "public-beta"
+    scan_paths = [root / "RELEASE_NOTES.md"]
+    public_beta = root / "docs" / "public-beta"
     if public_beta.is_dir():
         scan_paths.extend(sorted(public_beta.glob("*.md")))
 
@@ -376,29 +382,21 @@ def verify_no_stale_versions(staging: Path, expected_version: str) -> list[str]:
         text = path.read_text(encoding="utf-8", errors="replace")
         for stale in stale_versions:
             if stale in text:
-                errors.append(f"stale version {stale} found in {path.relative_to(staging)}")
+                rel = path.relative_to(root)
+                errors.append(f"stale version {stale} found in {rel}")
     return errors
 
 
 def verify_executable_version(staging: Path, expected_version: str) -> list[str]:
-    candidates = list(staging.rglob("Zarya.exe")) + list(staging.rglob("zarya"))
-    exe = next((path for path in candidates if path.is_file()), None)
+    candidates = artifact_gui_candidates(staging)
+    exe = candidates[0] if candidates else None
     if exe is None:
         return []
-    try:
-        proc = subprocess.run(
-            [str(exe), "--version"],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        output = (proc.stdout or "") + (proc.stderr or "")
-        if proc.returncode != 0:
-            return [f"executable --version failed for {exe.name}"]
-        if expected_version not in output:
-            return [f"executable --version does not report {expected_version}"]
-    except (OSError, subprocess.TimeoutExpired) as exc:
-        return [f"executable --version check failed: {exc}"]
+    ok, output = run_version_check(exe, gui=True)
+    if not ok:
+        return [f"executable --version failed for {exe.name}: {output}"]
+    if expected_version not in output:
+        return [f"executable --version does not report {expected_version}"]
     return []
 
 
@@ -548,30 +546,31 @@ def main() -> int:
             return 1
 
         staging = find_staging_root(temp_dir)
+        content = artifact_content_root(staging)
         errors.extend(verify_forbidden_files(staging))
         if args.public_beta or args.release_candidate or args.stable_release:
-            errors.extend(verify_public_beta_docs(staging))
-            errors.extend(verify_installer_docs(staging))
-            errors.extend(verify_updater_docs(staging))
-            errors.extend(verify_stable_docs(staging))
-            errors.extend(verify_public_beta_artifact(staging))
+            errors.extend(verify_public_beta_docs(content))
+            errors.extend(verify_installer_docs(content))
+            errors.extend(verify_updater_docs(content))
+            errors.extend(verify_stable_docs(content))
+            errors.extend(verify_public_beta_artifact(staging, content))
             errors.extend(verify_issue_templates(ROOT))
             errors.extend(verify_installer_skeletons(ROOT))
             errors.extend(verify_updater_source(ROOT))
             errors.extend(verify_stable_source(ROOT))
-            errors.extend(verify_no_production_installer_claims(staging))
-            errors.extend(verify_no_production_self_update_claims(staging))
-            errors.extend(verify_release_notes_version(staging, expected_version))
-            errors.extend(verify_no_stale_versions(staging, expected_version))
+            errors.extend(verify_no_production_installer_claims(content))
+            errors.extend(verify_no_production_self_update_claims(content))
+            errors.extend(verify_release_notes_version(staging, expected_version, content))
+            errors.extend(verify_no_stale_versions(staging, expected_version, content))
             errors.extend(verify_executable_version(staging, expected_version))
         if args.release_candidate:
-            errors.extend(verify_rc_docs(staging))
+            errors.extend(verify_rc_docs(content))
             errors.extend(verify_rc_source(ROOT))
             errors.extend(verify_rc_channel_defaults(ROOT))
             if not expected_version.endswith("-rc1") and "-rc" not in expected_version:
                 errors.append(f"expected RC version, got {expected_version}")
         if args.stable_release:
-            errors.extend(verify_stable_release_docs(staging))
+            errors.extend(verify_stable_release_docs(content))
             errors.extend(verify_stable_release_source(ROOT))
             errors.extend(verify_stable_channel_defaults(ROOT))
             if expected_version != "1.0.0":

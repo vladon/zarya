@@ -36,7 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Qt
-        run: sudo apt-get update && sudo apt-get install -y qt6-base-dev cmake build-essential
+        run: sudo apt-get update && sudo apt-get install -y qt6-base-dev cmake build-essential xvfb
       - name: Check translations
         run: python scripts/check-translations.py
       - name: Configure
@@ -51,6 +51,13 @@ jobs:
       - name: Verify release artifact
         if: github.ref == 'refs/heads/main'
         run: python3 scripts/verify-release-artifacts.py --artifact dist/Zarya-1.0.0-linux-x64.tar.gz --expected-version 1.0.0 --stable-release --require-checksum --allow-unsigned
+      - name: Upload release artifacts
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: zarya-linux-x64
+          path: dist/Zarya-1.0.0-linux-x64.*
+          if-no-files-found: error
 
   build-macos:
     runs-on: macos-latest
@@ -72,3 +79,10 @@ jobs:
       - name: Verify release artifact
         if: github.ref == 'refs/heads/main'
         run: python3 scripts/verify-release-artifacts.py --artifact dist/Zarya-1.0.0-macos-arm64.zip --expected-version 1.0.0 --stable-release --require-checksum --allow-unsigned
+      - name: Upload release artifacts
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: zarya-macos-arm64
+          path: dist/Zarya-1.0.0-macos-arm64.*
+          if-no-files-found: error
