@@ -36,13 +36,17 @@
 #include <QDialogButtonBox>
 #include <QFileDialog>
 #include <QFormLayout>
+#include <QFrame>
 #include <QGroupBox>
+#include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QRadioButton>
+#include <QScreen>
+#include <QScrollArea>
 #include <QSpinBox>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -734,23 +738,45 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     });
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
+    auto* content = new QWidget(this);
+    auto* contentLayout = new QVBoxLayout(content);
+    contentLayout->setContentsMargins(0, 0, 0, 0);
+    contentLayout->addWidget(generalGroup);
+    contentLayout->addWidget(coreGroup);
+    contentLayout->addWidget(proxyGroup);
+    contentLayout->addWidget(routingGroup);
+    contentLayout->addWidget(dnsGroup);
+    contentLayout->addWidget(startupGroup);
+    contentLayout->addWidget(desktopGroup);
+    contentLayout->addWidget(appUpdatesGroup);
+    contentLayout->addWidget(coreUpdatesGroup);
+    contentLayout->addWidget(testingGroup);
+    contentLayout->addWidget(releaseGroup);
+    contentLayout->addWidget(m_experimentalGroup);
+    contentLayout->addWidget(m_killSwitchGroup);
+    contentLayout->addStretch(1);
+
+    auto* scroll = new QScrollArea(this);
+    scroll->setWidgetResizable(true);
+    scroll->setFrameShape(QFrame::NoFrame);
+    scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    scroll->setWidget(content);
+
     auto* layout = new QVBoxLayout(this);
-    layout->addWidget(generalGroup);
-    layout->addWidget(coreGroup);
-    layout->addWidget(proxyGroup);
-    layout->addWidget(routingGroup);
-    layout->addWidget(dnsGroup);
-    layout->addWidget(startupGroup);
-    layout->addWidget(desktopGroup);
-    layout->addWidget(appUpdatesGroup);
-    layout->addWidget(coreUpdatesGroup);
-    layout->addWidget(testingGroup);
-    layout->addWidget(releaseGroup);
-    layout->addWidget(m_experimentalGroup);
-    layout->addWidget(m_killSwitchGroup);
+    layout->addWidget(scroll, 1);
     layout->addWidget(buttons);
+
     updateExperimentalVisibility();
-    resize(620, 1120);
+
+    QScreen* dlgScreen = screen();
+    if (!dlgScreen) {
+        dlgScreen = QGuiApplication::primaryScreen();
+    }
+    const QRect available = dlgScreen ? dlgScreen->availableGeometry() : QRect(0, 0, 1280, 720);
+    const int width = qBound(620, 480, available.width() - 48);
+    const int height = qBound(720, 420, available.height() - 72);
+    resize(width, height);
+    setMaximumHeight(available.height() - 24);
 }
 
 void SettingsDialog::onBrowseSingBox()
