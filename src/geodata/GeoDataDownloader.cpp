@@ -2,13 +2,31 @@
 
 #include <QEventLoop>
 #include <QFile>
+#include <QFileInfo>
 #include <QNetworkAccessManager>
+#include <QNetworkProxy>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QTimer>
 #include <QUrl>
 
 namespace zarya {
+
+namespace {
+
+constexpr int kIdleTimeoutMs = 30000;
+constexpr int kMinFileTimeoutMs = 300000; // 5 minutes floor for geo/rule-set archives
+
+void configureDirectRequest(QNetworkAccessManager* manager, QNetworkRequest* request,
+                            const QString& userAgent)
+{
+    manager->setProxy(QNetworkProxy::NoProxy);
+    request->setHeader(QNetworkRequest::UserAgentHeader, userAgent);
+    request->setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                          QNetworkRequest::NoLessSafeRedirectPolicy);
+}
+
+} // namespace
 
 GeoDataDownloader::GeoDataDownloader(int timeoutMs)
     : m_timeoutMs(timeoutMs)
@@ -28,23 +46,29 @@ GeoDataDownloadResult GeoDataDownloader::download(
 
     QNetworkAccessManager manager;
     QNetworkRequest request(url);
-    request.setHeader(QNetworkRequest::UserAgentHeader, userAgent);
-    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
-                         QNetworkRequest::NoLessSafeRedirectPolicy);
+    configureDirectRequest(&manager, &request, userAgent);
 
     QNetworkReply* reply = manager.get(request);
 
+    QEventLoop loop;
+    QTimer overallTimer;
+    overallTimer.setSingleShot(true);
+    const int effectiveTimeoutMs = qMax(m_timeoutMs, kMinFileTimeoutMs);
+
+    QTimer idleTimer;
+    idleTimer.setSingleShot(true);
+
     if (progressCallback) {
-        QObject::connect(reply, &QNetworkReply::downloadProgress, [&](qint64 received, qint64 total) {
-            progressCallback(received, total);
-        });
+        QObject::connect(reply, &QNetworkReply::downloadProgress,
+                         [&](qint64 received, qint64 total) {
+                             idleTimer.start(kIdleTimeoutMs);
+                             progressCallback(received, total);
+                         });
     }
 
-    QEventLoop loop;
-    QTimer timer;
-    timer.setSingleShot(true);
-    QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
     QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    QObject::connect(&overallTimer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    QObject::connect(&idleTimer, &QTimer::timeout, &loop, &QEventLoop::quit);
 
     QTimer cancelTimer;
     if (cancelCallback) {
@@ -57,7 +81,8 @@ GeoDataDownloadResult GeoDataDownloader::download(
         cancelTimer.start();
     }
 
-    timer.start(m_timeoutMs);
+    overallTimer.start(effectiveTimeoutMs);
+    idleTimer.start(kIdleTimeoutMs);
     loop.exec();
 
     if (cancelCallback && cancelCallback()) {
@@ -66,9 +91,15 @@ GeoDataDownloadResult GeoDataDownloader::download(
         return result;
     }
 
-    if (!timer.isActive()) {
+    // Prefer a completed reply over a timer race — progress can hit 100% just as the
+    // overall timer expires, which previously reported a false timeout.
+    if (!reply->isFinished()) {
         reply->abort();
-        result.errorMessage = QStringLiteral("Download timed out.");
+        if (!overallTimer.isActive()) {
+            result.errorMessage = QStringLiteral("Download timed out.");
+        } else {
+            result.errorMessage = QStringLiteral("Download stalled (no data received).");
+        }
         reply->deleteLater();
         return result;
     }
@@ -104,26 +135,132 @@ bool GeoDataDownloader::downloadToFile(const QUrl& url, const QString& destinati
                                          const std::function<void(qint64, qint64)>& progressCallback,
                                          const std::function<bool()>& cancelCallback) const
 {
-    const GeoDataDownloadResult result = download(url, userAgent, progressCallback, cancelCallback);
-    if (!result.success) {
+    auto fail = [errorMessage](const QString& message) {
         if (errorMessage) {
-            *errorMessage = result.errorMessage;
+            *errorMessage = message;
         }
         return false;
+    };
+
+    if (!url.isValid()) {
+        return fail(QStringLiteral("Invalid download URL."));
     }
 
+    QFile::remove(destinationPath);
     QFile file(destinationPath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        if (errorMessage) {
-            *errorMessage = file.errorString();
-        }
-        return false;
+        return fail(file.errorString());
     }
-    if (file.write(result.body) != result.body.size()) {
-        if (errorMessage) {
-            *errorMessage = QStringLiteral("Failed to write downloaded file.");
+
+    QNetworkAccessManager manager;
+    QNetworkRequest request(url);
+    configureDirectRequest(&manager, &request, userAgent);
+
+    QNetworkReply* reply = manager.get(request);
+
+    QEventLoop loop;
+    QTimer overallTimer;
+    overallTimer.setSingleShot(true);
+    const int effectiveTimeoutMs = qMax(m_timeoutMs, kMinFileTimeoutMs);
+
+    QTimer idleTimer;
+    idleTimer.setSingleShot(true);
+
+    bool writeFailed = false;
+    QObject::connect(reply, &QNetworkReply::readyRead, &file, [&]() {
+        const QByteArray chunk = reply->readAll();
+        if (chunk.isEmpty()) {
+            return;
         }
-        return false;
+        if (file.write(chunk) != chunk.size()) {
+            writeFailed = true;
+            reply->abort();
+        }
+    });
+    QObject::connect(reply, &QNetworkReply::downloadProgress,
+                     [&](qint64 received, qint64 total) {
+                         idleTimer.start(kIdleTimeoutMs);
+                         if (progressCallback) {
+                             progressCallback(received, total);
+                         }
+                     });
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    QObject::connect(&overallTimer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    QObject::connect(&idleTimer, &QTimer::timeout, &loop, &QEventLoop::quit);
+
+    QTimer cancelTimer;
+    if (cancelCallback) {
+        cancelTimer.setInterval(100);
+        QObject::connect(&cancelTimer, &QTimer::timeout, [&]() {
+            if (cancelCallback()) {
+                reply->abort();
+            }
+        });
+        cancelTimer.start();
+    }
+
+    overallTimer.start(effectiveTimeoutMs);
+    idleTimer.start(kIdleTimeoutMs);
+    loop.exec();
+
+    if (reply->bytesAvailable() > 0 && !writeFailed) {
+        const QByteArray chunk = reply->readAll();
+        if (!chunk.isEmpty() && file.write(chunk) != chunk.size()) {
+            writeFailed = true;
+        }
+    }
+    file.close();
+
+    if (writeFailed) {
+        QFile::remove(destinationPath);
+        reply->deleteLater();
+        return fail(QStringLiteral("Failed to write downloaded file."));
+    }
+
+    if (cancelCallback && cancelCallback()) {
+        QFile::remove(destinationPath);
+        reply->deleteLater();
+        return fail(QStringLiteral("Download canceled."));
+    }
+
+    if (!reply->isFinished()) {
+        reply->abort();
+        QFile::remove(destinationPath);
+        reply->deleteLater();
+        if (!overallTimer.isActive()) {
+            return fail(QStringLiteral("Download timed out."));
+        }
+        return fail(QStringLiteral("Download stalled (no data received)."));
+    }
+
+    if (reply->error() == QNetworkReply::OperationCanceledError) {
+        QFile::remove(destinationPath);
+        reply->deleteLater();
+        return fail(QStringLiteral("Download canceled."));
+    }
+
+    if (reply->error() != QNetworkReply::NoError) {
+        const QString error = reply->errorString();
+        QFile::remove(destinationPath);
+        reply->deleteLater();
+        return fail(error);
+    }
+
+    const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    reply->deleteLater();
+
+    if (status != 0 && (status < 200 || status >= 300)) {
+        QFile::remove(destinationPath);
+        return fail(QStringLiteral("Unexpected HTTP status: %1").arg(status));
+    }
+
+    if (!QFileInfo::exists(destinationPath) || QFileInfo(destinationPath).size() <= 0) {
+        QFile::remove(destinationPath);
+        return fail(QStringLiteral("Download returned empty body."));
+    }
+
+    if (errorMessage) {
+        errorMessage->clear();
     }
     return true;
 }
