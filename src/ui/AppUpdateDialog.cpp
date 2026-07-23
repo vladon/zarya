@@ -26,7 +26,6 @@
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QUrl>
-#include <QEventLoop>
 #include <QVBoxLayout>
 
 namespace zarya {
@@ -282,20 +281,23 @@ void AppUpdateDialog::onDownloadAndVerify()
     setStatusText(tr("Downloading %1…").arg(asset.fileName));
 
     CoreDownloader downloader;
-    QEventLoop loop;
-    bool downloadOk = false;
-    QString downloadError;
-    QObject::connect(&downloader, &CoreDownloader::finished, &loop,
-                     [&](bool success, const QString& message) {
-                         downloadOk = success;
-                         downloadError = message;
-                         loop.quit();
+    QObject::connect(&downloader, &CoreDownloader::progress, this,
+                     [this](qint64 received, qint64 total) {
+                         if (total > 0) {
+                             setStatusText(tr("Downloading… %1 / %2 bytes")
+                                               .arg(received)
+                                               .arg(total));
+                         }
                      });
 
     const QString userAgent = QStringLiteral("Zarya/%1").arg(PackagingInfo::versionString());
     const int timeoutMs = settings.githubApiTimeoutSeconds() * 1000;
-    downloader.downloadToFile(QUrl(asset.url), destination, userAgent, timeoutMs);
-    loop.exec();
+    // downloadToFile is synchronous and emits finished before returning; do not wait on
+    // QEventLoop after the call (exec() would hang forever).
+    QString downloadError;
+    const bool downloadOk =
+        downloader.downloadToFile(QUrl(asset.url), destination, userAgent, timeoutMs,
+                                  &downloadError);
 
     if (!downloadOk) {
         setBusy(false);
