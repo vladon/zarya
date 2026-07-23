@@ -16,7 +16,6 @@
 #include "storage/AppSettings.h"
 
 #include <QDir>
-#include <QEventLoop>
 #include <QFile>
 #include <QFileInfo>
 #include <QHash>
@@ -329,22 +328,18 @@ void CoreBinaryManager::continueDownload(CoreType type, const CoreRelease& relea
     m_activeDownloadType = type;
     emit logLine(QStringLiteral("Downloading core archive"));
 
-    bool downloadOk = false;
-    QString downloadError;
-    QEventLoop downloadLoop;
+    // downloadToFile is synchronous and emits finished before returning; do not wait on a
+    // QEventLoop after the call (exec() would hang forever after quit already ran).
+    disconnect(m_downloader, &CoreDownloader::progress, this, nullptr);
     connect(m_downloader, &CoreDownloader::progress, this,
             [this](qint64 received, qint64 total) {
                 emit downloadProgress(m_activeDownloadType, received, total);
             });
-    connect(m_downloader, &CoreDownloader::finished, &downloadLoop,
-            [&](bool ok, const QString& error) {
-                downloadOk = ok;
-                downloadError = error;
-                downloadLoop.quit();
-            });
-    m_downloader->downloadToFile(asset.downloadUrl, archivePath, userAgent(),
-                                 AppSettings::instance().githubApiTimeoutSeconds() * 1000);
-    downloadLoop.exec();
+    QString downloadError;
+    const bool downloadOk =
+        m_downloader->downloadToFile(asset.downloadUrl, archivePath, userAgent(),
+                                     AppSettings::instance().githubApiTimeoutSeconds() * 1000,
+                                     &downloadError);
 
     if (!downloadOk) {
         emit operationFinished(false, downloadError);
@@ -379,18 +374,10 @@ void CoreBinaryManager::continueDownload(CoreType type, const CoreRelease& relea
     const QString checksumPath = QDir(CorePaths::coreUpdatesDownloadsDir()).filePath(checksumAsset.name);
     emit logLine(QStringLiteral("Downloading checksum"));
     CoreDownloader checksumDownloader;
-    QEventLoop loop;
-    bool checksumOk = false;
     QString checksumError;
-    connect(&checksumDownloader, &CoreDownloader::finished, &loop,
-            [&](bool ok, const QString& error) {
-                checksumOk = ok;
-                checksumError = error;
-                loop.quit();
-            });
-    checksumDownloader.downloadToFile(checksumAsset.downloadUrl, checksumPath, userAgent(),
-                                      AppSettings::instance().githubApiTimeoutSeconds() * 1000);
-    loop.exec();
+    const bool checksumOk = checksumDownloader.downloadToFile(
+        checksumAsset.downloadUrl, checksumPath, userAgent(),
+        AppSettings::instance().githubApiTimeoutSeconds() * 1000, &checksumError);
 
     if (!checksumOk) {
         emit operationFinished(false, checksumError);

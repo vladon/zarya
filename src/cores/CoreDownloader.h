@@ -1,8 +1,11 @@
 #pragma once
 
 #include <QObject>
+#include <QPointer>
+#include <QString>
 #include <QUrl>
-#include <functional>
+
+class QNetworkReply;
 
 namespace zarya {
 
@@ -12,8 +15,11 @@ class CoreDownloader : public QObject {
 public:
     explicit CoreDownloader(QObject* parent = nullptr);
 
-    void downloadToFile(const QUrl& url, const QString& destinationPath, const QString& userAgent,
-                        int timeoutMs);
+    /// Synchronous download. Emits progress during transfer and finished when done.
+    /// Returns true on success. Prefer the return value over waiting on finished —
+    /// finished is emitted before this function returns (same thread).
+    bool downloadToFile(const QUrl& url, const QString& destinationPath, const QString& userAgent,
+                        int timeoutMs, QString* errorMessage = nullptr);
     void cancel();
 
 signals:
@@ -22,6 +28,7 @@ signals:
 
 private:
     bool m_cancelled = false;
+    QPointer<QNetworkReply> m_activeReply;
 };
 
 } // namespace zarya
