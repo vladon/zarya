@@ -18,6 +18,7 @@ struct GeoDataDownloadResult {
 
 class GeoDataDownloader {
 public:
+    /// timeoutMs is a soft overall limit; large-file downloads use at least 5 minutes.
     explicit GeoDataDownloader(int timeoutMs = 30000);
 
     GeoDataDownloadResult download(
