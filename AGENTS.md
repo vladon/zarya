@@ -23,6 +23,8 @@ cmake --build build --config Release --target zarya
 #      .\scripts\build.ps1 -Shared  # faster iteration
 ```
 
+**macOS:** `./scripts/build-macos.sh` (Homebrew `qt@6`; `--test`, `--force`).
+
 - Static Qt prefix: `C:\Qt\Static\6.8.3\msvc2022_64` (`QT_STATIC_DIR` to override).
 - One-time static Qt build: `.\scripts\build-qt-static-msvc2026.ps1`
 - Do not change CMake defaults for static linking; use `-Static` / `ZARYA_STATIC_QT=ON` via the configure script.
