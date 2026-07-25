@@ -29,4 +29,15 @@ alwaysApply: true
 - One logical change per PR when practical.
 - Short-lived branches; do not accumulate long-running feature branches on the trunk.
 
+## Agent landing (default)
+
+When finishing work that should land on the trunk, **do not stop at a local commit**. Always:
+
+1. Commit on a feature branch.
+2. Open a PR to `main`.
+3. Merge the PR (`gh pr merge`).
+4. Sync local `main` and delete the branch.
+
+Do not push directly to `main`. Only skip PR/merge if the user explicitly asks to leave changes uncommitted or unmerged.
+
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for contributor-facing details.
