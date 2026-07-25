@@ -53,10 +53,21 @@ Use `-Shared` on `build.ps1` or omit `-Static` on `configure-msvc2026.ps1` for s
 
 ### macOS
 
+Requires Homebrew Qt 6 (`brew install cmake qt@6`). Wrapper configures if needed (same role as `build.ps1` on Windows):
+
+```bash
+./scripts/build-macos.sh
+open ./build/zarya.app
+```
+
+Options: `--test`, `--force` (reconfigure), `--config Debug`, `--target <name>`, `-j <N>`. Override Qt with `CMAKE_PREFIX_PATH` or `QT_ROOT`.
+
+Manual configure/build:
+
 ```bash
 cmake -S . -B build -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6)"
 cmake --build build
-./build/zarya
+open ./build/zarya.app
 ```
 
 ### Linux
