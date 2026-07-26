@@ -238,6 +238,34 @@ int main(int argc, char* argv[])
         }
     }
 
+    const zarya::Profile hy2Sample = zarya::testhelpers::sampleHysteria2Profile();
+    if (!adapter.supportsProfile(hy2Sample)) {
+        ok &= fail("Hysteria2 TLS profile should be supported");
+    } else {
+        ok &= pass("Hysteria2 TLS profile is supported");
+    }
+    const auto hy2Generated = adapter.generateConfig(hy2Sample);
+    if (!hy2Generated.success) {
+        ok &= fail(hy2Generated.errorMessage.toUtf8().constData());
+    } else {
+        const QJsonObject hy2Outbound = firstProxyOutbound(hy2Generated.config);
+        if (hy2Outbound.value(QStringLiteral("protocol")).toString()
+            != QStringLiteral("hysteria")) {
+            ok &= fail("Hysteria2 outbound protocol should be hysteria");
+        } else {
+            const QJsonObject stream = hy2Outbound.value(QStringLiteral("streamSettings")).toObject();
+            const QJsonObject hySettings =
+                stream.value(QStringLiteral("hysteriaSettings")).toObject();
+            const QJsonObject tls = stream.value(QStringLiteral("tlsSettings")).toObject();
+            if (hySettings.value(QStringLiteral("auth")).toString() != QStringLiteral("hy2-password")
+                || !tls.value(QStringLiteral("alpn")).toArray().contains(QStringLiteral("h3"))) {
+                ok &= fail("Hysteria2 outbound missing auth/alpn");
+            } else {
+                ok &= pass("Hysteria2 generates hysteria outbound with TLS ALPN");
+            }
+        }
+    }
+
     const QVector<zarya::RoutingProfile> builtInProfiles =
         zarya::RoutingProfile::createBuiltInProfiles();
     zarya::RoutingProfile bypassLan;

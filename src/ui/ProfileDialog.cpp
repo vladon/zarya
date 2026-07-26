@@ -34,6 +34,8 @@ ProfileDialog::ProfileDialog(QWidget* parent)
     m_protocolCombo->addItem(QStringLiteral("Shadowsocks"),
                              static_cast<int>(ProtocolType::Shadowsocks));
     m_protocolCombo->addItem(QStringLiteral("SOCKS"), static_cast<int>(ProtocolType::Socks));
+    m_protocolCombo->addItem(QStringLiteral("Hysteria2"),
+                             static_cast<int>(ProtocolType::Hysteria2));
 
     m_coreCombo = new QComboBox(basicPage);
     m_coreCombo->addItem(QStringLiteral("Xray"), static_cast<int>(CoreType::Xray));
@@ -241,7 +243,8 @@ void ProfileDialog::updateProtocolFieldsVisibility()
                                 || protocol == ProtocolType::Vmess);
     m_passwordRowWidget->setVisible(protocol == ProtocolType::Trojan
                                     || protocol == ProtocolType::Shadowsocks
-                                    || protocol == ProtocolType::Socks);
+                                    || protocol == ProtocolType::Socks
+                                    || protocol == ProtocolType::Hysteria2);
     m_encryptionRowWidget->setVisible(protocol == ProtocolType::Vless);
     m_methodRowWidget->setVisible(protocol == ProtocolType::Shadowsocks);
     m_alterIdRowWidget->setVisible(protocol == ProtocolType::Vmess);

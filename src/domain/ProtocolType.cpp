@@ -15,6 +15,8 @@ QString protocolTypeToString(ProtocolType type)
         return QStringLiteral("Shadowsocks");
     case ProtocolType::Socks:
         return QStringLiteral("SOCKS");
+    case ProtocolType::Hysteria2:
+        return QStringLiteral("Hysteria2");
     }
     return QStringLiteral("VLESS");
 }
@@ -35,6 +37,11 @@ ProtocolType protocolTypeFromString(const QString& value, ProtocolType defaultVa
     }
     if (value.compare(QStringLiteral("SOCKS"), Qt::CaseInsensitive) == 0) {
         return ProtocolType::Socks;
+    }
+    if (value.compare(QStringLiteral("Hysteria2"), Qt::CaseInsensitive) == 0
+        || value.compare(QStringLiteral("hysteria2"), Qt::CaseInsensitive) == 0
+        || value.compare(QStringLiteral("hy2"), Qt::CaseInsensitive) == 0) {
+        return ProtocolType::Hysteria2;
     }
     return defaultValue;
 }

@@ -13,9 +13,9 @@ public:
     static bool isNetworkSupported(const Profile& profile, QString* reason = nullptr);
 
     static QJsonObject generate(const Profile& profile, QString* errorMessage = nullptr);
+    static QJsonObject buildTlsSettings(const Profile& profile);
 
 private:
-    static QJsonObject buildTlsSettings(const Profile& profile);
     static QJsonObject buildRealitySettings(const Profile& profile);
     static QJsonObject buildWsSettings(const Profile& profile);
     static QJsonObject buildGrpcSettings(const Profile& profile);

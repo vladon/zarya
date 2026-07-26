@@ -85,6 +85,9 @@ void ProfileImportWidget::parseLinks()
         case ProtocolType::Shadowsocks:
             ++m_stats.shadowsocks;
             break;
+        case ProtocolType::Hysteria2:
+            ++m_stats.hysteria2;
+            break;
         default:
             break;
         }
@@ -92,11 +95,13 @@ void ProfileImportWidget::parseLinks()
     m_stats.totalImported = m_imported.size();
 
     m_statsLabel->setText(
-        QStringLiteral("Parsed: VLESS %1, VMess %2, Trojan %3, Shadowsocks %4, Unsupported %5")
+        QStringLiteral(
+            "Parsed: VLESS %1, VMess %2, Trojan %3, Shadowsocks %4, Hysteria2 %5, Unsupported %6")
             .arg(m_stats.vless)
             .arg(m_stats.vmess)
             .arg(m_stats.trojan)
             .arg(m_stats.shadowsocks)
+            .arg(m_stats.hysteria2)
             .arg(m_stats.unsupported));
 
     emit parseCompleted(m_stats);

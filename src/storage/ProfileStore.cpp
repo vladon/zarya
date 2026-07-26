@@ -63,6 +63,9 @@ QJsonObject profileToJson(const Profile& profile)
     insertIfNotEmpty(object, QStringLiteral("method"), profile.method);
     insertIfNotEmpty(object, QStringLiteral("securityCipher"), profile.securityCipher);
     insertIfNotEmpty(object, QStringLiteral("serviceName"), profile.serviceName);
+    insertIfNotEmpty(object, QStringLiteral("alpn"), profile.alpn);
+    insertIfNotEmpty(object, QStringLiteral("obfs"), profile.obfs);
+    insertIfNotEmpty(object, QStringLiteral("obfsPassword"), profile.obfsPassword);
     insertIfNotEmpty(object, QStringLiteral("unsupportedReason"), profile.unsupportedReason);
 
     object.insert(QStringLiteral("sourceType"), profileSourceTypeToString(profile.sourceType));
@@ -141,6 +144,12 @@ Profile profileFromJson(const QJsonObject& object)
         profile.securityCipher = object.value(QStringLiteral("scy")).toString();
     }
     profile.serviceName = object.value(QStringLiteral("serviceName")).toString();
+    profile.alpn = object.value(QStringLiteral("alpn")).toString();
+    profile.obfs = object.value(QStringLiteral("obfs")).toString();
+    profile.obfsPassword = object.value(QStringLiteral("obfsPassword")).toString();
+    if (profile.obfsPassword.isEmpty()) {
+        profile.obfsPassword = object.value(QStringLiteral("obfs-password")).toString();
+    }
     profile.unsupportedReason = object.value(QStringLiteral("unsupportedReason")).toString();
 
     profile.sourceType = profileSourceTypeFromString(object.value(QStringLiteral("sourceType")).toString());

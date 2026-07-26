@@ -56,7 +56,19 @@ void applyShareLinkQueryParam(Profile& profile, const QString& key, const QStrin
         profile.path = decoded;
     } else if (key == QStringLiteral("headerType")) {
         profile.headerType = decoded;
-    } else if (key == QStringLiteral("allowinsecure") || key == QStringLiteral("allowInsecure")) {
+    } else if (key == QStringLiteral("alpn")) {
+        profile.alpn = decoded;
+    } else if (key == QStringLiteral("obfs")) {
+        profile.obfs = decoded;
+    } else if (key == QStringLiteral("obfs-password") || key == QStringLiteral("obfspassword")) {
+        profile.obfsPassword = decoded;
+    } else if (key == QStringLiteral("auth") || key == QStringLiteral("password")) {
+        // Used by some hysteria2 share links when auth is not in userinfo.
+        if (profile.password.isEmpty()) {
+            profile.password = decoded;
+            profile.uuidPassword = decoded;
+        }
+    } else if (key == QStringLiteral("allowinsecure") || key == QStringLiteral("insecure")) {
         profile.allowInsecure =
             decoded.compare(QStringLiteral("1")) == 0
             || decoded.compare(QStringLiteral("true"), Qt::CaseInsensitive) == 0;
@@ -363,6 +375,66 @@ ShareLinkParseResult parseShadowsocks(const QString& link)
     return result;
 }
 
+ShareLinkParseResult parseHysteria2(const QString& link)
+{
+    ShareLinkParseResult result;
+    const QUrl url = QUrl(link);
+    const QString scheme = url.scheme().toLower();
+    if (!url.isValid()
+        || (scheme != QStringLiteral("hysteria2") && scheme != QStringLiteral("hy2"))) {
+        result.error = QStringLiteral("Invalid hysteria2 URL.");
+        return result;
+    }
+
+    Profile profile = baseImportedProfile(ProtocolType::Hysteria2);
+    profile.network = QStringLiteral("hysteria");
+    const QString auth = decodeComponent(url.userName());
+    if (!auth.isEmpty()) {
+        profile.password = auth;
+        profile.uuidPassword = auth;
+    }
+    profile.address = url.host(QUrl::FullyDecoded);
+    profile.port = url.port(443);
+
+    if (profile.address.isEmpty() || profile.port < 1 || profile.port > 65535) {
+        result.error = QStringLiteral("Invalid host or port in hysteria2 link.");
+        return result;
+    }
+
+    const QUrlQuery query(url);
+    for (const QPair<QString, QString>& item : query.queryItems()) {
+        applyShareLinkQueryParam(profile, item.first.toLower(), item.second);
+    }
+
+    if (profile.password.isEmpty()) {
+        result.error = QStringLiteral("Incomplete hysteria2 link (missing auth).");
+        return result;
+    }
+
+    if (profile.security.isEmpty()) {
+        profile.security = QStringLiteral("tls");
+    }
+
+    const QString obfs = profile.obfs.trimmed().toLower();
+    if (!obfs.isEmpty() && obfs != QStringLiteral("salamander") && obfs != QStringLiteral("none")) {
+        profile.unsupportedReason =
+            QStringLiteral("Hysteria2 obfuscation type is not supported: %1").arg(profile.obfs);
+    }
+    if (obfs == QStringLiteral("salamander") && profile.obfsPassword.trimmed().isEmpty()) {
+        profile.unsupportedReason =
+            QStringLiteral("Hysteria2 salamander obfuscation requires obfs-password.");
+    }
+
+    QString name = decodeComponent(url.fragment());
+    profile.name = name.isEmpty()
+                       ? QStringLiteral("%1:%2").arg(profile.address).arg(profile.port)
+                       : name;
+
+    result.profile = profile;
+    result.ok = true;
+    return result;
+}
+
 } // namespace
 
 bool ShareLinkParser::isSupportedScheme(const QString& link)
@@ -372,7 +444,9 @@ bool ShareLinkParser::isSupportedScheme(const QString& link)
            || trimmed.startsWith(QStringLiteral("vmess://"), Qt::CaseInsensitive)
            || trimmed.startsWith(QStringLiteral("trojan://"), Qt::CaseInsensitive)
            || trimmed.startsWith(QStringLiteral("ss://"), Qt::CaseInsensitive)
-           || trimmed.startsWith(QStringLiteral("socks://"), Qt::CaseInsensitive);
+           || trimmed.startsWith(QStringLiteral("socks://"), Qt::CaseInsensitive)
+           || trimmed.startsWith(QStringLiteral("hysteria2://"), Qt::CaseInsensitive)
+           || trimmed.startsWith(QStringLiteral("hy2://"), Qt::CaseInsensitive);
 }
 
 ShareLinkParseResult ShareLinkParser::parse(const QString& link)
@@ -395,6 +469,10 @@ ShareLinkParseResult ShareLinkParser::parse(const QString& link)
     }
     if (trimmed.startsWith(QStringLiteral("ss://"), Qt::CaseInsensitive)) {
         return parseShadowsocks(trimmed);
+    }
+    if (trimmed.startsWith(QStringLiteral("hysteria2://"), Qt::CaseInsensitive)
+        || trimmed.startsWith(QStringLiteral("hy2://"), Qt::CaseInsensitive)) {
+        return parseHysteria2(trimmed);
     }
 
     result.error = QStringLiteral("Unsupported share link scheme.");

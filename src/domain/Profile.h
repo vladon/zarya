@@ -24,6 +24,9 @@ struct Profile {
     QString securityCipher;
     QString flow;
     QString remark;
+    QString alpn;
+    QString obfs;
+    QString obfsPassword;
     bool enabled = true;
 
     QString network = QStringLiteral("tcp");
