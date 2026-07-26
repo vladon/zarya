@@ -23,6 +23,7 @@
 #include "features/FeaturePolicy.h"
 #include "packaging/InstallationMode.h"
 #include "packaging/WindowsInstallInfo.h"
+#include "storage/DefaultSettings.h"
 #include "storage/AppSettings.h"
 #include "ui/DnsManagerDialog.h"
 #include "ui/RoutingManagerDialog.h"
@@ -47,6 +48,7 @@
 #include <QRadioButton>
 #include <QScreen>
 #include <QScrollArea>
+#include <QSizePolicy>
 #include <QSpinBox>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -144,7 +146,24 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     m_macPreferredServiceEdit->hide();
 #endif
 
-    m_testUrlEdit = new QLineEdit(settings.testUrl(), this);
+    m_testUrlCombo = new QComboBox(this);
+    m_testUrlCombo->setEditable(true);
+    m_testUrlCombo->setInsertPolicy(QComboBox::NoInsert);
+    m_testUrlCombo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    for (const QString& preset : DefaultSettings::testUrlPresets()) {
+        m_testUrlCombo->addItem(preset);
+    }
+    const QString currentTestUrl = settings.testUrl().trimmed();
+    int testUrlIndex = m_testUrlCombo->findText(currentTestUrl);
+    if (testUrlIndex < 0 && !currentTestUrl.isEmpty()) {
+        m_testUrlCombo->insertItem(0, currentTestUrl);
+        testUrlIndex = 0;
+    }
+    if (testUrlIndex >= 0) {
+        m_testUrlCombo->setCurrentIndex(testUrlIndex);
+    } else {
+        m_testUrlCombo->setCurrentText(DefaultSettings::testUrl());
+    }
     m_tcpTimeoutSpin = new QSpinBox(this);
     m_tcpTimeoutSpin->setRange(1000, 60000);
     m_tcpTimeoutSpin->setSuffix(QStringLiteral(" ms"));
@@ -232,7 +251,7 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     proxyGroup->setLayout(proxyForm);
 
     auto* testingForm = new QFormLayout;
-    testingForm->addRow(tr("Test URL"), m_testUrlEdit);
+    testingForm->addRow(tr("Test URL"), m_testUrlCombo);
     testingForm->addRow(tr("TCP timeout"), m_tcpTimeoutSpin);
     testingForm->addRow(tr("Real delay timeout"), m_realDelayTimeoutSpin);
     testingForm->addRow(tr("Max concurrent tests"), m_maxConcurrentTestsSpin);
@@ -914,7 +933,7 @@ void SettingsDialog::onManageDnsProfiles()
 
 bool SettingsDialog::validateAndSave()
 {
-    const QUrl testUrl(m_testUrlEdit->text().trimmed());
+    const QUrl testUrl(m_testUrlCombo->currentText().trimmed());
     if (!testUrl.isValid()
         || (testUrl.scheme() != QStringLiteral("http") && testUrl.scheme() != QStringLiteral("https"))) {
         QMessageBox::warning(this, tr("Settings"),

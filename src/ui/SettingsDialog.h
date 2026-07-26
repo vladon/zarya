@@ -77,7 +77,7 @@ private:
     QCheckBox* m_macApplyAllServicesCheck = nullptr;
     QLineEdit* m_macPreferredServiceEdit = nullptr;
 
-    QLineEdit* m_testUrlEdit = nullptr;
+    QComboBox* m_testUrlCombo = nullptr;
     QSpinBox* m_tcpTimeoutSpin = nullptr;
     QSpinBox* m_realDelayTimeoutSpin = nullptr;
     QSpinBox* m_maxConcurrentTestsSpin = nullptr;

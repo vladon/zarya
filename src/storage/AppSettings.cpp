@@ -280,7 +280,7 @@ void AppSettings::setConfirmBeforeChangingSystemProxy(bool enabled)
 QString AppSettings::testUrl() const
 {
     return settings()
-        .value(QStringLiteral("testing/testUrl"), QStringLiteral("https://www.google.com/generate_204"))
+        .value(QStringLiteral("testing/testUrl"), DefaultSettings::testUrl())
         .toString();
 }
 

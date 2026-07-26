@@ -288,7 +288,7 @@ Test profiles from the **Test** menu or toolbar:
 The profile table shows **TCP**, **Delay**, **Test Status**, and **Last Tested**. Results are saved in `profiles.json`.
 
 - **TCP test** checks server `host:port` reachability only; it does not validate the proxy protocol.
-- **Real delay** starts a separate temporary Xray process (not the running core) and measures HTTP time to the test URL (default `https://www.google.com/generate_204`).
+- **Real delay** starts a separate temporary Xray process (not the running core) and measures HTTP time to the test URL (default [`https://www.cloudflare.com/cdn-cgi/trace`](https://www.cloudflare.com/cdn-cgi/trace)).
 - **Real delay** uses the same Xray config generation as **Start**; unsupported variants show **Unsupported** with a reason.
 - Change the test URL, timeouts, and max concurrent tests in **Settings → Testing**.
 - Batch tests respect **max concurrent tests** (default 3); several temporary Xray processes may run at once.
