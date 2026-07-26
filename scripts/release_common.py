@@ -199,7 +199,10 @@ def copy_stable_release_docs(staging: Path) -> None:
         src = ROOT / "docs" / "release" / name
         if src.is_file():
             shutil.copy2(src, dest / name)
-    release_notes = ROOT / "docs" / "release-notes" / "1.0.0.md"
+    release_notes = ROOT / "docs" / "release-notes" / f"{read_cmake_version()['version']}.md"
+    if not release_notes.is_file():
+        # Fall back to latest stable notes if a patch-specific file is missing.
+        release_notes = ROOT / "docs" / "release-notes" / "1.1.0.md"
     if release_notes.is_file():
         dest_notes = staging / "docs" / "release-notes"
         dest_notes.mkdir(parents=True, exist_ok=True)
