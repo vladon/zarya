@@ -76,6 +76,25 @@ Profile sampleShadowsocksProfile()
     return profile;
 }
 
+Profile sampleHysteria2Profile()
+{
+    Profile profile;
+    profile.protocol = ProtocolType::Hysteria2;
+    profile.coreType = CoreType::Xray;
+    profile.name = QStringLiteral("Hysteria2");
+    profile.address = QStringLiteral("hy2.example.com");
+    profile.port = 443;
+    profile.password = QStringLiteral("hy2-password");
+    profile.security = QStringLiteral("tls");
+    profile.serverName = QStringLiteral("hy2.example.com");
+    profile.sni = QStringLiteral("hy2.example.com");
+    profile.fingerprint = QStringLiteral("firefox");
+    profile.alpn = QStringLiteral("h3");
+    profile.network = QStringLiteral("hysteria");
+    profile.enabled = true;
+    return profile;
+}
+
 QJsonObject sampleVlessRealityProxyOutbound()
 {
     QString error;

@@ -27,7 +27,7 @@ Enum and status labels are centralized in `TranslatableEnums` (`QCoreApplication
 
 ## Do not translate
 
-- Protocol IDs: VLESS, VMess, Trojan, Shadowsocks
+- Protocol IDs: VLESS, VMess, Trojan, Shadowsocks, SOCKS, Hysteria2
 - Core names: Xray, sing-box
 - Error codes: `CORE_XRAY_MISSING`
 - Config keys, JSON fields, URLs, file paths

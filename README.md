@@ -220,7 +220,7 @@ Add subscription URLs under **Subscriptions → Manage**. Zarya downloads the li
 - Nodes removed from the remote list are marked `[missing]` (soft-delete), not erased
 - Failed updates keep existing profiles unchanged
 
-**Runnable through Xray** (when fields are complete): VLESS (REALITY/TLS/none), VMess (TCP/WS + TLS), Trojan (TCP/WS + TLS), Shadowsocks (no plugin). Profiles with unsupported features (e.g. SS plugin) stay in the table with an import note.
+**Runnable through Xray** (when fields are complete): VLESS (REALITY/TLS/none), VMess (TCP/WS + TLS), Trojan (TCP/WS + TLS/Reality), Shadowsocks (no plugin), Hysteria2 (TLS). Profiles with unsupported features (e.g. SS plugin) stay in the table with an import note.
 
 **Local test server:**
 
@@ -497,9 +497,10 @@ Signed builds are optional. See [docs/signing/](docs/signing/).
 | VMess | tcp, ws, grpc | none, tls | VMess may fail if system UTC time is wrong |
 | Trojan | tcp, ws | tls, none, reality (tcp) | Password required |
 | Shadowsocks | tcp | — | Method preserved as imported; **no plugin** |
+| Hysteria2 | hysteria (QUIC) | tls | Auth/password; ALPN defaults to `h3` |
 | SOCKS | — | — | Optional outbound |
 
-**Imported but not runnable yet:** Shadowsocks with `plugin=`, exotic transports (xhttp), Clash YAML providers.
+**Imported but not runnable yet:** Shadowsocks with `plugin=`, exotic transports (xhttp), Clash YAML providers, WireGuard.
 
 ## Usage (0.12)
 

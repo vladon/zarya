@@ -24,6 +24,10 @@ QString TranslatableEnums::trProtocolType(ProtocolType type)
         return QStringLiteral("Trojan");
     case ProtocolType::Shadowsocks:
         return QStringLiteral("Shadowsocks");
+    case ProtocolType::Socks:
+        return QStringLiteral("SOCKS");
+    case ProtocolType::Hysteria2:
+        return QStringLiteral("Hysteria2");
     }
     return trEnum("Unknown");
 }

@@ -1,5 +1,6 @@
 #include "core/XrayStreamSettings.h"
 
+#include <QJsonArray>
 #include <QJsonObject>
 
 namespace zarya {
@@ -56,6 +57,19 @@ QJsonObject XrayStreamSettings::buildTlsSettings(const Profile& profile)
     }
     if (profile.allowInsecure) {
         tlsSettings.insert(QStringLiteral("allowInsecure"), true);
+    }
+    const QString alpn = profile.alpn.trimmed();
+    if (!alpn.isEmpty()) {
+        QJsonArray alpnArray;
+        for (const QString& part : alpn.split(QLatin1Char(','), Qt::SkipEmptyParts)) {
+            const QString item = part.trimmed();
+            if (!item.isEmpty()) {
+                alpnArray.append(item);
+            }
+        }
+        if (!alpnArray.isEmpty()) {
+            tlsSettings.insert(QStringLiteral("alpn"), alpnArray);
+        }
     }
     return tlsSettings;
 }

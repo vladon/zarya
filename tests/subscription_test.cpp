@@ -115,6 +115,23 @@ int main(int argc, char* argv[])
         ok &= pass("trojan:// Reality link parses Reality query params");
     }
 
+    const zarya::ShareLinkParseResult hy2 = zarya::ShareLinkParser::parse(QStringLiteral(
+        "hysteria2://hy2-password@hy2.example.com:5225?alpn=h3&fp=firefox&security=tls"
+        "&sni=hy2.example.com#hy2-node"));
+    if (!hy2.ok || hy2.profile.protocol != zarya::ProtocolType::Hysteria2
+        || hy2.profile.password != QStringLiteral("hy2-password")
+        || hy2.profile.port != 5225
+        || hy2.profile.address != QStringLiteral("hy2.example.com")
+        || hy2.profile.alpn != QStringLiteral("h3")
+        || hy2.profile.fingerprint != QStringLiteral("firefox")
+        || hy2.profile.sni != QStringLiteral("hy2.example.com")
+        || hy2.profile.security != QStringLiteral("tls")
+        || hy2.profile.name != QStringLiteral("hy2-node")) {
+        ok &= fail("hysteria2:// link should parse auth/sni/alpn/fp");
+    } else {
+        ok &= pass("hysteria2:// link parses into profile");
+    }
+
     const zarya::ShareLinkParseResult ssPlugin = zarya::ShareLinkParser::parse(QStringLiteral(
         "ss://YWVzLTI1Ni1nY206dGVzdA==@127.0.0.1:8388/?plugin=obfs-local%3Bobfs%3Dhttp"));
     if (!ssPlugin.ok || ssPlugin.profile.unsupportedReason.isEmpty()) {

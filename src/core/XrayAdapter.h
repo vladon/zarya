@@ -38,6 +38,7 @@ private:
     QJsonObject generateShadowsocksOutbound(const Profile& profile,
                                             QString* errorMessage) const;
     QJsonObject generateSocksOutbound(const Profile& profile, QString* errorMessage) const;
+    QJsonObject generateHysteria2Outbound(const Profile& profile, QString* errorMessage) const;
 
     static QJsonObject wrapProxyOutbound(const QString& protocol, const QJsonObject& settings,
                                          const QJsonObject& streamSettings);

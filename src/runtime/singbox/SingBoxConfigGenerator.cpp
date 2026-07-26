@@ -236,6 +236,20 @@ bool SingBoxConfigGenerator::supportsProfile(const Profile& profile, QString* re
             return false;
         }
         return true;
+    case ProtocolType::Hysteria2:
+        if (profile.hasUnsupportedFeature()) {
+            if (reason) {
+                *reason = profile.unsupportedReason;
+            }
+            return false;
+        }
+        if (profile.effectivePassword().isEmpty()) {
+            if (reason) {
+                *reason = QStringLiteral("Hysteria2 requires password/auth.");
+            }
+            return false;
+        }
+        return true;
     default:
         if (reason) {
             *reason =
@@ -257,6 +271,8 @@ QJsonObject SingBoxConfigGenerator::buildProxyOutbound(const Profile& profile,
         return buildTrojanOutbound(profile, errorMessage);
     case ProtocolType::Shadowsocks:
         return buildShadowsocksOutbound(profile, errorMessage);
+    case ProtocolType::Hysteria2:
+        return buildHysteria2Outbound(profile, errorMessage);
     default:
         if (errorMessage) {
             *errorMessage = QStringLiteral("Unsupported protocol.");
@@ -351,6 +367,62 @@ QJsonObject SingBoxConfigGenerator::buildShadowsocksOutbound(const Profile& prof
     outbound.insert(QStringLiteral("method"), profile.effectiveMethod());
     outbound.insert(QStringLiteral("password"), profile.effectivePassword());
     Q_UNUSED(errorMessage);
+    return outbound;
+}
+
+QJsonObject SingBoxConfigGenerator::buildHysteria2Outbound(const Profile& profile,
+                                                           QString* errorMessage) const
+{
+    QJsonObject outbound;
+    outbound.insert(QStringLiteral("type"), QStringLiteral("hysteria2"));
+    outbound.insert(QStringLiteral("tag"), QStringLiteral("proxy"));
+    outbound.insert(QStringLiteral("server"), profile.address.trimmed());
+    outbound.insert(QStringLiteral("server_port"), profile.port);
+    outbound.insert(QStringLiteral("password"), profile.effectivePassword());
+
+    QJsonObject tls;
+    tls.insert(QStringLiteral("enabled"), true);
+    QString serverName = profile.effectiveServerName();
+    if (serverName.isEmpty()) {
+        serverName = profile.address.trimmed();
+    }
+    tls.insert(QStringLiteral("server_name"), serverName);
+    if (profile.allowInsecure) {
+        tls.insert(QStringLiteral("insecure"), true);
+    }
+    const QString alpn = profile.alpn.trimmed().isEmpty() ? QStringLiteral("h3") : profile.alpn.trimmed();
+    QJsonArray alpnArray;
+    for (const QString& part : alpn.split(QLatin1Char(','), Qt::SkipEmptyParts)) {
+        const QString item = part.trimmed();
+        if (!item.isEmpty()) {
+            alpnArray.append(item);
+        }
+    }
+    if (!alpnArray.isEmpty()) {
+        tls.insert(QStringLiteral("alpn"), alpnArray);
+    }
+    if (!profile.effectiveFingerprint().isEmpty()) {
+        tls.insert(QStringLiteral("utls"),
+                   QJsonObject{{QStringLiteral("enabled"), true},
+                               {QStringLiteral("fingerprint"), profile.effectiveFingerprint()}});
+    }
+    outbound.insert(QStringLiteral("tls"), tls);
+
+    const QString obfs = profile.obfs.trimmed().toLower();
+    if (obfs == QStringLiteral("salamander")) {
+        const QString obfsPassword = profile.obfsPassword.trimmed();
+        if (obfsPassword.isEmpty()) {
+            if (errorMessage) {
+                *errorMessage =
+                    QStringLiteral("Hysteria2 salamander obfuscation requires obfs-password.");
+            }
+            return {};
+        }
+        outbound.insert(QStringLiteral("obfs"),
+                        QJsonObject{{QStringLiteral("type"), QStringLiteral("salamander")},
+                                    {QStringLiteral("password"), obfsPassword}});
+    }
+
     return outbound;
 }
 

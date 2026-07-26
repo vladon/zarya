@@ -98,6 +98,17 @@ ProfileValidationResult validateSocksDialog(const Profile& profile)
     return {true, {}};
 }
 
+ProfileValidationResult validateHysteria2Dialog(const Profile& profile)
+{
+    if (profile.hasUnsupportedFeature()) {
+        return {false, profile.unsupportedReason};
+    }
+    if (profile.effectivePassword().isEmpty()) {
+        return {false, QStringLiteral("Password/auth is required for Hysteria2.")};
+    }
+    return {true, {}};
+}
+
 } // namespace
 
 ProfileValidationResult validateProfileForDialog(const Profile& profile)
@@ -117,6 +128,8 @@ ProfileValidationResult validateProfileForDialog(const Profile& profile)
         return validateShadowsocksDialog(profile);
     case ProtocolType::Socks:
         return validateSocksDialog(profile);
+    case ProtocolType::Hysteria2:
+        return validateHysteria2Dialog(profile);
     }
 
     return {true, {}};

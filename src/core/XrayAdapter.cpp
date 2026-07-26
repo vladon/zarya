@@ -155,6 +155,31 @@ bool supportsSocks(const Profile& profile, QString* reason)
     return true;
 }
 
+bool supportsHysteria2(const Profile& profile, QString* reason)
+{
+    if (profile.hasUnsupportedFeature()) {
+        if (reason) {
+            *reason = profile.unsupportedReason;
+        }
+        return false;
+    }
+    if (profile.effectivePassword().isEmpty()) {
+        if (reason) {
+            *reason = QStringLiteral("Hysteria2 requires password/auth.");
+        }
+        return false;
+    }
+    if (!profile.isSecurityTls() && !profile.security.trimmed().isEmpty()
+        && profile.security.trimmed().compare(QStringLiteral("none"), Qt::CaseInsensitive) != 0) {
+        // Hy2 typically uses TLS; allow empty (treated as tls in generator) or explicit tls.
+        if (reason) {
+            *reason = QStringLiteral("Hysteria2 currently supports TLS security only.");
+        }
+        return false;
+    }
+    return true;
+}
+
 } // namespace
 
 CoreType XrayAdapter::type() const
@@ -261,6 +286,8 @@ QJsonObject XrayAdapter::generateOutbound(const Profile& profile, QString* error
         return generateShadowsocksOutbound(profile, errorMessage);
     case ProtocolType::Socks:
         return generateSocksOutbound(profile, errorMessage);
+    case ProtocolType::Hysteria2:
+        return generateHysteria2Outbound(profile, errorMessage);
     }
     if (errorMessage) {
         *errorMessage = QStringLiteral("Unknown protocol.");
@@ -387,6 +414,55 @@ QJsonObject XrayAdapter::generateSocksOutbound(const Profile& profile,
     return wrapProxyOutbound(QStringLiteral("socks"), settings, {});
 }
 
+QJsonObject XrayAdapter::generateHysteria2Outbound(const Profile& profile,
+                                                   QString* errorMessage) const
+{
+    QJsonObject settings;
+    settings.insert(QStringLiteral("version"), 2);
+    settings.insert(QStringLiteral("address"), profile.address.trimmed());
+    settings.insert(QStringLiteral("port"), profile.port);
+
+    QJsonObject hysteriaSettings;
+    hysteriaSettings.insert(QStringLiteral("version"), 2);
+    hysteriaSettings.insert(QStringLiteral("auth"), profile.effectivePassword());
+
+    QJsonObject streamSettings;
+    streamSettings.insert(QStringLiteral("network"), QStringLiteral("hysteria"));
+    streamSettings.insert(QStringLiteral("security"), QStringLiteral("tls"));
+
+    Profile tlsProfile = profile;
+    if (tlsProfile.security.trimmed().isEmpty()) {
+        tlsProfile.security = QStringLiteral("tls");
+    }
+    if (tlsProfile.alpn.trimmed().isEmpty()) {
+        tlsProfile.alpn = QStringLiteral("h3");
+    }
+    streamSettings.insert(QStringLiteral("tlsSettings"),
+                          XrayStreamSettings::buildTlsSettings(tlsProfile));
+    streamSettings.insert(QStringLiteral("hysteriaSettings"), hysteriaSettings);
+
+    const QString obfs = profile.obfs.trimmed().toLower();
+    if (obfs == QStringLiteral("salamander")) {
+        const QString obfsPassword = profile.obfsPassword.trimmed();
+        if (obfsPassword.isEmpty()) {
+            if (errorMessage) {
+                *errorMessage =
+                    QStringLiteral("Hysteria2 salamander obfuscation requires obfs-password.");
+            }
+            return {};
+        }
+        QJsonObject maskSettings;
+        maskSettings.insert(QStringLiteral("password"), obfsPassword);
+        QJsonObject mask;
+        mask.insert(QStringLiteral("type"), QStringLiteral("salamander"));
+        mask.insert(QStringLiteral("settings"), maskSettings);
+        streamSettings.insert(QStringLiteral("finalmask"),
+                              QJsonObject{{QStringLiteral("udp"), QJsonArray{mask}}});
+    }
+
+    return wrapProxyOutbound(QStringLiteral("hysteria"), settings, streamSettings);
+}
+
 bool XrayAdapter::supportsProfile(const Profile& profile, QString* reason) const
 {
     if (!profile.isValid()) {
@@ -414,6 +490,8 @@ bool XrayAdapter::supportsProfile(const Profile& profile, QString* reason) const
         return supportsShadowsocks(profile, reason);
     case ProtocolType::Socks:
         return supportsSocks(profile, reason);
+    case ProtocolType::Hysteria2:
+        return supportsHysteria2(profile, reason);
     }
 
     if (reason) {

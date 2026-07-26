@@ -50,6 +50,7 @@ private:
     QJsonObject buildVmessOutbound(const Profile& profile, QString* errorMessage) const;
     QJsonObject buildTrojanOutbound(const Profile& profile, QString* errorMessage) const;
     QJsonObject buildShadowsocksOutbound(const Profile& profile, QString* errorMessage) const;
+    QJsonObject buildHysteria2Outbound(const Profile& profile, QString* errorMessage) const;
 };
 
 } // namespace zarya

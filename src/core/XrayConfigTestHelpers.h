@@ -11,6 +11,7 @@ Profile sampleVlessRealityProfile();
 Profile sampleVmessTcpTlsProfile();
 Profile sampleTrojanTlsProfile();
 Profile sampleShadowsocksProfile();
+Profile sampleHysteria2Profile();
 QJsonObject sampleVlessRealityProxyOutbound();
 QString generateXrayConfigJson(const Profile& profile, QString* errorMessage = nullptr);
 bool proxyOutboundHasReality(const QJsonObject& proxyOutbound);
