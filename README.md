@@ -323,7 +323,10 @@ Xray routing can use `geoip:…` and `geosite:…` tags (for example `geoip:ru`,
 Open **Tools → Geo Data Manager…** to:
 
 - Check whether `geoip.dat` / `geosite.dat` exist beside your Xray binary
-- Download updates from a built-in source (**Loyalsoldier v2ray-rules-dat**, compatible with Xray/V2Ray-style routing)
+- Download updates from a built-in source (compatible with Xray/V2Ray-style routing):
+  - **Loyalsoldier v2ray-rules-dat** (general-purpose)
+  - **runetfreedom russia-v2ray-rules-dat** (Russia-focused)
+  - **Chocolate4U Iran-v2ray-rules** (Iran-focused)
 - Verify downloads using published `.sha256sum` files before replacing existing data
 - Open the Xray resource directory in your file manager
 
