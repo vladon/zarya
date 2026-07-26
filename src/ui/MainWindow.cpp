@@ -23,7 +23,6 @@
 #include "ui/BetaBannerWidget.h"
 #include "ui/onboarding/FirstRunState.h"
 #include "ui/onboarding/FirstRunWizard.h"
-#include "ui/StartupRecoveryDialog.h"
 #include "ui/widgets/StatusDashboardWidget.h"
 #include "errors/ErrorCode.h"
 #include "runtime/singbox/SingBoxConfigGenerator.h"
@@ -665,20 +664,12 @@ void MainWindow::runStartupRecovery()
     }
 
     appendLog(QStringLiteral("Unclean previous shutdown detected."));
-    StartupRecoveryDialog dialog(plan, this);
-    connect(&dialog, &StartupRecoveryDialog::createDiagnosticsRequested, this,
-            &MainWindow::onCreateDiagnosticsBundle);
-    connect(&dialog, &StartupRecoveryDialog::openReportingGuideRequested, this, []() {
-        PublicBetaDocs::openIssueReporting();
-    });
-    if (dialog.exec() != QDialog::Accepted) {
-        appendLog(QStringLiteral("Startup recovery skipped by user."));
-        return;
+    for (const QString& line : plan.detectedLines) {
+        appendLog(QStringLiteral("Recovery detected: %1").arg(line));
     }
 
     QStringList logLines;
-    const StartupRecoveryPlan selected = dialog.selectedPlan();
-    if (!StartupRecovery::apply(selected, &logLines)) {
+    if (!StartupRecovery::apply(plan, &logLines)) {
         appendLog(QStringLiteral("Startup recovery encountered errors."));
     }
     for (const QString& line : logLines) {

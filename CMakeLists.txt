@@ -367,7 +367,6 @@ set(ZARYA_SOURCES
     src/ui/BackupImportDialog.cpp
     src/ui/DiagnosticsDialog.cpp
     src/ui/DiagnosticsPreviewDialog.cpp
-    src/ui/StartupRecoveryDialog.cpp
     src/ui/ReadinessDialog.cpp
     src/ui/SafeExitDialog.cpp
     src/ui/BetaBannerWidget.cpp
