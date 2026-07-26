@@ -1,14 +1,14 @@
-# Zarya 1.2.0
+# Zarya 1.3.0
 
 ## Stable release
 
-1.2.0 ships a bundled Xray seed for offline first start, simplifies local proxy to a single mixed port, and adds Test URL presets.
+1.3.0 ships a pinned runetfreedom geo data seed with release packages and expands built-in geo sources.
 
-- Bundled pinned Xray (v26.3.27) in release artifacts under `cores/xray/` — no download required on first launch; Core Manager and external paths still work
-- Single local mixed SOCKS5/HTTP inbound (`mixedPort`, default `10808`) instead of separate SOCKS/HTTP ports
-- Test URL presets with Cloudflare as the default latency-test URL
+- Bundled pinned runetfreedom `geoip.dat` / `geosite.dat` next to Xray in release artifacts — bypass routing works offline on first launch; Geo Data Manager can still update or switch sources
+- Additional built-in geo sources: runetfreedom (default) and Chocolate4U alongside Loyalsoldier
+- Continues shipping the pinned Xray seed from 1.2.0
 
-See [docs/release-notes/1.2.0.md](docs/release-notes/1.2.0.md) and [docs/stable/stable-scope.md](docs/stable/stable-scope.md).
+See [docs/release-notes/1.3.0.md](docs/release-notes/1.3.0.md) and [docs/stable/stable-scope.md](docs/stable/stable-scope.md).
 
 ## Recommended path
 
