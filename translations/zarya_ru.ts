@@ -1997,32 +1997,6 @@ Select a profile and press Start, or use a running TUN session.</source>
         <translation>running=%1, pid=%2</translation></message>
 </context>
 <context>
-    <name>StartupRecoveryDialog</name>
-    <message>
-        <source>Startup Recovery</source>
-        <translation>Восстановление при запуске</translation></message>
-    <message>
-        <source>Zarya detected an unclean previous shutdown.</source>
-        <translation>Zarya обнаружила некорректное завершение предыдущего сеанса.</translation></message>
-    <message>
-        <source>No recovery items detected.</source>
-        <translation>Элементы восстановления не обнаружены.</translation></message>
-    <message>
-        <source>Detected:
-• </source>
-        <translation>Обнаружено:
-• </translation></message>
-    <message>
-        <source>Restore system proxy</source>
-        <translation>Восстановить системный прокси</translation></message>
-    <message>
-        <source>Clean runtime temp files</source>
-        <translation>Очистить временные файлы runtime</translation></message>
-    <message>
-        <source>Skip</source>
-        <translation>Пропустить</translation></message>
-</context>
-<context>
     <name>StatusDashboardWidget</name>
     <message>
         <source>Zarya is not configured yet</source>
