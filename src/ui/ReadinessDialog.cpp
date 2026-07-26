@@ -15,7 +15,7 @@ ReadinessDialog::ReadinessDialog(QWidget* parent)
     auto* text = new QLabel(
         tr("Zarya is not fully configured yet.\n\n"
            "Recommended next steps:\n"
-           "1. Install Xray in Core Manager\n"
+           "1. Confirm Xray (bundled in release builds, or install via Core Manager)\n"
            "2. Import or add a profile\n"
            "3. Choose routing profile\n"
            "4. Start profile"),

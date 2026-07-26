@@ -2,10 +2,10 @@
 
 ## Managed cores
 
-- **Xray** — system proxy runtime
-- **sing-box** — experimental TUN runtime
+- **Xray** — system proxy runtime (release artifacts may ship a bundled seed under `cores/xray/`)
+- **sing-box** — experimental TUN runtime (not bundled)
 
-Zarya downloads upstream release archives from GitHub, verifies checksums when available, extracts to staging, and installs into the managed cores directory.
+Zarya can download upstream release archives from GitHub, verify checksums when available, extract to staging, and install into the managed cores directory. Bundled Xray is only the initial seed; Core Manager updates replace it.
 
 ## Managed vs external paths
 

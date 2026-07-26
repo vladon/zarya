@@ -12,6 +12,7 @@
 - Never treat this as Zarya **app** self-update — that is `src/updater/`.
 - Verify checksums before install; fail closed on mismatch.
 - Do not vendor core binaries in git; runtime layout is `cores/xray/`, `cores/sing-box/`.
+- Release packaging may **seed** a pinned Xray into `cores/xray/` (`packaging/cores/xray-pin.json`); that is bootstrap only — Core Manager updates still replace the managed install.
 - Respect network/error surfacing to the UI; no silent partial installs.
 
-Docs: `docs/core-update-manager.md`.
+Docs: `docs/core-update-manager.md`, `docs/release-packaging.md`.

@@ -6,6 +6,7 @@ param(
     [string]$StagingDir = "",
     [switch]$SkipBuild,
     [switch]$SkipTests,
+    [switch]$SkipBundleXray,
     [switch]$Sign,
     [switch]$SkipSigning,
     [string]$SigningIdentity = "",
@@ -106,6 +107,7 @@ write_release_manifest(
     gui_artifact='Zarya.exe',
     helper_artifact='zarya-helper.exe',
     updater_artifact='zarya-updater.exe',
+    bundle_xray=$(if ($SkipBundleXray.IsPresent) { 'False' } else { 'None' }),
 )
 write_build_integrity(staging)
 errors = verify_clean_staging(staging)

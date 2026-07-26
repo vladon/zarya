@@ -12,7 +12,7 @@ Build, package, sign, smoke, and release helpers. Prefer these over ad-hoc cmake
 | `build-qt-static-msvc2026.ps1` | One-time static Qt → `C:\Qt\Static\6.8.3\msvc2022_64` |
 | `run-xray-config-test.ps1` | Xray config unit tests |
 | `check-translations.py` | Translation completeness (CI) |
-| `package-windows.ps1` | Portable ZIP packaging |
+| `package-windows.ps1` | Portable ZIP packaging (bundles pinned Xray by default) |
 | `package-windows-msi.ps1` | WiX MSI PoC |
 | `package-linux.sh` / `package-macos.sh` | Non-Windows packages |
 | `run-smoke-tests.py` / `smoke-*.ps1|sh` | Artifact smoke checks |

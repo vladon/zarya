@@ -11,6 +11,9 @@ import shutil
 import subprocess
 import sys
 import tarfile
+import tempfile
+import urllib.error
+import urllib.request
 import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -275,6 +278,253 @@ def create_placeholder_layout(staging: Path) -> None:
             shutil.copy2(src, path / "README.txt")
 
 
+def bundle_xray_enabled(explicit: bool | None = None) -> bool:
+    if explicit is not None:
+        return explicit
+    value = os.environ.get("ZARYA_BUNDLE_XRAY", "1").strip().lower()
+    return value not in {"0", "false", "no", "off"}
+
+
+def xray_pin_path() -> Path:
+    return ROOT / "packaging" / "cores" / "xray-pin.json"
+
+
+def load_xray_pin() -> dict[str, Any]:
+    path = xray_pin_path()
+    if not path.is_file():
+        raise FileNotFoundError(f"Missing Xray pin file: {path}")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    for key in ("repo", "tag", "version", "assets"):
+        if key not in data:
+            raise ValueError(f"Invalid xray-pin.json: missing {key}")
+    if not isinstance(data["assets"], dict) or not data["assets"]:
+        raise ValueError("Invalid xray-pin.json: assets must be a non-empty object")
+    return data
+
+
+def normalize_architecture(architecture: str) -> str:
+    arch = architecture.strip().lower()
+    aliases = {
+        "x64": "amd64",
+        "amd64": "amd64",
+        "x86_64": "amd64",
+        "arm64": "arm64",
+        "aarch64": "arm64",
+    }
+    if arch not in aliases:
+        raise ValueError(f"Unsupported architecture for Xray bundle: {architecture}")
+    return aliases[arch]
+
+
+def xray_asset_key(platform: str, architecture: str) -> str:
+    plat = platform.strip().lower()
+    arch = normalize_architecture(architecture)
+    if plat in {"windows", "win32", "win"}:
+        return f"windows-{arch}"
+    if plat in {"macos", "darwin", "osx"}:
+        return f"darwin-{arch}"
+    if plat in {"linux"}:
+        return f"linux-{arch}"
+    raise ValueError(f"Unsupported platform for Xray bundle: {platform}")
+
+
+def xray_executable_names(platform: str) -> tuple[str, ...]:
+    plat = platform.strip().lower()
+    if plat in {"windows", "win32", "win"}:
+        return ("xray.exe",)
+    return ("xray",)
+
+
+def xray_bundle_cache_dir() -> Path:
+    override = os.environ.get("ZARYA_XRAY_BUNDLE_CACHE", "").strip()
+    if override:
+        path = Path(override)
+    else:
+        path = Path.home() / ".cache" / "zarya-release" / "xray"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def download_url(url: str, destination: Path) -> None:
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    partial = destination.with_suffix(destination.suffix + ".partial")
+    try:
+        with urllib.request.urlopen(url, timeout=120) as response, partial.open("wb") as handle:
+            shutil.copyfileobj(response, handle)
+        partial.replace(destination)
+    except (urllib.error.URLError, OSError) as exc:
+        if partial.exists():
+            partial.unlink(missing_ok=True)
+        raise RuntimeError(f"Failed to download {url}: {exc}") from exc
+
+
+def find_xray_executable_in_tree(root: Path, platform: str) -> Path | None:
+    names = {name.lower() for name in xray_executable_names(platform)}
+    matches: list[Path] = []
+    for path in root.rglob("*"):
+        if path.is_file() and path.name.lower() in names:
+            matches.append(path)
+    if not matches:
+        return None
+    matches.sort(key=lambda item: (len(item.parts), str(item).lower()))
+    return matches[0]
+
+
+def detect_bundled_xray(install_dir: Path, platform: str) -> dict[str, Any] | None:
+    if not install_dir.is_dir():
+        return None
+    exe = None
+    for name in xray_executable_names(platform):
+        candidate = install_dir / name
+        if candidate.is_file():
+            exe = candidate
+            break
+    if exe is None:
+        return None
+    version = ""
+    version_file = install_dir / "VERSION"
+    if version_file.is_file():
+        version = version_file.read_text(encoding="utf-8").strip()
+        if version.lower().startswith("v"):
+            version = version[1:]
+    metadata_path = install_dir / ".zarya-core.json"
+    source = "bundled"
+    if metadata_path.is_file():
+        try:
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+            version = str(metadata.get("version") or version).strip() or version
+            source = str(metadata.get("source") or source)
+        except json.JSONDecodeError:
+            pass
+    return {
+        "version": version,
+        "source": source,
+        "executable": exe,
+        "relativeExecutable": f"cores/xray/{exe.name}",
+    }
+
+
+def ensure_bundled_xray(
+    cores_parent: Path,
+    *,
+    platform: str,
+    architecture: str,
+    enabled: bool | None = None,
+) -> dict[str, Any] | None:
+    """Download the pinned Xray asset into cores_parent/cores/xray/ when enabled."""
+    if not bundle_xray_enabled(enabled):
+        return None
+
+    pin = load_xray_pin()
+    key = xray_asset_key(platform, architecture)
+    assets = pin["assets"]
+    if key not in assets:
+        raise KeyError(f"xray-pin.json has no asset for key {key}")
+    asset = assets[key]
+    asset_name = str(asset["name"])
+    expected_sha = str(asset["sha256"]).strip().lower()
+    if expected_sha.startswith("sha256:"):
+        expected_sha = expected_sha.split(":", 1)[1]
+    if len(expected_sha) != 64:
+        raise ValueError(f"Invalid sha256 for {asset_name} in xray-pin.json")
+
+    version = str(pin.get("version") or pin["tag"]).strip()
+    if version.lower().startswith("v"):
+        version = version[1:]
+    tag = str(pin["tag"]).strip()
+    repo = str(pin["repo"]).strip()
+    url = f"https://github.com/{repo}/releases/download/{tag}/{asset_name}"
+
+    cache_dir = xray_bundle_cache_dir() / tag
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    archive_path = cache_dir / asset_name
+    if archive_path.is_file() and sha256_file(archive_path).lower() != expected_sha:
+        archive_path.unlink()
+    if not archive_path.is_file():
+        print(f"Downloading bundled Xray {tag} ({asset_name})...")
+        download_url(url, archive_path)
+    actual_sha = sha256_file(archive_path).lower()
+    if actual_sha != expected_sha:
+        raise RuntimeError(
+            f"Checksum mismatch for {asset_name}: expected {expected_sha}, got {actual_sha}"
+        )
+
+    install_dir = cores_parent / "cores" / "xray"
+    install_dir.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="zarya-xray-bundle-") as tmp:
+        extract_root = Path(tmp)
+        with zipfile.ZipFile(archive_path) as archive:
+            archive.extractall(extract_root)
+        staged = find_xray_executable_in_tree(extract_root, platform)
+        if staged is None:
+            raise RuntimeError(f"Xray executable not found inside {asset_name}")
+        dest_name = xray_executable_names(platform)[0]
+        destination = install_dir / dest_name
+        if destination.exists():
+            destination.unlink()
+        shutil.copy2(staged, destination)
+        if platform.strip().lower() not in {"windows", "win32", "win"}:
+            destination.chmod(destination.stat().st_mode | 0o111)
+
+    (install_dir / "VERSION").write_text(version + "\n", encoding="utf-8")
+    metadata = {
+        "version": version,
+        "coreType": "xray",
+        "installedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "source": "bundled",
+        "bundledTag": tag,
+        "bundledAsset": asset_name,
+    }
+    (install_dir / ".zarya-core.json").write_text(
+        json.dumps(metadata, indent=2) + "\n", encoding="utf-8"
+    )
+
+    readme_src = ROOT / "packaging" / "windows" / "cores-xray-README.txt"
+    if readme_src.is_file():
+        shutil.copy2(readme_src, install_dir / "README.txt")
+
+    print(f"Bundled Xray {version} -> {destination}")
+    return detect_bundled_xray(install_dir, platform)
+
+
+def verify_bundled_xray_manifest(
+    staging: Path, manifest: dict[str, Any], *, platform: str | None = None
+) -> list[str]:
+    errors: list[str] = []
+    included = manifest.get("included") or {}
+    plat = (platform or str(manifest.get("platform") or "")).strip().lower()
+    if not plat:
+        return errors
+
+    install_candidates = [
+        staging / "cores" / "xray",
+        staging / "Contents" / "MacOS" / "cores" / "xray",
+    ]
+    app_bundle = next(staging.rglob("*.app"), None)
+    if app_bundle is not None:
+        install_candidates.append(app_bundle / "Contents" / "MacOS" / "cores" / "xray")
+
+    detected = None
+    for candidate in install_candidates:
+        detected = detect_bundled_xray(candidate, plat if plat != "macos" else "macos")
+        if detected:
+            break
+
+    if included.get("xray"):
+        if detected is None:
+            errors.append("release-manifest.json marks xray bundled, but executable is missing")
+        else:
+            expected_version = str(included.get("xrayVersion") or "").strip()
+            if expected_version and detected["version"] != expected_version:
+                errors.append(
+                    "bundled Xray version mismatch: "
+                    f"manifest={expected_version}, on-disk={detected['version']}"
+                )
+    elif detected is not None and detected.get("source") == "bundled":
+        errors.append("bundled Xray executable present but included.xray is false")
+    return errors
+
+
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -388,17 +638,50 @@ def write_release_manifest(
     artifact_type: str | None = None,
     installation_mode: str | None = None,
     helper_service: dict[str, Any] | None = None,
+    bundle_xray: bool | None = None,
+    xray_cores_parent: Path | None = None,
 ) -> Path:
     meta = read_cmake_version()
     version = version or meta["version"]
     channel = channel or meta["channel"]
     build_commit = build_commit or git_commit_short()
 
+    cores_parent = xray_cores_parent or staging
+    bundled = ensure_bundled_xray(
+        cores_parent,
+        platform=platform,
+        architecture=architecture,
+        enabled=bundle_xray,
+    )
+    if bundled is None:
+        bundled = detect_bundled_xray(cores_parent / "cores" / "xray", platform)
+
     checksum_names = [gui_artifact]
     if helper_artifact:
         checksum_names.append(helper_artifact)
     if updater_artifact:
         checksum_names.append(updater_artifact)
+
+    included: dict[str, Any] = {
+        "translations": ["en", "ru"],
+        "xray": False,
+        "singBox": False,
+        "geoData": False,
+        "ruleSets": False,
+    }
+    if bundled is not None:
+        included["xray"] = True
+        included["xrayVersion"] = bundled.get("version") or ""
+        included["xraySource"] = bundled.get("source") or "bundled"
+
+    checksums = file_sha256_map(staging, checksum_names)
+    if bundled is not None:
+        exe_path = Path(bundled["executable"])
+        try:
+            rel = exe_path.relative_to(staging).as_posix()
+        except ValueError:
+            rel = str(bundled.get("relativeExecutable") or exe_path.name)
+        checksums[rel] = f"sha256:{sha256_file(exe_path)}"
 
     manifest: dict[str, Any] = {
         "app": "Zarya",
@@ -410,13 +693,7 @@ def write_release_manifest(
         "architecture": architecture,
         "portable": portable,
         "artifacts": {"gui": gui_artifact},
-        "included": {
-            "translations": ["en", "ru"],
-            "xray": False,
-            "singBox": False,
-            "geoData": False,
-            "ruleSets": False,
-        },
+        "included": included,
         "features": {
             "systemProxyXray": True,
             "tunSingBoxExperimental": True,
@@ -424,7 +701,7 @@ def write_release_manifest(
             "windowsWfpKillSwitchPoC": True,
             "macosKillSwitch": False,
         },
-        "checksums": file_sha256_map(staging, checksum_names),
+        "checksums": checksums,
     }
     if helper_artifact:
         manifest["artifacts"]["helper"] = helper_artifact

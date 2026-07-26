@@ -15,8 +15,10 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from release_common import (  # noqa: E402
     FORBIDDEN_ARTIFACT_NAMES,
     git_commit_short,
+    load_xray_pin,
     read_cmake_version,
     verify_clean_staging,
+    xray_asset_key,
 )
 
 SCHEMA_FILES = ()
@@ -77,12 +79,35 @@ def verify_source_tree(source_root: Path) -> list[str]:
         "docs/installer/windows-msi-poc.md",
         "packaging/windows/wix/Product.wxs",
         "packaging/windows/wix/Registry.wxs",
+        "packaging/cores/xray-pin.json",
+        "packaging/cores/README.md",
         ".github/ISSUE_TEMPLATE/bug_report.yml",
         "translations/zarya_ru.qm",
         "translations/zarya_en.qm",
     ):
         if not (source_root / relative).is_file():
             errors.append(f"missing {relative}")
+
+    try:
+        pin = load_xray_pin()
+        for platform, arch in (
+            ("windows", "x64"),
+            ("windows", "arm64"),
+            ("macos", "x64"),
+            ("macos", "arm64"),
+            ("linux", "x64"),
+            ("linux", "arm64"),
+        ):
+            key = xray_asset_key(platform, arch)
+            if key not in pin["assets"]:
+                errors.append(f"xray-pin.json missing asset key {key}")
+            else:
+                asset = pin["assets"][key]
+                sha = str(asset.get("sha256") or "").replace("sha256:", "")
+                if len(sha) != 64:
+                    errors.append(f"xray-pin.json invalid sha256 for {key}")
+    except (OSError, ValueError, KeyError, json.JSONDecodeError) as exc:
+        errors.append(f"invalid packaging/cores/xray-pin.json: {exc}")
 
     for relative in SCHEMA_FILES:
         path = source_root / relative
@@ -124,6 +149,16 @@ def verify_staging_dir(staging: Path) -> list[str]:
     for pattern in ("*.download", "*.tmp"):
         if any(staging.rglob(pattern)):
             errors.append(f"forbidden temp pattern present: {pattern}")
+
+    manifest_path = staging / "release-manifest.json"
+    if manifest_path.is_file():
+        try:
+            from release_common import verify_bundled_xray_manifest
+
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            errors.extend(verify_bundled_xray_manifest(staging, manifest))
+        except json.JSONDecodeError as exc:
+            errors.append(f"invalid release-manifest.json: {exc}")
     return errors
 
 

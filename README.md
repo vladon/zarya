@@ -155,7 +155,7 @@ See [docs/installer/windows-msi-poc.md](docs/installer/windows-msi-poc.md).
 
 ## Quick start
 
-1. Open **Tools → Core Manager** and install Xray.
+1. Use the bundled Xray under `cores/xray/` (release builds), or open **Tools → Core Manager** to install/update it.
 2. Import a profile link (**File → Import Profile Links…**) or add a subscription.
 3. Choose **Routing: Bypass LAN** (default) in the setup wizard or **Tools → Routing Profiles**.
 4. Choose **DNS: System DNS** (default).
@@ -463,7 +463,7 @@ python scripts\run-smoke-tests.py --artifact .\dist\Zarya-1.1.0-windows-x64-port
 python scripts\verify-release-artifacts.py --artifact .\dist\Zarya-1.1.0-windows-x64-portable.zip --expected-version 1.1.0 --release-stable --allow-unsigned
 ```
 
-See [docs/release-packaging.md](docs/release-packaging.md), [docs/release/release-process.md](docs/release/release-process.md), [docs/signing/README.md](docs/signing/README.md), and `packaging/windows/portable-layout.md`. Artifacts include `release-manifest.json`, SHA256 checksums, translations, docs, and core placeholders. Xray/sing-box are not bundled. Signing is optional.
+See [docs/release-packaging.md](docs/release-packaging.md), [docs/release/release-process.md](docs/release/release-process.md), [docs/signing/README.md](docs/signing/README.md), and `packaging/windows/portable-layout.md`. Artifacts include `release-manifest.json`, SHA256 checksums, translations, docs, and a **bundled Xray seed** under `cores/xray/` (sing-box and geo data are not bundled). Signing is optional.
 
 ## Verifying downloads
 

@@ -64,7 +64,7 @@ void FirstRunWizard::setupPages()
     auto* welcomeText = new QLabel(
         tr("Zarya is a cross-platform proxy client.\n\n"
            "Recommended setup:\n"
-           "1. Install Xray core\n"
+           "1. Confirm Xray core (bundled in release builds, or install via Core Manager)\n"
            "2. Add a profile or subscription\n"
            "3. Choose routing/DNS behavior\n"
            "4. Start a profile"),
@@ -87,6 +87,7 @@ void FirstRunWizard::setupPages()
         corePage);
     coreHelp->setWordWrap(true);
     auto* installXrayBtn = new QPushButton(tr("Install Xray"), corePage);
+    installXrayBtn->setObjectName(QStringLiteral("installXrayButton"));
     auto* installSingBoxBtn = new QPushButton(tr("Install sing-box (experimental TUN)"),
                                               corePage);
     auto* chooseXrayBtn = new QPushButton(tr("Choose existing Xray binary"), corePage);
@@ -244,6 +245,7 @@ void FirstRunWizard::setupPages()
     setStartId(kPageWelcome);
     setOption(QWizard::NoBackButtonOnStartPage, false);
     button(QWizard::CancelButton)->setText(tr("Skip setup"));
+    refreshCorePage();
 }
 
 void FirstRunWizard::refreshCorePage()
@@ -265,6 +267,9 @@ void FirstRunWizard::refreshCorePage()
                  singBox.exists ? tr("installed") : tr("missing"),
                  singBox.installedVersion.isEmpty() ? QStringLiteral("—")
                                                     : singBox.installedVersion));
+    if (auto* installXrayBtn = findChild<QPushButton*>(QStringLiteral("installXrayButton"))) {
+        installXrayBtn->setText(xray.exists ? tr("Update Xray…") : tr("Install Xray"));
+    }
 }
 
 bool FirstRunWizard::validateCurrentPage()
