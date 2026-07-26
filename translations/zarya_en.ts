@@ -673,7 +673,7 @@ Save anyway?</source>
         <source>Zarya is a cross-platform proxy client.
 
 Recommended setup:
-1. Install Xray core
+1. Confirm Xray core (bundled in release builds, or install via Core Manager)
 2. Add a profile or subscription
 3. Choose routing/DNS behavior
 4. Start a profile</source>
@@ -690,6 +690,10 @@ sing-box is only needed for experimental TUN mode.</source>
     </message>
     <message>
         <source>Install Xray</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update Xray…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1634,7 +1638,7 @@ Native proxy profile manager with system tray, Xray multi-protocol support, Wind
         <source>Zarya is not fully configured yet.
 
 Recommended next steps:
-1. Install Xray in Core Manager
+1. Confirm Xray (bundled in release builds, or install via Core Manager)
 2. Import or add a profile
 3. Choose routing profile
 4. Start profile</source>

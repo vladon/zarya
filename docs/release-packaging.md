@@ -87,12 +87,22 @@ sha256sum -c SHA256SUMS.txt
 
 ## What is not bundled
 
-- Xray
 - sing-box
 - Geo data (`geoip.dat`, `geosite.dat`)
 - sing-box rule sets
 
-Install cores via **Tools → Core Manager**.
+## Bundled Xray seed
+
+Release packaging downloads a **pinned** Xray binary into `cores/xray/` (see `packaging/cores/xray-pin.json`) so first launch works offline. Override with `ZARYA_BUNDLE_XRAY=0`, `-SkipBundleXray`, or `--skip-bundle-xray`.
+
+Users can still:
+
+- replace the managed binary via **Tools → Core Manager**
+- point **Settings → Xray executable** at an external path
+
+`release-manifest.json` reports `included.xray`, `included.xrayVersion`, and `included.xraySource`.
+
+Install/update cores via **Tools → Core Manager**. Geo data remains manual / Geo Data Manager.
 
 ## Smoke tests
 

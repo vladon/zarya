@@ -19,6 +19,7 @@ from release_common import (  # noqa: E402
     extract_tar_gz,
     extract_zip,
     run_version_check,
+    verify_bundled_xray_manifest,
     verify_clean_staging,
 )
 
@@ -75,6 +76,19 @@ def main() -> int:
             manifest = next(staging.rglob("release-manifest.json"), None)
         if manifest is None or not manifest.is_file():
             errors.append("release-manifest.json is missing")
+        else:
+            try:
+                import json
+
+                manifest_data = json.loads(manifest.read_text(encoding="utf-8"))
+                errors.extend(
+                    verify_bundled_xray_manifest(
+                        content if content.is_dir() else staging,
+                        manifest_data,
+                    )
+                )
+            except json.JSONDecodeError as exc:
+                errors.append(f"release-manifest.json is invalid JSON: {exc}")
 
         license_path = content / "LICENSE"
         if not license_path.is_file():

@@ -70,6 +70,7 @@ bool CoreInstaller::installFromStaging(CoreType type, const QString& stagedExecu
         {QStringLiteral("version"), version},
         {QStringLiteral("coreType"), coreTypeToString(type)},
         {QStringLiteral("installedAt"), QDateTime::currentDateTimeUtc().toString(Qt::ISODate)},
+        {QStringLiteral("source"), QStringLiteral("github")},
     };
     QFile metadataFile(CorePaths::metadataFilePath(installDir));
     if (metadataFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {

@@ -531,14 +531,14 @@ Save anyway?</source>
         <source>Zarya is a cross-platform proxy client.
 
 Recommended setup:
-1. Install Xray core
+1. Confirm Xray core (bundled in release builds, or install via Core Manager)
 2. Add a profile or subscription
 3. Choose routing/DNS behavior
 4. Start a profile</source>
         <translation>Zarya — кроссплатформенный прокси-клиент.
 
 Рекомендуемая настройка:
-1. Установите ядро Xray
+1. Проверьте ядро Xray (в релизах уже включено, либо установите через менеджер ядер)
 2. Добавьте профиль или подписку
 3. Выберите поведение маршрутизации/DNS
 4. Запустите профиль</translation></message>
@@ -553,6 +553,9 @@ sing-box нужен только для экспериментального р�
     <message>
         <source>Install Xray</source>
         <translation>Установить Xray</translation></message>
+    <message>
+        <source>Update Xray…</source>
+        <translation>Обновить Xray…</translation></message>
     <message>
         <source>Install sing-box (experimental TUN)</source>
         <translation>Установить sing-box (экспериментальный TUN)</translation></message>
@@ -1287,14 +1290,14 @@ Native proxy profile manager with system tray, Xray multi-protocol support, Wind
         <source>Zarya is not fully configured yet.
 
 Recommended next steps:
-1. Install Xray in Core Manager
+1. Confirm Xray (bundled in release builds, or install via Core Manager)
 2. Import or add a profile
 3. Choose routing profile
 4. Start profile</source>
         <translation>Zarya ещё не полностью настроена.
 
 Рекомендуемые следующие шаги:
-1. Установите Xray в менеджере ядер
+1. Проверьте Xray (в релизах уже включён, либо установите через менеджер ядер)
 2. Импортируйте или добавьте профиль
 3. Выберите профиль маршрутизации
 4. Запустите профиль</translation></message>

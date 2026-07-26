@@ -6,6 +6,7 @@ BUILD_DIR="${BUILD_DIR:-$ROOT/build}"
 OUTPUT_DIR="${OUTPUT_DIR:-$ROOT/dist}"
 SKIP_BUILD=0
 SKIP_TESTS=0
+SKIP_BUNDLE_XRAY=0
 ARCH="${ARCH:-}"
 SIGN=0
 SKIP_SIGNING=0
@@ -20,6 +21,7 @@ while [[ $# -gt 0 ]]; do
     --arch) ARCH="$2"; shift 2 ;;
     --skip-build) SKIP_BUILD=1; shift ;;
     --skip-tests) SKIP_TESTS=1; shift ;;
+    --skip-bundle-xray) SKIP_BUNDLE_XRAY=1; shift ;;
     --sign) SIGN=1; shift ;;
     --skip-signing) SKIP_SIGNING=1; shift ;;
     --gpg-sign) GPG_SIGN=1; SIGN=1; shift ;;
@@ -115,6 +117,7 @@ write_release_manifest(
     gui_artifact="zarya",
     helper_artifact="zarya-helper",
     updater_artifact="zarya-updater",
+    bundle_xray=False if $SKIP_BUNDLE_XRAY else None,
 )
 write_build_integrity(staging)
 errors = verify_clean_staging(staging)

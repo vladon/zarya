@@ -40,7 +40,7 @@ cmake --build build --config Release --target zarya
 ctest --test-dir build -C Release   # smoke, version, stable_hardening
 ```
 
-Xray/sing-box binaries are **not** in the repo; place under `cores/xray/` or `cores/sing-box/` (or Settings). The app runs without cores for offline profile work.
+Xray/sing-box binaries are **not** committed to the repo. Release packaging seeds a pinned Xray under `cores/xray/`; place or update cores there (or via Settings / Core Manager). The app can still run without cores for offline profile work.
 
 ## Architecture (short)
 

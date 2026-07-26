@@ -4,6 +4,7 @@ param(
     [string]$BuildDir = "build",
     [string]$OutputDir = "dist",
     [switch]$SkipBuild,
+    [switch]$SkipBundleXray,
     [switch]$Sign,
     [switch]$SkipSigning,
     [string]$SigningThumbprint = "",
@@ -111,6 +112,7 @@ write_release_manifest(
     artifact_type='windows-msi-poc',
     installation_mode='installed',
     helper_service={'included': True, 'installedByDefault': False},
+    bundle_xray=$(if ($SkipBundleXray.IsPresent) { 'False' } else { 'None' }),
 )
 write_build_integrity(staging)
 errors = verify_clean_staging(staging)
