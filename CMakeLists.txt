@@ -666,17 +666,29 @@ add_executable(zarya_subscription_test
     tests/subscription_test.cpp
     ${ZARYA_SUBSCRIPTION_SOURCES}
     ${ZARYA_DOMAIN_SOURCES}
+    ${ZARYA_I18N_SOURCES}
     src/testing/TestStatus.cpp
     src/storage/ProfileStore.cpp
     src/storage/SubscriptionStore.cpp
     src/storage/AppSettings.cpp
     src/storage/AppPaths.cpp
+    src/storage/SafeJsonWriter.cpp
+    src/storage/DefaultSettings.cpp
+    src/migration/JsonFileMigrator.cpp
     src/runtime/RuntimeBackendType.cpp
+    src/killswitch/KillSwitchMode.cpp
+    src/app/StartupOptions.cpp
+    src/app/BuildInfo.cpp
+    src/packaging/PackagingInfo.cpp
+    ${ZARYA_FEATURE_SOURCES}
+    src/packaging/InstallationMode.cpp
+    src/packaging/WindowsInstallInfo.cpp
+    src/diagnostics/DiagnosticsRedactor.cpp
     src/platform/Platform.cpp
     src/import/VlessUriParser.cpp
 )
 
-target_include_directories(zarya_subscription_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_include_directories(zarya_subscription_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${ZARYA_GENERATED_DIR})
 
 zarya_link_qt_core(zarya_subscription_test)
 target_link_libraries(zarya_subscription_test PRIVATE Qt6::Network)

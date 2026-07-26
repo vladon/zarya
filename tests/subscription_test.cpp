@@ -101,8 +101,25 @@ int main(int argc, char* argv[])
         "ss://YWVzLTI1Ni1nY206dGVzdA==@127.0.0.1:8388/?plugin=obfs-local%3Bobfs%3Dhttp"));
     if (!ssPlugin.ok || ssPlugin.profile.unsupportedReason.isEmpty()) {
         ok &= fail("ss:// with plugin should set unsupportedReason");
+    } else if (ssPlugin.profile.port != 8388 || ssPlugin.profile.address != QStringLiteral("127.0.0.1")) {
+        ok &= fail("ss:// with plugin path should still parse host/port");
     } else {
         ok &= pass("ss:// plugin link marks unsupported reason");
+    }
+
+    const zarya::ShareLinkParseResult ssQuery = zarya::ShareLinkParser::parse(QStringLiteral(
+        "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTp0ZXN0LXBhc3N3b3Jk@ss.example.com:35255?type=tcp#"
+        "ss-query-test"));
+    if (!ssQuery.ok || ssQuery.profile.protocol != zarya::ProtocolType::Shadowsocks
+        || ssQuery.profile.port != 35255
+        || ssQuery.profile.address != QStringLiteral("ss.example.com")
+        || ssQuery.profile.method != QStringLiteral("chacha20-ietf-poly1305")
+        || ssQuery.profile.password != QStringLiteral("test-password")
+        || ssQuery.profile.network != QStringLiteral("tcp")
+        || ssQuery.profile.name != QStringLiteral("ss-query-test")) {
+        ok &= fail("ss:// SIP002 with ?type= query should parse port/method/name");
+    } else {
+        ok &= pass("ss:// SIP002 query port parses correctly");
     }
 
     const QString tempPath = writeTempSubscriptionFile(plainBody);

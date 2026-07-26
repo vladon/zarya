@@ -246,6 +246,47 @@ bool parseShadowsocksUserInfo(const QString& userInfo, QString* method, QString*
     return !method->isEmpty();
 }
 
+// SIP002 host part may be "host:port", "host:port/", or "host:port?plugin=...&type=tcp".
+bool parseShadowsocksHostPort(QString hostPart, QString* host, int* port)
+{
+    const int queryIndex = hostPart.indexOf(QLatin1Char('?'));
+    if (queryIndex >= 0) {
+        hostPart = hostPart.left(queryIndex);
+    }
+    const int slashIndex = hostPart.indexOf(QLatin1Char('/'));
+    if (slashIndex >= 0) {
+        hostPart = hostPart.left(slashIndex);
+    }
+    hostPart = hostPart.trimmed();
+    if (hostPart.isEmpty()) {
+        return false;
+    }
+
+    // Prefer bracketed IPv6: [2001:db8::1]:8388
+    if (hostPart.startsWith(QLatin1Char('['))) {
+        const int close = hostPart.indexOf(QLatin1Char(']'));
+        if (close <= 1) {
+            return false;
+        }
+        *host = hostPart.mid(1, close - 1);
+        if (hostPart.size() > close + 1 && hostPart.at(close + 1) == QLatin1Char(':')) {
+            bool ok = false;
+            *port = hostPart.mid(close + 2).toInt(&ok);
+            return ok && *port >= 1 && *port <= 65535;
+        }
+        return false;
+    }
+
+    const int colon = hostPart.lastIndexOf(QLatin1Char(':'));
+    if (colon <= 0 || colon + 1 >= hostPart.size()) {
+        return false;
+    }
+    *host = hostPart.left(colon);
+    bool ok = false;
+    *port = hostPart.mid(colon + 1).toInt(&ok);
+    return ok && *port >= 1 && *port <= 65535 && !host->isEmpty();
+}
+
 ShareLinkParseResult parseShadowsocks(const QString& link)
 {
     ShareLinkParseResult result;
@@ -262,7 +303,7 @@ ShareLinkParseResult parseShadowsocks(const QString& link)
     QString method;
     QString password;
     QString host;
-    int port = 8388;
+    int port = 0;
 
     if (remainder.contains(QLatin1Char('@'))) {
         const int at = remainder.indexOf(QLatin1Char('@'));
@@ -278,10 +319,9 @@ ShareLinkParseResult parseShadowsocks(const QString& link)
             return result;
         }
 
-        const QStringList hostBits = hostPart.split(QLatin1Char(':'));
-        if (hostBits.size() >= 2) {
-            host = hostBits.at(0);
-            port = hostBits.at(1).toInt();
+        if (!parseShadowsocksHostPort(hostPart, &host, &port)) {
+            result.error = QStringLiteral("Invalid shadowsocks host or port.");
+            return result;
         }
     } else {
         const QByteArray decoded = decodeBase64Flexible(remainder);
@@ -292,10 +332,9 @@ ShareLinkParseResult parseShadowsocks(const QString& link)
                 result.error = QStringLiteral("Invalid shadowsocks credentials.");
                 return result;
             }
-            const QStringList hostBits = decodedText.mid(at + 1).split(QLatin1Char(':'));
-            if (hostBits.size() >= 2) {
-                host = hostBits.at(0);
-                port = hostBits.at(1).toInt();
+            if (!parseShadowsocksHostPort(decodedText.mid(at + 1), &host, &port)) {
+                result.error = QStringLiteral("Invalid shadowsocks host or port.");
+                return result;
             }
         } else if (!parseShadowsocksUserInfo(decodedText, &method, &password)) {
             result.error = QStringLiteral("Unsupported shadowsocks link format.");
@@ -303,7 +342,7 @@ ShareLinkParseResult parseShadowsocks(const QString& link)
         }
     }
 
-    if (host.isEmpty() || method.isEmpty()) {
+    if (host.isEmpty() || method.isEmpty() || port < 1 || port > 65535) {
         result.error = QStringLiteral("Incomplete shadowsocks link.");
         return result;
     }
@@ -325,6 +364,10 @@ ShareLinkParseResult parseShadowsocks(const QString& link)
         if (!pluginQuery.queryItemValue(QStringLiteral("plugin")).isEmpty()) {
             profile.unsupportedReason =
                 QStringLiteral("Shadowsocks plugin options are not supported yet");
+        }
+        const QString network = pluginQuery.queryItemValue(QStringLiteral("type")).trimmed();
+        if (!network.isEmpty()) {
+            profile.network = network;
         }
     }
 
