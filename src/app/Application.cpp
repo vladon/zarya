@@ -49,20 +49,20 @@ const StartupOptions& Application::startupOptions() const
 
 bool Application::eventFilter(QObject* watched, QEvent* event)
 {
-    if (event->type() == QEvent::KeyPress) {
-        const auto* keyEvent = static_cast<const QKeyEvent*>(event);
+    const QEvent::Type type = event->type();
+    if (type == QEvent::KeyPress || type == QEvent::ShortcutOverride) {
+        auto* keyEvent = static_cast<QKeyEvent*>(event);
         if (keyEvent->key() == Qt::Key_Escape) {
             if (auto* box = qobject_cast<QMessageBox*>(activeModalWidget())) {
-                if (!box->escapeButton()) {
-                    if (QAbstractButton* ok = box->button(QMessageBox::Ok)) {
-                        ok->click();
-                        return true;
+                const QList<QAbstractButton*> buttons = box->buttons();
+                // Ok-only info/warning boxes: Esc should always dismiss on macOS.
+                // ShortcutOverride must be accepted or KeyPress may never arrive.
+                if (buttons.size() == 1) {
+                    if (type == QEvent::ShortcutOverride) {
+                        keyEvent->accept();
                     }
-                    const QList<QAbstractButton*> buttons = box->buttons();
-                    if (buttons.size() == 1) {
-                        buttons.first()->click();
-                        return true;
-                    }
+                    buttons.first()->click();
+                    return true;
                 }
             }
         }
