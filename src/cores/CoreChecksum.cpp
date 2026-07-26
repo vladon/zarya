@@ -84,6 +84,18 @@ std::optional<QString> CoreChecksum::parseExpectedSha256(const QByteArray& check
     return std::nullopt;
 }
 
+std::optional<QString> CoreChecksum::parseGitHubDigest(const QString& digest)
+{
+    const QString trimmed = digest.trimmed();
+    static const QRegularExpression pattern(
+        QStringLiteral(R"(^sha256:([0-9a-fA-F]{64})$)"));
+    const QRegularExpressionMatch match = pattern.match(trimmed);
+    if (!match.hasMatch()) {
+        return std::nullopt;
+    }
+    return match.captured(1).toLower();
+}
+
 QString CoreChecksum::sha256OfFile(const QString& filePath, QString* errorMessage)
 {
     QFile file(filePath);

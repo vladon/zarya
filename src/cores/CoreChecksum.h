@@ -15,6 +15,8 @@ public:
                                                         const QString& archiveName);
     static std::optional<QString> parseExpectedSha256(const QByteArray& checksumBody,
                                                       const QString& archiveName);
+    // GitHub Releases API "digest" field, e.g. "sha256:<64-hex>".
+    static std::optional<QString> parseGitHubDigest(const QString& digest);
     static QString sha256OfFile(const QString& filePath, QString* errorMessage = nullptr);
     static bool verifyFileSha256(const QString& filePath, const QString& expectedSha256,
                                  QString* errorMessage = nullptr);
