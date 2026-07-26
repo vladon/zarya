@@ -263,7 +263,7 @@ def verify_rc_source(source_root: Path) -> list[str]:
     return errors
 
 
-def verify_stable_release_docs(staging: Path) -> list[str]:
+def verify_stable_release_docs(staging: Path, expected_version: str) -> list[str]:
     errors: list[str] = []
     for name in STABLE_RELEASE_DOC_FILES:
         if not (staging / "docs" / "release" / name).is_file():
@@ -273,9 +273,9 @@ def verify_stable_release_docs(staging: Path) -> list[str]:
         text = known_issues.read_text(encoding="utf-8", errors="replace").lower()
         if "msi" not in text or "portable" not in text:
             errors.append("known-issues.md must mention MSI PoC and portable artifact")
-    release_notes = staging / "docs" / "release-notes" / "1.0.0.md"
+    release_notes = staging / "docs" / "release-notes" / f"{expected_version}.md"
     if not release_notes.is_file():
-        errors.append("missing release notes: docs/release-notes/1.0.0.md")
+        errors.append(f"missing release notes: docs/release-notes/{expected_version}.md")
     return errors
 
 
@@ -570,11 +570,14 @@ def main() -> int:
             if not expected_version.endswith("-rc1") and "-rc" not in expected_version:
                 errors.append(f"expected RC version, got {expected_version}")
         if args.stable_release:
-            errors.extend(verify_stable_release_docs(content))
+            errors.extend(verify_stable_release_docs(content, expected_version))
             errors.extend(verify_stable_release_source(ROOT))
             errors.extend(verify_stable_channel_defaults(ROOT))
-            if expected_version != "1.0.0":
-                errors.append(f"expected stable version 1.0.0, got {expected_version}")
+            cmake_version = read_cmake_version()["version"]
+            if expected_version != cmake_version:
+                errors.append(
+                    f"expected stable version {cmake_version} from cmake, got {expected_version}"
+                )
         manifest = load_manifest(staging)
         if manifest is None:
             errors.append("release-manifest.json is missing")
