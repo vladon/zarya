@@ -30,6 +30,7 @@ from release_common import (  # noqa: E402
     read_cmake_version,
     run_version_check,
     sha256_file,
+    verify_bundled_geodata_manifest,
     verify_bundled_xray_manifest,
 )
 
@@ -588,6 +589,7 @@ def main() -> int:
                     f"version mismatch: expected {expected_version}, found {manifest.get('version')}"
                 )
             errors.extend(verify_bundled_xray_manifest(content, manifest))
+            errors.extend(verify_bundled_geodata_manifest(content, manifest))
             if args.release_candidate and manifest.get("channel") != "rc":
                 errors.append(
                     f"channel mismatch: expected rc, found {manifest.get('channel')}"

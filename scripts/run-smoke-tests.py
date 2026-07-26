@@ -15,6 +15,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from release_common import (  # noqa: E402
     FORBIDDEN_ARTIFACT_NAMES,
     git_commit_short,
+    load_geodata_pin,
     load_xray_pin,
     read_cmake_version,
     verify_clean_staging,
@@ -81,6 +82,8 @@ def verify_source_tree(source_root: Path) -> list[str]:
         "packaging/windows/wix/Registry.wxs",
         "packaging/cores/xray-pin.json",
         "packaging/cores/README.md",
+        "packaging/geodata/runetfreedom-pin.json",
+        "packaging/geodata/README.md",
         ".github/ISSUE_TEMPLATE/bug_report.yml",
         "translations/zarya_ru.qm",
         "translations/zarya_en.qm",
@@ -108,6 +111,15 @@ def verify_source_tree(source_root: Path) -> list[str]:
                     errors.append(f"xray-pin.json invalid sha256 for {key}")
     except (OSError, ValueError, KeyError, json.JSONDecodeError) as exc:
         errors.append(f"invalid packaging/cores/xray-pin.json: {exc}")
+
+    try:
+        geo_pin = load_geodata_pin()
+        for name in ("geoip.dat", "geosite.dat"):
+            sha = str(geo_pin["assets"][name].get("sha256") or "").replace("sha256:", "")
+            if len(sha) != 64:
+                errors.append(f"runetfreedom-pin.json invalid sha256 for {name}")
+    except (OSError, ValueError, KeyError, json.JSONDecodeError) as exc:
+        errors.append(f"invalid packaging/geodata/runetfreedom-pin.json: {exc}")
 
     for relative in SCHEMA_FILES:
         path = source_root / relative
@@ -153,10 +165,14 @@ def verify_staging_dir(staging: Path) -> list[str]:
     manifest_path = staging / "release-manifest.json"
     if manifest_path.is_file():
         try:
-            from release_common import verify_bundled_xray_manifest
+            from release_common import (
+                verify_bundled_geodata_manifest,
+                verify_bundled_xray_manifest,
+            )
 
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
             errors.extend(verify_bundled_xray_manifest(staging, manifest))
+            errors.extend(verify_bundled_geodata_manifest(staging, manifest))
         except json.JSONDecodeError as exc:
             errors.append(f"invalid release-manifest.json: {exc}")
     return errors

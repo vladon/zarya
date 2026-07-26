@@ -16,7 +16,7 @@ QString GeoDataSettingsStore::selectedSourceId() const
 {
     const QString value =
         AppSettings::settings().value(QStringLiteral("geodata/selectedSourceId")).toString();
-    return value.isEmpty() ? QStringLiteral("loyalsoldier") : value;
+    return value.isEmpty() ? QStringLiteral("runetfreedom") : value;
 }
 
 void GeoDataSettingsStore::setSelectedSourceId(const QString& sourceId)

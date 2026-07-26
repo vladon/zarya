@@ -324,8 +324,8 @@ Open **Tools → Geo Data Manager…** to:
 
 - Check whether `geoip.dat` / `geosite.dat` exist beside your Xray binary
 - Download updates from a built-in source (compatible with Xray/V2Ray-style routing):
+  - **runetfreedom russia-v2ray-rules-dat** (default; Russia-focused; also the release seed)
   - **Loyalsoldier v2ray-rules-dat** (general-purpose)
-  - **runetfreedom russia-v2ray-rules-dat** (Russia-focused)
   - **Chocolate4U Iran-v2ray-rules** (Iran-focused)
 - Verify downloads using published `.sha256sum` files before replacing existing data
 - Open the Xray resource directory in your file manager
@@ -339,7 +339,7 @@ Options in the dialog:
 - **Check geo data status on startup** — log presence/missing in the main log (no automatic download)
 - **Warn if routing uses geo rules and files are missing**
 
-Releases do not bundle third-party `.dat` files; use **Update All** after first install.
+Release packages ship a pinned runetfreedom seed next to Xray; use **Update All** later to refresh or switch sources.
 
 ## Experimental TUN mode (0.15+)
 
@@ -466,7 +466,7 @@ python scripts\run-smoke-tests.py --artifact .\dist\Zarya-1.2.0-windows-x64-port
 python scripts\verify-release-artifacts.py --artifact .\dist\Zarya-1.2.0-windows-x64-portable.zip --expected-version 1.2.0 --release-stable --allow-unsigned
 ```
 
-See [docs/release-packaging.md](docs/release-packaging.md), [docs/release/release-process.md](docs/release/release-process.md), [docs/signing/README.md](docs/signing/README.md), and `packaging/windows/portable-layout.md`. Artifacts include `release-manifest.json`, SHA256 checksums, translations, docs, and a **bundled Xray seed** under `cores/xray/` (sing-box and geo data are not bundled). Signing is optional.
+See [docs/release-packaging.md](docs/release-packaging.md), [docs/release/release-process.md](docs/release/release-process.md), [docs/signing/README.md](docs/signing/README.md), and `packaging/windows/portable-layout.md`. Artifacts include `release-manifest.json`, SHA256 checksums, translations, docs, a **bundled Xray seed** under `cores/xray/`, and **pinned runetfreedom geo data** (`geoip.dat` / `geosite.dat`) in the same folder (sing-box is not bundled). Signing is optional.
 
 ## Verifying downloads
 

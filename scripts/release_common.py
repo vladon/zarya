@@ -487,6 +487,179 @@ def ensure_bundled_xray(
     return detect_bundled_xray(install_dir, platform)
 
 
+def bundle_geodata_enabled(explicit: bool | None = None) -> bool:
+    if explicit is not None:
+        return explicit
+    value = os.environ.get("ZARYA_BUNDLE_GEODATA", "1").strip().lower()
+    return value not in {"0", "false", "no", "off"}
+
+
+def geodata_pin_path() -> Path:
+    return ROOT / "packaging" / "geodata" / "runetfreedom-pin.json"
+
+
+def load_geodata_pin() -> dict[str, Any]:
+    path = geodata_pin_path()
+    if not path.is_file():
+        raise FileNotFoundError(f"Missing geo data pin file: {path}")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    for key in ("repo", "tag", "version", "sourceId", "assets"):
+        if key not in data:
+            raise ValueError(f"Invalid runetfreedom-pin.json: missing {key}")
+    assets = data["assets"]
+    if not isinstance(assets, dict):
+        raise ValueError("Invalid runetfreedom-pin.json: assets must be an object")
+    for name in ("geoip.dat", "geosite.dat"):
+        if name not in assets or "sha256" not in assets[name]:
+            raise ValueError(f"Invalid runetfreedom-pin.json: missing assets.{name}.sha256")
+    return data
+
+
+def geodata_bundle_cache_dir() -> Path:
+    override = os.environ.get("ZARYA_GEODATA_BUNDLE_CACHE", "").strip()
+    if override:
+        path = Path(override)
+    else:
+        path = Path.home() / ".cache" / "zarya-release" / "geodata"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def detect_bundled_geodata(install_dir: Path) -> dict[str, Any] | None:
+    if not install_dir.is_dir():
+        return None
+    geoip = install_dir / "geoip.dat"
+    geosite = install_dir / "geosite.dat"
+    if not geoip.is_file() or not geosite.is_file():
+        return None
+    version = ""
+    source_id = "runetfreedom"
+    metadata_path = install_dir / ".zarya-geodata.json"
+    if metadata_path.is_file():
+        try:
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+            version = str(metadata.get("version") or "").strip()
+            source_id = str(metadata.get("sourceId") or source_id).strip() or source_id
+        except json.JSONDecodeError:
+            pass
+    return {
+        "version": version,
+        "sourceId": source_id,
+        "source": "bundled",
+        "geoip": geoip,
+        "geosite": geosite,
+    }
+
+
+def ensure_bundled_geodata(
+    cores_parent: Path,
+    *,
+    enabled: bool | None = None,
+) -> dict[str, Any] | None:
+    """Download pinned runetfreedom geo files into cores_parent/cores/xray/."""
+    if not bundle_geodata_enabled(enabled):
+        return None
+
+    pin = load_geodata_pin()
+    tag = str(pin["tag"]).strip()
+    version = str(pin.get("version") or tag).strip()
+    repo = str(pin["repo"]).strip()
+    source_id = str(pin.get("sourceId") or "runetfreedom").strip()
+    install_dir = cores_parent / "cores" / "xray"
+    install_dir.mkdir(parents=True, exist_ok=True)
+    cache_dir = geodata_bundle_cache_dir() / tag
+    cache_dir.mkdir(parents=True, exist_ok=True)
+
+    for file_name in ("geoip.dat", "geosite.dat"):
+        expected_sha = str(pin["assets"][file_name]["sha256"]).strip().lower()
+        if expected_sha.startswith("sha256:"):
+            expected_sha = expected_sha.split(":", 1)[1]
+        if len(expected_sha) != 64:
+            raise ValueError(f"Invalid sha256 for {file_name} in runetfreedom-pin.json")
+        url = f"https://github.com/{repo}/releases/download/{tag}/{file_name}"
+        cache_path = cache_dir / file_name
+        if cache_path.is_file() and sha256_file(cache_path).lower() != expected_sha:
+            cache_path.unlink()
+        if not cache_path.is_file():
+            print(f"Downloading bundled geo data {tag} ({file_name})...")
+            download_url(url, cache_path)
+        actual_sha = sha256_file(cache_path).lower()
+        if actual_sha != expected_sha:
+            raise RuntimeError(
+                f"Checksum mismatch for {file_name}: expected {expected_sha}, got {actual_sha}"
+            )
+        destination = install_dir / file_name
+        if destination.exists():
+            destination.unlink()
+        shutil.copy2(cache_path, destination)
+
+    metadata = {
+        "version": version,
+        "sourceId": source_id,
+        "installedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "source": "bundled",
+        "bundledTag": tag,
+        "repo": repo,
+    }
+    (install_dir / ".zarya-geodata.json").write_text(
+        json.dumps(metadata, indent=2) + "\n", encoding="utf-8"
+    )
+    print(f"Bundled geo data {source_id} {version} -> {install_dir}")
+    return detect_bundled_geodata(install_dir)
+
+
+def verify_bundled_geodata_manifest(
+    staging: Path, manifest: dict[str, Any]
+) -> list[str]:
+    errors: list[str] = []
+    included = manifest.get("included") or {}
+    install_candidates: list[Path] = [
+        staging / "cores" / "xray",
+        staging / "Contents" / "MacOS" / "cores" / "xray",
+    ]
+    if staging.name == "Resources" and staging.parent.name == "Contents":
+        install_candidates.append(staging.parent / "MacOS" / "cores" / "xray")
+    app_bundle = next(staging.rglob("*.app"), None)
+    if app_bundle is None and staging.name.endswith(".app"):
+        app_bundle = staging
+    if app_bundle is not None:
+        install_candidates.append(app_bundle / "Contents" / "MacOS" / "cores" / "xray")
+    for match in staging.rglob("cores/xray"):
+        if match.is_dir():
+            install_candidates.append(match)
+
+    detected = None
+    seen: set[str] = set()
+    for candidate in install_candidates:
+        key = str(candidate.resolve()) if candidate.exists() else str(candidate)
+        if key in seen:
+            continue
+        seen.add(key)
+        detected = detect_bundled_geodata(candidate)
+        if detected:
+            break
+
+    if included.get("geoData"):
+        if detected is None:
+            errors.append("release-manifest.json marks geoData bundled, but geoip/geosite are missing")
+        else:
+            expected_version = str(included.get("geoDataVersion") or "").strip()
+            if expected_version and detected.get("version") != expected_version:
+                errors.append(
+                    "bundled geo data version mismatch: "
+                    f"manifest={expected_version}, on-disk={detected.get('version')}"
+                )
+            expected_source = str(included.get("geoDataSource") or "").strip()
+            if expected_source and detected.get("sourceId") != expected_source:
+                errors.append(
+                    "bundled geo data source mismatch: "
+                    f"manifest={expected_source}, on-disk={detected.get('sourceId')}"
+                )
+    elif detected is not None and detected.get("source") == "bundled":
+        errors.append("bundled geo data present but included.geoData is false")
+    return errors
+
+
 def verify_bundled_xray_manifest(
     staging: Path, manifest: dict[str, Any], *, platform: str | None = None
 ) -> list[str]:
@@ -653,6 +826,7 @@ def write_release_manifest(
     installation_mode: str | None = None,
     helper_service: dict[str, Any] | None = None,
     bundle_xray: bool | None = None,
+    bundle_geodata: bool | None = None,
     xray_cores_parent: Path | None = None,
 ) -> Path:
     meta = read_cmake_version()
@@ -669,6 +843,9 @@ def write_release_manifest(
     )
     if bundled is None:
         bundled = detect_bundled_xray(cores_parent / "cores" / "xray", platform)
+    bundled_geo = ensure_bundled_geodata(cores_parent, enabled=bundle_geodata)
+    if bundled_geo is None:
+        bundled_geo = detect_bundled_geodata(cores_parent / "cores" / "xray")
 
     checksum_names = [gui_artifact]
     if helper_artifact:
@@ -687,6 +864,10 @@ def write_release_manifest(
         included["xray"] = True
         included["xrayVersion"] = bundled.get("version") or ""
         included["xraySource"] = bundled.get("source") or "bundled"
+    if bundled_geo is not None:
+        included["geoData"] = True
+        included["geoDataSource"] = bundled_geo.get("sourceId") or "runetfreedom"
+        included["geoDataVersion"] = bundled_geo.get("version") or ""
 
     checksums = file_sha256_map(staging, checksum_names)
     if bundled is not None:
@@ -696,6 +877,14 @@ def write_release_manifest(
         except ValueError:
             rel = str(bundled.get("relativeExecutable") or exe_path.name)
         checksums[rel] = f"sha256:{sha256_file(exe_path)}"
+    if bundled_geo is not None:
+        for key in ("geoip", "geosite"):
+            path = Path(bundled_geo[key])
+            try:
+                rel = path.relative_to(staging).as_posix()
+            except ValueError:
+                rel = f"cores/xray/{path.name}"
+            checksums[rel] = f"sha256:{sha256_file(path)}"
 
     manifest: dict[str, Any] = {
         "app": "Zarya",

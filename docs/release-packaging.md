@@ -34,6 +34,8 @@ Zarya-<version>-windows-x64-portable/
   translations/
   docs/
   cores/xray/README.txt
+  cores/xray/geoip.dat
+  cores/xray/geosite.dat
   cores/sing-box/README.txt
   data/
   runtime/
@@ -88,7 +90,6 @@ sha256sum -c SHA256SUMS.txt
 ## What is not bundled
 
 - sing-box
-- Geo data (`geoip.dat`, `geosite.dat`)
 - sing-box rule sets
 
 ## Bundled Xray seed
@@ -102,7 +103,15 @@ Users can still:
 
 `release-manifest.json` reports `included.xray`, `included.xrayVersion`, and `included.xraySource`.
 
-Install/update cores via **Tools → Core Manager**. Geo data remains manual / Geo Data Manager.
+## Bundled geo data (runetfreedom)
+
+Release packaging also downloads **pinned** `geoip.dat` / `geosite.dat` from runetfreedom into the same `cores/xray/` directory (see `packaging/geodata/runetfreedom-pin.json`). Override with `ZARYA_BUNDLE_GEODATA=0`, `-SkipBundleGeodata`, or `--skip-bundle-geodata`.
+
+Users can still replace files via **Tools → Geo Data Manager** (any built-in source).
+
+`release-manifest.json` reports `included.geoData`, `included.geoDataSource`, and `included.geoDataVersion`.
+
+Install/update cores via **Tools → Core Manager**. Geo updates remain available in Geo Data Manager.
 
 ## Smoke tests
 

@@ -16,6 +16,8 @@ SKIP_TESTS=0
 
 SKIP_BUNDLE_XRAY=0
 
+SKIP_BUNDLE_GEODATA=0
+
 ARCH="${ARCH:-}"
 
 SIGN=0
@@ -52,6 +54,8 @@ Usage: package-macos.sh [options]
 
   --skip-bundle-xray      Do not download/pin Xray into Contents/MacOS/cores/xray
 
+  --skip-bundle-geodata   Do not download/pin runetfreedom geo data into cores/xray
+
   --signing-identity <id> Developer ID Application identity
 
   --notarize              Submit for notarization when signing
@@ -87,6 +91,8 @@ while [[ $# -gt 0 ]]; do
     --skip-tests) SKIP_TESTS=1; shift ;;
 
     --skip-bundle-xray) SKIP_BUNDLE_XRAY=1; shift ;;
+
+    --skip-bundle-geodata) SKIP_BUNDLE_GEODATA=1; shift ;;
 
     --sign) SIGN=1; shift ;;
 
@@ -289,6 +295,8 @@ write_release_manifest(
     updater_artifact="Zarya.app/Contents/MacOS/zarya-updater" if Path("$MACOS_DIR/zarya-updater").exists() else None,
 
     bundle_xray=False if $SKIP_BUNDLE_XRAY else None,
+
+    bundle_geodata=False if $SKIP_BUNDLE_GEODATA else None,
 
     xray_cores_parent=Path("$MACOS_DIR"),
 

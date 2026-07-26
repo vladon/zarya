@@ -54,7 +54,7 @@ GeoDataSource makeChocolate4u()
 
 QVector<GeoDataSource> GeoDataSources::builtInSources()
 {
-    return {makeLoyalsoldier(), makeRunetfreedom(), makeChocolate4u()};
+    return {makeRunetfreedom(), makeLoyalsoldier(), makeChocolate4u()};
 }
 
 GeoDataSource GeoDataSources::sourceById(const QString& id)
@@ -64,7 +64,7 @@ GeoDataSource GeoDataSources::sourceById(const QString& id)
             return source;
         }
     }
-    return makeLoyalsoldier();
+    return makeRunetfreedom();
 }
 
 } // namespace zarya

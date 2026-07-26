@@ -8,3 +8,5 @@ Release packaging may download a **pinned** Xray binary into `cores/xray/` so fi
 - Disable bundling with `ZARYA_BUNDLE_XRAY=0` or package script `-SkipBundleXray` / `--skip-bundle-xray`.
 
 sing-box is not bundled (experimental TUN only).
+
+Geo data is bundled separately — see [`packaging/geodata/`](../geodata/).

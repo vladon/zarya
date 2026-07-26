@@ -9,4 +9,4 @@ Expected executable:
 - Windows: xray.exe
 - macOS/Linux: xray
 
-Geo Data Manager can place geoip.dat and geosite.dat in this directory (geo data is not bundled by default).
+Release builds may also ship pinned runetfreedom geoip.dat and geosite.dat here so bypass routing works offline. Tools → Geo Data Manager can still update or switch sources.

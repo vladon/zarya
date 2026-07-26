@@ -27,7 +27,7 @@ Zarya can download them from upstream release sources via **Core Manager**. Use 
 - [Xray](https://github.com/XTLS/Xray-core)
 - [sing-box](https://github.com/SagerNet/sing-box)
 
-Geo data files (`geoip.dat`, `geosite.dat`) and sing-box rule sets are also downloaded separately when needed via **Geo Data Manager** / rule-set tools. Built-in geo sources include:
+Geo data files (`geoip.dat`, `geosite.dat`) ship as a pinned **runetfreedom** seed in release packages (next to Xray) and can also be updated via **Geo Data Manager**. sing-box rule sets are downloaded separately via rule-set tools. Built-in geo sources include:
 
 - [Loyalsoldier/v2ray-rules-dat](https://github.com/Loyalsoldier/v2ray-rules-dat)
 - [runetfreedom/russia-v2ray-rules-dat](https://github.com/runetfreedom/russia-v2ray-rules-dat)
