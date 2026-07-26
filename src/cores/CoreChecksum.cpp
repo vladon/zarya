@@ -14,6 +14,8 @@ std::optional<QString> CoreChecksum::findChecksumAssetName(const QVector<CoreAss
     QStringList candidates = {
         archiveName + QStringLiteral(".sha256"),
         archiveName + QStringLiteral(".sha256sum"),
+        // Xray releases publish openssl dgst sidecars (e.g. Xray-*.zip.dgst).
+        archiveName + QStringLiteral(".dgst"),
         QStringLiteral("SHA256SUMS"),
         QStringLiteral("sha256sums"),
         QStringLiteral("checksums.txt"),
@@ -30,7 +32,9 @@ std::optional<QString> CoreChecksum::findChecksumAssetName(const QVector<CoreAss
 
     for (const CoreAsset& asset : assets) {
         const QString lowerName = asset.name.toLower();
-        if (lowerName.contains(QStringLiteral("sha256")) && lowerName.contains(lowerArchive)) {
+        if (lowerName.contains(lowerArchive)
+            && (lowerName.contains(QStringLiteral("sha256"))
+                || lowerName.endsWith(QStringLiteral(".dgst")))) {
             return asset.name;
         }
     }
@@ -45,6 +49,9 @@ std::optional<QString> CoreChecksum::parseExpectedSha256(const QByteArray& check
     const QStringList lines = text.split(QRegularExpression(QStringLiteral("[\\r\\n]+")),
                                          Qt::SkipEmptyParts);
     static const QRegularExpression hexPattern(QStringLiteral(R"(([0-9a-fA-F]{64}))"));
+    // openssl dgst -sha256 output used by Xray: "SHA2-256= <hex>" / "SHA256= <hex>"
+    static const QRegularExpression opensslSha256Pattern(
+        QStringLiteral(R"(^SHA(?:2-)?256\s*=\s*([0-9a-fA-F]{64})\s*$)"));
 
     for (const QString& line : lines) {
         const QString trimmed = line.trimmed();
@@ -60,6 +67,10 @@ std::optional<QString> CoreChecksum::parseExpectedSha256(const QByteArray& check
         if (parenMatch.hasMatch()
             && parenMatch.captured(1).compare(archiveName, Qt::CaseInsensitive) == 0) {
             return parenMatch.captured(2).toLower();
+        }
+        const QRegularExpressionMatch opensslMatch = opensslSha256Pattern.match(trimmed);
+        if (opensslMatch.hasMatch()) {
+            return opensslMatch.captured(1).toLower();
         }
     }
 
