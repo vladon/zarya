@@ -711,6 +711,16 @@ target_include_directories(zarya_geodata_verifier_test PRIVATE ${CMAKE_CURRENT_S
 
 zarya_link_qt_core(zarya_geodata_verifier_test)
 
+add_executable(zarya_core_checksum_test
+    tests/core_checksum_test.cpp
+    src/cores/CoreChecksum.cpp
+)
+
+target_include_directories(zarya_core_checksum_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+zarya_link_qt_core(zarya_core_checksum_test)
+add_test(NAME core_checksum COMMAND zarya_core_checksum_test)
+
 add_executable(zarya_smoke_test
     tests/smoke/smoke_test.cpp
     src/app/StartupOptions.cpp

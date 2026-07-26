@@ -27,7 +27,9 @@ No GitHub token is required. Rate limits may require retrying later.
 
 ## Checksum policy
 
-When a companion checksum asset is found (`.sha256`, `SHA256SUMS`, etc.), the downloaded archive is verified before install.
+When a companion checksum asset is found (`.sha256`, `.dgst`, `SHA256SUMS`, etc.), the downloaded archive is verified before install.
+
+Xray releases publish openssl digests as `<archive>.dgst` (including `SHA2-256=`). Zarya accepts those sidecars and parses the SHA-256 line.
 
 If no checksum is available:
 
