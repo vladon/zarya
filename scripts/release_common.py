@@ -496,17 +496,31 @@ def verify_bundled_xray_manifest(
     if not plat:
         return errors
 
-    install_candidates = [
+    install_candidates: list[Path] = [
         staging / "cores" / "xray",
         staging / "Contents" / "MacOS" / "cores" / "xray",
     ]
+    # release-manifest.json lives under Contents/Resources for macOS bundles, while the
+    # seeded Xray executable is installed next to the GUI under Contents/MacOS.
+    if staging.name == "Resources" and staging.parent.name == "Contents":
+        install_candidates.append(staging.parent / "MacOS" / "cores" / "xray")
     app_bundle = next(staging.rglob("*.app"), None)
+    if app_bundle is None and staging.name.endswith(".app"):
+        app_bundle = staging
     if app_bundle is not None:
         install_candidates.append(app_bundle / "Contents" / "MacOS" / "cores" / "xray")
+    for match in staging.rglob("cores/xray"):
+        if match.is_dir():
+            install_candidates.append(match)
 
     detected = None
+    seen: set[str] = set()
     for candidate in install_candidates:
-        detected = detect_bundled_xray(candidate, plat if plat != "macos" else "macos")
+        key = str(candidate.resolve()) if candidate.exists() else str(candidate)
+        if key in seen:
+            continue
+        seen.add(key)
+        detected = detect_bundled_xray(candidate, "macos" if plat in {"macos", "darwin"} else plat)
         if detected:
             break
 
