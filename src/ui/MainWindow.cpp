@@ -792,6 +792,8 @@ void MainWindow::updateStatusDashboard()
 
     StatusDashboardModel model;
     model.configured = configured;
+    model.xrayInstalled = xray.exists;
+    model.hasProfiles = hasProfiles;
     model.running = m_appController.isCoreRunning();
     model.routingText = m_routingManager.activeProfile().name;
     model.dnsText = m_dnsManager.activeProfile().name;
@@ -1717,6 +1719,8 @@ void MainWindow::onCoreManager()
                              [this](const QString& line) { appendLog(line); }, this);
     dialog.exec();
     m_coreBinaryManager.refreshLocalState();
+    updateStatusDashboard();
+    updateStatusBar();
 }
 
 void MainWindow::onExportBackup()

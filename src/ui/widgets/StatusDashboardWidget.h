@@ -11,6 +11,8 @@ class StatusBadge;
 
 struct StatusDashboardModel {
     bool configured = false;
+    bool xrayInstalled = false;
+    bool hasProfiles = false;
     bool running = false;
     QString runtimeText;
     QString recommendedRuntimeText;
@@ -49,10 +51,11 @@ signals:
 
 private:
     void showConfigured(const StatusDashboardModel& model);
-    void showUnconfigured();
+    void showUnconfigured(const StatusDashboardModel& model);
 
     QWidget* m_unconfiguredPanel = nullptr;
     QWidget* m_configuredPanel = nullptr;
+    QLabel* m_unconfiguredStepsLabel = nullptr;
     QLabel* m_titleLabel = nullptr;
     QLabel* m_detailLabel = nullptr;
     StatusBadge* m_runtimeBadge = nullptr;
