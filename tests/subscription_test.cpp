@@ -97,6 +97,24 @@ int main(int argc, char* argv[])
         ok &= pass("trojan:// link parses into runnable profile fields");
     }
 
+    const zarya::ShareLinkParseResult trojanReality = zarya::ShareLinkParser::parse(QStringLiteral(
+        "trojan://PASSWORD@trojan.example.com:56442?fp=firefox"
+        "&pbk=uREwNdwudj2vLUBJrveW3fx6xDABilwJjGqaVV26gQc&security=reality"
+        "&sid=2c5dcd8cab237e&sni=example.com&spx=%2Fpath&type=tcp#Trojan%20Reality"));
+    if (!trojanReality.ok || trojanReality.profile.protocol != zarya::ProtocolType::Trojan
+        || trojanReality.profile.security != QStringLiteral("reality")
+        || trojanReality.profile.publicKey
+            != QStringLiteral("uREwNdwudj2vLUBJrveW3fx6xDABilwJjGqaVV26gQc")
+        || trojanReality.profile.shortId != QStringLiteral("2c5dcd8cab237e")
+        || trojanReality.profile.spiderX != QStringLiteral("/path")
+        || trojanReality.profile.fingerprint != QStringLiteral("firefox")
+        || trojanReality.profile.sni != QStringLiteral("example.com")
+        || trojanReality.profile.network != QStringLiteral("tcp")) {
+        ok &= fail("trojan:// Reality link should parse pbk/sid/spx/fp/sni");
+    } else {
+        ok &= pass("trojan:// Reality link parses Reality query params");
+    }
+
     const zarya::ShareLinkParseResult ssPlugin = zarya::ShareLinkParser::parse(QStringLiteral(
         "ss://YWVzLTI1Ni1nY206dGVzdA==@127.0.0.1:8388/?plugin=obfs-local%3Bobfs%3Dhttp"));
     if (!ssPlugin.ok || ssPlugin.profile.unsupportedReason.isEmpty()) {
