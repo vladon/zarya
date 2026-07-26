@@ -44,6 +44,7 @@ private:
     void emitChanged();
     bool isCoreRunning(CoreType type) const;
     bool canManage(CoreType type, QString* reason) const;
+    bool coreNeedsInstallOrUpdate(CoreType type) const;
     void handleReleaseReady(CoreType type, const CoreRelease& release,
                             bool allowMissingChecksum);
     void continueDownload(CoreType type, const CoreRelease& release, const CoreAsset& asset,

@@ -51,6 +51,8 @@ If no checksum is available:
 9. Write `VERSION` and `.zarya-core.json`
 10. Final verification; rollback backup on failure
 
+**Update Selected / Update All** only download when the core is missing or the installed version differs from the latest checked release. Already up-to-date cores are skipped.
+
 ## Rollback
 
 **Tools → Core Manager → Rollback** restores the latest backup for the selected core (when not running).

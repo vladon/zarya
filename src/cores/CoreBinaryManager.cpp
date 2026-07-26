@@ -169,6 +169,30 @@ bool CoreBinaryManager::canManage(CoreType type, QString* reason) const
     return true;
 }
 
+bool CoreBinaryManager::coreNeedsInstallOrUpdate(CoreType type) const
+{
+    const CoreInfo info = infoFor(type);
+    if (!info.managed || info.status == CoreInstallStatus::External) {
+        return false;
+    }
+
+    const CoreRelease latest = m_latestReleases.value(type);
+    if (latest.version.isEmpty()) {
+        return false;
+    }
+
+    if (!info.exists) {
+        return true;
+    }
+
+    const QString installed = CoreVersionDetector::normalizeVersion(info.installedVersion);
+    const QString remote = CoreVersionDetector::normalizeVersion(latest.version);
+    if (installed.isEmpty()) {
+        return true;
+    }
+    return installed != remote;
+}
+
 void CoreBinaryManager::finishVersionChecks()
 {
     refreshLocalState();
@@ -282,18 +306,53 @@ void CoreBinaryManager::updateCore(CoreType type, bool allowMissingChecksum)
         return;
     }
 
+    refreshLocalState();
+    if (!coreNeedsInstallOrUpdate(type)) {
+        const CoreInfo info = infoFor(type);
+        const QString message =
+            QStringLiteral("%1 is already up to date (%2).").arg(info.name, info.installedVersion);
+        emit logLine(message);
+        emit operationFinished(true, message);
+        return;
+    }
+
     handleReleaseReady(type, release, allowMissingChecksum);
 }
 
 void CoreBinaryManager::updateAll(bool allowMissingChecksum)
 {
-    if (m_latestReleases.value(CoreType::Xray).version.isEmpty()
-        || m_latestReleases.value(CoreType::SingBox).version.isEmpty()) {
-        emit operationFinished(false, QStringLiteral("Check versions before updating all cores."));
+    refreshLocalState();
+
+    QVector<CoreType> toUpdate;
+    for (const CoreType type : {CoreType::Xray, CoreType::SingBox}) {
+        const CoreInfo info = infoFor(type);
+        if (!coreNeedsInstallOrUpdate(type)) {
+            if (info.managed && info.exists && !info.installedVersion.isEmpty()
+                && !m_latestReleases.value(type).version.isEmpty()) {
+                emit logLine(QStringLiteral("%1 is already up to date (%2)")
+                                 .arg(info.name, info.installedVersion));
+            }
+            continue;
+        }
+        if (m_latestReleases.value(type).version.isEmpty()
+            || m_latestReleases.value(type).assets.isEmpty()) {
+            emit operationFinished(false,
+                                   QStringLiteral("Check versions before updating all cores."));
+            return;
+        }
+        toUpdate.append(type);
+    }
+
+    if (toUpdate.isEmpty()) {
+        const QString message = QStringLiteral("All managed cores are up to date.");
+        emit logLine(message);
+        emit operationFinished(true, message);
         return;
     }
-    updateCore(CoreType::Xray, allowMissingChecksum);
-    updateCore(CoreType::SingBox, allowMissingChecksum);
+
+    for (const CoreType type : toUpdate) {
+        handleReleaseReady(type, m_latestReleases.value(type), allowMissingChecksum);
+    }
 }
 
 void CoreBinaryManager::handleReleaseReady(CoreType type, const CoreRelease& release,
