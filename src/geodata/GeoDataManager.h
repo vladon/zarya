@@ -20,6 +20,7 @@ public:
 
     GeoDataFileStatus checkFileStatus(GeoDataKind kind) const;
     QVector<GeoDataFileStatus> checkAllStatus() const;
+    void checkStatus();
 
     void updateGeoIp();
     void updateGeoSite();

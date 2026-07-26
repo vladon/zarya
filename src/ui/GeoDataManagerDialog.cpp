@@ -161,7 +161,7 @@ void GeoDataManagerDialog::onOptionsChanged()
 void GeoDataManagerDialog::onCheckStatus()
 {
     m_targetLabel->setText(m_manager.targetDirectory());
-    refreshTable(m_manager.checkAllStatus());
+    m_manager.checkStatus();
 }
 
 void GeoDataManagerDialog::onUpdateGeoIp()
@@ -221,7 +221,8 @@ void GeoDataManagerDialog::onUpdateFinished(bool ok)
 {
     Q_UNUSED(ok);
     setBusy(false);
-    onCheckStatus();
+    m_targetLabel->setText(m_manager.targetDirectory());
+    // statusChanged is already emitted by the update worker.
 }
 
 void GeoDataManagerDialog::onLogLine(const QString& line)
