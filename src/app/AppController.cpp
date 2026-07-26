@@ -225,8 +225,7 @@ bool AppController::confirmDnsWarningsIfNeeded(const DnsProfile& dnsProfile,
 {
     QStringList warnings = DnsValidator::warnings(dnsProfile);
     warnings.append(DnsValidator::interactionWarnings(
-        dnsProfile, routingProfile.domainStrategy,
-        RoutingManager::profileUsesGeoData(routingProfile)));
+        dnsProfile, RoutingManager::profileUsesGeoData(routingProfile)));
 
     if (warnings.isEmpty()) {
         return true;

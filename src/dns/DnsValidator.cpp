@@ -89,9 +89,7 @@ QStringList DnsValidator::warnings(const DnsProfile& profile)
     return warnings;
 }
 
-QStringList DnsValidator::interactionWarnings(const DnsProfile& dnsProfile,
-                                              const QString& routingDomainStrategy,
-                                              bool routingUsesGeoData)
+QStringList DnsValidator::interactionWarnings(const DnsProfile& dnsProfile, bool routingUsesGeoData)
 {
     QStringList warnings;
     if (routingUsesGeoData && dnsProfile.mode == DnsProfileMode::System) {
@@ -100,13 +98,8 @@ QStringList DnsValidator::interactionWarnings(const DnsProfile& dnsProfile,
             "Domain-to-IP routing may depend on system resolution behavior."));
     }
 
-    if (dnsProfile.mode != DnsProfileMode::System
-        && routingDomainStrategy.trimmed().compare(QStringLiteral("AsIs"), Qt::CaseInsensitive)
-               == 0) {
-        warnings.append(QStringLiteral(
-            "Routing domainStrategy is AsIs. Xray may not resolve domains for IP-based routing "
-            "unless required by rules."));
-    }
+    // AsIs + non-System DNS is the recommended default (Bypass LAN + Secure Remote DNS).
+    // Do not warn: AsIs only resolves when rules require it, which is intentional.
 
     return warnings;
 }
