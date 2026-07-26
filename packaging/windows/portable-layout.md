@@ -14,6 +14,8 @@ Zarya-0.10.0-windows-x64-portable/
   cores/
     xray/
       README.txt
+      geoip.dat
+      geosite.dat
   README.md
   LICENSE
 ```

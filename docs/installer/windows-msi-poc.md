@@ -27,7 +27,7 @@ Registry: `HKLM\Software\Zarya` (`InstallDir`, `Version`, `InstallerType`)
 - Xray / sing-box cores
 - Helper **service** (binary is installed; service is optional)
 - Wintun driver
-- Geo data / rule sets
+- sing-box rule sets
 
 ## User data
 

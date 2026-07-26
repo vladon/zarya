@@ -19,6 +19,7 @@ from release_common import (  # noqa: E402
     extract_tar_gz,
     extract_zip,
     run_version_check,
+    verify_bundled_geodata_manifest,
     verify_bundled_xray_manifest,
     verify_clean_staging,
 )
@@ -82,6 +83,7 @@ def main() -> int:
 
                 manifest_data = json.loads(manifest.read_text(encoding="utf-8"))
                 errors.extend(verify_bundled_xray_manifest(staging, manifest_data))
+                errors.extend(verify_bundled_geodata_manifest(staging, manifest_data))
             except json.JSONDecodeError as exc:
                 errors.append(f"release-manifest.json is invalid JSON: {exc}")
 

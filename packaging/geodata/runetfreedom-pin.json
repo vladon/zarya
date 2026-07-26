@@ -1,0 +1,14 @@
+{
+  "repo": "runetfreedom/russia-v2ray-rules-dat",
+  "tag": "202607261629",
+  "version": "202607261629",
+  "sourceId": "runetfreedom",
+  "assets": {
+    "geoip.dat": {
+      "sha256": "9c3ff6a4331fed855ed6b56d7deec0ce2a0a6e626a74c6910ddb2881b7e42bf9"
+    },
+    "geosite.dat": {
+      "sha256": "9ce41968ba5c16a99786f0d2781443e631911519f8768003564d0978b3f72b40"
+    }
+  }
+}

@@ -111,7 +111,7 @@ QJsonObject buildGeoDataSettingsJson()
     const QSettings& settings = AppSettings::settings();
     QJsonObject object;
     object.insert(QStringLiteral("selectedSourceId"),
-                  settings.value(QStringLiteral("geodata/selectedSourceId"), QStringLiteral("loyalsoldier"))
+                  settings.value(QStringLiteral("geodata/selectedSourceId"), QStringLiteral("runetfreedom"))
                       .toString());
     object.insert(QStringLiteral("autoCheckOnStartup"),
                   settings.value(QStringLiteral("geodata/autoCheckOnStartup"), false).toBool());
