@@ -133,15 +133,14 @@ TestResult RealDelayTester::run(const Profile& profile, int timeoutMs, const QSt
     }
 
     const InboundPorts ports = PortAllocator::allocateInboundPorts();
-    if (ports.socksPort < 1 || ports.httpPort < 1) {
+    if (ports.mixedPort < 1) {
         result.status = TestStatus::Failed;
-        result.errorMessage = QStringLiteral("Failed to allocate local ports for test.");
+        result.errorMessage = QStringLiteral("Failed to allocate local port for test.");
         return result;
     }
 
     XrayInboundPorts inboundPorts;
-    inboundPorts.socksPort = ports.socksPort;
-    inboundPorts.httpPort = ports.httpPort;
+    inboundPorts.mixedPort = ports.mixedPort;
 
     const ConfigGenerationResult generation =
         adapter.generateConfig(profile, inboundPorts, RoutingProfile::builtInProxyAll());
@@ -159,7 +158,7 @@ TestResult RealDelayTester::run(const Profile& profile, int timeoutMs, const QSt
     }
 
     logLine(log, QStringLiteral("Temporary config path: %1").arg(configPath));
-    logLine(log, QStringLiteral("Temporary HTTP proxy: 127.0.0.1:%1").arg(ports.httpPort));
+    logLine(log, QStringLiteral("Temporary mixed proxy: 127.0.0.1:%1").arg(ports.mixedPort));
     logLine(log, QStringLiteral("Validating Xray config…"));
 
     const ValidationResult validation = validateConfig(executablePath, configPath);
@@ -200,19 +199,19 @@ TestResult RealDelayTester::run(const Profile& profile, int timeoutMs, const QSt
     }
 
     const int proxyReadyTimeoutMs = qMin(5000, timeoutMs);
-    if (!waitForLocalPort(ports.httpPort, proxyReadyTimeoutMs)) {
+    if (!waitForLocalPort(ports.mixedPort, proxyReadyTimeoutMs)) {
         stopXray();
         QFile::remove(configPath);
         result.status = TestStatus::Timeout;
         result.errorMessage =
-            QStringLiteral("Local HTTP proxy did not become ready in time.");
+            QStringLiteral("Local mixed proxy did not become ready in time.");
         logLine(log, result.errorMessage);
         return result;
     }
-    logLine(log, QStringLiteral("Local HTTP proxy is ready"));
+    logLine(log, QStringLiteral("Local mixed proxy is ready"));
 
     QNetworkAccessManager manager;
-    QNetworkProxy proxy(QNetworkProxy::HttpProxy, QStringLiteral("127.0.0.1"), ports.httpPort);
+    QNetworkProxy proxy(QNetworkProxy::HttpProxy, QStringLiteral("127.0.0.1"), ports.mixedPort);
     manager.setProxy(proxy);
 
     const QUrl url(testUrl);

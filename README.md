@@ -169,7 +169,7 @@ Zarya shows a setup wizard on first launch. You can reopen it from **Help → Ru
 
 1. Open **File → Settings…**
 2. Set **Xray executable** (Browse or paste path).
-3. Set **Local SOCKS port** (default `10808`) and **Local HTTP port** (default `10809`).
+3. Set **Local proxy port** (default `10808`) — mixed SOCKS5 + HTTP on one port.
 4. Click **Save**.
 
 Settings are stored with `QSettings` (organization **Zarya**).
@@ -239,7 +239,7 @@ Data files:
 
 ## Windows system proxy
 
-On **Windows**, Zarya can set the system HTTP/HTTPS proxy to the local Xray HTTP inbound (`127.0.0.1:<httpPort>`, default **10809**).
+On **Windows**, Zarya can set the system HTTP/HTTPS proxy to the local Xray mixed inbound (`127.0.0.1:<mixedPort>`, default **10808**).
 
 - **Settings → Windows system proxy**: enable proxy automatically when a profile starts, and restore previous settings on stop/exit (both on by default on Windows).
 - **Tools → Enable System Proxy** / **Restore Previous Proxy** for manual control (enable requires a running core).
@@ -263,7 +263,7 @@ When Zarya enables proxy, expect roughly:
 
 ```
 ProxyEnable = 1
-ProxyServer = http=127.0.0.1:10809;https=127.0.0.1:10809
+ProxyServer = http=127.0.0.1:10808;https=127.0.0.1:10808
 ProxyOverride = <local>
 ```
 
@@ -512,7 +512,7 @@ Signed builds are optional. See [docs/signing/](docs/signing/).
    - Config is generated and written to the runtime path.
    - `xray run -test -config …` runs; on failure, a dialog and log output appear.
    - On success, `xray run -config …` starts.
-   - If **auto system proxy** is enabled (Windows), WinINet proxy is set to the local HTTP inbound.
+   - If **auto system proxy** is enabled (Windows), WinINet proxy is set to the local mixed inbound.
 6. **Stop** restores system proxy (if Zarya changed it), then terminates Xray (terminate, wait 3s, then kill).
 7. Core stdout/stderr appear in the log panel.
 8. Status bar shows **Core**, **System proxy**, and **Routing** profile name.
@@ -520,10 +520,9 @@ Signed builds are optional. See [docs/signing/](docs/signing/).
 10. For bypass profiles, open **Tools → Geo Data Manager…** and run **Update All** if `geoip.dat` / `geosite.dat` are missing.
 11. Choose a **DNS profile** in Settings or **Tools → DNS Profiles…** (default: **System DNS**).
 
-Local inbounds when Xray starts (from generated config, ports from Settings):
+Local mixed inbound when Xray starts (from generated config, port from Settings):
 
-- SOCKS: `127.0.0.1:10808` (default)
-- HTTP: `127.0.0.1:10809` (default)
+- Mixed (SOCKS5 + HTTP): `127.0.0.1:10808` (default)
 
 Expected log sequence after **Start**:
 
@@ -534,8 +533,7 @@ Validating Xray config…
 Validation OK
 Starting Xray…
 Xray started
-SOCKS: 127.0.0.1:10808
-HTTP: 127.0.0.1:10809
+Proxy: 127.0.0.1:10808 (mixed SOCKS/HTTP)
 ```
 
 ## Project layout
@@ -574,11 +572,10 @@ Validating Xray config…
 Validation OK
 Starting Xray…
 Xray started
-SOCKS: 127.0.0.1:10808
-HTTP: 127.0.0.1:10809
+Proxy: 127.0.0.1:10808 (mixed SOCKS/HTTP)
 Reading current Windows proxy settings…
 Previous proxy state saved
-Applying system proxy: http=127.0.0.1:10809;https=127.0.0.1:10809
+Applying system proxy: http=127.0.0.1:10808;https=127.0.0.1:10808
 Windows proxy settings changed notification sent.
 ```
 

@@ -319,7 +319,7 @@ QJsonObject collectSystemProxyStatus(const DiagnosticsContext& context)
                                                       DiagnosticsRedactionMode::Strict));
     }
     object.insert(QStringLiteral("currentProxyServer"),
-                  QStringLiteral("127.0.0.1:%1").arg(AppSettings::instance().httpPort()));
+                  QStringLiteral("127.0.0.1:%1").arg(AppSettings::instance().mixedPort()));
     return object;
 }
 

@@ -3,8 +3,7 @@
 namespace zarya {
 
 struct InboundPorts {
-    int socksPort = -1;
-    int httpPort = -1;
+    int mixedPort = -1;
 };
 
 class PortAllocator {

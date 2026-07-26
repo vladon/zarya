@@ -798,8 +798,7 @@ bool AppController::startProfileSystemProxyXray(const Profile& profile, bool fro
 
     XrayInboundPorts ports;
     const AppSettings& settings = AppSettings::instance();
-    ports.socksPort = settings.socksPort();
-    ports.httpPort = settings.httpPort();
+    ports.mixedPort = settings.mixedPort();
 
     const ConfigGenerationResult generation =
         m_xrayAdapter->generateConfig(profile, ports, routingProfile, dnsProfile);
@@ -962,7 +961,7 @@ bool AppController::enableSystemProxyManual()
     }
     QString error;
     const auto writeLog = [this](const QString& line) { emit logLine(line); };
-    const bool ok = m_systemProxy->enableLocalHttpProxy(AppSettings::instance().httpPort(),
+    const bool ok = m_systemProxy->enableLocalHttpProxy(AppSettings::instance().mixedPort(),
                                                         writeLog, &error);
     emit proxyStateChanged();
     if (!ok && m_dialogParent) {

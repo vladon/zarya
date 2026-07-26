@@ -19,11 +19,8 @@ public:
     QString xrayExecutablePath() const;
     void setXrayExecutablePath(const QString& path);
 
-    int socksPort() const;
-    void setSocksPort(int port);
-
-    int httpPort() const;
-    void setHttpPort(int port);
+    int mixedPort() const;
+    void setMixedPort(int port);
 
     QString resolvedXrayPath() const;
 

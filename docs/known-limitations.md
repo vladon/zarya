@@ -2,7 +2,7 @@
 
 ## System proxy mode is not VPN mode
 
-Zarya system-proxy mode configures the OS to send application traffic through a local SOCKS/HTTP proxy. It does not create a VPN tunnel and does not route all traffic automatically for every application.
+Zarya system-proxy mode configures the OS to send application traffic through a local mixed SOCKS/HTTP proxy. It does not create a VPN tunnel and does not route all traffic automatically for every application.
 
 ## TUN mode is experimental
 

@@ -49,7 +49,7 @@ Run before tagging `0.26.0-beta`. Use `python scripts/run-smoke-tests.py` for au
 |------|---------|-------|-------|--------|-------|
 | Start valid profile | [ ] | [ ] | [ ] | | |
 | `xray run -test` passes | [ ] | [ ] | [ ] | | |
-| Local HTTP/SOCKS ports up | [ ] | [ ] | [ ] | | |
+| Local mixed proxy port up | [ ] | [ ] | [ ] | | |
 | Stop terminates process | [ ] | [ ] | [ ] | | |
 | Logs do not expose credentials | [ ] | [ ] | [ ] | | |
 

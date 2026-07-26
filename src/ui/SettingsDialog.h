@@ -54,7 +54,7 @@ private slots:
     void updateKillSwitchControls();
     void onManageRoutingProfiles();
     void onManageDnsProfiles();
-    void updateHttpEndpointLabel();
+    void updateProxyEndpointLabel();
     void refreshRoutingCombo();
     void refreshDnsCombo();
     void refreshHelperServiceUi();
@@ -65,11 +65,10 @@ private:
     bool validateAndSave();
 
     QLineEdit* m_xrayPathEdit = nullptr;
-    QSpinBox* m_socksPortSpin = nullptr;
-    QSpinBox* m_httpPortSpin = nullptr;
+    QSpinBox* m_mixedPortSpin = nullptr;
     QCheckBox* m_autoEnableSystemProxyCheck = nullptr;
     QCheckBox* m_restoreProxyOnExitCheck = nullptr;
-    QLabel* m_httpEndpointLabel = nullptr;
+    QLabel* m_proxyEndpointLabel = nullptr;
     QLabel* m_proxyBackendLabel = nullptr;
     QLabel* m_proxySupportLabel = nullptr;
     QLabel* m_proxyLimitationsLabel = nullptr;

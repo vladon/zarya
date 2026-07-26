@@ -22,8 +22,7 @@ struct StatusDashboardModel {
     QString dnsText;
     QString systemProxyText;
     QString coreText;
-    QString httpEndpoint;
-    QString socksEndpoint;
+    QString localEndpoint;
 };
 
 class StatusDashboardWidget : public QWidget {

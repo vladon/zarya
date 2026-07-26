@@ -61,7 +61,7 @@ bool StartupRecovery::apply(const StartupRecoveryPlan& plan, QStringList* logLin
 
         bool restored = proxy.restorePersistedPreviousProxy(logLine, &proxyError);
         if (!restored) {
-            restored = proxy.tryClearZaryaOwnedProxy(AppSettings::instance().httpPort(), logLine,
+            restored = proxy.tryClearZaryaOwnedProxy(AppSettings::instance().mixedPort(), logLine,
                                                      &proxyError);
         }
         if (restored) {

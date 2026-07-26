@@ -5,8 +5,7 @@
 
 namespace zarya {
 
-int DefaultSettings::socksPort() { return 10808; }
-int DefaultSettings::httpPort() { return 10809; }
+int DefaultSettings::mixedPort() { return 10808; }
 int DefaultSettings::tcpTestTimeoutMs() { return 5000; }
 int DefaultSettings::realDelayTimeoutMs() { return 10000; }
 int DefaultSettings::maxConcurrentTests() { return 3; }

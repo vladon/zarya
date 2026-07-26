@@ -130,10 +130,9 @@ void StatusDashboardWidget::showConfigured(const StatusDashboardModel& model)
             m_runtimeBadge->setBadgeText(tr("Running"));
         }
         m_detailLabel->setText(
-            tr("Profile: %1\nLocal HTTP: %2\nLocal SOCKS: %3\nSystem proxy: %4\n"
-               "Routing: %5")
-                .arg(model.profileName, model.httpEndpoint, model.socksEndpoint,
-                     model.systemProxyText, model.routingText));
+            tr("Profile: %1\nLocal proxy: %2\nSystem proxy: %3\nRouting: %4")
+                .arg(model.profileName, model.localEndpoint, model.systemProxyText,
+                     model.routingText));
         m_primaryButton->setText(tr("Stop"));
         m_secondaryButton->setText(tr("Open Logs"));
         m_secondaryButton->disconnect();
