@@ -1,16 +1,14 @@
-# Zarya 1.1.0
+# Zarya 1.2.0
 
-## Stable maintenance release
+## Stable release
 
-1.1.0 adds Hysteria2 support and fixes Core Manager, share-link parsing, and desktop UX issues found after 1.0.0.
+1.2.0 ships a bundled Xray seed for offline first start, simplifies local proxy to a single mixed port, and adds Test URL presets.
 
-- Hysteria2 import (`hysteria2://` / `hy2://`) for Xray and sing-box
-- Core Manager checksum / Update All improvements
-- Shadowsocks SIP002 and Trojan Reality share-link fixes
-- Quieter start/update dialogs; Geo Data Check Status feedback
-- macOS Esc for Ok-only message boxes
+- Bundled pinned Xray (v26.3.27) in release artifacts under `cores/xray/` — no download required on first launch; Core Manager and external paths still work
+- Single local mixed SOCKS5/HTTP inbound (`mixedPort`, default `10808`) instead of separate SOCKS/HTTP ports
+- Test URL presets with Cloudflare as the default latency-test URL
 
-See [docs/release-notes/1.1.0.md](docs/release-notes/1.1.0.md) and [docs/stable/stable-scope.md](docs/stable/stable-scope.md).
+See [docs/release-notes/1.2.0.md](docs/release-notes/1.2.0.md) and [docs/stable/stable-scope.md](docs/stable/stable-scope.md).
 
 ## Recommended path
 
