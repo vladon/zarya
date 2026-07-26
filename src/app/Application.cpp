@@ -7,10 +7,77 @@
 
 #include <QAbstractButton>
 #include <QKeyEvent>
+#include <QKeySequence>
 #include <QMessageBox>
+#include <QPushButton>
 #include <QSystemTrayIcon>
+#include <QTimer>
+
+#if defined(Q_OS_MACOS)
+#include "platform/macos/MacMessageBoxEscape.h"
+#endif
 
 namespace zarya {
+namespace {
+
+QAbstractButton* dismissButtonForMessageBox(QMessageBox* box)
+{
+    if (!box) {
+        return nullptr;
+    }
+    if (QAbstractButton* button = box->escapeButton()) {
+        return button;
+    }
+    if (QAbstractButton* button = box->button(QMessageBox::Cancel)) {
+        return button;
+    }
+    if (QAbstractButton* button = box->button(QMessageBox::Close)) {
+        return button;
+    }
+    if (QAbstractButton* button = box->button(QMessageBox::No)) {
+        return button;
+    }
+    if (QAbstractButton* button = box->button(QMessageBox::Abort)) {
+        return button;
+    }
+
+    const QList<QAbstractButton*> buttons = box->buttons();
+    if (buttons.size() == 1) {
+        return buttons.first();
+    }
+
+    QAbstractButton* rejectOrNo = nullptr;
+    for (QAbstractButton* button : buttons) {
+        const QMessageBox::ButtonRole role = box->buttonRole(button);
+        if (role == QMessageBox::RejectRole || role == QMessageBox::NoRole) {
+            if (rejectOrNo) {
+                return nullptr;
+            }
+            rejectOrNo = button;
+        }
+    }
+    return rejectOrNo;
+}
+
+void focusMessageBoxDismissControl(QMessageBox* box)
+{
+    if (!box) {
+        return;
+    }
+    box->activateWindow();
+    QAbstractButton* button = box->defaultButton();
+    if (!button) {
+        button = dismissButtonForMessageBox(box);
+    }
+    if (!button && !box->buttons().isEmpty()) {
+        button = box->buttons().constFirst();
+    }
+    if (button) {
+        button->setFocus(Qt::OtherFocusReason);
+    }
+}
+
+} // namespace
 
 Application::Application(int& argc, char** argv)
     : QApplication(argc, argv)
@@ -33,7 +100,12 @@ Application::Application(int& argc, char** argv)
         setQuitOnLastWindowClosed(false);
     }
 
-    // Ok-only QMessageBox (information/warning) often has no Escape button on macOS.
+#if defined(Q_OS_MACOS)
+    // Sheets often have no first responder; Esc never becomes a Qt key event.
+    installMacMessageBoxEscapeMonitor();
+#endif
+
+    // Focus + Esc fallback for Ok-only / Cancel message boxes.
     installEventFilter(this);
 }
 
@@ -50,20 +122,32 @@ const StartupOptions& Application::startupOptions() const
 bool Application::eventFilter(QObject* watched, QEvent* event)
 {
     const QEvent::Type type = event->type();
+
+    if (type == QEvent::Show) {
+        if (auto* box = qobject_cast<QMessageBox*>(watched)) {
+            // Defer until the native sheet/window is up so focus sticks on macOS.
+            QTimer::singleShot(0, box, [box]() { focusMessageBoxDismissControl(box); });
+        }
+    }
+
     if (type == QEvent::KeyPress || type == QEvent::ShortcutOverride) {
         auto* keyEvent = static_cast<QKeyEvent*>(event);
-        if (keyEvent->key() == Qt::Key_Escape) {
-            if (auto* box = qobject_cast<QMessageBox*>(activeModalWidget())) {
-                const QList<QAbstractButton*> buttons = box->buttons();
-                // Ok-only info/warning boxes: Esc should always dismiss on macOS.
-                // ShortcutOverride must be accepted or KeyPress may never arrive.
-                if (buttons.size() == 1) {
-                    if (type == QEvent::ShortcutOverride) {
-                        keyEvent->accept();
+        if (keyEvent->key() == Qt::Key_Escape || keyEvent->matches(QKeySequence::Cancel)) {
+            QMessageBox* box = qobject_cast<QMessageBox*>(activeModalWidget());
+            if (!box) {
+                for (QObject* object = watched; object; object = object->parent()) {
+                    box = qobject_cast<QMessageBox*>(object);
+                    if (box) {
+                        break;
                     }
-                    buttons.first()->click();
-                    return true;
                 }
+            }
+            if (QAbstractButton* button = dismissButtonForMessageBox(box)) {
+                if (type == QEvent::ShortcutOverride) {
+                    keyEvent->accept();
+                }
+                button->click();
+                return true;
             }
         }
     }

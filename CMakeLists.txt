@@ -320,7 +320,11 @@ if(WIN32)
     list(APPEND ZARYA_PLATFORM_SOURCES src/platform/windows/WindowsSystemProxyManager.cpp)
     list(APPEND ZARYA_AUTOSTART_SOURCES src/platform/windows/WindowsAutostartManager.cpp)
 elseif(APPLE)
-    list(APPEND ZARYA_PLATFORM_SOURCES src/platform/macos/MacSystemProxyManager.cpp)
+    enable_language(OBJCXX)
+    list(APPEND ZARYA_PLATFORM_SOURCES
+        src/platform/macos/MacSystemProxyManager.cpp
+        src/platform/macos/MacMessageBoxEscape.mm
+    )
     list(APPEND ZARYA_AUTOSTART_SOURCES src/platform/macos/MacAutostartManager.cpp)
 elseif(UNIX)
     list(APPEND ZARYA_PLATFORM_SOURCES
@@ -491,6 +495,7 @@ elseif(APPLE)
         MACOSX_BUNDLE_SHORT_VERSION_STRING ${ZARYA_VERSION_STRING}
         MACOSX_BUNDLE_BUNDLE_VERSION ${ZARYA_VERSION_STRING}
     )
+    target_link_libraries(zarya PRIVATE "-framework AppKit")
 endif()
 
 if(ZARYA_STATIC_QT AND WIN32)
