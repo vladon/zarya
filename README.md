@@ -557,7 +557,7 @@ src/
 
 ## Current limitations
 
-- **Xray**: VLESS, VMess, Trojan, Shadowsocks (see table above); sing-box still stub.
+- **Xray**: VLESS, VMess, Trojan, Shadowsocks, Hysteria2 (see table above); sing-box still stub.
 - **sing-box**: adapter stub only; cannot start.
 - **System proxy**: Windows (full), macOS `networksetup` (full), Linux GNOME `gsettings` (full); KDE partial; no TUN/PAC.
 - **Subscriptions**: no scheduled auto-update; no Clash/sing-box subscription formats.
