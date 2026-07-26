@@ -161,6 +161,50 @@ QVector<GeoDataFileStatus> GeoDataManager::checkAllStatus() const
     return {checkFileStatus(GeoDataKind::GeoIp), checkFileStatus(GeoDataKind::GeoSite)};
 }
 
+void GeoDataManager::checkStatus()
+{
+    if (m_updateThread && m_updateThread->isRunning()) {
+        emit logLine(QStringLiteral("Geo data operation already in progress"));
+        return;
+    }
+
+    emit logLine(QStringLiteral("Checking geo data status…"));
+    emit logLine(QStringLiteral("Xray resource directory: %1").arg(targetDirectory()));
+
+    if (m_updateThread) {
+        m_updateThread->wait();
+        delete m_updateThread;
+        m_updateThread = nullptr;
+    }
+
+    // Hashing geoip/geosite can take seconds; keep the UI responsive.
+    m_updateThread = QThread::create([this]() {
+        const QVector<GeoDataFileStatus> statuses = checkAllStatus();
+        QMetaObject::invokeMethod(
+            this,
+            [this, statuses]() {
+                for (const GeoDataFileStatus& status : statuses) {
+                    QString line = QStringLiteral("%1: %2").arg(
+                        status.fileName, geoDataStatusDisplayString(status.status));
+                    if (status.sizeBytes > 0) {
+                        line += QStringLiteral(" (%1 bytes)").arg(status.sizeBytes);
+                    }
+                    if (!status.error.isEmpty()) {
+                        line += QStringLiteral(" — %1").arg(status.error);
+                    }
+                    emit logLine(line);
+                }
+                emit statusChanged(statuses);
+            },
+            Qt::QueuedConnection);
+    });
+    connect(m_updateThread, &QThread::finished, this, [this]() {
+        m_updateThread->deleteLater();
+        m_updateThread = nullptr;
+    });
+    m_updateThread->start();
+}
+
 bool GeoDataManager::profileNeedsGeoIp(const QStringList& geoTags) const
 {
     for (const QString& tag : geoTags) {
@@ -233,10 +277,7 @@ void GeoDataManager::updateAll()
 
 void GeoDataManager::verifyAll()
 {
-    emit logLine(QStringLiteral("Checking geo data status"));
-    const QVector<GeoDataFileStatus> statuses = checkAllStatus();
-    emit statusChanged(statuses);
-    emit updateFinished(true);
+    checkStatus();
 }
 
 void GeoDataManager::startUpdate(const QVector<GeoDataKind>& kinds)
