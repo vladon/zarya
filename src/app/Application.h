@@ -4,6 +4,9 @@
 
 #include <QApplication>
 
+class QEvent;
+class QObject;
+
 namespace zarya {
 
 class Application : public QApplication {
@@ -15,6 +18,9 @@ public:
     static Application* instance();
 
     const StartupOptions& startupOptions() const;
+
+protected:
+    bool eventFilter(QObject* watched, QEvent* event) override;
 
 private:
     StartupOptions m_startupOptions;
