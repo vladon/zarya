@@ -1,6 +1,6 @@
 # Stable Release Process
 
-1. Update version in `cmake/ZaryaVersion.cmake` (currently 1.2.0).
+1. Update version in `cmake/ZaryaVersion.cmake` (currently 1.3.0).
 2. Build artifacts.
 3. Run package verification.
 4. Run stable regression matrix.
@@ -15,8 +15,8 @@
 
 ```bash
 python scripts/verify-release-artifacts.py \
-  --artifact dist/Zarya-1.2.0-windows-x64-portable.zip \
-  --expected-version 1.2.0 \
+  --artifact dist/Zarya-1.3.0-windows-x64-portable.zip \
+  --expected-version 1.3.0 \
   --release-stable \
   --allow-unsigned
 
