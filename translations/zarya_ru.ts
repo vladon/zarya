@@ -2028,12 +2028,14 @@ Select a profile and press Start, or use a running TUN session.</source>
         <source>Zarya is not configured yet</source>
         <translation>Zarya ещё не настроена</translation></message>
     <message>
-        <source>1. Install Xray core
-2. Add a profile or subscription
-3. Start a profile</source>
-        <translation>1. Установите ядро Xray
-2. Добавьте профиль или подписку
-3. Запустите профиль</translation></message>
+        <source>%1. Install Xray core</source>
+        <translation>%1. Установите ядро Xray</translation></message>
+    <message>
+        <source>%1. Add a profile or subscription</source>
+        <translation>%1. Добавьте профиль или подписку</translation></message>
+    <message>
+        <source>%1. Start a profile</source>
+        <translation>%1. Запустите профиль</translation></message>
     <message>
         <source>Open Core Manager</source>
         <translation>Открыть менеджер ядер</translation></message>

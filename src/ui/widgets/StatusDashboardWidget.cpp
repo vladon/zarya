@@ -4,6 +4,7 @@
 
 #include <QLabel>
 #include <QPushButton>
+#include <QStringList>
 #include <QVBoxLayout>
 
 namespace zarya {
@@ -16,10 +17,8 @@ StatusDashboardWidget::StatusDashboardWidget(QWidget* parent)
     m_unconfiguredPanel = new QWidget(this);
     auto* unconfiguredTitle = new QLabel(tr("Zarya is not configured yet"), m_unconfiguredPanel);
     unconfiguredTitle->setStyleSheet(QStringLiteral("font-weight:bold; font-size:14px;"));
-    auto* unconfiguredSteps = new QLabel(
-        tr("1. Install Xray core\n2. Add a profile or subscription\n3. Start a profile"),
-        m_unconfiguredPanel);
-    unconfiguredSteps->setWordWrap(true);
+    m_unconfiguredStepsLabel = new QLabel(m_unconfiguredPanel);
+    m_unconfiguredStepsLabel->setWordWrap(true);
     auto* coreBtn = new QPushButton(tr("Open Core Manager"), m_unconfiguredPanel);
     auto* profileBtn = new QPushButton(tr("Add Profile"), m_unconfiguredPanel);
     auto* subBtn = new QPushButton(tr("Add Subscription"), m_unconfiguredPanel);
@@ -35,7 +34,7 @@ StatusDashboardWidget::StatusDashboardWidget(QWidget* parent)
     auto* unconfiguredLayout = new QVBoxLayout(m_unconfiguredPanel);
     unconfiguredLayout->setContentsMargins(8, 8, 8, 8);
     unconfiguredLayout->addWidget(unconfiguredTitle);
-    unconfiguredLayout->addWidget(unconfiguredSteps);
+    unconfiguredLayout->addWidget(m_unconfiguredStepsLabel);
     unconfiguredLayout->addWidget(coreBtn);
     unconfiguredLayout->addWidget(pasteBtn);
     unconfiguredLayout->addWidget(profileBtn);
@@ -88,14 +87,25 @@ StatusDashboardWidget::StatusDashboardWidget(QWidget* parent)
 void StatusDashboardWidget::updateModel(const StatusDashboardModel& model)
 {
     if (!model.configured) {
-        showUnconfigured();
+        showUnconfigured(model);
         return;
     }
     showConfigured(model);
 }
 
-void StatusDashboardWidget::showUnconfigured()
+void StatusDashboardWidget::showUnconfigured(const StatusDashboardModel& model)
 {
+    QStringList steps;
+    int step = 1;
+    if (!model.xrayInstalled) {
+        steps << tr("%1. Install Xray core").arg(step++);
+    }
+    if (!model.hasProfiles) {
+        steps << tr("%1. Add a profile or subscription").arg(step++);
+    }
+    steps << tr("%1. Start a profile").arg(step);
+    m_unconfiguredStepsLabel->setText(steps.join(QLatin1Char('\n')));
+
     m_unconfiguredPanel->show();
     m_configuredPanel->hide();
 }

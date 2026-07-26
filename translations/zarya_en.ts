@@ -2570,9 +2570,15 @@ Select a profile and press Start, or use a running TUN session.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>1. Install Xray core
-2. Add a profile or subscription
-3. Start a profile</source>
+        <source>%1. Install Xray core</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1. Add a profile or subscription</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1. Start a profile</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
