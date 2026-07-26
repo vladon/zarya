@@ -218,12 +218,9 @@ void CoreManagerDialog::onLogLine(const QString& line)
 void CoreManagerDialog::onOperationFinished(bool ok, const QString& message)
 {
     setBusy(false);
-    if (!message.isEmpty()) {
-        if (ok) {
-            QMessageBox::information(this, tr("Core Manager"), message);
-        } else {
-            QMessageBox::warning(this, tr("Core Manager"), message);
-        }
+    if (!ok && !message.isEmpty()) {
+        // Success is already visible in the log and table; avoid a blocking popup.
+        QMessageBox::warning(this, tr("Core Manager"), message);
     }
     m_manager.refreshLocalState();
 }
