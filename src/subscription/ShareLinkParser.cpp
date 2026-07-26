@@ -28,7 +28,7 @@ QByteArray decodeBase64Flexible(const QString& input)
     return QByteArray::fromBase64(normalized.toUtf8());
 }
 
-void applyVlessQueryParam(Profile& profile, const QString& key, const QString& value)
+void applyShareLinkQueryParam(Profile& profile, const QString& key, const QString& value)
 {
     const QString decoded = decodeComponent(value);
     if (key == QStringLiteral("type")) {
@@ -56,6 +56,10 @@ void applyVlessQueryParam(Profile& profile, const QString& key, const QString& v
         profile.path = decoded;
     } else if (key == QStringLiteral("headerType")) {
         profile.headerType = decoded;
+    } else if (key == QStringLiteral("allowinsecure") || key == QStringLiteral("allowInsecure")) {
+        profile.allowInsecure =
+            decoded.compare(QStringLiteral("1")) == 0
+            || decoded.compare(QStringLiteral("true"), Qt::CaseInsensitive) == 0;
     }
 }
 
@@ -96,7 +100,7 @@ ShareLinkParseResult parseVless(const QString& link)
 
     const QUrlQuery query(url);
     for (const QPair<QString, QString>& item : query.queryItems()) {
-        applyVlessQueryParam(profile, item.first.toLower(), item.second);
+        applyShareLinkQueryParam(profile, item.first.toLower(), item.second);
     }
 
     QString name = decodeComponent(url.fragment());
@@ -195,35 +199,16 @@ ShareLinkParseResult parseTrojan(const QString& link)
     }
 
     const QUrlQuery query(url);
-    profile.security = query.queryItemValue(QStringLiteral("security"));
+    for (const QPair<QString, QString>& item : query.queryItems()) {
+        applyShareLinkQueryParam(profile, item.first.toLower(), item.second);
+    }
+
+    if (profile.security.isEmpty() && !profile.publicKey.isEmpty()) {
+        profile.security = QStringLiteral("reality");
+    }
     if (profile.security.isEmpty() && profile.port == 443) {
         profile.security = QStringLiteral("tls");
     }
-    const QString sni = query.queryItemValue(QStringLiteral("sni"));
-    if (!sni.isEmpty()) {
-        profile.serverName = sni;
-        profile.sni = sni;
-    }
-    const QString network = query.queryItemValue(QStringLiteral("type"));
-    if (!network.isEmpty()) {
-        profile.network = network;
-    }
-    const QString path = query.queryItemValue(QStringLiteral("path"));
-    if (!path.isEmpty()) {
-        profile.path = path;
-    }
-    const QString host = query.queryItemValue(QStringLiteral("host"));
-    if (!host.isEmpty()) {
-        profile.host = host;
-    }
-    const QString fp = query.queryItemValue(QStringLiteral("fp"));
-    if (!fp.isEmpty()) {
-        profile.fingerprint = fp;
-    }
-    profile.allowInsecure =
-        query.queryItemValue(QStringLiteral("allowInsecure")).compare(QStringLiteral("1")) == 0
-        || query.queryItemValue(QStringLiteral("allowInsecure"))
-               .compare(QStringLiteral("true"), Qt::CaseInsensitive) == 0;
 
     QString name = decodeComponent(url.fragment());
     profile.name = name.isEmpty()
