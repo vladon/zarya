@@ -196,8 +196,7 @@ ConfigGenerationResult XrayAdapter::generateConfig(const Profile& profile) const
 {
     XrayInboundPorts ports;
     const AppSettings& settings = AppSettings::instance();
-    ports.socksPort = settings.socksPort();
-    ports.httpPort = settings.httpPort();
+    ports.mixedPort = settings.mixedPort();
     return generateConfigInternal(profile, ports, nullptr, nullptr);
 }
 

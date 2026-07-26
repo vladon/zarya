@@ -801,8 +801,7 @@ void MainWindow::updateStatusDashboard()
         m_systemProxy.enabledByZarya() ? QStringLiteral("On") : QStringLiteral("Off");
     model.coreText = xray.exists ? QStringLiteral("Xray %1").arg(xray.installedVersion) : QStringLiteral("missing");
     const AppSettings& settings = AppSettings::instance();
-    model.httpEndpoint = QStringLiteral("127.0.0.1:%1").arg(settings.httpPort());
-    model.socksEndpoint = QStringLiteral("127.0.0.1:%1").arg(settings.socksPort());
+    model.localEndpoint = QStringLiteral("127.0.0.1:%1").arg(settings.mixedPort());
 
     Profile* selected = selectedProfileInStorage();
     if (!selected && !m_allProfiles.isEmpty()) {
@@ -1154,9 +1153,7 @@ void MainWindow::updateStatusBar()
                  systemProxyStatusText(), routingStatusText(), dnsStatusText(), trayStatusText());
 
     if (m_coreManager.isRunning()) {
-        message += QStringLiteral(" | SOCKS 127.0.0.1:%1 | HTTP 127.0.0.1:%2")
-                       .arg(settings.socksPort())
-                       .arg(settings.httpPort());
+        message += QStringLiteral(" | Proxy 127.0.0.1:%1").arg(settings.mixedPort());
         m_startAction->setEnabled(false);
         m_stopAction->setEnabled(true);
     } else {
@@ -1338,7 +1335,7 @@ void MainWindow::tryAutoEnableSystemProxy(bool fromAutostart)
 
     QString error;
     const auto logLine = [this](const QString& line) { appendLog(line); };
-    if (!m_systemProxy.enableLocalHttpProxy(settings.httpPort(), logLine, &error)) {
+    if (!m_systemProxy.enableLocalHttpProxy(settings.mixedPort(), logLine, &error)) {
         QMessageBox::warning(this, QStringLiteral("System proxy"),
                              QStringLiteral("Failed to enable system proxy:\n%1").arg(error));
     }
@@ -2155,7 +2152,7 @@ void MainWindow::onEnableSystemProxy()
     const AppSettings& settings = AppSettings::instance();
     QString error;
     const auto logLine = [this](const QString& line) { appendLog(line); };
-    if (!m_systemProxy.enableLocalHttpProxy(settings.httpPort(), logLine, &error)) {
+    if (!m_systemProxy.enableLocalHttpProxy(settings.mixedPort(), logLine, &error)) {
         QMessageBox::warning(this, tr("System proxy"),
                              tr("Failed to enable system proxy:\n%1").arg(error));
     }
@@ -2178,8 +2175,7 @@ void MainWindow::onCoreStarted(const QString& coreName)
 {
     const AppSettings& settings = AppSettings::instance();
     appendLog(QStringLiteral("%1 started").arg(coreName));
-    appendLog(QStringLiteral("SOCKS: 127.0.0.1:%1").arg(settings.socksPort()));
-    appendLog(QStringLiteral("HTTP: 127.0.0.1:%1").arg(settings.httpPort()));
+    appendLog(QStringLiteral("Proxy: 127.0.0.1:%1 (mixed SOCKS/HTTP)").arg(settings.mixedPort()));
     notifyTray(QStringLiteral("Zarya"), QStringLiteral("Proxy core started"));
     updateStatusBar();
 }

@@ -6,8 +6,7 @@
 namespace zarya {
 
 struct XrayInboundPorts {
-    int socksPort = 10808;
-    int httpPort = 10809;
+    int mixedPort = 10808;
 };
 
 class XrayVlessGenerator {

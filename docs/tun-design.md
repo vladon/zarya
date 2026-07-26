@@ -19,7 +19,7 @@ Add optional transparent proxy (TUN) mode to Zarya without breaking the existing
 
 | Mode | Backend | OS proxy | Status |
 |------|---------|----------|--------|
-| System proxy via Xray | `xray run` + local SOCKS/HTTP inbounds | WinINet / networksetup / gsettings | Default, production path |
+| System proxy via Xray | `xray run` + local mixed SOCKS/HTTP inbound | WinINet / networksetup / gsettings | Default, production path |
 | TUN via sing-box (experimental) | `sing-box run` + `tun` inbound | Not used | Opt-in, PoC |
 
 ## Why sing-box for the first TUN backend

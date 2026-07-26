@@ -2151,11 +2151,7 @@ What should happen?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Local SOCKS port</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Local HTTP port</source>
+        <source>Local proxy port</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2639,10 +2635,9 @@ Select a profile and press Start, or use a running TUN session.</source>
     </message>
     <message>
         <source>Profile: %1
-Local HTTP: %2
-Local SOCKS: %3
-System proxy: %4
-Routing: %5</source>
+Local proxy: %2
+System proxy: %3
+Routing: %4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

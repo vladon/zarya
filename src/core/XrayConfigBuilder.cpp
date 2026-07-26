@@ -15,20 +15,14 @@ QJsonObject XrayConfigBuilder::buildFullConfig(const QJsonObject& proxyOutbound,
     blockOutbound.insert(QStringLiteral("tag"), QStringLiteral("block"));
     blockOutbound.insert(QStringLiteral("protocol"), QStringLiteral("blackhole"));
 
-    QJsonObject socksInbound;
-    socksInbound.insert(QStringLiteral("listen"), QStringLiteral("127.0.0.1"));
-    socksInbound.insert(QStringLiteral("port"), ports.socksPort);
-    socksInbound.insert(QStringLiteral("protocol"), QStringLiteral("socks"));
-    socksInbound.insert(QStringLiteral("tag"), QStringLiteral("socks-in"));
-    socksInbound.insert(QStringLiteral("settings"), QJsonObject{
+    QJsonObject mixedInbound;
+    mixedInbound.insert(QStringLiteral("listen"), QStringLiteral("127.0.0.1"));
+    mixedInbound.insert(QStringLiteral("port"), ports.mixedPort);
+    mixedInbound.insert(QStringLiteral("protocol"), QStringLiteral("mixed"));
+    mixedInbound.insert(QStringLiteral("tag"), QStringLiteral("mixed-in"));
+    mixedInbound.insert(QStringLiteral("settings"), QJsonObject{
         {QStringLiteral("udp"), true},
     });
-
-    QJsonObject httpInbound;
-    httpInbound.insert(QStringLiteral("listen"), QStringLiteral("127.0.0.1"));
-    httpInbound.insert(QStringLiteral("port"), ports.httpPort);
-    httpInbound.insert(QStringLiteral("protocol"), QStringLiteral("http"));
-    httpInbound.insert(QStringLiteral("tag"), QStringLiteral("http-in"));
 
     QJsonObject defaultRule;
     defaultRule.insert(QStringLiteral("type"), QStringLiteral("field"));
@@ -39,7 +33,7 @@ QJsonObject XrayConfigBuilder::buildFullConfig(const QJsonObject& proxyOutbound,
     config.insert(QStringLiteral("log"), QJsonObject{
         {QStringLiteral("loglevel"), QStringLiteral("warning")},
     });
-    config.insert(QStringLiteral("inbounds"), QJsonArray{socksInbound, httpInbound});
+    config.insert(QStringLiteral("inbounds"), QJsonArray{mixedInbound});
     config.insert(QStringLiteral("outbounds"),
                   QJsonArray{proxyOutbound, directOutbound, blockOutbound});
     config.insert(QStringLiteral("routing"), QJsonObject{

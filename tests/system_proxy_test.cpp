@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
     }
     ok &= pass("Read current proxy state");
 
-    if (!manager->applyHttpProxy(QStringLiteral("127.0.0.1"), 10809, &error)) {
+    if (!manager->applyHttpProxy(QStringLiteral("127.0.0.1"), 10808, &error)) {
         ok &= fail(error.toUtf8().constData());
     } else {
         ok &= pass("Apply local HTTP proxy");
@@ -60,7 +60,7 @@ int main(int argc, char* argv[])
     if (!during.proxyEnabled) {
         ok &= fail("ProxyEnable not set after apply");
     }
-    if (!during.proxyServer.contains(QStringLiteral("127.0.0.1:10809"))) {
+    if (!during.proxyServer.contains(QStringLiteral("127.0.0.1:10808"))) {
         ok &= fail("ProxyServer does not contain expected endpoint");
     } else {
         ok &= pass("ProxyServer set to local HTTP inbound");

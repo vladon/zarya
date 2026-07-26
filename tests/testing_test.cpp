@@ -42,7 +42,7 @@ int runAll()
     pass("allocate free local port");
 
     const InboundPorts ports = PortAllocator::allocateInboundPorts();
-    if (ports.socksPort <= 0 || ports.httpPort <= 0 || ports.socksPort == ports.httpPort) {
+    if (ports.mixedPort <= 0) {
         return fail("allocate inbound ports");
     }
     pass("allocate inbound ports");

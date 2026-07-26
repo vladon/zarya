@@ -1691,11 +1691,8 @@ What should happen?</source>
         <source>Xray executable</source>
         <translation>Исполняемый файл Xray</translation></message>
     <message>
-        <source>Local SOCKS port</source>
-        <translation>Локальный порт SOCKS</translation></message>
-    <message>
-        <source>Local HTTP port</source>
-        <translation>Локальный порт HTTP</translation></message>
+        <source>Local proxy port</source>
+        <translation>Локальный порт прокси</translation></message>
     <message>
         <source>Cores</source>
         <translation>Ядра</translation></message>
@@ -2080,15 +2077,13 @@ Select a profile and press Start, or use a running TUN session.</source>
         <translation>Работает</translation></message>
     <message>
         <source>Profile: %1
-Local HTTP: %2
-Local SOCKS: %3
-System proxy: %4
-Routing: %5</source>
+Local proxy: %2
+System proxy: %3
+Routing: %4</source>
         <translation>Профиль: %1
-Локальный HTTP: %2
-Локальный SOCKS: %3
-Системный прокси: %4
-Маршрутизация: %5</translation></message>
+Локальный прокси: %2
+Системный прокси: %3
+Маршрутизация: %4</translation></message>
     <message>
         <source>Open Logs</source>
         <translation>Открыть журналы</translation></message>

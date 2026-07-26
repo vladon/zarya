@@ -7,8 +7,7 @@ namespace zarya {
 
 class DefaultSettings {
 public:
-    static int socksPort();
-    static int httpPort();
+    static int mixedPort();
     static int tcpTestTimeoutMs();
     static int realDelayTimeoutMs();
     static int maxConcurrentTests();

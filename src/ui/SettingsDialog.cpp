@@ -95,18 +95,14 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     pathRow->addWidget(m_xrayPathEdit);
     pathRow->addWidget(browseButton);
 
-    m_socksPortSpin = new QSpinBox(this);
-    m_socksPortSpin->setRange(1, 65535);
-    m_socksPortSpin->setValue(settings.socksPort());
+    m_mixedPortSpin = new QSpinBox(this);
+    m_mixedPortSpin->setRange(1, 65535);
+    m_mixedPortSpin->setValue(settings.mixedPort());
+    connect(m_mixedPortSpin, qOverload<int>(&QSpinBox::valueChanged), this,
+            &SettingsDialog::updateProxyEndpointLabel);
 
-    m_httpPortSpin = new QSpinBox(this);
-    m_httpPortSpin->setRange(1, 65535);
-    m_httpPortSpin->setValue(settings.httpPort());
-    connect(m_httpPortSpin, qOverload<int>(&QSpinBox::valueChanged), this,
-            &SettingsDialog::updateHttpEndpointLabel);
-
-    m_httpEndpointLabel = new QLabel(this);
-    updateHttpEndpointLabel();
+    m_proxyEndpointLabel = new QLabel(this);
+    updateProxyEndpointLabel();
 
     m_autoEnableSystemProxyCheck =
         new QCheckBox(tr("Enable system proxy when profile starts"), this);
@@ -226,8 +222,7 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
 
     auto* coreForm = new QFormLayout;
     coreForm->addRow(tr("Xray executable"), pathRow);
-    coreForm->addRow(tr("Local SOCKS port"), m_socksPortSpin);
-    coreForm->addRow(tr("Local HTTP port"), m_httpPortSpin);
+    coreForm->addRow(tr("Local proxy port"), m_mixedPortSpin);
 
     auto* coreGroup = new QGroupBox(tr("Cores"), this);
     coreGroup->setLayout(coreForm);
@@ -236,7 +231,7 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     proxyForm->addRow(tr("Backend"), m_proxyBackendLabel);
     proxyForm->addRow(tr("Support level"), m_proxySupportLabel);
     proxyForm->addRow(tr("Limitations"), m_proxyLimitationsLabel);
-    proxyForm->addRow(tr("System proxy endpoint"), m_httpEndpointLabel);
+    proxyForm->addRow(tr("System proxy endpoint"), m_proxyEndpointLabel);
 #if defined(Q_OS_LINUX)
     proxyForm->addRow(tr("Desktop"), m_linuxDesktopLabel);
 #endif
@@ -875,10 +870,10 @@ void SettingsDialog::onBrowseXray()
     }
 }
 
-void SettingsDialog::updateHttpEndpointLabel()
+void SettingsDialog::updateProxyEndpointLabel()
 {
-    m_httpEndpointLabel->setText(
-        QStringLiteral("127.0.0.1:%1").arg(m_httpPortSpin->value()));
+    m_proxyEndpointLabel->setText(
+        QStringLiteral("127.0.0.1:%1").arg(m_mixedPortSpin->value()));
 }
 
 void SettingsDialog::refreshRoutingCombo()
@@ -954,8 +949,7 @@ bool SettingsDialog::validateAndSave()
 
     AppSettings& settings = AppSettings::instance();
     settings.setXrayExecutablePath(m_xrayPathEdit->text().trimmed());
-    settings.setSocksPort(m_socksPortSpin->value());
-    settings.setHttpPort(m_httpPortSpin->value());
+    settings.setMixedPort(m_mixedPortSpin->value());
     settings.setAutoEnableSystemProxyOnStart(m_autoEnableSystemProxyCheck->isChecked());
     settings.setRestoreProxyOnExit(m_restoreProxyOnExitCheck->isChecked());
 #if defined(Q_OS_MACOS)

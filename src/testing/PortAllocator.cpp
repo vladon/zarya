@@ -19,8 +19,7 @@ int PortAllocator::allocateFreeLocalPort()
 InboundPorts PortAllocator::allocateInboundPorts()
 {
     InboundPorts ports;
-    ports.socksPort = allocateFreeLocalPort();
-    ports.httpPort = allocateFreeLocalPort();
+    ports.mixedPort = allocateFreeLocalPort();
     return ports;
 }
 

@@ -48,26 +48,24 @@ void AppSettings::setXrayExecutablePath(const QString& path)
     settings().setValue(QStringLiteral("cores/xrayPath"), path.trimmed());
 }
 
-int AppSettings::socksPort() const
+int AppSettings::mixedPort() const
 {
-    const int port = settings().value(QStringLiteral("proxy/socksPort"), 10808).toInt();
+    QSettings& s = settings();
+    int port = 10808;
+    if (s.contains(QStringLiteral("proxy/mixedPort"))) {
+        port = s.value(QStringLiteral("proxy/mixedPort")).toInt();
+    } else if (s.contains(QStringLiteral("proxy/socksPort"))) {
+        port = s.value(QStringLiteral("proxy/socksPort")).toInt();
+    }
     return port >= 1 && port <= 65535 ? port : 10808;
 }
 
-void AppSettings::setSocksPort(int port)
+void AppSettings::setMixedPort(int port)
 {
-    settings().setValue(QStringLiteral("proxy/socksPort"), port);
-}
-
-int AppSettings::httpPort() const
-{
-    const int port = settings().value(QStringLiteral("proxy/httpPort"), 10809).toInt();
-    return port >= 1 && port <= 65535 ? port : 10809;
-}
-
-void AppSettings::setHttpPort(int port)
-{
-    settings().setValue(QStringLiteral("proxy/httpPort"), port);
+    QSettings& s = settings();
+    s.setValue(QStringLiteral("proxy/mixedPort"), port);
+    s.remove(QStringLiteral("proxy/socksPort"));
+    s.remove(QStringLiteral("proxy/httpPort"));
 }
 
 QString AppSettings::resolvedXrayPath() const

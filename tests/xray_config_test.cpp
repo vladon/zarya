@@ -96,6 +96,15 @@ int main(int argc, char* argv[])
         ok &= fail(generated.errorMessage.toUtf8().constData());
     } else {
         ok &= pass("Sample REALITY profile generates config");
+        const QJsonArray inbounds = generated.config.value(QStringLiteral("inbounds")).toArray();
+        if (inbounds.size() != 1
+            || inbounds.first().toObject().value(QStringLiteral("protocol")).toString()
+                   != QStringLiteral("mixed")
+            || inbounds.first().toObject().value(QStringLiteral("port")).toInt() != 10808) {
+            ok &= fail("Config should expose a single mixed inbound on port 10808");
+        } else {
+            ok &= pass("Config uses a single mixed inbound");
+        }
     }
 
     const QJsonObject proxyOutbound = firstProxyOutbound(generated.config);
@@ -309,8 +318,7 @@ int main(int argc, char* argv[])
         }
 
         zarya::XrayInboundPorts ports;
-        ports.socksPort = 10808;
-        ports.httpPort = 10809;
+        ports.mixedPort = 10808;
         const auto routedConfig = adapter.generateConfig(vmessSample, ports, bypassLan);
         if (!routedConfig.success) {
             ok &= fail("Config with routing profile failed to generate");
@@ -356,8 +364,7 @@ int main(int argc, char* argv[])
         }
 
         zarya::XrayInboundPorts ports;
-        ports.socksPort = 10808;
-        ports.httpPort = 10809;
+        ports.mixedPort = 10808;
         const auto dnsConfig = adapter.generateConfig(
             vmessSample, ports, zarya::RoutingProfile::builtInProxyAll(), secureRemoteDns);
         if (!dnsConfig.success) {

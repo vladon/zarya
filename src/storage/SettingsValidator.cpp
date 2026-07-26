@@ -17,8 +17,7 @@ void clampPort(AppSettings& settings, int (AppSettings::*getter)() const,
 {
     const int value = (settings.*getter)();
     if (value < 1 || value > 65535) {
-        (settings.*setter)(label.contains(QStringLiteral("HTTP")) ? DefaultSettings::httpPort()
-                                                                    : DefaultSettings::socksPort());
+        (settings.*setter)(DefaultSettings::mixedPort());
         result->autoFixed.append(QStringLiteral("%1 port was %2; reset to default.").arg(label).arg(value));
     }
 }
@@ -30,15 +29,8 @@ SettingsValidationResult SettingsValidator::validateAndFixOnStartup()
     SettingsValidationResult result;
     AppSettings& settings = AppSettings::instance();
 
-    clampPort(settings, &AppSettings::socksPort, &AppSettings::setSocksPort,
-              QStringLiteral("SOCKS"), &result);
-    clampPort(settings, &AppSettings::httpPort, &AppSettings::setHttpPort, QStringLiteral("HTTP"),
-              &result);
-
-    if (settings.socksPort() == settings.httpPort()) {
-        settings.setHttpPort(DefaultSettings::httpPort());
-        result.autoFixed.append(QStringLiteral("HTTP and SOCKS ports were equal; HTTP reset."));
-    }
+    clampPort(settings, &AppSettings::mixedPort, &AppSettings::setMixedPort,
+              QStringLiteral("Mixed"), &result);
 
     const int maxTests = settings.maxConcurrentTests();
     if (maxTests < 1 || maxTests > 10) {
