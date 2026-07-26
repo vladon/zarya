@@ -1,15 +1,16 @@
-# Zarya 1.0.0
+# Zarya 1.1.0
 
-## First stable release
+## Stable maintenance release
 
-1.0 is the first stable release of Zarya's Xray system-proxy desktop client.
+1.1.0 adds Hysteria2 support and fixes Core Manager, share-link parsing, and desktop UX issues found after 1.0.0.
 
-- Experimental features (TUN, helper, kill switch) are **disabled by default**
-- Portable ZIP remains the recommended artifact
-- App update check/download/verify works; **install is disabled by default**
-- Windows MSI remains a PoC (non-default)
+- Hysteria2 import (`hysteria2://` / `hy2://`) for Xray and sing-box
+- Core Manager checksum / Update All improvements
+- Shadowsocks SIP002 and Trojan Reality share-link fixes
+- Quieter start/update dialogs; Geo Data Check Status feedback
+- macOS Esc for Ok-only message boxes
 
-See [docs/release-notes/1.0.0.md](docs/release-notes/1.0.0.md) and [docs/stable/stable-scope.md](docs/stable/stable-scope.md).
+See [docs/release-notes/1.1.0.md](docs/release-notes/1.1.0.md) and [docs/stable/stable-scope.md](docs/stable/stable-scope.md).
 
 ## Recommended path
 

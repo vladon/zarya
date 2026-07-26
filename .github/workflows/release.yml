@@ -12,6 +12,12 @@ jobs:
       SIGNING_ENABLED: ${{ secrets.SIGNING_ENABLED }}
     steps:
       - uses: actions/checkout@v4
+      - name: Read version
+        id: ver
+        shell: bash
+        run: |
+          VERSION=$(python -c "import sys; sys.path.insert(0, 'scripts'); from release_common import read_cmake_version; print(read_cmake_version()['version'])")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
@@ -26,7 +32,7 @@ jobs:
       - name: Package (unsigned by default)
         run: .\scripts\package-windows.ps1 -Configuration Release -OutputDir dist -SkipBuild -SkipSigning
       - name: Verify release artifact
-        run: python scripts/verify-release-artifacts.py --artifact dist/Zarya-1.0.0-windows-x64-portable.zip --expected-version 1.0.0 --stable-release --require-checksum --allow-unsigned
+        run: python scripts/verify-release-artifacts.py --artifact dist/Zarya-${{ steps.ver.outputs.version }}-windows-x64-portable.zip --expected-version ${{ steps.ver.outputs.version }} --stable-release --require-checksum --allow-unsigned
       - name: Sign release (optional)
         if: env.SIGNING_ENABLED == 'true'
         env:

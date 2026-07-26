@@ -11,6 +11,12 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Read version
+        id: ver
+        shell: bash
+        run: |
+          VERSION=$(python -c "import sys; sys.path.insert(0, 'scripts'); from release_common import read_cmake_version; print(read_cmake_version()['version'])")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
@@ -29,12 +35,17 @@ jobs:
       - name: Package (unsigned)
         run: .\scripts\package-windows.ps1 -Configuration Release -OutputDir dist -SkipBuild -SkipSigning
       - name: Verify release artifact
-        run: python scripts/verify-release-artifacts.py --artifact dist/Zarya-1.0.0-windows-x64-portable.zip --expected-version 1.0.0 --stable-release --require-checksum --allow-unsigned
+        run: python scripts/verify-release-artifacts.py --artifact dist/Zarya-${{ steps.ver.outputs.version }}-windows-x64-portable.zip --expected-version ${{ steps.ver.outputs.version }} --stable-release --require-checksum --allow-unsigned
 
   build-ubuntu:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Read version
+        id: ver
+        run: |
+          VERSION=$(python3 -c "import sys; sys.path.insert(0, 'scripts'); from release_common import read_cmake_version; print(read_cmake_version()['version'])")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       - name: Install Qt
         run: sudo apt-get update && sudo apt-get install -y qt6-base-dev cmake build-essential xvfb
       - name: Check translations
@@ -50,19 +61,24 @@ jobs:
         run: ./scripts/package-linux.sh --skip-build --skip-signing
       - name: Verify release artifact
         if: github.ref == 'refs/heads/main'
-        run: python3 scripts/verify-release-artifacts.py --artifact dist/Zarya-1.0.0-linux-x64.tar.gz --expected-version 1.0.0 --stable-release --require-checksum --allow-unsigned
+        run: python3 scripts/verify-release-artifacts.py --artifact dist/Zarya-${{ steps.ver.outputs.version }}-linux-x64.tar.gz --expected-version ${{ steps.ver.outputs.version }} --stable-release --require-checksum --allow-unsigned
       - name: Upload release artifacts
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: zarya-linux-x64
-          path: dist/Zarya-1.0.0-linux-x64.*
+          path: dist/Zarya-${{ steps.ver.outputs.version }}-linux-x64.*
           if-no-files-found: error
 
   build-macos:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Read version
+        id: ver
+        run: |
+          VERSION=$(python3 -c "import sys; sys.path.insert(0, 'scripts'); from release_common import read_cmake_version; print(read_cmake_version()['version'])")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       - name: Install Qt
         run: brew install qt@6 cmake
       - name: Check translations
@@ -78,11 +94,11 @@ jobs:
         run: ./scripts/package-macos.sh --skip-build --skip-signing
       - name: Verify release artifact
         if: github.ref == 'refs/heads/main'
-        run: python3 scripts/verify-release-artifacts.py --artifact dist/Zarya-1.0.0-macos-arm64.zip --expected-version 1.0.0 --stable-release --require-checksum --allow-unsigned
+        run: python3 scripts/verify-release-artifacts.py --artifact dist/Zarya-${{ steps.ver.outputs.version }}-macos-arm64.zip --expected-version ${{ steps.ver.outputs.version }} --stable-release --require-checksum --allow-unsigned
       - name: Upload release artifacts
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: zarya-macos-arm64
-          path: dist/Zarya-1.0.0-macos-arm64.*
+          path: dist/Zarya-${{ steps.ver.outputs.version }}-macos-arm64.*
           if-no-files-found: error
