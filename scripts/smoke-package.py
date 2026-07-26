@@ -81,12 +81,7 @@ def main() -> int:
                 import json
 
                 manifest_data = json.loads(manifest.read_text(encoding="utf-8"))
-                errors.extend(
-                    verify_bundled_xray_manifest(
-                        content if content.is_dir() else staging,
-                        manifest_data,
-                    )
-                )
+                errors.extend(verify_bundled_xray_manifest(staging, manifest_data))
             except json.JSONDecodeError as exc:
                 errors.append(f"release-manifest.json is invalid JSON: {exc}")
 
