@@ -1,5 +1,8 @@
 #pragma once
 
+#include <QString>
+#include <QStringList>
+
 namespace zarya {
 
 class DefaultSettings {
@@ -12,6 +15,11 @@ public:
     static int autoStartDelaySeconds();
     static int githubApiTimeoutSeconds();
     static int coreBackupRetentionCount();
+
+    /// Default real-delay probe URL (Cloudflare trace endpoint).
+    static QString testUrl();
+    /// Built-in presets offered in Settings (first entry matches testUrl()).
+    static QStringList testUrlPresets();
 
     static bool autoEnableSystemProxyOnStart();
     static bool restoreProxyOnExit();

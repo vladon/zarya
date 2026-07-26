@@ -14,6 +14,22 @@ int DefaultSettings::autoStartDelaySeconds() { return 3; }
 int DefaultSettings::githubApiTimeoutSeconds() { return 20; }
 int DefaultSettings::coreBackupRetentionCount() { return 2; }
 
+QString DefaultSettings::testUrl()
+{
+    return QStringLiteral("https://www.cloudflare.com/cdn-cgi/trace");
+}
+
+QStringList DefaultSettings::testUrlPresets()
+{
+    return {
+        testUrl(),
+        QStringLiteral("https://cp.cloudflare.com/generate_204"),
+        QStringLiteral("https://www.gstatic.com/generate_204"),
+        QStringLiteral("https://www.google.com/generate_204"),
+        QStringLiteral("https://detectportal.firefox.com/success.txt"),
+    };
+}
+
 bool DefaultSettings::autoEnableSystemProxyOnStart()
 {
     return AppSettings::defaultAutoEnableSystemProxyOnStart();
