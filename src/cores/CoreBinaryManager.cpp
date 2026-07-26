@@ -347,12 +347,55 @@ void CoreBinaryManager::continueDownload(CoreType type, const CoreRelease& relea
         return;
     }
 
+    std::optional<QString> expectedSha256;
     const auto checksumAssetName = CoreChecksum::findChecksumAssetName(allAssets, asset.name);
-    if (!checksumAssetName.has_value()) {
+    if (checksumAssetName.has_value()) {
+        CoreAsset checksumAsset;
+        for (const CoreAsset& candidate : allAssets) {
+            if (candidate.name == *checksumAssetName) {
+                checksumAsset = candidate;
+                break;
+            }
+        }
+
+        const QString checksumPath =
+            QDir(CorePaths::coreUpdatesDownloadsDir()).filePath(checksumAsset.name);
+        emit logLine(QStringLiteral("Downloading checksum"));
+        CoreDownloader checksumDownloader;
+        QString checksumError;
+        const bool checksumOk = checksumDownloader.downloadToFile(
+            checksumAsset.downloadUrl, checksumPath, userAgent(),
+            AppSettings::instance().githubApiTimeoutSeconds() * 1000, &checksumError);
+
+        if (!checksumOk) {
+            emit operationFinished(false, checksumError);
+            refreshLocalState();
+            return;
+        }
+
+        QFile checksumFile(checksumPath);
+        if (!checksumFile.open(QIODevice::ReadOnly)) {
+            emit operationFinished(false, checksumFile.errorString());
+            refreshLocalState();
+            return;
+        }
+        expectedSha256 = CoreChecksum::parseExpectedSha256(checksumFile.readAll(), asset.name);
+        if (!expectedSha256.has_value()) {
+            emit operationFinished(false, QStringLiteral("Could not parse checksum file."));
+            refreshLocalState();
+            return;
+        }
+    } else if (!asset.sha256.isEmpty()) {
+        // GitHub Releases API digest (used by sing-box and others with no sidecar file).
+        expectedSha256 = asset.sha256;
+        emit logLine(QStringLiteral("Using GitHub release asset digest"));
+    }
+
+    if (!expectedSha256.has_value()) {
         if (!allowMissingChecksum
             && !AppSettings::instance().allowCoreUpdateWithoutChecksum()) {
             emit operationFinished(
-                false, QStringLiteral("Checksum file was not found for this asset. Enable "
+                false, QStringLiteral("Checksum was not found for this asset. Enable "
                                       "allow-without-checksum in settings or retry later."));
             refreshLocalState();
             return;
@@ -363,39 +406,8 @@ void CoreBinaryManager::continueDownload(CoreType type, const CoreRelease& relea
         return;
     }
 
-    CoreAsset checksumAsset;
-    for (const CoreAsset& candidate : allAssets) {
-        if (candidate.name == *checksumAssetName) {
-            checksumAsset = candidate;
-            break;
-        }
-    }
-
-    const QString checksumPath = QDir(CorePaths::coreUpdatesDownloadsDir()).filePath(checksumAsset.name);
-    emit logLine(QStringLiteral("Downloading checksum"));
-    CoreDownloader checksumDownloader;
-    QString checksumError;
-    const bool checksumOk = checksumDownloader.downloadToFile(
-        checksumAsset.downloadUrl, checksumPath, userAgent(),
-        AppSettings::instance().githubApiTimeoutSeconds() * 1000, &checksumError);
-
-    if (!checksumOk) {
-        emit operationFinished(false, checksumError);
-        refreshLocalState();
-        return;
-    }
-
-    QFile checksumFile(checksumPath);
-    checksumFile.open(QIODevice::ReadOnly);
-    const auto expected = CoreChecksum::parseExpectedSha256(checksumFile.readAll(), asset.name);
-    if (!expected.has_value()) {
-        emit operationFinished(false, QStringLiteral("Could not parse checksum file."));
-        refreshLocalState();
-        return;
-    }
-
     QString verifyError;
-    if (!CoreChecksum::verifyFileSha256(archivePath, *expected, &verifyError)) {
+    if (!CoreChecksum::verifyFileSha256(archivePath, *expectedSha256, &verifyError)) {
         emit operationFinished(false, verifyError);
         refreshLocalState();
         return;

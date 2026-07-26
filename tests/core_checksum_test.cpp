@@ -64,6 +64,17 @@ int main(int argc, char* argv[])
         return fail("parseExpectedSha256 failed for SHA256SUMS-style line");
     }
 
+    const auto digest = zarya::CoreChecksum::parseGitHubDigest(QStringLiteral(
+        "sha256:73e8967b0fc08e17bce4263ca56ebc394822401a16497a1c4e02316c888202ab"));
+    if (!digest.has_value()
+        || *digest
+            != QStringLiteral("73e8967b0fc08e17bce4263ca56ebc394822401a16497a1c4e02316c888202ab")) {
+        return fail("parseGitHubDigest failed for sha256 digest");
+    }
+    if (zarya::CoreChecksum::parseGitHubDigest(QStringLiteral("md5:deadbeef")).has_value()) {
+        return fail("parseGitHubDigest should reject non-sha256 digests");
+    }
+
     std::printf("core_checksum_test OK\n");
     return 0;
 }

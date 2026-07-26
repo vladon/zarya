@@ -31,6 +31,8 @@ When a companion checksum asset is found (`.sha256`, `.dgst`, `SHA256SUMS`, etc.
 
 Xray releases publish openssl digests as `<archive>.dgst` (including `SHA2-256=`). Zarya accepts those sidecars and parses the SHA-256 line.
 
+If no sidecar exists, Zarya uses the GitHub Releases API `digest` field (`sha256:…`) when present (sing-box and most modern GitHub assets).
+
 If no checksum is available:
 
 - Default: install is **blocked**

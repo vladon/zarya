@@ -1,5 +1,6 @@
 #include "cores/GitHubReleaseProvider.h"
 
+#include "cores/CoreChecksum.h"
 #include "packaging/PackagingInfo.h"
 
 #include <QEventLoop>
@@ -87,6 +88,10 @@ void GitHubReleaseProvider::fetchLatestRelease(int timeoutMs)
         asset.name = assetObject.value(QStringLiteral("name")).toString();
         asset.downloadUrl = QUrl(assetObject.value(QStringLiteral("browser_download_url")).toString());
         asset.sizeBytes = assetObject.value(QStringLiteral("size")).toDouble();
+        if (const auto digest =
+                CoreChecksum::parseGitHubDigest(assetObject.value(QStringLiteral("digest")).toString())) {
+            asset.sha256 = *digest;
+        }
         release.assets.append(asset);
     }
 
