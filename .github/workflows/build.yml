@@ -20,9 +20,26 @@ jobs:
           VERSION=$(python -c "import sys; sys.path.insert(0, 'scripts'); from release_common import read_cmake_version; print(read_cmake_version()['version'])")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       - name: Install OpenSSL
-        uses: shogo82148/actions-setup-openssl@v1
-        with:
-          version: "3.4.1"
+        shell: pwsh
+        run: |
+          choco install openssl -y --no-progress
+          $roots = @(
+            'C:\Program Files\OpenSSL-Win64',
+            'C:\Program Files\OpenSSL',
+            'C:\OpenSSL-Win64'
+          )
+          $found = $null
+          foreach ($r in $roots) {
+            if (Test-Path "$r\include\openssl\ssl.h") {
+              $found = $r
+              "OPENSSL_ROOT_DIR=$r" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+              Write-Host "OPENSSL_ROOT_DIR=$r"
+              break
+            }
+          }
+          if (-not $found) {
+            throw 'OpenSSL headers not found after choco install'
+          }
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
@@ -64,6 +81,7 @@ jobs:
           sudo apt-get install -y \
             qt6-base-dev qt6-svg-dev qt6-tools-dev \
             libssl-dev zlib1g-dev libjpeg-dev libgl1-mesa-dev \
+            libglib2.0-dev libglib2.0-bin libdbus-1-dev libxkbcommon-dev \
             cmake build-essential xvfb
       - name: Check translations
         run: python scripts/check-translations.py

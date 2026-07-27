@@ -4,8 +4,12 @@ set(ZARYA_DESKTOP_APP_UI ON CACHE BOOL "Link desktop-app lib_ui (required; GPLv3
 
 message(STATUS "Linking Desktop App Toolkit (lib_ui) — GPLv3+ binary")
 
-# lz4 and other bundled deps ship .c sources.
+# lz4 and other bundled deps ship .c sources; macOS toolkit uses ObjC++ (.mm).
 enable_language(C)
+if(APPLE)
+    enable_language(OBJC)
+    enable_language(OBJCXX)
+endif()
 
 set(DESKTOP_APP_SPECIAL_TARGET "" CACHE STRING "" FORCE)
 set(DESKTOP_APP_USE_PACKAGED ON CACHE BOOL "" FORCE)
