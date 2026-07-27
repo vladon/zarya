@@ -95,6 +95,23 @@ Profile sampleHysteria2Profile()
     return profile;
 }
 
+Profile sampleWireGuardProfile()
+{
+    Profile profile;
+    profile.protocol = ProtocolType::WireGuard;
+    profile.coreType = CoreType::Xray;
+    profile.name = QStringLiteral("WireGuard");
+    profile.address = QStringLiteral("wg.example.com");
+    profile.port = 51820;
+    profile.password = QStringLiteral("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
+    profile.publicKey = QStringLiteral("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=");
+    profile.localAddress = QStringLiteral("10.0.0.2/32");
+    profile.mtu = 1420;
+    profile.network = QStringLiteral("udp");
+    profile.enabled = true;
+    return profile;
+}
+
 QJsonObject sampleVlessRealityProxyOutbound()
 {
     QString error;

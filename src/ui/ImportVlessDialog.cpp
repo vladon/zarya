@@ -18,7 +18,8 @@ ImportVlessDialog::ImportVlessDialog(QWidget* parent)
 
     m_linksEdit = new QPlainTextEdit(this);
     m_linksEdit->setPlaceholderText(
-        tr("Paste one vless://, vmess://, trojan://, or ss:// link per line…"));
+        tr("Paste one vless://, vmess://, trojan://, ss://, hysteria2://, or wireguard:// "
+           "link per line…"));
     m_linksEdit->setMinimumHeight(160);
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);

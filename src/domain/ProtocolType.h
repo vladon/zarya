@@ -11,6 +11,7 @@ enum class ProtocolType {
     Shadowsocks,
     Socks,
     Hysteria2,
+    WireGuard,
 };
 
 QString protocolTypeToString(ProtocolType type);

@@ -20,6 +20,10 @@ FORBIDDEN_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("vmess:// link", re.compile(r"vmess://", re.IGNORECASE)),
     ("trojan:// link", re.compile(r"trojan://", re.IGNORECASE)),
     ("ss:// link", re.compile(r"ss://", re.IGNORECASE)),
+    ("hysteria2:// link", re.compile(r"hysteria2://", re.IGNORECASE)),
+    ("hy2:// link", re.compile(r"hy2://", re.IGNORECASE)),
+    ("wireguard:// link", re.compile(r"wireguard://", re.IGNORECASE)),
+    ("wg:// link", re.compile(r"wg://", re.IGNORECASE)),
     ("helper.token secret", re.compile(r"helper\.token\s*=\s*[^\s<]+", re.IGNORECASE)),
     (
         "runtime token",

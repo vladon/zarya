@@ -28,6 +28,8 @@ QString TranslatableEnums::trProtocolType(ProtocolType type)
         return QStringLiteral("SOCKS");
     case ProtocolType::Hysteria2:
         return QStringLiteral("Hysteria2");
+    case ProtocolType::WireGuard:
+        return QStringLiteral("WireGuard");
     }
     return trEnum("Unknown");
 }

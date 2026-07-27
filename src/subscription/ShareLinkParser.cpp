@@ -68,6 +68,37 @@ void applyShareLinkQueryParam(Profile& profile, const QString& key, const QStrin
             profile.password = decoded;
             profile.uuidPassword = decoded;
         }
+    } else if (key == QStringLiteral("publickey") || key == QStringLiteral("peerpublickey")) {
+        profile.publicKey = decoded;
+    } else if (key == QStringLiteral("address") || key == QStringLiteral("localaddress")
+               || key == QStringLiteral("ip")) {
+        // WireGuard local interface address(es); do not overwrite server host.
+        if (profile.protocol == ProtocolType::WireGuard) {
+            profile.localAddress = decoded;
+        }
+    } else if (key == QStringLiteral("mtu")) {
+        bool ok = false;
+        const int mtu = decoded.toInt(&ok);
+        if (ok && mtu > 0) {
+            profile.mtu = mtu;
+        }
+    } else if (key == QStringLiteral("reserved")) {
+        profile.reserved = decoded;
+    } else if (key == QStringLiteral("presharedkey") || key == QStringLiteral("psk")) {
+        profile.preSharedKey = decoded;
+    } else if (key == QStringLiteral("allowedips") || key == QStringLiteral("allowedip")) {
+        profile.allowedIps = decoded;
+    } else if (key == QStringLiteral("keepalive") || key == QStringLiteral("persistentkeepalive")) {
+        bool ok = false;
+        const int keepAlive = decoded.toInt(&ok);
+        if (ok && keepAlive >= 0) {
+            profile.keepAlive = keepAlive;
+        }
+    } else if (key == QStringLiteral("privatekey") || key == QStringLiteral("secretkey")) {
+        if (profile.password.isEmpty()) {
+            profile.password = decoded;
+            profile.uuidPassword = decoded;
+        }
     } else if (key == QStringLiteral("allowinsecure") || key == QStringLiteral("insecure")) {
         profile.allowInsecure =
             decoded.compare(QStringLiteral("1")) == 0
@@ -435,6 +466,56 @@ ShareLinkParseResult parseHysteria2(const QString& link)
     return result;
 }
 
+ShareLinkParseResult parseWireGuard(const QString& link)
+{
+    ShareLinkParseResult result;
+    const QUrl url = QUrl(link);
+    const QString scheme = url.scheme().toLower();
+    if (!url.isValid()
+        || (scheme != QStringLiteral("wireguard") && scheme != QStringLiteral("wg"))) {
+        result.error = QStringLiteral("Invalid wireguard URL.");
+        return result;
+    }
+
+    Profile profile = baseImportedProfile(ProtocolType::WireGuard);
+    profile.network = QStringLiteral("udp");
+    const QString privateKey = decodeComponent(url.userName());
+    if (!privateKey.isEmpty()) {
+        profile.password = privateKey;
+        profile.uuidPassword = privateKey;
+    }
+    profile.address = url.host(QUrl::FullyDecoded);
+    profile.port = url.port(51820);
+
+    if (profile.address.isEmpty() || profile.port < 1 || profile.port > 65535) {
+        result.error = QStringLiteral("Invalid host or port in wireguard link.");
+        return result;
+    }
+
+    const QUrlQuery query(url);
+    for (const QPair<QString, QString>& item : query.queryItems()) {
+        applyShareLinkQueryParam(profile, item.first.toLower(), item.second);
+    }
+
+    if (profile.password.isEmpty()) {
+        result.error = QStringLiteral("Incomplete wireguard link (missing private key).");
+        return result;
+    }
+    if (profile.publicKey.trimmed().isEmpty()) {
+        result.error = QStringLiteral("Incomplete wireguard link (missing peer public key).");
+        return result;
+    }
+
+    QString name = decodeComponent(url.fragment());
+    profile.name = name.isEmpty()
+                       ? QStringLiteral("%1:%2").arg(profile.address).arg(profile.port)
+                       : name;
+
+    result.profile = profile;
+    result.ok = true;
+    return result;
+}
+
 } // namespace
 
 bool ShareLinkParser::isSupportedScheme(const QString& link)
@@ -446,7 +527,9 @@ bool ShareLinkParser::isSupportedScheme(const QString& link)
            || trimmed.startsWith(QStringLiteral("ss://"), Qt::CaseInsensitive)
            || trimmed.startsWith(QStringLiteral("socks://"), Qt::CaseInsensitive)
            || trimmed.startsWith(QStringLiteral("hysteria2://"), Qt::CaseInsensitive)
-           || trimmed.startsWith(QStringLiteral("hy2://"), Qt::CaseInsensitive);
+           || trimmed.startsWith(QStringLiteral("hy2://"), Qt::CaseInsensitive)
+           || trimmed.startsWith(QStringLiteral("wireguard://"), Qt::CaseInsensitive)
+           || trimmed.startsWith(QStringLiteral("wg://"), Qt::CaseInsensitive);
 }
 
 ShareLinkParseResult ShareLinkParser::parse(const QString& link)
@@ -473,6 +556,10 @@ ShareLinkParseResult ShareLinkParser::parse(const QString& link)
     if (trimmed.startsWith(QStringLiteral("hysteria2://"), Qt::CaseInsensitive)
         || trimmed.startsWith(QStringLiteral("hy2://"), Qt::CaseInsensitive)) {
         return parseHysteria2(trimmed);
+    }
+    if (trimmed.startsWith(QStringLiteral("wireguard://"), Qt::CaseInsensitive)
+        || trimmed.startsWith(QStringLiteral("wg://"), Qt::CaseInsensitive)) {
+        return parseWireGuard(trimmed);
     }
 
     result.error = QStringLiteral("Unsupported share link scheme.");

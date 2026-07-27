@@ -15,6 +15,7 @@ struct ProfileImportStats {
     int trojan = 0;
     int shadowsocks = 0;
     int hysteria2 = 0;
+    int wireguard = 0;
     int unsupported = 0;
     int totalImported = 0;
 };

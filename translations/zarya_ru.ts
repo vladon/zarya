@@ -747,8 +747,8 @@ sing-box: %3 (%4)</translation></message>
         <source>Import share links</source>
         <translation>Импорт ссылок</translation></message>
     <message>
-        <source>Paste one vless://, vmess://, trojan://, or ss:// link per line…</source>
-        <translation>Вставьте по одной ссылке vless://, vmess://, trojan:// или ss:// в строке…</translation></message>
+        <source>Paste one vless://, vmess://, trojan://, ss://, hysteria2://, or wireguard:// link per line…</source>
+        <translation>Вставьте по одной ссылке vless://, vmess://, trojan://, ss://, hysteria2:// или wireguard:// в строке…</translation></message>
     <message>
         <source>Import</source>
         <translation>Импорт</translation></message>
@@ -1154,6 +1154,21 @@ Native proxy profile manager with system tray, Xray multi-protocol support, Wind
     <message>
         <source>Password</source>
         <translation>Пароль</translation></message>
+    <message>
+        <source>Private key</source>
+        <translation>Приватный ключ</translation></message>
+    <message>
+        <source>Peer public key</source>
+        <translation>Публичный ключ пира</translation></message>
+    <message>
+        <source>Local address</source>
+        <translation>Локальный адрес</translation></message>
+    <message>
+        <source>MTU</source>
+        <translation>MTU</translation></message>
+    <message>
+        <source>Default</source>
+        <translation>По умолчанию</translation></message>
     <message>
         <source>VLESS encryption</source>
         <translation>Шифрование VLESS</translation></message>

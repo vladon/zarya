@@ -66,6 +66,16 @@ QJsonObject profileToJson(const Profile& profile)
     insertIfNotEmpty(object, QStringLiteral("alpn"), profile.alpn);
     insertIfNotEmpty(object, QStringLiteral("obfs"), profile.obfs);
     insertIfNotEmpty(object, QStringLiteral("obfsPassword"), profile.obfsPassword);
+    insertIfNotEmpty(object, QStringLiteral("localAddress"), profile.localAddress);
+    insertIfNotEmpty(object, QStringLiteral("allowedIps"), profile.allowedIps);
+    insertIfNotEmpty(object, QStringLiteral("preSharedKey"), profile.preSharedKey);
+    insertIfNotEmpty(object, QStringLiteral("reserved"), profile.reserved);
+    if (profile.mtu > 0) {
+        object.insert(QStringLiteral("mtu"), profile.mtu);
+    }
+    if (profile.keepAlive > 0) {
+        object.insert(QStringLiteral("keepAlive"), profile.keepAlive);
+    }
     insertIfNotEmpty(object, QStringLiteral("unsupportedReason"), profile.unsupportedReason);
 
     object.insert(QStringLiteral("sourceType"), profileSourceTypeToString(profile.sourceType));
@@ -150,6 +160,12 @@ Profile profileFromJson(const QJsonObject& object)
     if (profile.obfsPassword.isEmpty()) {
         profile.obfsPassword = object.value(QStringLiteral("obfs-password")).toString();
     }
+    profile.localAddress = object.value(QStringLiteral("localAddress")).toString();
+    profile.allowedIps = object.value(QStringLiteral("allowedIps")).toString();
+    profile.preSharedKey = object.value(QStringLiteral("preSharedKey")).toString();
+    profile.reserved = object.value(QStringLiteral("reserved")).toString();
+    profile.mtu = object.value(QStringLiteral("mtu")).toInt(0);
+    profile.keepAlive = object.value(QStringLiteral("keepAlive")).toInt(0);
     profile.unsupportedReason = object.value(QStringLiteral("unsupportedReason")).toString();
 
     profile.sourceType = profileSourceTypeFromString(object.value(QStringLiteral("sourceType")).toString());

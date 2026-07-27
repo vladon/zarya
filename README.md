@@ -209,7 +209,7 @@ Add subscription URLs under **Subscriptions → Manage**. Zarya downloads the li
 
 - Plain UTF-8 text — one share link per line
 - Base64-encoded text of the same link list
-- Share links: `vless://`, `vmess://`, `trojan://`, `ss://`
+- Share links: `vless://`, `vmess://`, `trojan://`, `ss://`, `hysteria2://`/`hy2://`, `wireguard://`/`wg://`
 
 **Unsupported:** Clash YAML, sing-box JSON subscriptions, provider metadata blocks.
 
@@ -220,7 +220,7 @@ Add subscription URLs under **Subscriptions → Manage**. Zarya downloads the li
 - Nodes removed from the remote list are marked `[missing]` (soft-delete), not erased
 - Failed updates keep existing profiles unchanged
 
-**Runnable through Xray** (when fields are complete): VLESS (REALITY/TLS/none), VMess (TCP/WS + TLS), Trojan (TCP/WS + TLS/Reality), Shadowsocks (no plugin), Hysteria2 (TLS). Profiles with unsupported features (e.g. SS plugin) stay in the table with an import note.
+**Runnable through Xray** (when fields are complete): VLESS (REALITY/TLS/none), VMess (TCP/WS + TLS), Trojan (TCP/WS + TLS/Reality), Shadowsocks (no plugin), Hysteria2 (TLS), WireGuard. Profiles with unsupported features (e.g. SS plugin) stay in the table with an import note.
 
 **Local test server:**
 
@@ -501,9 +501,10 @@ Signed builds are optional. See [docs/signing/](docs/signing/).
 | Trojan | tcp, ws | tls, none, reality (tcp) | Password required |
 | Shadowsocks | tcp | — | Method preserved as imported; **no plugin** |
 | Hysteria2 | hysteria (QUIC) | tls | Auth/password; ALPN defaults to `h3` |
+| WireGuard | udp | — | Private key + peer public key; optional local address / MTU / reserved / PSK |
 | SOCKS | — | — | Optional outbound |
 
-**Imported but not runnable yet:** Shadowsocks with `plugin=`, exotic transports (xhttp), Clash YAML providers, WireGuard.
+**Imported but not runnable yet:** Shadowsocks with `plugin=`, exotic transports (xhttp), Clash YAML providers.
 
 ## Usage (0.12)
 
@@ -558,7 +559,7 @@ src/
 
 ## Current limitations
 
-- **Xray**: VLESS, VMess, Trojan, Shadowsocks, Hysteria2 (see table above); sing-box still stub.
+- **Xray**: VLESS, VMess, Trojan, Shadowsocks, Hysteria2, WireGuard (see table above); sing-box still stub.
 - **sing-box**: adapter stub only; cannot start.
 - **System proxy**: Windows (full), macOS `networksetup` (full), Linux GNOME `gsettings` (full); KDE partial; no TUN/PAC.
 - **Subscriptions**: no scheduled auto-update; no Clash/sing-box subscription formats.

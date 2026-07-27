@@ -78,7 +78,7 @@ QString redactPathInternal(const QString& path, DiagnosticsRedactionMode mode, b
 QString redactShareLinks(const QString& text)
 {
     static const QRegularExpression shareLink(
-        QStringLiteral(R"((vless|vmess|trojan|ss)://[^\s"']+)"),
+        QStringLiteral(R"((vless|vmess|trojan|ss|hysteria2|hy2|wireguard|wg)://[^\s"']+)"),
         QRegularExpression::CaseInsensitiveOption);
     QString result = text;
     result.replace(shareLink, kRedactedUrl);
@@ -110,6 +110,7 @@ bool isSensitiveJsonKey(const QString& key)
     const QString lower = key.toLower();
     return lower.contains(QStringLiteral("uuid")) || lower.contains(QStringLiteral("password"))
            || lower.contains(QStringLiteral("publickey")) || lower.contains(QStringLiteral("shortid"))
+           || lower.contains(QStringLiteral("presharedkey")) || lower.contains(QStringLiteral("secretkey"))
            || lower.contains(QStringLiteral("token")) || lower == QStringLiteral("url")
            || lower.contains(QStringLiteral("servername")) || lower == QStringLiteral("sni")
            || lower == QStringLiteral("address") || lower == QStringLiteral("host");

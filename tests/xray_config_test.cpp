@@ -275,6 +275,42 @@ int main(int argc, char* argv[])
         }
     }
 
+    const zarya::Profile wgSample = zarya::testhelpers::sampleWireGuardProfile();
+    if (!adapter.supportsProfile(wgSample)) {
+        ok &= fail("WireGuard profile should be supported");
+    } else {
+        ok &= pass("WireGuard profile is supported");
+    }
+    const auto wgGenerated = adapter.generateConfig(wgSample);
+    if (!wgGenerated.success) {
+        ok &= fail(wgGenerated.errorMessage.toUtf8().constData());
+    } else {
+        const QJsonObject wgOutbound = firstProxyOutbound(wgGenerated.config);
+        if (wgOutbound.value(QStringLiteral("protocol")).toString()
+            != QStringLiteral("wireguard")) {
+            ok &= fail("WireGuard outbound protocol should be wireguard");
+        } else {
+            const QJsonObject settings = wgOutbound.value(QStringLiteral("settings")).toObject();
+            const QJsonArray peers = settings.value(QStringLiteral("peers")).toArray();
+            const QJsonObject peer = peers.isEmpty() ? QJsonObject{} : peers.first().toObject();
+            if (settings.value(QStringLiteral("secretKey")).toString()
+                    != QStringLiteral("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
+                || peer.value(QStringLiteral("publicKey")).toString()
+                    != QStringLiteral("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=")
+                || peer.value(QStringLiteral("endpoint")).toString()
+                    != QStringLiteral("wg.example.com:51820")
+                || !settings.value(QStringLiteral("address"))
+                        .toArray()
+                        .contains(QStringLiteral("10.0.0.2/32"))
+                || settings.value(QStringLiteral("mtu")).toInt() != 1420
+                || settings.value(QStringLiteral("noKernelTun")).toBool() != true) {
+                ok &= fail("WireGuard outbound missing secretKey/peer/address/mtu");
+            } else {
+                ok &= pass("WireGuard generates wireguard outbound");
+            }
+        }
+    }
+
     const QVector<zarya::RoutingProfile> builtInProfiles =
         zarya::RoutingProfile::createBuiltInProfiles();
     zarya::RoutingProfile bypassLan;

@@ -109,6 +109,26 @@ ProfileValidationResult validateHysteria2Dialog(const Profile& profile)
     return {true, {}};
 }
 
+ProfileValidationResult validateWireGuardDialog(const Profile& profile)
+{
+    if (profile.hasUnsupportedFeature()) {
+        return {false, profile.unsupportedReason};
+    }
+    if (profile.effectivePassword().isEmpty()) {
+        return {false, QStringLiteral("Private key is required for WireGuard.")};
+    }
+    if (profile.publicKey.trimmed().isEmpty()) {
+        return {false, QStringLiteral("Peer public key is required for WireGuard.")};
+    }
+    if (profile.mtu < 0) {
+        return {false, QStringLiteral("MTU must be >= 0.")};
+    }
+    if (profile.keepAlive < 0) {
+        return {false, QStringLiteral("Keep-alive must be >= 0.")};
+    }
+    return {true, {}};
+}
+
 } // namespace
 
 ProfileValidationResult validateProfileForDialog(const Profile& profile)
@@ -130,6 +150,8 @@ ProfileValidationResult validateProfileForDialog(const Profile& profile)
         return validateSocksDialog(profile);
     case ProtocolType::Hysteria2:
         return validateHysteria2Dialog(profile);
+    case ProtocolType::WireGuard:
+        return validateWireGuardDialog(profile);
     }
 
     return {true, {}};

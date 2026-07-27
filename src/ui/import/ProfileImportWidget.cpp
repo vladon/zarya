@@ -15,7 +15,8 @@ ProfileImportWidget::ProfileImportWidget(QWidget* parent)
 {
     m_linksEdit = new QPlainTextEdit(this);
     m_linksEdit->setPlaceholderText(
-        QStringLiteral("Paste vless://, vmess://, trojan://, or ss:// links here.\n"
+        QStringLiteral("Paste vless://, vmess://, trojan://, ss://, hysteria2://, or "
+                       "wireguard:// links here.\n"
                        "One link per line."));
     m_linksEdit->setMinimumHeight(140);
 
@@ -88,6 +89,9 @@ void ProfileImportWidget::parseLinks()
         case ProtocolType::Hysteria2:
             ++m_stats.hysteria2;
             break;
+        case ProtocolType::WireGuard:
+            ++m_stats.wireguard;
+            break;
         default:
             break;
         }
@@ -96,12 +100,14 @@ void ProfileImportWidget::parseLinks()
 
     m_statsLabel->setText(
         QStringLiteral(
-            "Parsed: VLESS %1, VMess %2, Trojan %3, Shadowsocks %4, Hysteria2 %5, Unsupported %6")
+            "Parsed: VLESS %1, VMess %2, Trojan %3, Shadowsocks %4, Hysteria2 %5, WireGuard %6, "
+            "Unsupported %7")
             .arg(m_stats.vless)
             .arg(m_stats.vmess)
             .arg(m_stats.trojan)
             .arg(m_stats.shadowsocks)
             .arg(m_stats.hysteria2)
+            .arg(m_stats.wireguard)
             .arg(m_stats.unsupported));
 
     emit parseCompleted(m_stats);
