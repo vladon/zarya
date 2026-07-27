@@ -3,15 +3,24 @@
 #include "storage/AppPaths.h"
 #include "ui/desktopapp/ZaryaBaseIntegration.h"
 
+#include "ui/effects/animations.h"
+#include "ui/main_queue_processor.h"
+#include "ui/style/style_core.h"
+#include "ui/style/style_core_font.h"
+
 #include <QCoreApplication>
 #include <QDir>
 #include <QMetaObject>
+#include <memory>
 
 namespace zarya {
 namespace {
 
 ZaryaBaseIntegration* g_baseIntegration = nullptr;
 ZaryaUiIntegration* g_uiIntegration = nullptr;
+std::unique_ptr<Ui::MainQueueProcessor> g_mainQueueProcessor;
+std::unique_ptr<Ui::Animations::Manager> g_animationsManager;
+bool g_styleStarted = false;
 
 } // namespace
 
@@ -198,6 +207,18 @@ void initDesktopAppUiIntegrations(int argc, char** argv)
     if (!g_uiIntegration) {
         g_uiIntegration = new ZaryaUiIntegration();
         Ui::Integration::Set(g_uiIntegration);
+    }
+    // Required before any RippleButton / FlatLabel animation (Basic::start).
+    if (!g_mainQueueProcessor) {
+        g_mainQueueProcessor = std::make_unique<Ui::MainQueueProcessor>();
+    }
+    if (!g_animationsManager) {
+        g_animationsManager = std::make_unique<Ui::Animations::Manager>();
+    }
+    if (!g_styleStarted) {
+        style::internal::StartFonts();
+        style::StartManager(style::Scale());
+        g_styleStarted = true;
     }
 }
 
