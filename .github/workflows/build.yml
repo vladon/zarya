@@ -47,7 +47,6 @@ jobs:
           host: windows
           target: desktop
           arch: win64_msvc2022_64
-          modules: qtsvg
       - name: Check translations
         run: python scripts/check-translations.py
       - name: Configure
@@ -79,9 +78,10 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            qt6-base-dev qt6-svg-dev qt6-tools-dev \
+            qt6-base-dev qt6-base-private-dev qt6-svg-dev qt6-tools-dev \
             libssl-dev zlib1g-dev libjpeg-dev libgl1-mesa-dev \
             libglib2.0-dev libglib2.0-bin libdbus-1-dev libxkbcommon-dev \
+            gobject-introspection libgirepository1.0-dev \
             cmake build-essential xvfb
       - name: Check translations
         run: python scripts/check-translations.py
@@ -116,14 +116,20 @@ jobs:
         run: |
           VERSION=$(python3 -c "import sys; sys.path.insert(0, 'scripts'); from release_common import read_cmake_version; print(read_cmake_version()['version'])")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-      - name: Install dependencies
-        run: brew install qt@6 cmake openssl@3
+      - name: Install OpenSSL / cmake
+        run: brew install cmake openssl@3
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.8.3"
+          host: mac
+          target: desktop
+          arch: ${{ runner.arch == 'ARM64' && 'clang_arm64' || 'clang_64' }}
       - name: Check translations
         run: python scripts/check-translations.py
       - name: Configure
         run: |
           cmake -S . -B build \
-            -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6)" \
             -DOPENSSL_ROOT_DIR="$(brew --prefix openssl@3)"
       - name: Build
         run: cmake --build build --target zarya zarya_xray_config_test

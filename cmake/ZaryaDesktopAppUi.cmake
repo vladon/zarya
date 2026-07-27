@@ -153,6 +153,9 @@ else()
     set(ZARYA_HAS_QT_SVG OFF)
     message(WARNING "Qt6 Svg not found — codegen_style will use a stub RenderSvg")
 endif()
+# Qt 6.10+ ships GuiPrivate/WidgetsPrivate as separate CMake packages.
+# Older Qt still exposes private headers via *_PRIVATE_INCLUDE_DIRS (see Externals).
+find_package(Qt6 QUIET COMPONENTS GuiPrivate WidgetsPrivate)
 if(QT_VERSION VERSION_GREATER_EQUAL 6.10)
     find_package(Qt6 REQUIRED COMPONENTS GuiPrivate WidgetsPrivate)
 endif()
