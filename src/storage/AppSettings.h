@@ -223,6 +223,9 @@ public:
     QString languageCode() const;
     void setLanguageCode(const QString& code);
 
+    QString themeMode() const;
+    void setThemeMode(const QString& mode);
+
     static bool defaultAutoEnableSystemProxyOnStart();
     static bool defaultMinimizeToTrayOnClose();
 

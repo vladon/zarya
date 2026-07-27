@@ -17,6 +17,8 @@ signals:
     void dismissed();
 
 private:
+    void applyTheme();
+
     QLabel* m_label = nullptr;
 };
 

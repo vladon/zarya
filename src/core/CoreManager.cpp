@@ -1,5 +1,10 @@
 #include "core/CoreManager.h"
 
+#if defined(Q_OS_LINUX)
+#include <signal.h>
+#include <sys/prctl.h>
+#endif
+
 namespace zarya {
 
 CoreManager::CoreManager(QObject* parent)
@@ -13,6 +18,12 @@ CoreManager::CoreManager(QObject* parent)
     });
     connect(&m_process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this,
             &CoreManager::onProcessFinished);
+
+#if defined(Q_OS_LINUX)
+    m_process.setChildProcessModifier([]() {
+        ::prctl(PR_SET_PDEATHSIG, SIGTERM);
+    });
+#endif
 }
 
 bool CoreManager::isRunning() const
@@ -37,6 +48,11 @@ QString CoreManager::runProcess(const QString& coreExecutablePath,
     QProcess process;
     process.setProgram(coreExecutablePath);
     process.setArguments(arguments);
+#if defined(Q_OS_LINUX)
+    process.setChildProcessModifier([]() {
+        ::prctl(PR_SET_PDEATHSIG, SIGTERM);
+    });
+#endif
     process.start();
 
     if (!process.waitForStarted(5000)) {
@@ -122,6 +138,17 @@ void CoreManager::startCore(const QString& coreExecutablePath, const QString& co
     start(coreExecutablePath, coreDisplayName, arguments);
 }
 
+void CoreManager::attachKillOnCloseJob()
+{
+    m_killOnCloseJob.reset();
+    const qint64 pid = m_process.processId();
+    if (!m_killOnCloseJob.attach(pid)) {
+        emit logLine(QStringLiteral(
+            "Warning: could not attach core process to kill-on-close job; "
+            "force-killing Zarya may leave the core running."));
+    }
+}
+
 void CoreManager::start(const QString& coreExecutablePath, const QString& coreDisplayName,
                         const QStringList& arguments)
 {
@@ -130,6 +157,7 @@ void CoreManager::start(const QString& coreExecutablePath, const QString& coreDi
         return;
     }
 
+    m_killOnCloseJob.reset();
     m_runningCoreName = coreDisplayName;
     m_process.setProgram(coreExecutablePath);
     m_process.setArguments(arguments);
@@ -147,12 +175,14 @@ void CoreManager::start(const QString& coreExecutablePath, const QString& coreDi
         return;
     }
 
+    attachKillOnCloseJob();
     emit started(coreDisplayName);
 }
 
 void CoreManager::stop()
 {
     if (!isRunning()) {
+        m_killOnCloseJob.reset();
         return;
     }
 
@@ -161,6 +191,7 @@ void CoreManager::stop()
         m_process.kill();
         m_process.waitForFinished(kStopTimeoutMs);
     }
+    m_killOnCloseJob.reset();
 }
 
 void CoreManager::appendProcessOutput(const QByteArray& data, bool isStdErr)
@@ -179,6 +210,7 @@ void CoreManager::appendProcessOutput(const QByteArray& data, bool isStdErr)
 void CoreManager::onProcessFinished(int exitCode, QProcess::ExitStatus status)
 {
     Q_UNUSED(status);
+    m_killOnCloseJob.reset();
     m_lastExitCode = exitCode;
     if (!m_runningCoreName.isEmpty()) {
         emit logLine(QStringLiteral("Core process exited (code %1).").arg(exitCode));

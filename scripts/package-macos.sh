@@ -250,7 +250,7 @@ PY
 
 
 
-for file in README.md LICENSE THIRD_PARTY_NOTICES.md RELEASE_NOTES.md; do
+for file in README.md LICENSE LICENSE.MIT LICENSE.GPL-3.0 COPYING THIRD_PARTY_NOTICES.md RELEASE_NOTES.md; do
 
   if [[ -f "$ROOT/$file" ]]; then
 

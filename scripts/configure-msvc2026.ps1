@@ -1,8 +1,10 @@
 # Configure Zarya with Visual Studio 2026 (MSVC) and Qt.
 # Use -Static for a fully static Release binary (requires scripts/build-qt-static-msvc2026.ps1).
+# Use -DesktopAppUi to link desktop-app/lib_ui (GPLv3+ official toolkit path).
 param(
     [switch]$Static,
-    [switch]$Force
+    [switch]$Force,
+    [switch]$DesktopAppUi
 )
 
 $ErrorActionPreference = "Stop"
@@ -50,8 +52,11 @@ try {
             $gen = (Select-String -Path $cache -Pattern "^CMAKE_GENERATOR:" | ForEach-Object { $_.Line -replace '^CMAKE_GENERATOR:INTERNAL=', '' })
             $wasStatic = Select-String -Path $cache -Pattern "^ZARYA_STATIC_QT:BOOL=ON" -Quiet
             $wantStatic = [bool]$Static
+            $wasDesktopUi = Select-String -Path $cache -Pattern "^ZARYA_DESKTOP_APP_UI:BOOL=ON" -Quiet
+            $wantDesktopUi = [bool]$DesktopAppUi
             if ($gen -and $gen -notmatch "Visual Studio 18 2026") { $remove = $true }
             if ($wasStatic -ne $wantStatic) { $remove = $true }
+            if ($wasDesktopUi -ne $wantDesktopUi) { $remove = $true }
         }
         if ($remove -and (Test-Path $BuildDir)) {
             Write-Host "Removing build tree for reconfigure..."
@@ -66,12 +71,21 @@ try {
         "-DCMAKE_PREFIX_PATH=$QtMsvc"
     )
     if ($StaticFlag) { $cmakeArgs += $StaticFlag }
+    if ($DesktopAppUi) {
+        $cmakeArgs += "-DZARYA_DESKTOP_APP_UI=ON"
+        if (Test-Path "C:\Program Files\OpenSSL-Win64") {
+            $cmakeArgs += "-DOPENSSL_ROOT_DIR=C:/Program Files/OpenSSL-Win64"
+        } elseif (Test-Path (Join-Path $RepoRoot "third_party\desktop-app\openssl-win64")) {
+            $cmakeArgs += "-DOPENSSL_ROOT_DIR=$RepoRoot/third_party/desktop-app/openssl-win64"
+        }
+    }
 
     cmake @cmakeArgs
 
     Write-Host ""
     $mode = if ($Static) { "static Qt (/MT)" } else { "shared Qt" }
-    Write-Host "Configured: Visual Studio 2026 + $mode"
+    $ui = if ($DesktopAppUi) { " + Desktop App UI (GPLv3+)" } else { "" }
+    Write-Host "Configured: Visual Studio 2026 + $mode$ui"
     Write-Host "Qt path:   $QtMsvc"
     Write-Host "Build app:  cmake --build build --config $Config --target zarya"
     Write-Host "Run app:    .\build\$Config\zarya.exe"

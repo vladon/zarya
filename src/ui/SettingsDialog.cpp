@@ -27,6 +27,8 @@
 #include "storage/AppSettings.h"
 #include "ui/DnsManagerDialog.h"
 #include "ui/RoutingManagerDialog.h"
+#include "ui/theme/ThemeManager.h"
+#include "ui/theme/ThemeMode.h"
 
 #if defined(Q_OS_LINUX)
 #include "platform/linux/LinuxSystemProxyManager.h"
@@ -82,8 +84,23 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
         m_languageCombo->setCurrentIndex(langIndex);
     }
 
+    m_themeCombo = new QComboBox(this);
+    m_themeCombo->addItem(tr("System"), themeModeToString(ThemeMode::System));
+    m_themeCombo->addItem(tr("Light"), themeModeToString(ThemeMode::Light));
+    m_themeCombo->addItem(tr("Dark"), themeModeToString(ThemeMode::Dark));
+    const int themeIndex =
+        m_themeCombo->findData(themeModeToString(ThemeManager::instance().mode()));
+    if (themeIndex >= 0) {
+        m_themeCombo->setCurrentIndex(themeIndex);
+    }
+    connect(m_themeCombo, &QComboBox::currentIndexChanged, this, [this](int) {
+        const QString mode = m_themeCombo->currentData().toString();
+        ThemeManager::instance().setMode(themeModeFromString(mode));
+    });
+
     auto* generalForm = new QFormLayout;
     generalForm->addRow(tr("Language"), m_languageCombo);
+    generalForm->addRow(tr("Theme"), m_themeCombo);
     auto* generalGroup = new QGroupBox(tr("General"), this);
     generalGroup->setLayout(generalForm);
 
@@ -945,6 +962,11 @@ bool SettingsDialog::validateAndSave()
             return false;
         }
         languageChanged = true;
+    }
+
+    const ThemeMode selectedTheme = themeModeFromString(m_themeCombo->currentData().toString());
+    if (selectedTheme != ThemeManager::instance().mode()) {
+        ThemeManager::instance().setMode(selectedTheme);
     }
 
     AppSettings& settings = AppSettings::instance();

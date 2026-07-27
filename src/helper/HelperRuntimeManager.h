@@ -1,6 +1,7 @@
 #pragma once
 
 #include "helper/HelperPathPolicy.h"
+#include "platform/KillOnCloseProcessJob.h"
 
 #include <QDateTime>
 #include <QObject>
@@ -38,6 +39,7 @@ private:
 
     const HelperPathPolicy* m_pathPolicy = nullptr;
     QProcess m_process;
+    KillOnCloseProcessJob m_killOnCloseJob;
     QString m_configPath;
     QDateTime m_startedAt;
 };

@@ -25,6 +25,11 @@ zarya_apply_qt_prefix_path()
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Network)
 include(ZaryaQt)
 
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ZaryaDesktopAppUi.cmake)
+if(NOT DEFINED ZARYA_DESKTOP_APP_UI_SOURCES)
+    set(ZARYA_DESKTOP_APP_UI_SOURCES)
+endif()
+
 zarya_detect_static_qt(_zarya_qt_is_static)
 if(_zarya_qt_is_static AND NOT ZARYA_STATIC_QT)
     message(STATUS "Static Qt detected at CMAKE_PREFIX_PATH; enabling ZARYA_STATIC_QT")
@@ -304,6 +309,8 @@ set(ZARYA_PLATFORM_SOURCES
     src/platform/Platform.cpp
     src/platform/PlatformPrivilege.cpp
     src/platform/PlatformProcessUtils.cpp
+    src/platform/KillOnCloseProcessJob.cpp
+    src/platform/ManagedCoreOrphanCleanup.cpp
     src/platform/SystemProxyManagerFactory.cpp
     src/platform/SystemProxyController.cpp
     src/platform/SystemProxyStateStore.cpp
@@ -376,6 +383,8 @@ set(ZARYA_SOURCES
     src/ui/import/ProfileImportWidget.cpp
     src/ui/widgets/StatusBadge.cpp
     src/ui/widgets/StatusDashboardWidget.cpp
+    src/ui/theme/ThemeTokens.cpp
+    src/ui/theme/ThemeManager.cpp
     src/ui/DnsManagerDialog.cpp
     src/ui/DnsProfileDialog.cpp
     src/ui/DnsServerEditorDialog.cpp
@@ -471,13 +480,17 @@ set(ZARYA_HEADERS
     src/domain/ProfileValidation.h
 )
 
-add_executable(zarya ${ZARYA_SOURCES} ${ZARYA_HEADERS})
+add_executable(zarya ${ZARYA_SOURCES} ${ZARYA_HEADERS} ${ZARYA_DESKTOP_APP_UI_SOURCES})
 
 target_include_directories(zarya PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${ZARYA_GENERATED_DIR})
 
 target_compile_definitions(zarya PRIVATE ZARYA_VERSION_STRING="${ZARYA_VERSION_STRING}")
 if(ZARYA_PROJECT_ISSUES_URL)
     target_compile_definitions(zarya PRIVATE ZARYA_PROJECT_ISSUES_URL="${ZARYA_PROJECT_ISSUES_URL}")
+endif()
+if(ZARYA_DESKTOP_APP_UI)
+    target_compile_definitions(zarya PRIVATE ZARYA_DESKTOP_APP_UI=1)
+    target_link_libraries(zarya PRIVATE ${ZARYA_DESKTOP_APP_UI_LIBS})
 endif()
 
 zarya_link_qt_widgets_app(zarya)
@@ -518,6 +531,7 @@ set(ZARYA_HELPER_SOURCES
     src/helper/HelperRuntimeManager.cpp
     src/helper/HelperAuth.cpp
     src/helper/HelperPathPolicy.cpp
+    src/platform/KillOnCloseProcessJob.cpp
     ${ZARYA_IPC_SOURCES}
     src/runtime/singbox/SingBoxTunSupportChecker.cpp
     src/platform/PlatformPrivilege.cpp
@@ -610,6 +624,7 @@ add_executable(zarya_xray_config_test
     src/packaging/WindowsInstallInfo.cpp
     src/diagnostics/DiagnosticsRedactor.cpp
     src/platform/Platform.cpp
+    src/platform/KillOnCloseProcessJob.cpp
     src/import/VlessUriParser.cpp
     src/subscription/ShareLinkParser.cpp
     src/subscription/SubscriptionParser.cpp

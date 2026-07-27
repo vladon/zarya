@@ -26,6 +26,8 @@ public:
 
 private:
     void applyStyle(StatusBadgeKind kind);
+
+    StatusBadgeKind m_kind = StatusBadgeKind::Neutral;
 };
 
 } // namespace zarya

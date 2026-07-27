@@ -42,6 +42,9 @@ Zarya-<version>-windows-x64-portable/
   release-manifest.json
   README.md
   LICENSE
+  LICENSE.MIT
+  LICENSE.GPL-3.0
+  COPYING
   THIRD_PARTY_NOTICES.md
   RELEASE_NOTES.md
 ```
@@ -123,7 +126,7 @@ Checks:
 
 - artifact extracts
 - executables and translations exist
-- `LICENSE` and `release-manifest.json` exist
+- `LICENSE` (and companion `LICENSE.MIT` / `LICENSE.GPL-3.0` / `COPYING`) and `release-manifest.json` exist
 - forbidden user/runtime files are absent
 - `--version` works on the current OS
 

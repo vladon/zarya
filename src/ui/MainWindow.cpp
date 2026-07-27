@@ -20,6 +20,7 @@
 #include "diagnostics/SupportSummary.h"
 #include "recovery/StartupRecovery.h"
 #include "storage/SettingsValidator.h"
+#include "platform/SystemProxyStateStore.h"
 #include "ui/BetaBannerWidget.h"
 #include "ui/onboarding/FirstRunState.h"
 #include "ui/onboarding/FirstRunWizard.h"
@@ -45,6 +46,10 @@
 #include "ui/RoutingManagerDialog.h"
 #include "ui/SettingsDialog.h"
 #include "ui/AppUpdateDialog.h"
+#include "ui/theme/ThemeManager.h"
+#if defined(ZARYA_DESKTOP_APP_UI)
+#include "ui/desktopapp/LibUiSpikeDialog.h"
+#endif
 #include "updater/AppUpdateChecker.h"
 #include "updater/AppUpdateStateManager.h"
 #include "features/FeatureGate.h"
@@ -77,6 +82,7 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QProgressDialog>
 #include <QPushButton>
 #include <QPlainTextEdit>
 #include <QSplitter>
@@ -84,6 +90,7 @@
 #include <QTableView>
 #include <QToolBar>
 #include <QDateTime>
+#include <QEventLoop>
 
 namespace zarya {
 
@@ -125,7 +132,6 @@ MainWindow::MainWindow(QWidget* parent)
     appendLog(QStringLiteral("Active routing profile: %1")
                   .arg(m_routingManager.activeProfile().name));
     checkGeoDataOnStartup();
-    runStartupRecovery();
     appendLog(QStringLiteral("Subscriptions: %1").arg(m_subscriptionStore.filePath()));
     appendLog(QStringLiteral("Xray path: %1").arg(AppSettings::instance().resolvedXrayPath()));
     if (!m_systemProxy.isSupported()) {
@@ -156,8 +162,18 @@ void MainWindow::setupUi()
     m_emptyStateLabel = new QLabel(this);
     m_emptyStateLabel->setWordWrap(true);
     m_emptyStateLabel->setAlignment(Qt::AlignCenter);
-    m_emptyStateLabel->setStyleSheet(QStringLiteral("padding:12px; color:#555;"));
     m_emptyStateLabel->hide();
+    const auto applyEmptyStateTheme = [this]() {
+        if (!m_emptyStateLabel) {
+            return;
+        }
+        const ThemeTokens tokens = ThemeManager::instance().tokens();
+        m_emptyStateLabel->setStyleSheet(
+            QStringLiteral("padding:12px; color:%1; background:transparent;")
+                .arg(tokens.textSecondary.name(QColor::HexRgb)));
+    };
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this, applyEmptyStateTheme);
+    applyEmptyStateTheme();
 
     m_logFilterCombo = new QComboBox(this);
     m_logFilterCombo->addItem(tr("All"), QStringLiteral("all"));
@@ -358,6 +374,13 @@ void MainWindow::setupMenuBar()
     helpMenu->addAction(tr("Copy &Support Summary"), this, &MainWindow::onCopySupportSummary);
     helpMenu->addAction(tr("Check for App &Updates…"), this, &MainWindow::onCheckAppUpdates);
     helpMenu->addSeparator();
+#if defined(ZARYA_DESKTOP_APP_UI)
+    helpMenu->addAction(tr("Desktop App UI &spike…"), this, [this]() {
+        LibUiSpikeDialog dialog(this);
+        dialog.exec();
+    });
+    helpMenu->addSeparator();
+#endif
     helpMenu->addAction(tr("&About"), this, &MainWindow::onAbout);
 }
 
@@ -658,8 +681,30 @@ void MainWindow::runPreLoadStartup(const StartupOptions& options)
 
 void MainWindow::runStartupRecovery()
 {
+    const AppSettings& settings = AppSettings::instance();
+    const bool likelyNeedsRecovery =
+        settings.shouldWarnUncleanTunShutdown()
+        || QFile::exists(AppPaths::killSwitchMarkerPath())
+        || QFile::exists(AppPaths::xrayConfigPath())
+        || QFile::exists(AppPaths::singBoxConfigPath())
+        || QFile::exists(AppPaths::singBoxTunConfigPath())
+        || (settings.restoreProxyOnExit() && SystemProxyStateStore::exists());
+
+    QProgressDialog progress(tr("Checking previous session…"), QString(), 0, 0, this);
+    progress.setWindowTitle(tr("Zarya"));
+    progress.setWindowModality(Qt::ApplicationModal);
+    progress.setMinimumDuration(0);
+    progress.setCancelButton(nullptr);
+    progress.setAutoClose(false);
+    progress.setAutoReset(false);
+    if (likelyNeedsRecovery) {
+        progress.show();
+        QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+    }
+
     const StartupRecoveryPlan plan = StartupRecovery::detect();
     if (!plan.uncleanShutdown && plan.detectedLines.isEmpty()) {
+        progress.close();
         return;
     }
 
@@ -668,10 +713,48 @@ void MainWindow::runStartupRecovery()
         appendLog(QStringLiteral("Recovery detected: %1").arg(line));
     }
 
+    QStringList stepLabels;
+    if (plan.stopOrphanedManagedCores && plan.orphanedManagedCoresPresent) {
+        stepLabels.append(tr("Stopping leftover core processes…"));
+    }
+    if (plan.restoreSystemProxy && plan.systemProxyMayBeEnabled) {
+        stepLabels.append(tr("Restoring system proxy…"));
+    }
+    if (plan.disableKillSwitch && plan.killSwitchMarkerPresent) {
+        stepLabels.append(tr("Recovering kill switch…"));
+    }
+    if (plan.cleanRuntimeTempFiles && plan.runtimeTempFilesPresent) {
+        stepLabels.append(tr("Cleaning temporary runtime files…"));
+    }
+    if (plan.uncleanShutdown) {
+        stepLabels.append(tr("Finishing recovery…"));
+    }
+
+    const int totalSteps = StartupRecovery::plannedStepCount(plan);
+    progress.setLabelText(tr("Recovering from previous session…"));
+    progress.setRange(0, totalSteps);
+    progress.setValue(0);
+    progress.show();
+    QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+
+    const auto onProgress = [&](int currentStep, int stepCount) {
+        progress.setMaximum(stepCount);
+        if (currentStep < stepLabels.size()) {
+            progress.setLabelText(stepLabels.at(currentStep));
+        } else if (currentStep >= stepCount && stepCount > 0) {
+            progress.setLabelText(tr("Recovery complete"));
+        }
+        progress.setValue(qMin(currentStep, stepCount));
+        QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+    };
+
     QStringList logLines;
-    if (!StartupRecovery::apply(plan, &logLines)) {
+    if (!StartupRecovery::apply(plan, &logLines, nullptr, onProgress)) {
         appendLog(QStringLiteral("Startup recovery encountered errors."));
     }
+    progress.setValue(totalSteps);
+    progress.close();
+
     for (const QString& line : logLines) {
         appendLog(line);
     }
@@ -1202,6 +1285,7 @@ void MainWindow::logStartupContext(const StartupOptions& options)
 
 void MainWindow::finishStartup(const StartupOptions& options)
 {
+    runStartupRecovery();
     checkKillSwitchRecoveryOnStartup();
 
     if (options.updateRollbackNotice) {

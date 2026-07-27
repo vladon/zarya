@@ -2,6 +2,8 @@
 
 #include "packaging/PackagingInfo.h"
 #include "storage/AppSettings.h"
+#include "ui/theme/ThemeManager.h"
+#include "ui/theme/ThemeTokens.h"
 
 #include <QLabel>
 #include <QPushButton>
@@ -12,7 +14,6 @@ namespace zarya {
 BetaBannerWidget::BetaBannerWidget(QWidget* parent)
     : QWidget(parent)
 {
-    setStyleSheet(QStringLiteral("background:#fff3e0; border-bottom:1px solid #ffcc80;"));
     QString bannerText;
     if (PackagingInfo::isStableBuild()) {
         if (AppSettings::instance().showExperimentalFeatures()) {
@@ -49,6 +50,25 @@ BetaBannerWidget::BetaBannerWidget(QWidget* parent)
     auto* layout = new QHBoxLayout(this);
     layout->addWidget(m_label, 1);
     layout->addWidget(dismiss);
+
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
+            &BetaBannerWidget::applyTheme);
+    applyTheme();
+}
+
+void BetaBannerWidget::applyTheme()
+{
+    const ThemeTokens tokens = ThemeManager::instance().tokens();
+    const bool dark = ThemeManager::instance().effectiveIsDark();
+    const QColor bg =
+        dark ? QColor(QStringLiteral("#3d2e00")) : QColor(QStringLiteral("#fff8c5"));
+    const QColor border = dark ? tokens.warning.darker(120) : QColor(QStringLiteral("#d4a72c"));
+    setStyleSheet(QStringLiteral("background:%1; border-bottom:1px solid %2;")
+                      .arg(bg.name(QColor::HexRgb), border.name(QColor::HexRgb)));
+    if (m_label) {
+        m_label->setStyleSheet(QStringLiteral("color:%1; background:transparent;")
+                                   .arg(tokens.warning.name(QColor::HexRgb)));
+    }
 }
 
 } // namespace zarya

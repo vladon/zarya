@@ -1,2 +1,3 @@
-Copyright (c) Zarya contributors
-# TODO: align with LICENSE holder for installer metadata
+Copyright (c) 2026 Vlad Yaroslavlev and Zarya contributors.
+Dual-licensed MIT | GPLv3+. See LICENSE, LICENSE.MIT, LICENSE.GPL-3.0.
+Builds with Desktop App Toolkit UI are distributed under GPLv3+.

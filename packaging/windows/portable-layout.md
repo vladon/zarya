@@ -18,6 +18,9 @@ Zarya-0.10.0-windows-x64-portable/
       geosite.dat
   README.md
   LICENSE
+  LICENSE.MIT
+  LICENSE.GPL-3.0
+  COPYING
 ```
 
 Build with `scripts/package-windows.ps1` after a Release build.

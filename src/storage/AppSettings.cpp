@@ -832,6 +832,16 @@ QString AppSettings::languageCode() const
     return settings().value(QStringLiteral("desktop/languageCode"), QStringLiteral("system")).toString();
 }
 
+QString AppSettings::themeMode() const
+{
+    return settings().value(QStringLiteral("desktop/themeMode"), QStringLiteral("system")).toString();
+}
+
+void AppSettings::setThemeMode(const QString& mode)
+{
+    settings().setValue(QStringLiteral("desktop/themeMode"), mode.trimmed().toLower());
+}
+
 void AppSettings::setLanguageCode(const QString& code)
 {
     settings().setValue(QStringLiteral("desktop/languageCode"), code);

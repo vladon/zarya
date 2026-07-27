@@ -2,6 +2,11 @@
 
 #include <QProcess>
 
+#if defined(Q_OS_LINUX)
+#include <signal.h>
+#include <sys/prctl.h>
+#endif
+
 namespace zarya {
 
 HelperRuntimeManager::HelperRuntimeManager(QObject* parent)
@@ -16,9 +21,15 @@ HelperRuntimeManager::HelperRuntimeManager(QObject* parent)
     connect(&m_process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this,
             [this](int exitCode, QProcess::ExitStatus status) {
                 Q_UNUSED(status);
+                m_killOnCloseJob.reset();
                 m_configPath.clear();
                 emit runtimeExited(exitCode);
             });
+#if defined(Q_OS_LINUX)
+    m_process.setChildProcessModifier([]() {
+        ::prctl(PR_SET_PDEATHSIG, SIGTERM);
+    });
+#endif
 }
 
 void HelperRuntimeManager::setPathPolicy(const HelperPathPolicy* policy)
@@ -145,6 +156,7 @@ bool HelperRuntimeManager::startTun(const QString& singBoxPath, const QString& c
         m_process.setWorkingDirectory(workingDirectory);
     }
 
+    m_killOnCloseJob.reset();
     m_process.setProgram(singBoxPath);
     m_process.setArguments({QStringLiteral("run"), QStringLiteral("-c"), configPath});
     emit logLine(QStringLiteral("helper: starting sing-box"));
@@ -156,6 +168,11 @@ bool HelperRuntimeManager::startTun(const QString& singBoxPath, const QString& c
         return false;
     }
 
+    if (!m_killOnCloseJob.attach(m_process.processId())) {
+        emit logLine(QStringLiteral(
+            "helper: warning: could not attach sing-box to kill-on-close job"));
+    }
+
     m_configPath = configPath;
     m_startedAt = QDateTime::currentDateTimeUtc();
     return true;
@@ -164,6 +181,7 @@ bool HelperRuntimeManager::startTun(const QString& singBoxPath, const QString& c
 bool HelperRuntimeManager::stopTun(QString* errorMessage)
 {
     if (!isRunning()) {
+        m_killOnCloseJob.reset();
         return true;
     }
 
@@ -173,6 +191,7 @@ bool HelperRuntimeManager::stopTun(QString* errorMessage)
         m_process.kill();
         m_process.waitForFinished(1000);
     }
+    m_killOnCloseJob.reset();
     m_configPath.clear();
     emit logLine(QStringLiteral("helper: sing-box stopped"));
     Q_UNUSED(errorMessage);

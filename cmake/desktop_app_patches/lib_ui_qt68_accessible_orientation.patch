@@ -1,0 +1,33 @@
+diff --git a/ui/accessible/ui_accessible_widget.cpp b/ui/accessible/ui_accessible_widget.cpp
+index aa538f7..728f698 100644
+--- a/ui/accessible/ui_accessible_widget.cpp
++++ b/ui/accessible/ui_accessible_widget.cpp
+@@ -360,13 +360,18 @@ bool Widget::clear() {
+ 
+ QList<QAccessible::Attribute> Widget::attributeKeys() const {
+ 	auto result = QList<QAccessible::Attribute>();
++#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
+ 	if (rp()->accessibilityOrientation().has_value()) {
+ 		result.append(QAccessible::Attribute::Orientation);
+ 	}
++#else
++	Q_UNUSED(result);
++#endif
+ 	return result;
+ }
+ 
+ QVariant Widget::attributeValue(QAccessible::Attribute key) const {
++#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
+ 	if (key == QAccessible::Attribute::Orientation) {
+ 		if (const auto orientation = rp()->accessibilityOrientation()) {
+ 			// Plain int by design: the UIA bridge reads this back with
+@@ -375,6 +380,9 @@ QVariant Widget::attributeValue(QAccessible::Attribute key) const {
+ 			return int(*orientation);
+ 		}
+ 	}
++#else
++	Q_UNUSED(key);
++#endif
+ 	return QVariant();
+ }
+ 

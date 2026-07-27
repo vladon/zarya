@@ -783,6 +783,30 @@ sing-box: %3 (%4)</translation></message>
         <source>Zarya</source>
         <translation>Zarya</translation></message>
     <message>
+        <source>Recovering from previous session…</source>
+        <translation>Восстановление после предыдущего сеанса…</translation></message>
+    <message>
+        <source>Checking previous session…</source>
+        <translation>Проверка предыдущего сеанса…</translation></message>
+    <message>
+        <source>Stopping leftover core processes…</source>
+        <translation>Остановка оставшихся процессов ядра…</translation></message>
+    <message>
+        <source>Restoring system proxy…</source>
+        <translation>Восстановление системного прокси…</translation></message>
+    <message>
+        <source>Recovering kill switch…</source>
+        <translation>Восстановление kill switch…</translation></message>
+    <message>
+        <source>Cleaning temporary runtime files…</source>
+        <translation>Очистка временных runtime-файлов…</translation></message>
+    <message>
+        <source>Finishing recovery…</source>
+        <translation>Завершение восстановления…</translation></message>
+    <message>
+        <source>Recovery complete</source>
+        <translation>Восстановление завершено</translation></message>
+    <message>
         <source>Core and application logs appear here…</source>
         <translation>Здесь отображаются журналы ядра и приложения…</translation></message>
     <message>
@@ -944,6 +968,9 @@ sing-box: %3 (%4)</translation></message>
     <message>
         <source>Create &amp;Diagnostics Bundle…</source>
         <translation>Создать &amp;пакет диагностики…</translation></message>
+    <message>
+        <source>Desktop App UI &amp;spike…</source>
+        <translation>Desktop App UI &amp;spike…</translation></message>
     <message>
         <source>&amp;About</source>
         <translation>&amp;О программе</translation></message>
@@ -1652,6 +1679,18 @@ What should happen?</source>
         <source>Language</source>
         <translation>Язык</translation></message>
     <message>
+        <source>Theme</source>
+        <translation>Тема</translation></message>
+    <message>
+        <source>System</source>
+        <translation>Системная</translation></message>
+    <message>
+        <source>Light</source>
+        <translation>Светлая</translation></message>
+    <message>
+        <source>Dark</source>
+        <translation>Тёмная</translation></message>
+    <message>
         <source>General</source>
         <translation>Общие</translation></message>
     <message>
@@ -2353,5 +2392,17 @@ Cancel = abort</source>
     <message>
         <source>Copy details</source>
         <translation>Копировать подробности</translation></message>
+</context>
+<context>
+    <name>zarya::LibUiSpikeDialog</name>
+    <message>
+        <source>Desktop App UI spike</source>
+        <translation>Desktop App UI spike</translation></message>
+    <message>
+        <source>This dialog uses desktop-app/lib_ui (FlatLabel + RoundButton). The rest of Zarya still uses Qt Widgets + ThemeManager.</source>
+        <translation>Этот диалог использует desktop-app/lib_ui (FlatLabel + RoundButton). Остальной интерфейс Zarya по-прежнему на Qt Widgets + ThemeManager.</translation></message>
+    <message>
+        <source>Close</source>
+        <translation>Закрыть</translation></message>
 </context>
 </TS>
