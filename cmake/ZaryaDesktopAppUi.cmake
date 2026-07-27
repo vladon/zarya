@@ -266,10 +266,13 @@ if(WIN32 AND NOT ZARYA_STATIC_QT)
 
     set(_zarya_codegen_launch
         "${CMAKE_BINARY_DIR}/desktop_app/zarya_codegen_launch.cmd")
+    # Bracket args avoid \" quote-escaping traps that break CMake parsing.
     file(WRITE "${_zarya_codegen_launch}"
-        "@echo off\r\n"
-        "set \"PATH=${_zarya_codegen_path};%PATH%\"\r\n"
-        "%*"\r\n")
+[=[@echo off
+set PATH=]=] "${_zarya_codegen_path}" [=[;%PATH%
+%*
+]=])
+
 
     find_program(ZARYA_WINDEPLOYQT windeployqt HINTS "${_zarya_qt_bin}" NO_CACHE)
     foreach(_zarya_codegen_tool codegen_style codegen_emoji)
