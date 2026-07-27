@@ -1,21 +1,19 @@
-#include "ui/widgets/StatusBadge.h"
-
-#if defined(ZARYA_DESKTOP_APP_UI)
 #include "ui/desktopapp/StatusBadgeLibUiEmbed.h"
 
-#include <QVBoxLayout>
-#else
 #include "ui/theme/ThemeManager.h"
 #include "ui/theme/ThemeTokens.h"
 
-#include <QLabel>
-#include <QVBoxLayout>
-#endif
+#include "styles/style_widgets.h"
+#include "ui/qt_object_factory.h"
+#include "ui/widgets/labels.h"
+
+#include <QPainter>
+#include <QPainterPath>
+#include <algorithm>
 
 namespace zarya {
 namespace {
 
-#if !defined(ZARYA_DESKTOP_APP_UI)
 void badgeColors(StatusBadgeKind kind, const ThemeTokens& tokens, bool dark, QColor* bg,
                  QColor* fg)
 {
@@ -56,65 +54,78 @@ void badgeColors(StatusBadgeKind kind, const ThemeTokens& tokens, bool dark, QCo
         break;
     }
 }
-#endif
 
 } // namespace
 
-StatusBadge::StatusBadge(QWidget* parent)
+StatusBadgeLibUiEmbed::StatusBadgeLibUiEmbed(QWidget* parent)
     : QWidget(parent)
 {
-#if defined(ZARYA_DESKTOP_APP_UI)
-    auto* layout = new QVBoxLayout(this);
-    layout->setContentsMargins(0, 0, 0, 0);
-    m_embed = new StatusBadgeLibUiEmbed(this);
-    layout->addWidget(m_embed);
-    setKind(StatusBadgeKind::Neutral);
-#else
-    auto* layout = new QVBoxLayout(this);
-    layout->setContentsMargins(0, 0, 0, 0);
-    m_label = new QLabel(this);
-    m_label->setMargin(4);
-    layout->addWidget(m_label);
+    setAttribute(Qt::WA_OpaquePaintEvent, false);
+
+    auto* label = Ui::CreateChild<Ui::FlatLabel>(this, QString(), st::defaultFlatLabel);
+    m_labelHost = label;
+
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this, [this]() {
-        applyStyle(m_kind);
+        applyColors();
+        update();
     });
-    setKind(StatusBadgeKind::Neutral);
-#endif
+    applyColors();
 }
 
-void StatusBadge::setKind(StatusBadgeKind kind)
+void StatusBadgeLibUiEmbed::setKind(StatusBadgeKind kind)
 {
     m_kind = kind;
-#if defined(ZARYA_DESKTOP_APP_UI)
-    m_embed->setKind(kind);
-#else
-    applyStyle(kind);
-#endif
+    applyColors();
+    update();
 }
 
-void StatusBadge::setBadgeText(const QString& text)
+void StatusBadgeLibUiEmbed::setBadgeText(const QString& text)
 {
-#if defined(ZARYA_DESKTOP_APP_UI)
-    m_embed->setBadgeText(text);
-#else
-    m_label->setText(text);
-#endif
+    auto* label = static_cast<Ui::FlatLabel*>(m_labelHost);
+    label->setText(text);
+    const int padX = 6;
+    const int padY = 2;
+    const int textW = std::max(label->textMaxWidth(), 1);
+    label->resizeToWidth(textW);
+    const int textH = std::max(label->height(), 1);
+    setFixedSize(textW + padX * 2, textH + padY * 2);
+    layoutLabel();
 }
 
-void StatusBadge::applyStyle(StatusBadgeKind kind)
+void StatusBadgeLibUiEmbed::paintEvent(QPaintEvent* event)
 {
-#if defined(ZARYA_DESKTOP_APP_UI)
-    Q_UNUSED(kind);
-#else
+    Q_UNUSED(event);
+    QPainter p(this);
+    p.setRenderHint(QPainter::Antialiasing);
     const ThemeTokens tokens = ThemeManager::instance().tokens();
-    QColor bg;
-    QColor fg;
-    badgeColors(kind, tokens, ThemeManager::instance().effectiveIsDark(), &bg, &fg);
-    m_label->setStyleSheet(
-        QStringLiteral("background:%1; color:%2; border-radius:%3px; padding:2px 6px;")
-            .arg(bg.name(QColor::HexRgb), fg.name(QColor::HexRgb))
-            .arg(tokens.radiusSm));
-#endif
+    QPainterPath path;
+    path.addRoundedRect(QRectF(rect()).adjusted(0.5, 0.5, -0.5, -0.5), tokens.radiusSm,
+                        tokens.radiusSm);
+    p.fillPath(path, m_bg);
+}
+
+void StatusBadgeLibUiEmbed::resizeEvent(QResizeEvent* event)
+{
+    QWidget::resizeEvent(event);
+    layoutLabel();
+}
+
+void StatusBadgeLibUiEmbed::applyColors()
+{
+    badgeColors(m_kind, ThemeManager::instance().tokens(),
+                ThemeManager::instance().effectiveIsDark(), &m_bg, &m_fg);
+    auto* label = static_cast<Ui::FlatLabel*>(m_labelHost);
+    label->setTextColorOverride(m_fg);
+}
+
+void StatusBadgeLibUiEmbed::layoutLabel()
+{
+    if (!m_labelHost) {
+        return;
+    }
+    const int padX = 6;
+    const int padY = 2;
+    m_labelHost->move(padX, padY);
 }
 
 } // namespace zarya

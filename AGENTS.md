@@ -25,11 +25,12 @@ cmake --build build --config Release --target zarya
 #      .\scripts\build.ps1 -Shared  # faster iteration
 ```
 
-Desktop App Toolkit UI spike (optional, GPLv3+ binary):
+Desktop App Toolkit UI (`lib_ui`, GPLv3+ binary) is **ON by default** for Windows static configure/build. Opt out with `-NoDesktopAppUi`. Force on with shared Qt via `-DesktopAppUi`. Requires `git submodule update --init --recursive` and OpenSSL.
 
 ```powershell
-.\scripts\configure-msvc2026.ps1 -Static -DesktopAppUi
-cmake --build build --config Release --target zarya
+.\scripts\configure-msvc2026.ps1 -Static          # Desktop App UI ON
+.\scripts\configure-msvc2026.ps1 -Static -NoDesktopAppUi
+.\scripts\build.ps1 -Shared -DesktopAppUi         # shared Qt + lib_ui
 ```
 
 **macOS:** `./scripts/build-macos.sh` (Homebrew `qt@6`; `--test`, `--force`).
@@ -37,8 +38,7 @@ cmake --build build --config Release --target zarya
 - Static Qt prefix: `C:\Qt\Static\6.8.3\msvc2022_64` (`QT_STATIC_DIR` to override).
 - One-time static Qt build: `.\scripts\build-qt-static-msvc2026.ps1` (qtbase + qtsvg). Add `-SvgOnly` to install Svg into an existing static prefix.
 - Do not change CMake defaults for static linking; use `-Static` / `ZARYA_STATIC_QT=ON` via the configure script.
-- CI uses shared Qt. Use `build/` for local work (ignore `build-ci-test*`).
-- `ZARYA_DESKTOP_APP_UI` defaults **OFF** (CI unchanged).
+- CI uses shared Qt and leaves `ZARYA_DESKTOP_APP_UI` **OFF** (CMake option default). Use `build/` for local work (ignore `build-ci-test*`).
 - Desktop App UI needs OpenSSL (e.g. `C:\Program Files\OpenSSL-Win64`); configure passes `OPENSSL_ROOT_DIR` when present.
 - Static Qt kits without Svg use stubs under `cmake/desktop_app_stubs/` for codegen/`style_core_icon`. Shared Qt Svg is not mixed into static builds.
 

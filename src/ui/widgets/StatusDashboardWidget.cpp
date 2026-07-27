@@ -1,6 +1,10 @@
 #include "ui/widgets/StatusDashboardWidget.h"
 
+#if defined(ZARYA_DESKTOP_APP_UI)
+#include "ui/desktopapp/StatusConfiguredStrip.h"
+#else
 #include "ui/widgets/StatusBadge.h"
+#endif
 
 #include <QFont>
 #include <QLabel>
@@ -48,6 +52,19 @@ StatusDashboardWidget::StatusDashboardWidget(QWidget* parent)
     unconfiguredLayout->addWidget(backupBtn);
     unconfiguredLayout->addWidget(setupBtn);
 
+#if defined(ZARYA_DESKTOP_APP_UI)
+    m_configuredStrip = new StatusConfiguredStrip(this);
+    connect(m_configuredStrip, &StatusConfiguredStrip::startRequested, this,
+            &StatusDashboardWidget::startRequested);
+    connect(m_configuredStrip, &StatusConfiguredStrip::stopRequested, this,
+            &StatusDashboardWidget::stopRequested);
+    connect(m_configuredStrip, &StatusConfiguredStrip::testRequested, this,
+            &StatusDashboardWidget::testRequested);
+    connect(m_configuredStrip, &StatusConfiguredStrip::openLogsRequested, this,
+            &StatusDashboardWidget::openLogsRequested);
+    connect(m_configuredStrip, &StatusConfiguredStrip::createDiagnosticsRequested, this,
+            &StatusDashboardWidget::createDiagnosticsRequested);
+#else
     m_configuredPanel = new QWidget(this);
     m_titleLabel = new QLabel(m_configuredPanel);
     {
@@ -87,12 +104,18 @@ StatusDashboardWidget::StatusDashboardWidget(QWidget* parent)
     configuredLayout->addWidget(m_detailLabel);
     configuredLayout->addWidget(m_primaryButton);
     configuredLayout->addWidget(m_secondaryButton);
+#endif
 
     auto* root = new QVBoxLayout(this);
     root->setContentsMargins(0, 0, 0, 0);
     root->addWidget(m_unconfiguredPanel);
+#if defined(ZARYA_DESKTOP_APP_UI)
+    root->addWidget(m_configuredStrip);
+    m_configuredStrip->hide();
+#else
     root->addWidget(m_configuredPanel);
     m_configuredPanel->hide();
+#endif
 }
 
 void StatusDashboardWidget::updateModel(const StatusDashboardModel& model)
@@ -118,12 +141,20 @@ void StatusDashboardWidget::showUnconfigured(const StatusDashboardModel& model)
     m_unconfiguredStepsLabel->setText(steps.join(QLatin1Char('\n')));
 
     m_unconfiguredPanel->show();
+#if defined(ZARYA_DESKTOP_APP_UI)
+    m_configuredStrip->hide();
+#else
     m_configuredPanel->hide();
+#endif
 }
 
 void StatusDashboardWidget::showConfigured(const StatusDashboardModel& model)
 {
     m_unconfiguredPanel->hide();
+#if defined(ZARYA_DESKTOP_APP_UI)
+    m_configuredStrip->show();
+    m_configuredStrip->updateModel(model);
+#else
     m_configuredPanel->show();
 
     if (model.experimentalRuntimeActive) {
@@ -177,6 +208,7 @@ void StatusDashboardWidget::showConfigured(const StatusDashboardModel& model)
         connect(m_secondaryButton, &QPushButton::clicked, this,
                 &StatusDashboardWidget::testRequested);
     }
+#endif
 }
 
 } // namespace zarya
