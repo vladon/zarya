@@ -31,24 +31,33 @@ if(NOT EXISTS "${cmake_helpers_loc}/init_target.cmake")
 endif()
 
 # Qt 6.8 lacks QAccessible::Attribute::Orientation (added in 6.9+).
-set(_zarya_lib_ui_orient_patch
-    "${CMAKE_SOURCE_DIR}/cmake/desktop_app_patches/lib_ui_qt68_accessible_orientation.patch")
-set(_zarya_lib_ui_orient_marker
-    "${submodules_loc}/lib_ui/ui/accessible/ui_accessible_widget.cpp")
-file(READ "${_zarya_lib_ui_orient_marker}" _zarya_lib_ui_orient_src)
-if(NOT _zarya_lib_ui_orient_src MATCHES "QT_VERSION_CHECK\\(6, 9, 0\\)")
-    find_program(GIT_EXECUTABLE git REQUIRED)
-    execute_process(
-        COMMAND ${GIT_EXECUTABLE} apply --ignore-whitespace "${_zarya_lib_ui_orient_patch}"
-        WORKING_DIRECTORY "${submodules_loc}/lib_ui"
-        RESULT_VARIABLE _zarya_patch_rc
-        ERROR_VARIABLE _zarya_patch_err)
-    if(NOT _zarya_patch_rc EQUAL 0)
-        message(WARNING "lib_ui Qt 6.8 accessibility patch failed: ${_zarya_patch_err}")
-    else()
-        message(STATUS "Applied lib_ui Qt 6.8 QAccessible::Attribute::Orientation compat patch")
+# Write a patched TU into the build tree so we never dirty the lib_ui submodule
+# (git apply was easy to lose when build.ps1 skipped reconfigure).
+function(zarya_write_lib_ui_qt68_accessible_patch out_path)
+    set(_orig "${submodules_loc}/lib_ui/ui/accessible/ui_accessible_widget.cpp")
+    if(NOT EXISTS "${_orig}")
+        message(FATAL_ERROR "Missing ${_orig}")
     endif()
-endif()
+    file(READ "${_orig}" _src)
+    if(_src MATCHES "QT_VERSION_CHECK\\(6, 9, 0\\)")
+        file(WRITE "${out_path}" "${_src}")
+        return()
+    endif()
+    string(REPLACE
+        "QList<QAccessible::Attribute> Widget::attributeKeys() const {\n\tauto result = QList<QAccessible::Attribute>();\n\tif (rp()->accessibilityOrientation().has_value()) {\n\t\tresult.append(QAccessible::Attribute::Orientation);\n\t}\n\treturn result;\n}"
+        "QList<QAccessible::Attribute> Widget::attributeKeys() const {\n\tauto result = QList<QAccessible::Attribute>();\n#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)\n\tif (rp()->accessibilityOrientation().has_value()) {\n\t\tresult.append(QAccessible::Attribute::Orientation);\n\t}\n#else\n\tQ_UNUSED(result);\n#endif\n\treturn result;\n}"
+        _src "${_src}")
+    string(REPLACE
+        "QVariant Widget::attributeValue(QAccessible::Attribute key) const {\n\tif (key == QAccessible::Attribute::Orientation) {\n\t\tif (const auto orientation = rp()->accessibilityOrientation()) {\n\t\t\t// Plain int by design: the UIA bridge reads this back with\n\t\t\t// QVariant::toInt(), and Qt::Orientation isn't a registered\n\t\t\t// metatype here - QVariant::fromValue() of it wouldn't round-trip.\n\t\t\treturn int(*orientation);\n\t\t}\n\t}\n\treturn QVariant();\n}"
+        "QVariant Widget::attributeValue(QAccessible::Attribute key) const {\n#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)\n\tif (key == QAccessible::Attribute::Orientation) {\n\t\tif (const auto orientation = rp()->accessibilityOrientation()) {\n\t\t\t// Plain int by design: the UIA bridge reads this back with\n\t\t\t// QVariant::toInt(), and Qt::Orientation isn't a registered\n\t\t\t// metatype here - QVariant::fromValue() of it wouldn't round-trip.\n\t\t\treturn int(*orientation);\n\t\t}\n\t}\n#else\n\tQ_UNUSED(key);\n#endif\n\treturn QVariant();\n}"
+        _src "${_src}")
+    if(NOT _src MATCHES "QT_VERSION_CHECK\\(6, 9, 0\\)")
+        message(FATAL_ERROR
+            "Failed to patch ui_accessible_widget.cpp for Qt 6.8 "
+            "(QAccessible::Attribute::Orientation). Upstream lib_ui may have changed.")
+    endif()
+    file(WRITE "${out_path}" "${_src}")
+endfunction()
 
 list(PREPEND CMAKE_MODULE_PATH ${cmake_helpers_loc})
 
@@ -178,6 +187,26 @@ if(NOT ZARYA_HAS_QT_SVG)
 endif()
 
 add_subdirectory(${submodules_loc}/lib_ui ${CMAKE_BINARY_DIR}/desktop_app/lib_ui)
+
+# Swap accessibility TU for Qt 6.8-compatible build-tree copy (no submodule dirt).
+if(TARGET lib_ui AND QT_VERSION VERSION_LESS 6.9.0)
+    set(_zarya_a11y_patched_dir "${CMAKE_BINARY_DIR}/desktop_app/patched")
+    file(MAKE_DIRECTORY "${_zarya_a11y_patched_dir}")
+    set(_zarya_a11y_patched
+        "${_zarya_a11y_patched_dir}/ui_accessible_widget.cpp")
+    zarya_write_lib_ui_qt68_accessible_patch("${_zarya_a11y_patched}")
+    get_target_property(_zarya_lib_ui_sources lib_ui SOURCES)
+    set(_zarya_lib_ui_new_sources)
+    foreach(_zarya_src IN LISTS _zarya_lib_ui_sources)
+        if(_zarya_src MATCHES "ui_accessible_widget\\.cpp$")
+            list(APPEND _zarya_lib_ui_new_sources "${_zarya_a11y_patched}")
+        else()
+            list(APPEND _zarya_lib_ui_new_sources "${_zarya_src}")
+        endif()
+    endforeach()
+    set_property(TARGET lib_ui PROPERTY SOURCES ${_zarya_lib_ui_new_sources})
+    message(STATUS "lib_ui: using Qt 6.8-safe ui_accessible_widget.cpp from build tree")
+endif()
 
 if(NOT ZARYA_HAS_QT_SVG AND TARGET lib_ui)
     target_include_directories(lib_ui BEFORE PRIVATE
