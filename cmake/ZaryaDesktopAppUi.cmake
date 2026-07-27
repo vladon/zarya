@@ -107,6 +107,25 @@ INTERFACE
 )
 if(WIN32)
     include(${cmake_helpers_loc}/options_win.cmake)
+    # desktop-app sets /DEPENDENTLOADFLAG:0x800 (LOAD_LIBRARY_SEARCH_SYSTEM32).
+    # That blocks loading Qt (and other) DLLs from PATH or the app directory, so
+    # shared-Qt tools like codegen_style die with STATUS_DLL_NOT_FOUND (0xC0000135).
+    # Static Qt binaries do not load Qt DLLs — keep the hardening flag there.
+    if(NOT ZARYA_STATIC_QT AND TARGET common_options)
+        get_target_property(_zarya_co_linkopts common_options INTERFACE_LINK_OPTIONS)
+        if(_zarya_co_linkopts)
+            set(_zarya_co_linkopts_new)
+            foreach(_zarya_co_opt IN LISTS _zarya_co_linkopts)
+                if(NOT _zarya_co_opt MATCHES "DEPENDENTLOADFLAG")
+                    list(APPEND _zarya_co_linkopts_new "${_zarya_co_opt}")
+                endif()
+            endforeach()
+            set_property(TARGET common_options PROPERTY
+                INTERFACE_LINK_OPTIONS "${_zarya_co_linkopts_new}")
+            message(STATUS
+                "Cleared /DEPENDENTLOADFLAG on common_options for shared Qt DLL load")
+        endif()
+    endif()
 elseif(APPLE)
     include(${cmake_helpers_loc}/options_mac.cmake)
 elseif(LINUX)
