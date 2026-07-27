@@ -185,6 +185,38 @@ add_subdirectory(${submodules_loc}/codegen/codegen/style
 add_subdirectory(${submodules_loc}/codegen/codegen/emoji
     ${CMAKE_BINARY_DIR}/desktop_app/codegen_emoji)
 
+# Shared Qt on Windows: MSBuild custom commands often lack Qt in PATH.
+# Deploy runtime DLLs next to the codegen tools so style/emoji generation works.
+if(WIN32)
+    get_filename_component(_zarya_qt_bin "${Qt6_DIR}/../../../bin" ABSOLUTE)
+    find_program(ZARYA_WINDEPLOYQT windeployqt HINTS "${_zarya_qt_bin}" NO_CACHE)
+    foreach(_zarya_codegen_tool codegen_style codegen_emoji)
+        if(TARGET ${_zarya_codegen_tool} AND ZARYA_WINDEPLOYQT)
+            add_custom_command(TARGET ${_zarya_codegen_tool} POST_BUILD
+                COMMAND "${ZARYA_WINDEPLOYQT}"
+                    --no-translations
+                    --no-compiler-runtime
+                    --no-system-d3d-compiler
+                    --no-opengl-sw
+                    "$<TARGET_FILE:${_zarya_codegen_tool}>"
+                COMMENT "windeployqt ${_zarya_codegen_tool}")
+        endif()
+    endforeach()
+    if(EXISTS "${_zarya_qt_bin}")
+        set(CMAKE_MSVCIDE_RUN_PATH "${_zarya_qt_bin}" CACHE STRING "" FORCE)
+    endif()
+endif()
+
+# macOS 15+ SDKs dropped AGL; Qt OpenGL may still reference it.
+if(APPLE)
+    foreach(_zarya_codegen_tool codegen_style codegen_emoji)
+        if(TARGET ${_zarya_codegen_tool})
+            target_link_options(${_zarya_codegen_tool} PRIVATE
+                "LINKER:-weak_framework,AGL")
+        endif()
+    endforeach()
+endif()
+
 if(NOT ZARYA_HAS_QT_SVG)
     # Replace SVG-dependent translation unit with a stub and inject a
     # minimal QSvgRenderer so generator.cpp / style_core_icon.cpp still compile.
@@ -198,6 +230,10 @@ if(NOT ZARYA_HAS_QT_SVG)
 endif()
 
 add_subdirectory(${submodules_loc}/lib_ui ${CMAKE_BINARY_DIR}/desktop_app/lib_ui)
+
+if(APPLE AND TARGET lib_ui)
+    target_link_options(lib_ui PUBLIC "LINKER:-weak_framework,AGL")
+endif()
 
 # Swap accessibility TU for Qt 6.8-compatible build-tree copy (no submodule dirt).
 if(TARGET lib_ui AND QT_VERSION VERSION_LESS 6.9.0)

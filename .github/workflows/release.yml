@@ -62,7 +62,17 @@ jobs:
             -DOPENSSL_ROOT_DIR="${OPENSSL_ROOT_DIR}" \
             -DCMAKE_PREFIX_PATH="${VCPKG_PREFIX};${CMAKE_PREFIX_PATH}"
       - name: Build
-        run: cmake --build build --config Release --target zarya_lrelease zarya zarya-helper
+        shell: pwsh
+        run: |
+          $qtBin = $null
+          if ($env:QT_ROOT_DIR) { $qtBin = Join-Path $env:QT_ROOT_DIR 'bin' }
+          elseif ($env:Qt6_DIR) { $qtBin = (Resolve-Path (Join-Path $env:Qt6_DIR '..\..\..\bin')).Path }
+          if ($qtBin -and (Test-Path $qtBin)) {
+            $env:Path = "$qtBin;$env:Path"
+            Write-Host "Prepended Qt bin to PATH: $qtBin"
+          }
+          cmake --build build --config Release --target zarya_lrelease zarya zarya-helper
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Package (unsigned by default)
         run: .\scripts\package-windows.ps1 -Configuration Release -OutputDir dist -SkipBuild -SkipSigning
       - name: Verify release artifact

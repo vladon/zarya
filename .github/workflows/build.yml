@@ -63,7 +63,17 @@ jobs:
             -DOPENSSL_ROOT_DIR="${OPENSSL_ROOT_DIR}" \
             -DCMAKE_PREFIX_PATH="${VCPKG_PREFIX};${CMAKE_PREFIX_PATH}"
       - name: Build
-        run: cmake --build build --config Release --target zarya_lrelease zarya zarya-helper zarya_xray_config_test
+        shell: pwsh
+        run: |
+          $qtBin = $null
+          if ($env:QT_ROOT_DIR) { $qtBin = Join-Path $env:QT_ROOT_DIR 'bin' }
+          elseif ($env:Qt6_DIR) { $qtBin = (Resolve-Path (Join-Path $env:Qt6_DIR '..\..\..\bin')).Path }
+          if ($qtBin -and (Test-Path $qtBin)) {
+            $env:Path = "$qtBin;$env:Path"
+            Write-Host "Prepended Qt bin to PATH: $qtBin"
+          }
+          cmake --build build --config Release --target zarya_lrelease zarya zarya-helper zarya_xray_config_test
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Test
         run: ./build/Release/zarya_xray_config_test.exe
       - name: Package (unsigned)
@@ -90,7 +100,7 @@ jobs:
             libssl-dev zlib1g-dev libjpeg-dev libgl1-mesa-dev \
             libglib2.0-dev libglib2.0-bin libdbus-1-dev libxkbcommon-dev \
             gobject-introspection libgirepository1.0-dev \
-            libkf6coreaddons-dev pkg-config \
+            pkg-config \
             cmake build-essential xvfb
       - name: Check translations
         run: python scripts/check-translations.py
@@ -130,7 +140,7 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
-          version: "6.8.3"
+          version: "6.9.1"
           host: mac
           target: desktop
           arch: clang_64
