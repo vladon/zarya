@@ -1,10 +1,12 @@
 # Configure Zarya with Visual Studio 2026 (MSVC) and Qt.
 # Use -Static for a fully static Release binary (requires scripts/build-qt-static-msvc2026.ps1).
-# Use -DesktopAppUi to link desktop-app/lib_ui (GPLv3+ official toolkit path).
+# Desktop App UI (lib_ui, GPLv3+) is ON by default for -Static; use -NoDesktopAppUi to disable.
+# Use -DesktopAppUi to force-enable on shared Qt configures.
 param(
     [switch]$Static,
     [switch]$Force,
-    [switch]$DesktopAppUi
+    [switch]$DesktopAppUi,
+    [switch]$NoDesktopAppUi
 )
 
 $ErrorActionPreference = "Stop"
@@ -19,6 +21,12 @@ if ($Static) {
     $QtMsvc = "$QtRoot\$QtVersion\msvc2022_64"
     $StaticFlag = ""
 }
+
+# Desktop App UI ON by default for static builds unless -NoDesktopAppUi
+$useDesktopAppUi = if ($NoDesktopAppUi) { $false }
+                   elseif ($DesktopAppUi) { $true }
+                   elseif ($Static) { $true }
+                   else { $false }
 
 if (-not (Test-Path "$QtMsvc\lib\cmake\Qt6\Qt6Config.cmake")) {
     if ($Static) {
@@ -53,7 +61,7 @@ try {
             $wasStatic = Select-String -Path $cache -Pattern "^ZARYA_STATIC_QT:BOOL=ON" -Quiet
             $wantStatic = [bool]$Static
             $wasDesktopUi = Select-String -Path $cache -Pattern "^ZARYA_DESKTOP_APP_UI:BOOL=ON" -Quiet
-            $wantDesktopUi = [bool]$DesktopAppUi
+            $wantDesktopUi = [bool]$useDesktopAppUi
             if ($gen -and $gen -notmatch "Visual Studio 18 2026") { $remove = $true }
             if ($wasStatic -ne $wantStatic) { $remove = $true }
             if ($wasDesktopUi -ne $wantDesktopUi) { $remove = $true }
@@ -71,7 +79,7 @@ try {
         "-DCMAKE_PREFIX_PATH=$QtMsvc"
     )
     if ($StaticFlag) { $cmakeArgs += $StaticFlag }
-    if ($DesktopAppUi) {
+    if ($useDesktopAppUi) {
         $cmakeArgs += "-DZARYA_DESKTOP_APP_UI=ON"
         if (Test-Path "C:\Program Files\OpenSSL-Win64") {
             $cmakeArgs += "-DOPENSSL_ROOT_DIR=C:/Program Files/OpenSSL-Win64"
@@ -84,7 +92,7 @@ try {
 
     Write-Host ""
     $mode = if ($Static) { "static Qt (/MT)" } else { "shared Qt" }
-    $ui = if ($DesktopAppUi) { " + Desktop App UI (GPLv3+)" } else { "" }
+    $ui = if ($useDesktopAppUi) { " + Desktop App UI (GPLv3+)" } else { "" }
     Write-Host "Configured: Visual Studio 2026 + $mode$ui"
     Write-Host "Qt path:   $QtMsvc"
     Write-Host "Build app:  cmake --build build --config $Config --target zarya"

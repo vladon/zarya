@@ -9,6 +9,10 @@ namespace zarya {
 
 class StatusBadge;
 
+#if defined(ZARYA_DESKTOP_APP_UI)
+class StatusConfiguredStrip;
+#endif
+
 struct StatusDashboardModel {
     bool configured = false;
     bool xrayInstalled = false;
@@ -33,7 +37,7 @@ public:
 
     void updateModel(const StatusDashboardModel& model);
 
-signals:
+Q_SIGNALS:
     void openCoreManagerRequested();
     void addProfileRequested();
     void addSubscriptionRequested();
@@ -53,13 +57,17 @@ private:
     void showUnconfigured(const StatusDashboardModel& model);
 
     QWidget* m_unconfiguredPanel = nullptr;
-    QWidget* m_configuredPanel = nullptr;
     QLabel* m_unconfiguredStepsLabel = nullptr;
+#if defined(ZARYA_DESKTOP_APP_UI)
+    StatusConfiguredStrip* m_configuredStrip = nullptr;
+#else
+    QWidget* m_configuredPanel = nullptr;
     QLabel* m_titleLabel = nullptr;
     QLabel* m_detailLabel = nullptr;
     StatusBadge* m_runtimeBadge = nullptr;
     QPushButton* m_primaryButton = nullptr;
     QPushButton* m_secondaryButton = nullptr;
+#endif
 };
 
 } // namespace zarya

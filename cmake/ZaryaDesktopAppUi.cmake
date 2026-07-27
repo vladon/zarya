@@ -225,7 +225,10 @@ set(ZARYA_DESKTOP_APP_UI_SOURCES
     src/ui/desktopapp/ZaryaBaseIntegration.cpp
     src/ui/desktopapp/ZaryaUiIntegration.cpp
     src/ui/desktopapp/ZaryaCrlIntegration.cpp
-    src/ui/desktopapp/LibUiSpikeDialog.cpp)
+    src/ui/desktopapp/LibUiSpikeDialog.cpp
+    src/ui/desktopapp/StatusBadgeLibUiEmbed.cpp
+    src/ui/desktopapp/StatusConfiguredStrip.cpp)
+
 
 # Spike sources consume toolkit headers that assume QT_NO_KEYWORDS + base PCH.
 set_source_files_properties(${ZARYA_DESKTOP_APP_UI_SOURCES} PROPERTIES

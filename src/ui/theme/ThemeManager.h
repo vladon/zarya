@@ -21,7 +21,7 @@ public:
 
     void apply();
 
-signals:
+Q_SIGNALS:
     void themeChanged();
 
 private:

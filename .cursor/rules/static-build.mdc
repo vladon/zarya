@@ -22,6 +22,8 @@ Or use the wrapper (static by default):
 
 Pass `-Shared` to `build.ps1` only when the user wants faster iteration with shared Qt DLLs.
 
+Desktop App UI (`lib_ui`) is **ON by default** with static configure/build. Pass `-NoDesktopAppUi` to disable. Requires OpenSSL and initialized `third_party/desktop-app` submodules. CI shared builds leave the CMake option OFF.
+
 ## Static Qt location
 
 - Prefix: `C:\Qt\Static\6.8.3\msvc2022_64`
