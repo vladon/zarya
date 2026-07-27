@@ -27,30 +27,32 @@ if(NOT EXISTS "${cmake_helpers_loc}/init_target.cmake")
     message(FATAL_ERROR "Desktop App cmake_helpers missing. Run: git submodule update --init --recursive")
 endif()
 
-# Qt 6.8 lacks QAccessible::Attribute::Orientation (added in 6.9+).
-# Write a patched TU into the build tree so we never dirty the lib_ui submodule
-# (git apply was easy to lose when build.ps1 skipped reconfigure).
+# QAccessible::Attribute::Orientation is not in Qt 6.8–6.9; gate it for Qt 6.10+.
+# Write a patched TU into the build tree so we never dirty the lib_ui submodule.
 function(zarya_write_lib_ui_qt68_accessible_patch out_path)
     set(_orig "${submodules_loc}/lib_ui/ui/accessible/ui_accessible_widget.cpp")
     if(NOT EXISTS "${_orig}")
         message(FATAL_ERROR "Missing ${_orig}")
     endif()
     file(READ "${_orig}" _src)
-    if(_src MATCHES "QT_VERSION_CHECK\\(6, 9, 0\\)")
-        file(WRITE "${out_path}" "${_src}")
-        return()
+    # Normalize any existing 6.9 gate up to 6.10 (Orientation is not in 6.9.x).
+    string(REPLACE
+        "QT_VERSION_CHECK(6, 9, 0)"
+        "QT_VERSION_CHECK(6, 10, 0)"
+        _src "${_src}")
+    if(NOT _src MATCHES "QT_VERSION_CHECK\\(6, 10, 0\\)")
+        string(REPLACE
+            "QList<QAccessible::Attribute> Widget::attributeKeys() const {\n\tauto result = QList<QAccessible::Attribute>();\n\tif (rp()->accessibilityOrientation().has_value()) {\n\t\tresult.append(QAccessible::Attribute::Orientation);\n\t}\n\treturn result;\n}"
+            "QList<QAccessible::Attribute> Widget::attributeKeys() const {\n\tauto result = QList<QAccessible::Attribute>();\n#if QT_VERSION >= QT_VERSION_CHECK(6, 10, 0)\n\tif (rp()->accessibilityOrientation().has_value()) {\n\t\tresult.append(QAccessible::Attribute::Orientation);\n\t}\n#else\n\tQ_UNUSED(result);\n#endif\n\treturn result;\n}"
+            _src "${_src}")
+        string(REPLACE
+            "QVariant Widget::attributeValue(QAccessible::Attribute key) const {\n\tif (key == QAccessible::Attribute::Orientation) {\n\t\tif (const auto orientation = rp()->accessibilityOrientation()) {\n\t\t\t// Plain int by design: the UIA bridge reads this back with\n\t\t\t// QVariant::toInt(), and Qt::Orientation isn't a registered\n\t\t\t// metatype here - QVariant::fromValue() of it wouldn't round-trip.\n\t\t\treturn int(*orientation);\n\t\t}\n\t}\n\treturn QVariant();\n}"
+            "QVariant Widget::attributeValue(QAccessible::Attribute key) const {\n#if QT_VERSION >= QT_VERSION_CHECK(6, 10, 0)\n\tif (key == QAccessible::Attribute::Orientation) {\n\t\tif (const auto orientation = rp()->accessibilityOrientation()) {\n\t\t\t// Plain int by design: the UIA bridge reads this back with\n\t\t\t// QVariant::toInt(), and Qt::Orientation isn't a registered\n\t\t\t// metatype here - QVariant::fromValue() of it wouldn't round-trip.\n\t\t\treturn int(*orientation);\n\t\t}\n\t}\n#else\n\tQ_UNUSED(key);\n#endif\n\treturn QVariant();\n}"
+            _src "${_src}")
     endif()
-    string(REPLACE
-        "QList<QAccessible::Attribute> Widget::attributeKeys() const {\n\tauto result = QList<QAccessible::Attribute>();\n\tif (rp()->accessibilityOrientation().has_value()) {\n\t\tresult.append(QAccessible::Attribute::Orientation);\n\t}\n\treturn result;\n}"
-        "QList<QAccessible::Attribute> Widget::attributeKeys() const {\n\tauto result = QList<QAccessible::Attribute>();\n#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)\n\tif (rp()->accessibilityOrientation().has_value()) {\n\t\tresult.append(QAccessible::Attribute::Orientation);\n\t}\n#else\n\tQ_UNUSED(result);\n#endif\n\treturn result;\n}"
-        _src "${_src}")
-    string(REPLACE
-        "QVariant Widget::attributeValue(QAccessible::Attribute key) const {\n\tif (key == QAccessible::Attribute::Orientation) {\n\t\tif (const auto orientation = rp()->accessibilityOrientation()) {\n\t\t\t// Plain int by design: the UIA bridge reads this back with\n\t\t\t// QVariant::toInt(), and Qt::Orientation isn't a registered\n\t\t\t// metatype here - QVariant::fromValue() of it wouldn't round-trip.\n\t\t\treturn int(*orientation);\n\t\t}\n\t}\n\treturn QVariant();\n}"
-        "QVariant Widget::attributeValue(QAccessible::Attribute key) const {\n#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)\n\tif (key == QAccessible::Attribute::Orientation) {\n\t\tif (const auto orientation = rp()->accessibilityOrientation()) {\n\t\t\t// Plain int by design: the UIA bridge reads this back with\n\t\t\t// QVariant::toInt(), and Qt::Orientation isn't a registered\n\t\t\t// metatype here - QVariant::fromValue() of it wouldn't round-trip.\n\t\t\treturn int(*orientation);\n\t\t}\n\t}\n#else\n\tQ_UNUSED(key);\n#endif\n\treturn QVariant();\n}"
-        _src "${_src}")
-    if(NOT _src MATCHES "QT_VERSION_CHECK\\(6, 9, 0\\)")
+    if(NOT _src MATCHES "QT_VERSION_CHECK\\(6, 10, 0\\)")
         message(FATAL_ERROR
-            "Failed to patch ui_accessible_widget.cpp for Qt 6.8 "
+            "Failed to patch ui_accessible_widget.cpp for Qt < 6.10 "
             "(QAccessible::Attribute::Orientation). Upstream lib_ui may have changed.")
     endif()
     file(WRITE "${out_path}" "${_src}")
@@ -283,8 +285,8 @@ if(TARGET lib_ui)
     endforeach()
 endif()
 
-# Swap accessibility TU for Qt 6.8-compatible build-tree copy (no submodule dirt).
-if(TARGET lib_ui AND QT_VERSION VERSION_LESS 6.9.0)
+# Swap accessibility TU for Qt < 6.10 (Orientation API) — build-tree copy, no submodule dirt.
+if(TARGET lib_ui AND QT_VERSION VERSION_LESS 6.10.0)
     set(_zarya_a11y_patched_dir "${CMAKE_BINARY_DIR}/desktop_app/patched")
     file(MAKE_DIRECTORY "${_zarya_a11y_patched_dir}")
     set(_zarya_a11y_patched
@@ -300,7 +302,7 @@ if(TARGET lib_ui AND QT_VERSION VERSION_LESS 6.9.0)
         endif()
     endforeach()
     set_property(TARGET lib_ui PROPERTY SOURCES ${_zarya_lib_ui_new_sources})
-    message(STATUS "lib_ui: using Qt 6.8-safe ui_accessible_widget.cpp from build tree")
+    message(STATUS "lib_ui: using Qt < 6.10-safe ui_accessible_widget.cpp from build tree")
 endif()
 
 if(NOT ZARYA_HAS_QT_SVG AND TARGET lib_ui)

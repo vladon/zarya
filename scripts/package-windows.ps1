@@ -28,6 +28,12 @@ if ($SkipSigning.IsPresent) {
 $DistDir = if ([System.IO.Path]::IsPathRooted($OutputDir)) { $OutputDir } else { Join-Path $Root $OutputDir }
 $BuildRoot = Join-Path $Root $BuildDir
 $BuildOutput = Join-Path $BuildRoot $Configuration
+# Ninja/single-config places binaries in the build root; VS multi-config uses build/Release.
+if (-not (Test-Path (Join-Path $BuildOutput "zarya.exe")) -and
+    -not (Test-Path (Join-Path $BuildOutput "Zarya.exe")) -and
+    ((Test-Path (Join-Path $BuildRoot "zarya.exe")) -or (Test-Path (Join-Path $BuildRoot "Zarya.exe")))) {
+    $BuildOutput = $BuildRoot
+}
 $ArtifactBase = "Zarya-$Version-windows-x64-portable"
 $Staging = if ($StagingDir) { $StagingDir } else { Join-Path $DistDir $ArtifactBase }
 $ZipPath = Join-Path $DistDir "$ArtifactBase.zip"

@@ -54,28 +54,24 @@ jobs:
           host: windows
           target: desktop
           arch: win64_msvc2022_64
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Install Ninja
+        run: choco install ninja -y --no-progress
       - name: Check translations
         run: python scripts/check-translations.py
       - name: Configure
         shell: bash
         run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
             -DOPENSSL_ROOT_DIR="${OPENSSL_ROOT_DIR}" \
             -DCMAKE_PREFIX_PATH="${VCPKG_PREFIX};${CMAKE_PREFIX_PATH}"
       - name: Build
-        shell: pwsh
+        shell: bash
         run: |
-          $qtBin = $null
-          if ($env:QT_ROOT_DIR) { $qtBin = Join-Path $env:QT_ROOT_DIR 'bin' }
-          elseif ($env:Qt6_DIR) { $qtBin = (Resolve-Path (Join-Path $env:Qt6_DIR '..\..\..\bin')).Path }
-          if ($qtBin -and (Test-Path $qtBin)) {
-            $env:Path = "$qtBin;$env:Path"
-            Write-Host "Prepended Qt bin to PATH: $qtBin"
-          }
-          cmake --build build --config Release --target zarya_lrelease zarya zarya-helper zarya_xray_config_test
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          export PATH="${QT_ROOT_DIR}/bin:${PATH}"
+          cmake --build build --target zarya_lrelease zarya zarya-helper zarya_xray_config_test
       - name: Test
-        run: ./build/Release/zarya_xray_config_test.exe
+        run: ./build/zarya_xray_config_test.exe
       - name: Package (unsigned)
         run: .\scripts\package-windows.ps1 -Configuration Release -OutputDir dist -SkipBuild -SkipSigning
       - name: Verify release artifact
@@ -92,20 +88,27 @@ jobs:
         run: |
           VERSION=$(python3 -c "import sys; sys.path.insert(0, 'scripts'); from release_common import read_cmake_version; print(read_cmake_version()['version'])")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-      - name: Install dependencies
+      - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            qt6-base-dev qt6-base-private-dev qt6-svg-dev qt6-tools-dev \
-            libssl-dev zlib1g-dev libjpeg-dev libgl1-mesa-dev \
+            libssl-dev zlib1g-dev libjpeg-dev libgl1-mesa-dev libegl1-mesa-dev \
             libglib2.0-dev libglib2.0-bin libdbus-1-dev libxkbcommon-dev \
+            libxkbcommon-x11-dev libxcb-cursor0 libxcb-xinerama0 \
             gobject-introspection libgirepository1.0-dev \
             libboost-dev pkg-config \
-            cmake build-essential xvfb
+            cmake ninja-build build-essential xvfb
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.8.3"
+          host: linux
+          target: desktop
+          arch: linux_gcc_64
       - name: Check translations
         run: python scripts/check-translations.py
       - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
       - name: Build
         run: cmake --build build --target zarya zarya_xray_config_test
       - name: Test
@@ -135,12 +138,12 @@ jobs:
         run: |
           VERSION=$(python3 -c "import sys; sys.path.insert(0, 'scripts'); from release_common import read_cmake_version; print(read_cmake_version()['version'])")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-      - name: Install OpenSSL / cmake
-        run: brew install cmake openssl@3
+      - name: Install OpenSSL / cmake / ninja
+        run: brew install cmake ninja openssl@3
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
-          version: "6.9.1"
+          version: "6.8.3"
           host: mac
           target: desktop
           arch: clang_64
@@ -148,7 +151,7 @@ jobs:
         run: python scripts/check-translations.py
       - name: Configure
         run: |
-          cmake -S . -B build \
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
             -DOPENSSL_ROOT_DIR="$(brew --prefix openssl@3)"
       - name: Build
         run: cmake --build build --target zarya zarya_xray_config_test
