@@ -100,7 +100,7 @@ jobs:
             libssl-dev zlib1g-dev libjpeg-dev libgl1-mesa-dev \
             libglib2.0-dev libglib2.0-bin libdbus-1-dev libxkbcommon-dev \
             gobject-introspection libgirepository1.0-dev \
-            pkg-config \
+            libboost-dev pkg-config \
             cmake build-essential xvfb
       - name: Check translations
         run: python scripts/check-translations.py

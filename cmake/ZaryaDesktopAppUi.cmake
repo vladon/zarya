@@ -118,6 +118,45 @@ if(LINUX)
     find_package(Qt6 REQUIRED COMPONENTS DBus)
 endif()
 
+# macOS 15+ SDKs dropped AGL; strip it from OpenGL imported targets and provide
+# a tiny stub framework so any remaining -framework AGL resolves at link time.
+if(APPLE)
+    foreach(_zarya_gl_tgt OpenGL::GL OpenGL::OpenGL Qt6::OpenGL Qt6::OpenGLWidgets)
+        if(TARGET ${_zarya_gl_tgt})
+            get_target_property(_zarya_gl_libs ${_zarya_gl_tgt} INTERFACE_LINK_LIBRARIES)
+            if(_zarya_gl_libs)
+                list(FILTER _zarya_gl_libs EXCLUDE REGEX "[Aa][Gg][Ll]")
+                set_property(TARGET ${_zarya_gl_tgt} PROPERTY INTERFACE_LINK_LIBRARIES "${_zarya_gl_libs}")
+            endif()
+            get_target_property(_zarya_gl_opts ${_zarya_gl_tgt} INTERFACE_LINK_OPTIONS)
+            if(_zarya_gl_opts)
+                list(FILTER _zarya_gl_opts EXCLUDE REGEX "[Aa][Gg][Ll]")
+                set_property(TARGET ${_zarya_gl_tgt} PROPERTY INTERFACE_LINK_OPTIONS "${_zarya_gl_opts}")
+            endif()
+        endif()
+    endforeach()
+    set(_zarya_agl_stub_root "${CMAKE_BINARY_DIR}/macos-stubs")
+    set(_zarya_agl_fw "${_zarya_agl_stub_root}/AGL.framework")
+    file(MAKE_DIRECTORY "${_zarya_agl_fw}/Versions/A")
+    file(WRITE "${_zarya_agl_stub_root}/agl_stub.c" "void zarya_agl_stub(void) {}\n")
+    execute_process(
+        COMMAND ${CMAKE_C_COMPILER} -dynamiclib
+            -install_name "/System/Library/Frameworks/AGL.framework/Versions/A/AGL"
+            -o "${_zarya_agl_fw}/Versions/A/AGL"
+            "${_zarya_agl_stub_root}/agl_stub.c"
+        RESULT_VARIABLE _zarya_agl_stub_rc
+        OUTPUT_VARIABLE _zarya_agl_stub_out
+        ERROR_VARIABLE _zarya_agl_stub_err)
+    if(NOT _zarya_agl_stub_rc EQUAL 0)
+        message(WARNING "Failed to build AGL stub framework: ${_zarya_agl_stub_err}")
+    else()
+        file(CREATE_LINK "A" "${_zarya_agl_fw}/Versions/Current" SYMBOLIC)
+        file(CREATE_LINK "Versions/Current/AGL" "${_zarya_agl_fw}/AGL" SYMBOLIC)
+        add_link_options("LINKER:-F${_zarya_agl_stub_root}")
+        message(STATUS "Using stub AGL.framework at ${_zarya_agl_fw}")
+    endif()
+endif()
+
 # Static Qt kits often omit Svg; codegen_style / lib_ui need QSvgRenderer.
 # find_package(Qt6 COMPONENTS Svg) only searches the already-resolved Qt6 prefix,
 # so a shared-kit fallback must set Qt6Svg_DIR explicitly.
@@ -187,34 +226,33 @@ add_subdirectory(${submodules_loc}/codegen/codegen/emoji
 
 # Shared Qt on Windows: MSBuild custom commands often lack Qt in PATH.
 # Deploy runtime DLLs next to the codegen tools so style/emoji generation works.
-if(WIN32)
+# Cannot use add_custom_command(TARGET ...) here — codegen_* live in subdirs.
+# Static Qt builds need no deploy (tools link Qt statically).
+if(WIN32 AND NOT ZARYA_STATIC_QT)
     get_filename_component(_zarya_qt_bin "${Qt6_DIR}/../../../bin" ABSOLUTE)
     find_program(ZARYA_WINDEPLOYQT windeployqt HINTS "${_zarya_qt_bin}" NO_CACHE)
     foreach(_zarya_codegen_tool codegen_style codegen_emoji)
         if(TARGET ${_zarya_codegen_tool} AND ZARYA_WINDEPLOYQT)
-            add_custom_command(TARGET ${_zarya_codegen_tool} POST_BUILD
+            set(_zarya_deploy_stamp
+                "${CMAKE_BINARY_DIR}/desktop_app/${_zarya_codegen_tool}.windeployqt.stamp")
+            add_custom_command(
+                OUTPUT "${_zarya_deploy_stamp}"
                 COMMAND "${ZARYA_WINDEPLOYQT}"
                     --no-translations
                     --no-compiler-runtime
                     --no-system-d3d-compiler
                     --no-opengl-sw
                     "$<TARGET_FILE:${_zarya_codegen_tool}>"
+                COMMAND "${CMAKE_COMMAND}" -E touch "${_zarya_deploy_stamp}"
+                DEPENDS ${_zarya_codegen_tool}
                 COMMENT "windeployqt ${_zarya_codegen_tool}")
+            add_custom_target(zarya_windeploy_${_zarya_codegen_tool}
+                DEPENDS "${_zarya_deploy_stamp}")
         endif()
     endforeach()
     if(EXISTS "${_zarya_qt_bin}")
         set(CMAKE_MSVCIDE_RUN_PATH "${_zarya_qt_bin}" CACHE STRING "" FORCE)
     endif()
-endif()
-
-# macOS 15+ SDKs dropped AGL; Qt OpenGL may still reference it.
-if(APPLE)
-    foreach(_zarya_codegen_tool codegen_style codegen_emoji)
-        if(TARGET ${_zarya_codegen_tool})
-            target_link_options(${_zarya_codegen_tool} PRIVATE
-                "LINKER:-weak_framework,AGL")
-        endif()
-    endforeach()
 endif()
 
 if(NOT ZARYA_HAS_QT_SVG)
@@ -231,8 +269,18 @@ endif()
 
 add_subdirectory(${submodules_loc}/lib_ui ${CMAKE_BINARY_DIR}/desktop_app/lib_ui)
 
-if(APPLE AND TARGET lib_ui)
-    target_link_options(lib_ui PUBLIC "LINKER:-weak_framework,AGL")
+# Run windeployqt before lib_ui style/emoji codegen invokes the tools.
+if(TARGET lib_ui)
+    foreach(_zarya_codegen_tool codegen_style codegen_emoji)
+        if(TARGET zarya_windeploy_${_zarya_codegen_tool})
+            add_dependencies(lib_ui zarya_windeploy_${_zarya_codegen_tool})
+            foreach(_zarya_gen lib_ui_emoji lib_ui_palette lib_ui_styles)
+                if(TARGET ${_zarya_gen})
+                    add_dependencies(${_zarya_gen} zarya_windeploy_${_zarya_codegen_tool})
+                endif()
+            endforeach()
+        endif()
+    endforeach()
 endif()
 
 # Swap accessibility TU for Qt 6.8-compatible build-tree copy (no submodule dirt).
