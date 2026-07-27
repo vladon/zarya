@@ -44,12 +44,16 @@ private:
     QLineEdit* m_addressEdit = nullptr;
     QSpinBox* m_portSpin = nullptr;
     QLineEdit* m_uuidEdit = nullptr;
+    QLabel* m_passwordLabel = nullptr;
     QLineEdit* m_passwordEdit = nullptr;
     QLineEdit* m_encryptionEdit = nullptr;
     QLineEdit* m_methodEdit = nullptr;
     QLineEdit* m_securityCipherEdit = nullptr;
     QSpinBox* m_alterIdSpin = nullptr;
     QCheckBox* m_enabledCheck = nullptr;
+    QLineEdit* m_wgPeerPublicKeyEdit = nullptr;
+    QLineEdit* m_localAddressEdit = nullptr;
+    QSpinBox* m_mtuSpin = nullptr;
 
     QComboBox* m_networkCombo = nullptr;
     QLineEdit* m_pathEdit = nullptr;
@@ -73,6 +77,9 @@ private:
     QWidget* m_realityTab = nullptr;
     QWidget* m_uuidRowWidget = nullptr;
     QWidget* m_passwordRowWidget = nullptr;
+    QWidget* m_wgPeerPublicKeyRowWidget = nullptr;
+    QWidget* m_localAddressRowWidget = nullptr;
+    QWidget* m_mtuRowWidget = nullptr;
     QWidget* m_methodRowWidget = nullptr;
     QWidget* m_alterIdRowWidget = nullptr;
     QWidget* m_securityCipherRowWidget = nullptr;

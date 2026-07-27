@@ -44,6 +44,14 @@ struct Profile {
     QString spiderX;
     bool allowInsecure = false;
 
+    // WireGuard: password holds private key; publicKey is peer public key.
+    QString localAddress;
+    QString allowedIps;
+    QString preSharedKey;
+    QString reserved;
+    int mtu = 0;
+    int keepAlive = 0;
+
     int alterId = 0;
 
     ProfileSourceType sourceType = ProfileSourceType::Manual;

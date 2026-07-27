@@ -36,6 +36,8 @@ ProfileDialog::ProfileDialog(QWidget* parent)
     m_protocolCombo->addItem(QStringLiteral("SOCKS"), static_cast<int>(ProtocolType::Socks));
     m_protocolCombo->addItem(QStringLiteral("Hysteria2"),
                              static_cast<int>(ProtocolType::Hysteria2));
+    m_protocolCombo->addItem(QStringLiteral("WireGuard"),
+                             static_cast<int>(ProtocolType::WireGuard));
 
     m_coreCombo = new QComboBox(basicPage);
     m_coreCombo->addItem(QStringLiteral("Xray"), static_cast<int>(CoreType::Xray));
@@ -78,8 +80,33 @@ ProfileDialog::ProfileDialog(QWidget* parent)
     m_passwordRowWidget = new QWidget(basicPage);
     auto* passwordRowLayout = new QFormLayout(m_passwordRowWidget);
     passwordRowLayout->setContentsMargins(0, 0, 0, 0);
-    passwordRowLayout->addRow(tr("Password"), m_passwordEdit);
+    m_passwordLabel = new QLabel(tr("Password"), m_passwordRowWidget);
+    passwordRowLayout->addRow(m_passwordLabel, m_passwordEdit);
     basicForm->addRow(m_passwordRowWidget);
+
+    m_wgPeerPublicKeyEdit = new QLineEdit(basicPage);
+    m_localAddressEdit = new QLineEdit(basicPage);
+    m_localAddressEdit->setPlaceholderText(QStringLiteral("10.0.0.2/32"));
+    m_mtuSpin = new QSpinBox(basicPage);
+    m_mtuSpin->setRange(0, 9000);
+    m_mtuSpin->setSpecialValueText(tr("Default"));
+    m_mtuSpin->setValue(0);
+    m_wgPeerPublicKeyRowWidget = new QWidget(basicPage);
+    auto* wgPubRowLayout = new QFormLayout(m_wgPeerPublicKeyRowWidget);
+    wgPubRowLayout->setContentsMargins(0, 0, 0, 0);
+    wgPubRowLayout->addRow(tr("Peer public key"), m_wgPeerPublicKeyEdit);
+    basicForm->addRow(m_wgPeerPublicKeyRowWidget);
+    m_localAddressRowWidget = new QWidget(basicPage);
+    auto* localAddrRowLayout = new QFormLayout(m_localAddressRowWidget);
+    localAddrRowLayout->setContentsMargins(0, 0, 0, 0);
+    localAddrRowLayout->addRow(tr("Local address"), m_localAddressEdit);
+    basicForm->addRow(m_localAddressRowWidget);
+    m_mtuRowWidget = new QWidget(basicPage);
+    auto* mtuRowLayout = new QFormLayout(m_mtuRowWidget);
+    mtuRowLayout->setContentsMargins(0, 0, 0, 0);
+    mtuRowLayout->addRow(tr("MTU"), m_mtuSpin);
+    basicForm->addRow(m_mtuRowWidget);
+
     m_encryptionRowWidget = new QWidget(basicPage);
     auto* encryptionRowLayout = new QFormLayout(m_encryptionRowWidget);
     encryptionRowLayout->setContentsMargins(0, 0, 0, 0);
@@ -244,7 +271,16 @@ void ProfileDialog::updateProtocolFieldsVisibility()
     m_passwordRowWidget->setVisible(protocol == ProtocolType::Trojan
                                     || protocol == ProtocolType::Shadowsocks
                                     || protocol == ProtocolType::Socks
-                                    || protocol == ProtocolType::Hysteria2);
+                                    || protocol == ProtocolType::Hysteria2
+                                    || protocol == ProtocolType::WireGuard);
+    if (m_passwordLabel) {
+        m_passwordLabel->setText(protocol == ProtocolType::WireGuard ? tr("Private key")
+                                                                     : tr("Password"));
+    }
+    const bool wireGuard = protocol == ProtocolType::WireGuard;
+    m_wgPeerPublicKeyRowWidget->setVisible(wireGuard);
+    m_localAddressRowWidget->setVisible(wireGuard);
+    m_mtuRowWidget->setVisible(wireGuard);
     m_encryptionRowWidget->setVisible(protocol == ProtocolType::Vless);
     m_methodRowWidget->setVisible(protocol == ProtocolType::Shadowsocks);
     m_alterIdRowWidget->setVisible(protocol == ProtocolType::Vmess);
@@ -303,6 +339,9 @@ void ProfileDialog::populateFromProfile(const Profile& profile)
 
     m_serverNameEdit->setText(profile.serverName.isEmpty() ? profile.sni : profile.serverName);
     m_publicKeyEdit->setText(profile.publicKey);
+    m_wgPeerPublicKeyEdit->setText(profile.publicKey);
+    m_localAddressEdit->setText(profile.localAddress);
+    m_mtuSpin->setValue(profile.mtu > 0 ? profile.mtu : 0);
     m_shortIdEdit->setText(profile.shortId);
     m_fingerprintEdit->setText(profile.fingerprint);
     m_spiderXEdit->setText(profile.spiderX);
@@ -348,7 +387,13 @@ Profile ProfileDialog::profileFromFields() const
     profile.security = m_securityCombo->currentData().toString();
     profile.serverName = m_serverNameEdit->text().trimmed();
     profile.sni = m_sniEdit->text().trimmed();
-    profile.publicKey = m_publicKeyEdit->text().trimmed();
+    if (profile.protocol == ProtocolType::WireGuard) {
+        profile.publicKey = m_wgPeerPublicKeyEdit->text().trimmed();
+        profile.localAddress = m_localAddressEdit->text().trimmed();
+        profile.mtu = m_mtuSpin->value();
+    } else {
+        profile.publicKey = m_publicKeyEdit->text().trimmed();
+    }
     profile.shortId = m_shortIdEdit->text().trimmed();
     profile.fingerprint = m_fingerprintEdit->text().trimmed();
     profile.spiderX = m_spiderXEdit->text().trimmed();

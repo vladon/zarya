@@ -129,6 +129,12 @@ QString Profile::effectiveFingerprint() const
 
 QString Profile::computeSourceKey() const
 {
+    if (protocol == ProtocolType::WireGuard) {
+        return QStringLiteral("%1|%2|%3|%4|%5")
+            .arg(protocolTypeToString(protocol), address.trimmed())
+            .arg(port)
+            .arg(publicKey.trimmed(), localAddress.trimmed());
+    }
     return QStringLiteral("%1|%2|%3|%4|%5|%6")
         .arg(protocolTypeToString(protocol), address.trimmed())
         .arg(port)

@@ -132,6 +132,23 @@ int main(int argc, char* argv[])
         ok &= pass("hysteria2:// link parses into profile");
     }
 
+    const zarya::ShareLinkParseResult wg = zarya::ShareLinkParser::parse(QStringLiteral(
+        "wireguard://cHJpdmF0ZS1rZXktZXhhbXBsZQ==@wg.example.com:4344"
+        "?address=10.0.0.2%2F32&mtu=1420"
+        "&publickey=cGVlci1wdWItZXhhbXBsZQ==#wg-node"));
+    if (!wg.ok || wg.profile.protocol != zarya::ProtocolType::WireGuard
+        || wg.profile.password != QStringLiteral("cHJpdmF0ZS1rZXktZXhhbXBsZQ==")
+        || wg.profile.address != QStringLiteral("wg.example.com")
+        || wg.profile.port != 4344
+        || wg.profile.localAddress != QStringLiteral("10.0.0.2/32")
+        || wg.profile.mtu != 1420
+        || wg.profile.publicKey != QStringLiteral("cGVlci1wdWItZXhhbXBsZQ==")
+        || wg.profile.name != QStringLiteral("wg-node")) {
+        ok &= fail("wireguard:// link should parse private key/peer/local address/mtu");
+    } else {
+        ok &= pass("wireguard:// link parses into profile");
+    }
+
     const zarya::ShareLinkParseResult ssPlugin = zarya::ShareLinkParser::parse(QStringLiteral(
         "ss://YWVzLTI1Ni1nY206dGVzdA==@127.0.0.1:8388/?plugin=obfs-local%3Bobfs%3Dhttp"));
     if (!ssPlugin.ok || ssPlugin.profile.unsupportedReason.isEmpty()) {

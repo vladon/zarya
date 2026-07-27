@@ -945,7 +945,7 @@ sing-box: %3 (%4)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Paste one vless://, vmess://, trojan://, or ss:// link per line…</source>
+        <source>Paste one vless://, vmess://, trojan://, ss://, hysteria2://, or wireguard:// link per line…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1458,6 +1458,26 @@ Native proxy profile manager with system tray, Xray multi-protocol support, Wind
     </message>
     <message>
         <source>Password</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Private key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Peer public key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Local address</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>MTU</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Default</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

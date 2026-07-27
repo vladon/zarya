@@ -7,6 +7,7 @@
 #include "storage/AppSettings.h"
 
 #include <QJsonArray>
+#include <QRegularExpression>
 
 namespace zarya {
 
@@ -180,6 +181,81 @@ bool supportsHysteria2(const Profile& profile, QString* reason)
     return true;
 }
 
+bool supportsWireGuard(const Profile& profile, QString* reason)
+{
+    if (profile.hasUnsupportedFeature()) {
+        if (reason) {
+            *reason = profile.unsupportedReason;
+        }
+        return false;
+    }
+    if (profile.effectivePassword().isEmpty()) {
+        if (reason) {
+            *reason = QStringLiteral("WireGuard requires a private key.");
+        }
+        return false;
+    }
+    if (profile.publicKey.trimmed().isEmpty()) {
+        if (reason) {
+            *reason = QStringLiteral("WireGuard requires a peer public key.");
+        }
+        return false;
+    }
+    return true;
+}
+
+QStringList splitCsvList(const QString& value)
+{
+    QStringList parts;
+    for (const QString& part : value.split(QRegularExpression(QStringLiteral("[,\\s]+")),
+                                            Qt::SkipEmptyParts)) {
+        const QString trimmed = part.trimmed();
+        if (!trimmed.isEmpty()) {
+            parts.append(trimmed);
+        }
+    }
+    return parts;
+}
+
+QJsonArray parseReservedBytes(const QString& reserved)
+{
+    const QString trimmed = reserved.trimmed();
+    if (trimmed.isEmpty()) {
+        return {};
+    }
+
+    // Comma/space-separated decimal bytes: "1,2,3"
+    if (trimmed.contains(QLatin1Char(',')) || trimmed.contains(QLatin1Char(' '))) {
+        QJsonArray bytes;
+        for (const QString& part : splitCsvList(trimmed)) {
+            bool ok = false;
+            const int value = part.toInt(&ok);
+            if (!ok || value < 0 || value > 255) {
+                return {};
+            }
+            bytes.append(value);
+        }
+        return bytes.size() == 3 ? bytes : QJsonArray{};
+    }
+
+    // Single decimal triplet without separators is uncommon; try base64 (3 bytes).
+    QByteArray decoded = QByteArray::fromBase64(trimmed.toUtf8());
+    if (decoded.size() != 3) {
+        QString normalized = trimmed;
+        const int remainder = normalized.size() % 4;
+        if (remainder != 0) {
+            normalized.append(QString(4 - remainder, QLatin1Char('=')));
+        }
+        decoded = QByteArray::fromBase64(normalized.toUtf8());
+    }
+    if (decoded.size() != 3) {
+        return {};
+    }
+    return QJsonArray{static_cast<int>(static_cast<uchar>(decoded.at(0))),
+                      static_cast<int>(static_cast<uchar>(decoded.at(1))),
+                      static_cast<int>(static_cast<uchar>(decoded.at(2)))};
+}
+
 } // namespace
 
 CoreType XrayAdapter::type() const
@@ -287,6 +363,8 @@ QJsonObject XrayAdapter::generateOutbound(const Profile& profile, QString* error
         return generateSocksOutbound(profile, errorMessage);
     case ProtocolType::Hysteria2:
         return generateHysteria2Outbound(profile, errorMessage);
+    case ProtocolType::WireGuard:
+        return generateWireGuardOutbound(profile, errorMessage);
     }
     if (errorMessage) {
         *errorMessage = QStringLiteral("Unknown protocol.");
@@ -462,6 +540,64 @@ QJsonObject XrayAdapter::generateHysteria2Outbound(const Profile& profile,
     return wrapProxyOutbound(QStringLiteral("hysteria"), settings, streamSettings);
 }
 
+QJsonObject XrayAdapter::generateWireGuardOutbound(const Profile& profile,
+                                                   QString* errorMessage) const
+{
+    const QString secretKey = profile.effectivePassword();
+    const QString peerPublicKey = profile.publicKey.trimmed();
+    if (secretKey.isEmpty()) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("WireGuard private key is required.");
+        }
+        return {};
+    }
+    if (peerPublicKey.isEmpty()) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("WireGuard peer public key is required.");
+        }
+        return {};
+    }
+
+    QJsonObject peer;
+    peer.insert(QStringLiteral("endpoint"),
+                QStringLiteral("%1:%2").arg(profile.address.trimmed()).arg(profile.port));
+    peer.insert(QStringLiteral("publicKey"), peerPublicKey);
+    if (!profile.preSharedKey.trimmed().isEmpty()) {
+        peer.insert(QStringLiteral("preSharedKey"), profile.preSharedKey.trimmed());
+    }
+    if (profile.keepAlive > 0) {
+        peer.insert(QStringLiteral("keepAlive"), profile.keepAlive);
+    }
+    const QStringList allowedIps = splitCsvList(profile.allowedIps);
+    if (!allowedIps.isEmpty()) {
+        peer.insert(QStringLiteral("allowedIPs"), QJsonArray::fromStringList(allowedIps));
+    }
+
+    QJsonObject settings;
+    settings.insert(QStringLiteral("secretKey"), secretKey);
+    settings.insert(QStringLiteral("peers"), QJsonArray{peer});
+    // Prefer userspace path so system-proxy mode does not require kernel TUN privileges.
+    settings.insert(QStringLiteral("noKernelTun"), true);
+
+    const QStringList localAddresses = splitCsvList(profile.localAddress);
+    if (!localAddresses.isEmpty()) {
+        settings.insert(QStringLiteral("address"), QJsonArray::fromStringList(localAddresses));
+    }
+    if (profile.mtu > 0) {
+        settings.insert(QStringLiteral("mtu"), profile.mtu);
+    }
+
+    const QJsonArray reserved = parseReservedBytes(profile.reserved);
+    if (!reserved.isEmpty()) {
+        settings.insert(QStringLiteral("reserved"), reserved);
+    } else if (!profile.reserved.trimmed().isEmpty() && errorMessage) {
+        *errorMessage = QStringLiteral("WireGuard reserved must be 3 bytes (e.g. 1,2,3 or base64).");
+        return {};
+    }
+
+    return wrapProxyOutbound(QStringLiteral("wireguard"), settings, {});
+}
+
 bool XrayAdapter::supportsProfile(const Profile& profile, QString* reason) const
 {
     if (!profile.isValid()) {
@@ -491,6 +627,8 @@ bool XrayAdapter::supportsProfile(const Profile& profile, QString* reason) const
         return supportsSocks(profile, reason);
     case ProtocolType::Hysteria2:
         return supportsHysteria2(profile, reason);
+    case ProtocolType::WireGuard:
+        return supportsWireGuard(profile, reason);
     }
 
     if (reason) {

@@ -35,6 +35,8 @@ void redactProfileObject(QJsonObject& object, BackupRedactionMode mode, Redactio
     redact("password", QStringLiteral("profiles.password"));
     redact("publicKey", QStringLiteral("profiles.publicKey"));
     redact("shortId", QStringLiteral("profiles.shortId"));
+    redact("preSharedKey", QStringLiteral("profiles.preSharedKey"));
+    redact("obfsPassword", QStringLiteral("profiles.obfsPassword"));
 
     if (mode == BackupRedactionMode::Strict) {
         if (object.contains(QStringLiteral("address"))) {
