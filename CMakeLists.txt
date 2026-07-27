@@ -26,9 +26,6 @@ find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Network)
 include(ZaryaQt)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ZaryaDesktopAppUi.cmake)
-if(NOT DEFINED ZARYA_DESKTOP_APP_UI_SOURCES)
-    set(ZARYA_DESKTOP_APP_UI_SOURCES)
-endif()
 
 zarya_detect_static_qt(_zarya_qt_is_static)
 if(_zarya_qt_is_static AND NOT ZARYA_STATIC_QT)
@@ -488,10 +485,8 @@ target_compile_definitions(zarya PRIVATE ZARYA_VERSION_STRING="${ZARYA_VERSION_S
 if(ZARYA_PROJECT_ISSUES_URL)
     target_compile_definitions(zarya PRIVATE ZARYA_PROJECT_ISSUES_URL="${ZARYA_PROJECT_ISSUES_URL}")
 endif()
-if(ZARYA_DESKTOP_APP_UI)
-    target_compile_definitions(zarya PRIVATE ZARYA_DESKTOP_APP_UI=1)
-    target_link_libraries(zarya PRIVATE ${ZARYA_DESKTOP_APP_UI_LIBS})
-endif()
+target_compile_definitions(zarya PRIVATE ZARYA_DESKTOP_APP_UI=1)
+target_link_libraries(zarya PRIVATE ${ZARYA_DESKTOP_APP_UI_LIBS})
 
 zarya_link_qt_widgets_app(zarya)
 target_link_libraries(zarya PRIVATE Qt6::Network)

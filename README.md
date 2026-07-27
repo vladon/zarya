@@ -590,7 +590,7 @@ Run `zarya_xray_config_test` (or `.\scripts\run-xray-config-test.ps1`) to verify
 Zarya is **dual-licensed** under the [MIT License](LICENSE.MIT) and
 [GPLv3+](LICENSE.GPL-3.0). See [LICENSE](LICENSE) for how each applies.
 
-Official builds that enable Desktop App Toolkit UI (`ZARYA_DESKTOP_APP_UI`) are
-distributed under **GPLv3+** because they link [desktop-app/lib_ui](https://github.com/desktop-app/lib_ui)
-and related toolkit libraries ([LEGAL](https://github.com/desktop-app/legal/blob/master/LEGAL)).
-Builds without that toolkit may still be used under MIT.
+Official builds always link Desktop App Toolkit UI (`lib_ui`) and are
+distributed under **GPLv3+** ([desktop-app/lib_ui](https://github.com/desktop-app/lib_ui),
+[LEGAL](https://github.com/desktop-app/legal/blob/master/LEGAL)). Zarya-authored
+source may still be used under MIT or GPLv3+ per [LICENSE](LICENSE).

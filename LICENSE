@@ -13,14 +13,13 @@ Copyright (c) 2026 Vlad Yaroslavlev and Zarya contributors.
 
 Which license applies to a given distribution
 
-1. Zarya source (or builds) that do NOT link Desktop App Toolkit libraries
-   (lib_ui, lib_base, and related desktop-app components) may be used under
-   either the MIT License or GPLv3+, at your option.
+1. Zarya-authored source code may be used under either the MIT License or
+   GPLv3+, at your option (see LICENSE.MIT and LICENSE.GPL-3.0).
 
-2. Official and other builds that link Desktop App Toolkit (CMake option
-   ZARYA_DESKTOP_APP_UI=ON, or any binary that includes those libraries) MUST
-   be distributed under GPLv3+ (or a compatible license), because the Toolkit
-   is licensed under GPLv3+ with an OpenSSL linking exception. See:
+2. Official and other builds that link Desktop App Toolkit (lib_ui, lib_base,
+   and related desktop-app components — required by the Zarya build) MUST be
+   distributed under GPLv3+ (or a compatible license), because the Toolkit is
+   licensed under GPLv3+ with an OpenSSL linking exception. See:
 
    https://github.com/desktop-app/legal/blob/master/LEGAL
 

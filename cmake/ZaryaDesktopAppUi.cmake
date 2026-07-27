@@ -1,15 +1,8 @@
-# Optional Desktop App Toolkit (lib_ui) integration for Zarya.
-# Enabled with -DZARYA_DESKTOP_APP_UI=ON. Produces a GPLv3+ derivative binary.
+# Desktop App Toolkit (lib_ui) — required. Official binaries are GPLv3+ derivatives.
 
-option(ZARYA_DESKTOP_APP_UI
-    "Link desktop-app lib_ui (GPLv3+). Spike UI; OFF by default for CI."
-    OFF)
+set(ZARYA_DESKTOP_APP_UI ON CACHE BOOL "Link desktop-app lib_ui (required; GPLv3+)" FORCE)
 
-if(NOT ZARYA_DESKTOP_APP_UI)
-    return()
-endif()
-
-message(STATUS "ZARYA_DESKTOP_APP_UI=ON — linking Desktop App Toolkit (GPLv3+)")
+message(STATUS "Linking Desktop App Toolkit (lib_ui) — GPLv3+ binary")
 
 # lz4 and other bundled deps ship .c sources.
 enable_language(C)

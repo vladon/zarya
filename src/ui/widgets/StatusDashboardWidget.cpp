@@ -1,10 +1,6 @@
 #include "ui/widgets/StatusDashboardWidget.h"
 
-#if defined(ZARYA_DESKTOP_APP_UI)
 #include "ui/desktopapp/StatusConfiguredStrip.h"
-#else
-#include "ui/widgets/StatusBadge.h"
-#endif
 
 #include <QFont>
 #include <QLabel>
@@ -52,7 +48,6 @@ StatusDashboardWidget::StatusDashboardWidget(QWidget* parent)
     unconfiguredLayout->addWidget(backupBtn);
     unconfiguredLayout->addWidget(setupBtn);
 
-#if defined(ZARYA_DESKTOP_APP_UI)
     m_configuredStrip = new StatusConfiguredStrip(this);
     connect(m_configuredStrip, &StatusConfiguredStrip::startRequested, this,
             &StatusDashboardWidget::startRequested);
@@ -64,58 +59,12 @@ StatusDashboardWidget::StatusDashboardWidget(QWidget* parent)
             &StatusDashboardWidget::openLogsRequested);
     connect(m_configuredStrip, &StatusConfiguredStrip::createDiagnosticsRequested, this,
             &StatusDashboardWidget::createDiagnosticsRequested);
-#else
-    m_configuredPanel = new QWidget(this);
-    m_titleLabel = new QLabel(m_configuredPanel);
-    {
-        QFont font = m_titleLabel->font();
-        font.setBold(true);
-        font.setPointSize(font.pointSize() + 1);
-        m_titleLabel->setFont(font);
-    }
-    m_runtimeBadge = new StatusBadge(m_configuredPanel);
-    m_detailLabel = new QLabel(m_configuredPanel);
-    m_detailLabel->setWordWrap(true);
-    m_primaryButton = new QPushButton(m_configuredPanel);
-    m_secondaryButton = new QPushButton(m_configuredPanel);
-    connect(m_primaryButton, &QPushButton::clicked, this, [this]() {
-        if (m_primaryButton->text() == tr("Stop")) {
-            emit stopRequested();
-        } else {
-            emit startRequested();
-        }
-    });
-    connect(m_secondaryButton, &QPushButton::clicked, this, [this]() {
-        const QString text = m_secondaryButton->text();
-        if (text.contains(tr("Diagnostics"))) {
-            emit createDiagnosticsRequested();
-        } else if (text.contains(tr("Logs"))) {
-            emit openLogsRequested();
-        } else if (text.contains(tr("Test"))) {
-            emit testRequested();
-        } else if (text.contains(tr("Subscriptions"))) {
-            emit updateSubscriptionsRequested();
-        }
-    });
-    auto* configuredLayout = new QVBoxLayout(m_configuredPanel);
-    configuredLayout->setContentsMargins(8, 8, 8, 8);
-    configuredLayout->addWidget(m_titleLabel);
-    configuredLayout->addWidget(m_runtimeBadge);
-    configuredLayout->addWidget(m_detailLabel);
-    configuredLayout->addWidget(m_primaryButton);
-    configuredLayout->addWidget(m_secondaryButton);
-#endif
 
     auto* root = new QVBoxLayout(this);
     root->setContentsMargins(0, 0, 0, 0);
     root->addWidget(m_unconfiguredPanel);
-#if defined(ZARYA_DESKTOP_APP_UI)
     root->addWidget(m_configuredStrip);
     m_configuredStrip->hide();
-#else
-    root->addWidget(m_configuredPanel);
-    m_configuredPanel->hide();
-#endif
 }
 
 void StatusDashboardWidget::updateModel(const StatusDashboardModel& model)
@@ -141,74 +90,14 @@ void StatusDashboardWidget::showUnconfigured(const StatusDashboardModel& model)
     m_unconfiguredStepsLabel->setText(steps.join(QLatin1Char('\n')));
 
     m_unconfiguredPanel->show();
-#if defined(ZARYA_DESKTOP_APP_UI)
     m_configuredStrip->hide();
-#else
-    m_configuredPanel->hide();
-#endif
 }
 
 void StatusDashboardWidget::showConfigured(const StatusDashboardModel& model)
 {
     m_unconfiguredPanel->hide();
-#if defined(ZARYA_DESKTOP_APP_UI)
     m_configuredStrip->show();
     m_configuredStrip->updateModel(model);
-#else
-    m_configuredPanel->show();
-
-    if (model.experimentalRuntimeActive) {
-        m_runtimeBadge->setKind(StatusBadgeKind::Warning);
-        m_runtimeBadge->setBadgeText(tr("Experimental runtime active"));
-    } else if (!model.recommendedRuntimeText.isEmpty()) {
-        m_runtimeBadge->setKind(StatusBadgeKind::Ok);
-        m_runtimeBadge->setBadgeText(tr("Recommended: %1").arg(model.recommendedRuntimeText));
-    }
-
-    if (model.running) {
-        m_titleLabel->setText(tr("Runtime: Running — %1").arg(model.runtimeText));
-        if (!model.experimentalRuntimeActive) {
-            m_runtimeBadge->setKind(StatusBadgeKind::Running);
-            m_runtimeBadge->setBadgeText(tr("Running"));
-        }
-        m_detailLabel->setText(
-            tr("Profile: %1\nLocal proxy: %2\nSystem proxy: %3\nRouting: %4")
-                .arg(model.profileName, model.localEndpoint, model.systemProxyText,
-                     model.routingText));
-        m_primaryButton->setText(tr("Stop"));
-        m_secondaryButton->setText(tr("Open Logs"));
-        m_secondaryButton->disconnect();
-        connect(m_secondaryButton, &QPushButton::clicked, this,
-                &StatusDashboardWidget::openLogsRequested);
-        auto* diagBtn = findChild<QPushButton*>(QStringLiteral("diagBtn"));
-        if (!diagBtn) {
-            diagBtn = new QPushButton(tr("Create Diagnostics"), m_configuredPanel);
-            diagBtn->setObjectName(QStringLiteral("diagBtn"));
-            m_configuredPanel->layout()->addWidget(diagBtn);
-            connect(diagBtn, &QPushButton::clicked, this,
-                    &StatusDashboardWidget::createDiagnosticsRequested);
-        }
-        diagBtn->show();
-    } else {
-        if (auto* diagBtn = findChild<QPushButton*>(QStringLiteral("diagBtn"))) {
-            diagBtn->hide();
-        }
-        m_titleLabel->setText(tr("Runtime: Stopped — %1").arg(model.runtimeText));
-        if (!model.experimentalRuntimeActive) {
-            m_runtimeBadge->setKind(StatusBadgeKind::Stopped);
-            m_runtimeBadge->setBadgeText(tr("Stopped"));
-        }
-        m_detailLabel->setText(
-            tr("Selected profile: %1\nRouting: %2\nDNS: %3\nSystem proxy: %4\nCore: %5")
-                .arg(model.profileName.isEmpty() ? QStringLiteral("—") : model.profileName,
-                     model.routingText, model.dnsText, model.systemProxyText, model.coreText));
-        m_primaryButton->setText(tr("Start"));
-        m_secondaryButton->setText(tr("Test"));
-        m_secondaryButton->disconnect();
-        connect(m_secondaryButton, &QPushButton::clicked, this,
-                &StatusDashboardWidget::testRequested);
-    }
-#endif
 }
 
 } // namespace zarya

@@ -6,9 +6,8 @@ Build, package, sign, smoke, and release helpers. Prefer these over ad-hoc cmake
 
 | Script | Use |
 |--------|-----|
-| `configure-msvc2026.ps1 -Static` | Configure local/release (static Qt; Desktop App UI ON by default) |
-| `configure-msvc2026.ps1 -Static -NoDesktopAppUi` | Static Qt without lib_ui |
-| `build.ps1` | Configure+build wrapper (static default; Desktop App UI ON; `-Shared`, `-NoDesktopAppUi`, `-Test`) |
+| `configure-msvc2026.ps1 -Static` | Configure local/release (static Qt + required lib_ui) |
+| `build.ps1` | Configure+build wrapper (static default; `-Shared`, `-Test`) |
 | `build-macos.sh` | macOS configure+build wrapper (Homebrew `qt@6`; `--test`, `--force`) |
 | `build-qt-static-msvc2026.ps1` | Static Qt (qtbase+qtsvg) → `C:\Qt\Static\6.8.3\msvc2022_64`; `-SvgOnly` adds Svg to an existing prefix |
 | `run-xray-config-test.ps1` | Xray config unit tests |

@@ -1,120 +1,30 @@
 #include "ui/widgets/StatusBadge.h"
 
-#if defined(ZARYA_DESKTOP_APP_UI)
 #include "ui/desktopapp/StatusBadgeLibUiEmbed.h"
 
 #include <QVBoxLayout>
-#else
-#include "ui/theme/ThemeManager.h"
-#include "ui/theme/ThemeTokens.h"
-
-#include <QLabel>
-#include <QVBoxLayout>
-#endif
 
 namespace zarya {
-namespace {
-
-#if !defined(ZARYA_DESKTOP_APP_UI)
-void badgeColors(StatusBadgeKind kind, const ThemeTokens& tokens, bool dark, QColor* bg,
-                 QColor* fg)
-{
-    *fg = tokens.textPrimary;
-    switch (kind) {
-    case StatusBadgeKind::Ok:
-        *bg = dark ? QColor(QStringLiteral("#238636")).darker(140) : QColor(QStringLiteral("#dafbe1"));
-        *fg = tokens.success;
-        break;
-    case StatusBadgeKind::Warning:
-        *bg = dark ? QColor(QStringLiteral("#9e6a03")).darker(150) : QColor(QStringLiteral("#fff8c5"));
-        *fg = tokens.warning;
-        break;
-    case StatusBadgeKind::Error:
-        *bg = dark ? QColor(QStringLiteral("#da3633")).darker(150) : QColor(QStringLiteral("#ffebe9"));
-        *fg = tokens.danger;
-        break;
-    case StatusBadgeKind::Experimental:
-        *bg = dark ? QColor(QStringLiteral("#8957e5")).darker(150) : QColor(QStringLiteral("#fbefff"));
-        *fg = tokens.experimental;
-        break;
-    case StatusBadgeKind::Unsupported:
-        *bg = tokens.panelBg;
-        *fg = tokens.textSecondary;
-        break;
-    case StatusBadgeKind::Running:
-        *bg = dark ? QColor(QStringLiteral("#1158c7")).darker(140) : QColor(QStringLiteral("#ddf4ff"));
-        *fg = tokens.info;
-        break;
-    case StatusBadgeKind::Stopped:
-        *bg = tokens.panelBg;
-        *fg = tokens.textSecondary;
-        break;
-    case StatusBadgeKind::Neutral:
-    default:
-        *bg = tokens.panelBg;
-        *fg = tokens.textSecondary;
-        break;
-    }
-}
-#endif
-
-} // namespace
 
 StatusBadge::StatusBadge(QWidget* parent)
     : QWidget(parent)
 {
-#if defined(ZARYA_DESKTOP_APP_UI)
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     m_embed = new StatusBadgeLibUiEmbed(this);
     layout->addWidget(m_embed);
     setKind(StatusBadgeKind::Neutral);
-#else
-    auto* layout = new QVBoxLayout(this);
-    layout->setContentsMargins(0, 0, 0, 0);
-    m_label = new QLabel(this);
-    m_label->setMargin(4);
-    layout->addWidget(m_label);
-    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this, [this]() {
-        applyStyle(m_kind);
-    });
-    setKind(StatusBadgeKind::Neutral);
-#endif
 }
 
 void StatusBadge::setKind(StatusBadgeKind kind)
 {
     m_kind = kind;
-#if defined(ZARYA_DESKTOP_APP_UI)
     m_embed->setKind(kind);
-#else
-    applyStyle(kind);
-#endif
 }
 
 void StatusBadge::setBadgeText(const QString& text)
 {
-#if defined(ZARYA_DESKTOP_APP_UI)
     m_embed->setBadgeText(text);
-#else
-    m_label->setText(text);
-#endif
-}
-
-void StatusBadge::applyStyle(StatusBadgeKind kind)
-{
-#if defined(ZARYA_DESKTOP_APP_UI)
-    Q_UNUSED(kind);
-#else
-    const ThemeTokens tokens = ThemeManager::instance().tokens();
-    QColor bg;
-    QColor fg;
-    badgeColors(kind, tokens, ThemeManager::instance().effectiveIsDark(), &bg, &fg);
-    m_label->setStyleSheet(
-        QStringLiteral("background:%1; color:%2; border-radius:%3px; padding:2px 6px;")
-            .arg(bg.name(QColor::HexRgb), fg.name(QColor::HexRgb))
-            .arg(tokens.radiusSm));
-#endif
 }
 
 } // namespace zarya

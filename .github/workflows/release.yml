@@ -12,12 +12,18 @@ jobs:
       SIGNING_ENABLED: ${{ secrets.SIGNING_ENABLED }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: Read version
         id: ver
         shell: bash
         run: |
           VERSION=$(python -c "import sys; sys.path.insert(0, 'scripts'); from release_common import read_cmake_version; print(read_cmake_version()['version'])")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Install OpenSSL
+        uses: shogo82148/actions-setup-openssl@v1
+        with:
+          version: "3.4.1"
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
@@ -25,8 +31,12 @@ jobs:
           host: windows
           target: desktop
           arch: win64_msvc2022_64
+          modules: qtsvg
       - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+        shell: bash
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+            -DOPENSSL_ROOT_DIR="${OPENSSL_ROOT_DIR}"
       - name: Build
         run: cmake --build build --config Release --target zarya_lrelease zarya zarya-helper
       - name: Package (unsigned by default)

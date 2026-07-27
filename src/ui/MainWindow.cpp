@@ -47,9 +47,7 @@
 #include "ui/SettingsDialog.h"
 #include "ui/AppUpdateDialog.h"
 #include "ui/theme/ThemeManager.h"
-#if defined(ZARYA_DESKTOP_APP_UI)
 #include "ui/desktopapp/LibUiSpikeDialog.h"
-#endif
 #include "updater/AppUpdateChecker.h"
 #include "updater/AppUpdateStateManager.h"
 #include "features/FeatureGate.h"
@@ -374,13 +372,11 @@ void MainWindow::setupMenuBar()
     helpMenu->addAction(tr("Copy &Support Summary"), this, &MainWindow::onCopySupportSummary);
     helpMenu->addAction(tr("Check for App &Updates…"), this, &MainWindow::onCheckAppUpdates);
     helpMenu->addSeparator();
-#if defined(ZARYA_DESKTOP_APP_UI)
     helpMenu->addAction(tr("Desktop App UI &spike…"), this, [this]() {
         LibUiSpikeDialog dialog(this);
         dialog.exec();
     });
     helpMenu->addSeparator();
-#endif
     helpMenu->addAction(tr("&About"), this, &MainWindow::onAbout);
 }
 

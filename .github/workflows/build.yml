@@ -11,12 +11,18 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: Read version
         id: ver
         shell: bash
         run: |
           VERSION=$(python -c "import sys; sys.path.insert(0, 'scripts'); from release_common import read_cmake_version; print(read_cmake_version()['version'])")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Install OpenSSL
+        uses: shogo82148/actions-setup-openssl@v1
+        with:
+          version: "3.4.1"
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
@@ -24,10 +30,14 @@ jobs:
           host: windows
           target: desktop
           arch: win64_msvc2022_64
+          modules: qtsvg
       - name: Check translations
         run: python scripts/check-translations.py
       - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+        shell: bash
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+            -DOPENSSL_ROOT_DIR="${OPENSSL_ROOT_DIR}"
       - name: Build
         run: cmake --build build --config Release --target zarya_lrelease zarya zarya-helper zarya_xray_config_test
       - name: Test
@@ -41,13 +51,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: Read version
         id: ver
         run: |
           VERSION=$(python3 -c "import sys; sys.path.insert(0, 'scripts'); from release_common import read_cmake_version; print(read_cmake_version()['version'])")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-      - name: Install Qt
-        run: sudo apt-get update && sudo apt-get install -y qt6-base-dev cmake build-essential xvfb
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            qt6-base-dev qt6-svg-dev qt6-tools-dev \
+            libssl-dev zlib1g-dev libjpeg-dev libgl1-mesa-dev \
+            cmake build-essential xvfb
       - name: Check translations
         run: python scripts/check-translations.py
       - name: Configure
@@ -74,17 +91,22 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: Read version
         id: ver
         run: |
           VERSION=$(python3 -c "import sys; sys.path.insert(0, 'scripts'); from release_common import read_cmake_version; print(read_cmake_version()['version'])")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-      - name: Install Qt
-        run: brew install qt@6 cmake
+      - name: Install dependencies
+        run: brew install qt@6 cmake openssl@3
       - name: Check translations
         run: python scripts/check-translations.py
       - name: Configure
-        run: cmake -S . -B build -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6)"
+        run: |
+          cmake -S . -B build \
+            -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6)" \
+            -DOPENSSL_ROOT_DIR="$(brew --prefix openssl@3)"
       - name: Build
         run: cmake --build build --target zarya zarya_xray_config_test
       - name: Test

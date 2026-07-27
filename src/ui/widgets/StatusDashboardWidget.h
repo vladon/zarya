@@ -1,17 +1,13 @@
 #pragma once
 
+#include <QString>
 #include <QWidget>
 
 class QLabel;
-class QPushButton;
 
 namespace zarya {
 
-class StatusBadge;
-
-#if defined(ZARYA_DESKTOP_APP_UI)
 class StatusConfiguredStrip;
-#endif
 
 struct StatusDashboardModel {
     bool configured = false;
@@ -58,16 +54,7 @@ private:
 
     QWidget* m_unconfiguredPanel = nullptr;
     QLabel* m_unconfiguredStepsLabel = nullptr;
-#if defined(ZARYA_DESKTOP_APP_UI)
     StatusConfiguredStrip* m_configuredStrip = nullptr;
-#else
-    QWidget* m_configuredPanel = nullptr;
-    QLabel* m_titleLabel = nullptr;
-    QLabel* m_detailLabel = nullptr;
-    StatusBadge* m_runtimeBadge = nullptr;
-    QPushButton* m_primaryButton = nullptr;
-    QPushButton* m_secondaryButton = nullptr;
-#endif
 };
 
 } // namespace zarya
