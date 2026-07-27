@@ -27,6 +27,30 @@ if(NOT EXISTS "${cmake_helpers_loc}/init_target.cmake")
     message(FATAL_ERROR "Desktop App cmake_helpers missing. Run: git submodule update --init --recursive")
 endif()
 
+# Qt::NoTitleBarBackgroundHint is Qt 6.9+; upstream lib_ui incorrectly gates at 6.8.
+# Write a patched TU into the build tree so we never dirty the lib_ui submodule.
+function(zarya_write_lib_ui_qt69_window_mac_patch out_path)
+    set(_orig "${submodules_loc}/lib_ui/ui/platform/mac/ui_window_mac.mm")
+    if(NOT EXISTS "${_orig}")
+        message(FATAL_ERROR "Missing ${_orig}")
+    endif()
+    file(READ "${_orig}" _src)
+    string(REPLACE
+        "QT_VERSION_CHECK(6, 8, 0)"
+        "QT_VERSION_CHECK(6, 9, 0)"
+        _src "${_src}")
+    if(NOT _src MATCHES "QT_VERSION_CHECK\\(6, 9, 0\\)")
+        message(FATAL_ERROR
+            "Failed to patch ui_window_mac.mm for Qt < 6.9 "
+            "(Qt::NoTitleBarBackgroundHint). Upstream lib_ui may have changed.")
+    endif()
+    if(_src MATCHES "QT_VERSION_CHECK\\(6, 8, 0\\)")
+        message(FATAL_ERROR
+            "ui_window_mac.mm still has Qt 6.8 gates after patch")
+    endif()
+    file(WRITE "${out_path}" "${_src}")
+endfunction()
+
 # QAccessible::Attribute::Orientation is not in Qt 6.8–6.9; gate it for Qt 6.10+.
 # Write a patched TU into the build tree so we never dirty the lib_ui submodule.
 function(zarya_write_lib_ui_qt68_accessible_patch out_path)
@@ -237,9 +261,12 @@ if(WIN32 AND NOT ZARYA_STATIC_QT)
         if(TARGET ${_zarya_codegen_tool} AND ZARYA_WINDEPLOYQT)
             set(_zarya_deploy_stamp
                 "${CMAKE_BINARY_DIR}/desktop_app/${_zarya_codegen_tool}.windeployqt.stamp")
+            # Force --release/--debug: without it, windeployqt may drop
+            # qwindowsd.dll next to a Release tool → STATUS_DLL_NOT_FOUND.
             add_custom_command(
                 OUTPUT "${_zarya_deploy_stamp}"
                 COMMAND "${ZARYA_WINDEPLOYQT}"
+                    $<IF:$<CONFIG:Debug>,--debug,--release>
                     --no-translations
                     --no-compiler-runtime
                     --no-system-d3d-compiler
@@ -285,24 +312,44 @@ if(TARGET lib_ui)
     endforeach()
 endif()
 
-# Swap accessibility TU for Qt < 6.10 (Orientation API) — build-tree copy, no submodule dirt.
-if(TARGET lib_ui AND QT_VERSION VERSION_LESS 6.10.0)
-    set(_zarya_a11y_patched_dir "${CMAKE_BINARY_DIR}/desktop_app/patched")
-    file(MAKE_DIRECTORY "${_zarya_a11y_patched_dir}")
-    set(_zarya_a11y_patched
-        "${_zarya_a11y_patched_dir}/ui_accessible_widget.cpp")
-    zarya_write_lib_ui_qt68_accessible_patch("${_zarya_a11y_patched}")
-    get_target_property(_zarya_lib_ui_sources lib_ui SOURCES)
-    set(_zarya_lib_ui_new_sources)
-    foreach(_zarya_src IN LISTS _zarya_lib_ui_sources)
-        if(_zarya_src MATCHES "ui_accessible_widget\\.cpp$")
-            list(APPEND _zarya_lib_ui_new_sources "${_zarya_a11y_patched}")
-        else()
-            list(APPEND _zarya_lib_ui_new_sources "${_zarya_src}")
-        endif()
-    endforeach()
-    set_property(TARGET lib_ui PROPERTY SOURCES ${_zarya_lib_ui_new_sources})
-    message(STATUS "lib_ui: using Qt < 6.10-safe ui_accessible_widget.cpp from build tree")
+# Swap toolkit TUs for older Qt — build-tree copies, no submodule dirt.
+if(TARGET lib_ui)
+    set(_zarya_patched_dir "${CMAKE_BINARY_DIR}/desktop_app/patched")
+    file(MAKE_DIRECTORY "${_zarya_patched_dir}")
+    set(_zarya_lib_ui_need_rescan FALSE)
+
+    if(APPLE AND QT_VERSION VERSION_LESS 6.9.0)
+        set(_zarya_mac_window_patched
+            "${_zarya_patched_dir}/ui_window_mac.mm")
+        zarya_write_lib_ui_qt69_window_mac_patch("${_zarya_mac_window_patched}")
+        set_source_files_properties("${_zarya_mac_window_patched}" PROPERTIES
+            LANGUAGE OBJCXX)
+        set(_zarya_lib_ui_need_rescan TRUE)
+        message(STATUS "lib_ui: using Qt < 6.9-safe ui_window_mac.mm from build tree")
+    endif()
+
+    if(QT_VERSION VERSION_LESS 6.10.0)
+        set(_zarya_a11y_patched
+            "${_zarya_patched_dir}/ui_accessible_widget.cpp")
+        zarya_write_lib_ui_qt68_accessible_patch("${_zarya_a11y_patched}")
+        set(_zarya_lib_ui_need_rescan TRUE)
+        message(STATUS "lib_ui: using Qt < 6.10-safe ui_accessible_widget.cpp from build tree")
+    endif()
+
+    if(_zarya_lib_ui_need_rescan)
+        get_target_property(_zarya_lib_ui_sources lib_ui SOURCES)
+        set(_zarya_lib_ui_new_sources)
+        foreach(_zarya_src IN LISTS _zarya_lib_ui_sources)
+            if(DEFINED _zarya_a11y_patched AND _zarya_src MATCHES "ui_accessible_widget\\.cpp$")
+                list(APPEND _zarya_lib_ui_new_sources "${_zarya_a11y_patched}")
+            elseif(DEFINED _zarya_mac_window_patched AND _zarya_src MATCHES "ui_window_mac\\.mm$")
+                list(APPEND _zarya_lib_ui_new_sources "${_zarya_mac_window_patched}")
+            else()
+                list(APPEND _zarya_lib_ui_new_sources "${_zarya_src}")
+            endif()
+        endforeach()
+        set_property(TARGET lib_ui PROPERTY SOURCES ${_zarya_lib_ui_new_sources})
+    endif()
 endif()
 
 if(NOT ZARYA_HAS_QT_SVG AND TARGET lib_ui)
@@ -328,9 +375,17 @@ set(ZARYA_DESKTOP_APP_UI_SOURCES
 
 
 # Spike sources consume toolkit headers that assume QT_NO_KEYWORDS + base PCH.
-set_source_files_properties(${ZARYA_DESKTOP_APP_UI_SOURCES} PROPERTIES
-    COMPILE_DEFINITIONS "QT_NO_KEYWORDS"
-    COMPILE_OPTIONS "/FI${submodules_loc}/lib_ui/ui/ui_pch.h")
+# MSVC: /FI; GCC/Clang: -include (never pass /FI to non-MSVC).
+set(_zarya_ui_pch "${submodules_loc}/lib_ui/ui/ui_pch.h")
+if(MSVC)
+    set_source_files_properties(${ZARYA_DESKTOP_APP_UI_SOURCES} PROPERTIES
+        COMPILE_DEFINITIONS "QT_NO_KEYWORDS"
+        COMPILE_OPTIONS "/FI${_zarya_ui_pch}")
+else()
+    set_source_files_properties(${ZARYA_DESKTOP_APP_UI_SOURCES} PROPERTIES
+        COMPILE_DEFINITIONS "QT_NO_KEYWORDS"
+        COMPILE_OPTIONS "-include;${_zarya_ui_pch}")
+endif()
 
 # lz4 is PRIVATE on lib_ui; static link requires the final exe to pull it in.
 set(ZARYA_DESKTOP_APP_UI_LIBS
