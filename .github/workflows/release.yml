@@ -60,6 +60,7 @@ jobs:
         run: |
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
             -DOPENSSL_ROOT_DIR="${OPENSSL_ROOT_DIR}" \
+            -DOPENSSL_USE_STATIC_LIBS=TRUE \
             -DCMAKE_PREFIX_PATH="${VCPKG_PREFIX};${CMAKE_PREFIX_PATH}"
       - name: Build
         shell: pwsh

@@ -251,9 +251,8 @@ add_subdirectory(${submodules_loc}/codegen/codegen/emoji
     ${CMAKE_BINARY_DIR}/desktop_app/codegen_emoji)
 
 # Shared Qt on Windows: codegen tools need Qt (+ OpenSSL / vcpkg) DLLs at runtime.
-# Deploy next to the tools and wrap lib_ui generate rules with a PATH launcher.
-# Cannot use add_custom_command(TARGET ...) here — codegen_* live in subdirs.
-# Static Qt builds need no deploy (tools link Qt statically).
+# Do NOT windeployqt next to the tools — a partial deploy shadows PATH and still
+# misses OpenSSL. Instead wrap generate_* commands with a PATH-setting .cmd.
 if(WIN32 AND NOT ZARYA_STATIC_QT)
     get_filename_component(_zarya_qt_bin "${Qt6_DIR}/../../../bin" ABSOLUTE)
     set(_zarya_codegen_path "${_zarya_qt_bin}")
@@ -264,64 +263,32 @@ if(WIN32 AND NOT ZARYA_STATIC_QT)
         string(APPEND _zarya_codegen_path ";$ENV{VCPKG_PREFIX}/bin")
     endif()
 
-    set(_zarya_codegen_launch
+    set(ZARYA_CODEGEN_LAUNCH
         "${CMAKE_BINARY_DIR}/desktop_app/zarya_codegen_launch.cmd")
     # Bracket args avoid \" quote-escaping traps that break CMake parsing.
-    file(WRITE "${_zarya_codegen_launch}"
+    file(WRITE "${ZARYA_CODEGEN_LAUNCH}"
 [=[@echo off
 set PATH=]=] "${_zarya_codegen_path}" [=[;%PATH%
 %*
+exit /b %ERRORLEVEL%
 ]=])
+    set(ZARYA_CODEGEN_LAUNCH "${ZARYA_CODEGEN_LAUNCH}" CACHE FILEPATH
+        "PATH launcher for lib_ui codegen tools" FORCE)
+    message(STATUS "codegen PATH launcher: ${ZARYA_CODEGEN_LAUNCH}")
+    message(STATUS "codegen PATH prefix: ${_zarya_codegen_path}")
 
-
-    find_program(ZARYA_WINDEPLOYQT windeployqt HINTS "${_zarya_qt_bin}" NO_CACHE)
-    foreach(_zarya_codegen_tool codegen_style codegen_emoji)
-        if(TARGET ${_zarya_codegen_tool} AND ZARYA_WINDEPLOYQT)
-            set(_zarya_deploy_stamp
-                "${CMAKE_BINARY_DIR}/desktop_app/${_zarya_codegen_tool}.windeployqt.stamp")
-            set(_zarya_deploy_cmds
-                COMMAND "${ZARYA_WINDEPLOYQT}"
-                    $<IF:$<CONFIG:Debug>,--debug,--release>
-                    --no-translations
-                    --no-compiler-runtime
-                    --no-system-d3d-compiler
-                    --no-opengl-sw
-                    "$<TARGET_FILE:${_zarya_codegen_tool}>")
-            # OpenSSL / vcpkg DLLs are not deployed by windeployqt but are
-            # linked by lib_base (and friends) into the codegen tools.
-            if(OPENSSL_ROOT_DIR AND EXISTS "${OPENSSL_ROOT_DIR}/bin")
-                file(GLOB _zarya_ssl_dlls "${OPENSSL_ROOT_DIR}/bin/*.dll")
-                foreach(_zarya_ssl_dll IN LISTS _zarya_ssl_dlls)
-                    list(APPEND _zarya_deploy_cmds
-                        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-                            "${_zarya_ssl_dll}"
-                            "$<TARGET_FILE_DIR:${_zarya_codegen_tool}>")
-                endforeach()
-            endif()
-            if(DEFINED ENV{VCPKG_PREFIX} AND EXISTS "$ENV{VCPKG_PREFIX}/bin")
-                foreach(_zarya_vcpkg_dll IN ITEMS zlib1.dll jpeg62.dll turbojpeg.dll libjpeg-turbo.dll)
-                    if(EXISTS "$ENV{VCPKG_PREFIX}/bin/${_zarya_vcpkg_dll}")
-                        list(APPEND _zarya_deploy_cmds
-                            COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-                                "$ENV{VCPKG_PREFIX}/bin/${_zarya_vcpkg_dll}"
-                                "$<TARGET_FILE_DIR:${_zarya_codegen_tool}>")
-                    endif()
-                endforeach()
-            endif()
-            add_custom_command(
-                OUTPUT "${_zarya_deploy_stamp}"
-                ${_zarya_deploy_cmds}
-                COMMAND "${CMAKE_COMMAND}" -E touch "${_zarya_deploy_stamp}"
-                DEPENDS ${_zarya_codegen_tool}
-                COMMENT "windeployqt ${_zarya_codegen_tool}")
-            add_custom_target(zarya_windeploy_${_zarya_codegen_tool}
-                DEPENDS "${_zarya_deploy_stamp}")
-        endif()
-    endforeach()
     if(EXISTS "${_zarya_qt_bin}")
         set(CMAKE_MSVCIDE_RUN_PATH "${_zarya_codegen_path}" CACHE STRING "" FORCE)
     endif()
 endif()
+
+# Prefer Zarya generate_* wrappers (PATH launcher on Windows shared Qt).
+foreach(_zarya_gen_script palette styles emoji)
+    configure_file(
+        "${CMAKE_SOURCE_DIR}/cmake/desktop_app_generate/generate_${_zarya_gen_script}.cmake"
+        "${submodules_loc}/lib_ui/cmake/generate_${_zarya_gen_script}.cmake"
+        COPYONLY)
+endforeach()
 
 if(NOT ZARYA_HAS_QT_SVG)
     # Replace SVG-dependent translation unit with a stub and inject a
@@ -335,26 +302,8 @@ if(NOT ZARYA_HAS_QT_SVG)
         ${CMAKE_SOURCE_DIR}/cmake/desktop_app_stubs)
 endif()
 
-# Prepend PATH for lib_ui generate_* custom commands (Ninja/Make).
-if(WIN32 AND NOT ZARYA_STATIC_QT AND EXISTS "${_zarya_codegen_launch}")
-    set(CMAKE_RULE_LAUNCH_CUSTOM "${_zarya_codegen_launch}")
-endif()
+# Prefer Zarya generate_* wrappers already installed above.
 add_subdirectory(${submodules_loc}/lib_ui ${CMAKE_BINARY_DIR}/desktop_app/lib_ui)
-unset(CMAKE_RULE_LAUNCH_CUSTOM)
-
-# Run windeployqt before lib_ui style/emoji codegen invokes the tools.
-if(TARGET lib_ui)
-    foreach(_zarya_codegen_tool codegen_style codegen_emoji)
-        if(TARGET zarya_windeploy_${_zarya_codegen_tool})
-            add_dependencies(lib_ui zarya_windeploy_${_zarya_codegen_tool})
-            foreach(_zarya_gen lib_ui_emoji lib_ui_palette lib_ui_styles)
-                if(TARGET ${_zarya_gen})
-                    add_dependencies(${_zarya_gen} zarya_windeploy_${_zarya_codegen_tool})
-                endif()
-            endforeach()
-        endif()
-    endforeach()
-endif()
 
 # Swap toolkit TUs for older Qt — build-tree copies, no submodule dirt.
 if(TARGET lib_ui)

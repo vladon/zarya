@@ -74,6 +74,12 @@ endfunction()
 
 zarya_openssl_pick_lib(_zarya_libssl libssl)
 zarya_openssl_pick_lib(_zarya_libcrypto libcrypto)
+if(_zarya_libssl)
+    message(STATUS "Desktop App OpenSSL SSL lib: ${_zarya_libssl}")
+endif()
+if(_zarya_libcrypto)
+    message(STATUS "Desktop App OpenSSL Crypto lib: ${_zarya_libcrypto}")
+endif()
 
 add_library(external_openssl_ssl INTERFACE IMPORTED GLOBAL)
 add_library(desktop-app::external_openssl_ssl ALIAS external_openssl_ssl)

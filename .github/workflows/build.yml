@@ -64,6 +64,7 @@ jobs:
         run: |
           cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
             -DOPENSSL_ROOT_DIR="${OPENSSL_ROOT_DIR}" \
+            -DOPENSSL_USE_STATIC_LIBS=TRUE \
             -DCMAKE_PREFIX_PATH="${VCPKG_PREFIX};${CMAKE_PREFIX_PATH}"
       # Do not use bash `export PATH=D:\...` — backslashes are escapes and break the PATH.
       - name: Build
@@ -77,6 +78,34 @@ jobs:
             if ($p -and (Test-Path $p)) { $env:Path = "$p;$env:Path" }
           }
           Write-Host "PATH prefixes: $($parts -join '; ')"
+
+          cmake --build build --target codegen_style
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          $exe = Join-Path $pwd 'build/desktop_app/codegen_style/codegen_style.exe'
+          Write-Host "Smoke-testing $exe"
+          & $exe 2>&1 | Out-Host
+          $code = $LASTEXITCODE
+          Write-Host "codegen_style smoke exit=$code"
+          if ($code -eq 3221225781 -or $code -eq -1073741515) {
+            Write-Host "STATUS_DLL_NOT_FOUND — dependents and search paths:"
+            $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+            if (Test-Path $vswhere) {
+              $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+              $dumpbin = Get-ChildItem "$vs\VC\Tools\MSVC" -Recurse -Filter dumpbin.exe |
+                Where-Object { $_.FullName -match 'Hostx64\\x64' } |
+                Select-Object -First 1 -ExpandProperty FullName
+              if ($dumpbin) { & $dumpbin /dependents $exe }
+            }
+            foreach ($p in $parts) {
+              if (Test-Path $p) {
+                Write-Host "--- $p ---"
+                Get-ChildItem $p -Filter '*.dll' | Select-Object -ExpandProperty Name
+              }
+            }
+            exit 1
+          }
+
           cmake --build build --target zarya_lrelease zarya zarya-helper zarya_xray_config_test
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Test
