@@ -65,11 +65,20 @@ jobs:
           cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
             -DOPENSSL_ROOT_DIR="${OPENSSL_ROOT_DIR}" \
             -DCMAKE_PREFIX_PATH="${VCPKG_PREFIX};${CMAKE_PREFIX_PATH}"
+      # Do not use bash `export PATH=D:\...` — backslashes are escapes and break the PATH.
       - name: Build
-        shell: bash
+        shell: pwsh
         run: |
-          export PATH="${QT_ROOT_DIR}/bin:${PATH}"
+          $parts = @()
+          if ($env:QT_ROOT_DIR) { $parts += (Join-Path $env:QT_ROOT_DIR 'bin') }
+          if ($env:OPENSSL_ROOT_DIR) { $parts += (Join-Path $env:OPENSSL_ROOT_DIR 'bin') }
+          if ($env:VCPKG_PREFIX) { $parts += (Join-Path $env:VCPKG_PREFIX 'bin') }
+          foreach ($p in $parts) {
+            if ($p -and (Test-Path $p)) { $env:Path = "$p;$env:Path" }
+          }
+          Write-Host "PATH prefixes: $($parts -join '; ')"
           cmake --build build --target zarya_lrelease zarya zarya-helper zarya_xray_config_test
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Test
         run: ./build/zarya_xray_config_test.exe
       - name: Package (unsigned)
