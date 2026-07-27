@@ -41,6 +41,13 @@ jobs:
           if (-not $found) {
             throw 'OpenSSL headers not found after choco install'
           }
+      - name: Install JPEG / ZLIB (vcpkg)
+        shell: pwsh
+        run: |
+          & "$env:VCPKG_INSTALLATION_ROOT\vcpkg.exe" install libjpeg-turbo:x64-windows zlib:x64-windows
+          $prefix = Join-Path $env:VCPKG_INSTALLATION_ROOT 'installed\x64-windows'
+          "VCPKG_PREFIX=$prefix" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "VCPKG_PREFIX=$prefix"
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
@@ -52,7 +59,8 @@ jobs:
         shell: bash
         run: |
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
-            -DOPENSSL_ROOT_DIR="${OPENSSL_ROOT_DIR}"
+            -DOPENSSL_ROOT_DIR="${OPENSSL_ROOT_DIR}" \
+            -DCMAKE_PREFIX_PATH="${VCPKG_PREFIX};${CMAKE_PREFIX_PATH}"
       - name: Build
         run: cmake --build build --config Release --target zarya_lrelease zarya zarya-helper
       - name: Package (unsigned by default)

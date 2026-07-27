@@ -114,6 +114,9 @@ find_package(JPEG)
 
 # Qt modules required by toolkit.
 find_package(Qt6 REQUIRED COMPONENTS OpenGL OpenGLWidgets)
+if(LINUX)
+    find_package(Qt6 REQUIRED COMPONENTS DBus)
+endif()
 
 # Static Qt kits often omit Svg; codegen_style / lib_ui need QSvgRenderer.
 # find_package(Qt6 COMPONENTS Svg) only searches the already-resolved Qt6 prefix,
@@ -161,6 +164,14 @@ if(QT_VERSION VERSION_GREATER_EQUAL 6.10)
 endif()
 
 include(${CMAKE_SOURCE_DIR}/cmake/ZaryaDesktopAppExternals.cmake)
+
+# Linux lib_base needs glib/cppgir D-Bus codegen and kcoreaddons (packaged KF or bundled).
+if(LINUX)
+    add_subdirectory(${cmake_helpers_loc}/external/glib
+        ${CMAKE_BINARY_DIR}/desktop_app/external_glib)
+    add_subdirectory(${cmake_helpers_loc}/external/kcoreaddons
+        ${CMAKE_BINARY_DIR}/desktop_app/external_kcoreaddons)
+endif()
 
 add_subdirectory(${submodules_loc}/lib_crl ${CMAKE_BINARY_DIR}/desktop_app/lib_crl)
 add_subdirectory(${submodules_loc}/lib_rpl ${CMAKE_BINARY_DIR}/desktop_app/lib_rpl)

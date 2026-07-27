@@ -12,6 +12,9 @@ target_link_libraries(external_qt INTERFACE
     Qt6::OpenGL
     Qt6::OpenGLWidgets
 )
+if(TARGET Qt6::DBus)
+    target_link_libraries(external_qt INTERFACE Qt6::DBus)
+endif()
 if(TARGET Qt6::GuiPrivate)
     target_link_libraries(external_qt INTERFACE Qt6::GuiPrivate)
 elseif(DEFINED Qt6Gui_PRIVATE_INCLUDE_DIRS)
