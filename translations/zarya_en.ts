@@ -991,6 +991,38 @@ sing-box: %3 (%4)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Recovering from previous session…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Checking previous session…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stopping leftover core processes…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restoring system proxy…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recovering kill switch…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cleaning temporary runtime files…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Finishing recovery…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recovery complete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Core and application logs appear here…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1204,6 +1236,10 @@ sing-box: %3 (%4)</source>
     </message>
     <message>
         <source>Create &amp;Diagnostics Bundle…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Desktop App UI &amp;spike…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2099,6 +2135,22 @@ What should happen?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Theme</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>System</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>General</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2981,6 +3033,21 @@ Cancel = abort</source>
     </message>
     <message>
         <source>Copy details</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>zarya::LibUiSpikeDialog</name>
+    <message>
+        <source>Desktop App UI spike</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This dialog uses desktop-app/lib_ui (FlatLabel + RoundButton). The rest of Zarya still uses Qt Widgets + ThemeManager.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

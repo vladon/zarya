@@ -2,6 +2,7 @@
 
 #include "ui/widgets/StatusBadge.h"
 
+#include <QFont>
 #include <QLabel>
 #include <QPushButton>
 #include <QStringList>
@@ -16,7 +17,12 @@ StatusDashboardWidget::StatusDashboardWidget(QWidget* parent)
 
     m_unconfiguredPanel = new QWidget(this);
     auto* unconfiguredTitle = new QLabel(tr("Zarya is not configured yet"), m_unconfiguredPanel);
-    unconfiguredTitle->setStyleSheet(QStringLiteral("font-weight:bold; font-size:14px;"));
+    {
+        QFont font = unconfiguredTitle->font();
+        font.setBold(true);
+        font.setPointSize(font.pointSize() + 1);
+        unconfiguredTitle->setFont(font);
+    }
     m_unconfiguredStepsLabel = new QLabel(m_unconfiguredPanel);
     m_unconfiguredStepsLabel->setWordWrap(true);
     auto* coreBtn = new QPushButton(tr("Open Core Manager"), m_unconfiguredPanel);
@@ -44,7 +50,12 @@ StatusDashboardWidget::StatusDashboardWidget(QWidget* parent)
 
     m_configuredPanel = new QWidget(this);
     m_titleLabel = new QLabel(m_configuredPanel);
-    m_titleLabel->setStyleSheet(QStringLiteral("font-weight:bold; font-size:14px;"));
+    {
+        QFont font = m_titleLabel->font();
+        font.setBold(true);
+        font.setPointSize(font.pointSize() + 1);
+        m_titleLabel->setFont(font);
+    }
     m_runtimeBadge = new StatusBadge(m_configuredPanel);
     m_detailLabel = new QLabel(m_configuredPanel);
     m_detailLabel->setWordWrap(true);

@@ -9,7 +9,7 @@ Build, package, sign, smoke, and release helpers. Prefer these over ad-hoc cmake
 | `configure-msvc2026.ps1 -Static` | Configure local/release (static Qt) |
 | `build.ps1` | Configure+build wrapper (static default; `-Shared`, `-Test`) |
 | `build-macos.sh` | macOS configure+build wrapper (Homebrew `qt@6`; `--test`, `--force`) |
-| `build-qt-static-msvc2026.ps1` | One-time static Qt → `C:\Qt\Static\6.8.3\msvc2022_64` |
+| `build-qt-static-msvc2026.ps1` | Static Qt (qtbase+qtsvg) → `C:\Qt\Static\6.8.3\msvc2022_64`; `-SvgOnly` adds Svg to an existing prefix |
 | `run-xray-config-test.ps1` | Xray config unit tests |
 | `check-translations.py` | Translation completeness (CI) |
 | `package-windows.ps1` | Portable ZIP packaging (bundles pinned Xray by default) |

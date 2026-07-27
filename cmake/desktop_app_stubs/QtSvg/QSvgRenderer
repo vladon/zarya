@@ -1,0 +1,21 @@
+#pragma once
+
+// Minimal stub so lib_ui / codegen build when the app Qt kit has no Svg module.
+// Spike styles use PNG icons; SVG rasterization is unused at runtime.
+
+#include <QtCore/QByteArray>
+#include <QtCore/QRectF>
+#include <QtCore/QSize>
+#include <QtCore/QString>
+#include <QtGui/QPainter>
+
+class QSvgRenderer {
+public:
+	QSvgRenderer() = default;
+	explicit QSvgRenderer(const QByteArray &) {}
+	explicit QSvgRenderer(const QString &) {}
+
+	[[nodiscard]] bool isValid() const { return false; }
+	[[nodiscard]] QSize defaultSize() const { return {}; }
+	void render(QPainter *, const QRectF & = QRectF()) {}
+};

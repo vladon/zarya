@@ -1,21 +1,33 @@
-MIT License
+Zarya is dual-licensed under the MIT License and the GNU General Public License
+version 3 (or, at your option, any later version).
 
-Copyright (c) 2026 Vlad Yaroslavlev
+You may use, copy, modify, and distribute the Zarya-authored source code under
+either license:
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+  - LICENSE.MIT      — MIT License
+  - LICENSE.GPL-3.0  — GNU General Public License v3
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Copyright (c) 2026 Vlad Yaroslavlev and Zarya contributors.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+-----------------------------------------------------------------------------
+
+Which license applies to a given distribution
+
+1. Zarya source (or builds) that do NOT link Desktop App Toolkit libraries
+   (lib_ui, lib_base, and related desktop-app components) may be used under
+   either the MIT License or GPLv3+, at your option.
+
+2. Official and other builds that link Desktop App Toolkit (CMake option
+   ZARYA_DESKTOP_APP_UI=ON, or any binary that includes those libraries) MUST
+   be distributed under GPLv3+ (or a compatible license), because the Toolkit
+   is licensed under GPLv3+ with an OpenSSL linking exception. See:
+
+   https://github.com/desktop-app/legal/blob/master/LEGAL
+
+3. Third-party components (Qt, Xray, sing-box, etc.) remain under their own
+   licenses. See THIRD_PARTY_NOTICES.md.
+
+-----------------------------------------------------------------------------
+
+Copies of the full MIT and GPLv3 license texts are in LICENSE.MIT and
+LICENSE.GPL-3.0 in this repository.

@@ -2,6 +2,9 @@
 
 Zarya bundles or links the following third-party components.
 
+Zarya itself is dual-licensed MIT | GPLv3+ (see `LICENSE`). Builds that link
+Desktop App Toolkit must be distributed under GPLv3+.
+
 ## Qt 6
 
 Zarya is built with [Qt 6](https://www.qt.io/) (modules including Core, Gui, Widgets, Network).
@@ -9,6 +12,20 @@ Zarya is built with [Qt 6](https://www.qt.io/) (modules including Core, Gui, Wid
 Qt is licensed under the GNU Lesser General Public License (LGPL) version 3 and other licenses depending on the module. See the Qt documentation and your Qt installation for the exact license texts.
 
 When distributing shared-Qt builds, comply with Qt LGPL obligations (including providing a written offer to supply Qt source code where required).
+
+## Desktop App Toolkit (optional, `ZARYA_DESKTOP_APP_UI`)
+
+When enabled, Zarya links libraries from the [Desktop App Toolkit](https://github.com/desktop-app), including:
+
+- [lib_ui](https://github.com/desktop-app/lib_ui)
+- [lib_base](https://github.com/desktop-app/lib_base)
+- [lib_rpl](https://github.com/desktop-app/lib_rpl)
+- [lib_crl](https://github.com/desktop-app/lib_crl)
+- [codegen](https://github.com/desktop-app/codegen) / [cmake_helpers](https://github.com/desktop-app/cmake_helpers)
+
+These are licensed under **GPLv3+** with an OpenSSL linking exception. See
+[desktop-app/legal](https://github.com/desktop-app/legal/blob/master/LEGAL).
+A Zarya binary that includes them is a GPLv3+ derivative for distribution purposes.
 
 ## Platform libraries (Windows helper)
 

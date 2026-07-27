@@ -1,0 +1,8 @@
+Zarya is dual-licensed under MIT and GPLv3+. See LICENSE for how each applies.
+
+Full texts:
+  LICENSE.MIT
+  LICENSE.GPL-3.0
+
+Builds that link Desktop App Toolkit (lib_ui / lib_base / …) are distributed
+under GPLv3+. See https://github.com/desktop-app/legal/blob/master/LEGAL

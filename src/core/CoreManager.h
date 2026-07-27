@@ -1,5 +1,7 @@
 #pragma once
 
+#include "platform/KillOnCloseProcessJob.h"
+
 #include <QObject>
 #include <QProcess>
 #include <QString>
@@ -45,8 +47,10 @@ private:
                        int timeoutMs, int* exitCode) const;
     void appendProcessOutput(const QByteArray& data, bool isStdErr);
     void onProcessFinished(int exitCode, QProcess::ExitStatus status);
+    void attachKillOnCloseJob();
 
     QProcess m_process;
+    KillOnCloseProcessJob m_killOnCloseJob;
     QString m_runningCoreName;
     int m_lastExitCode = 0;
     static constexpr int kStopTimeoutMs = 3000;

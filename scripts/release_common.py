@@ -68,7 +68,7 @@ def git_commit_short() -> str:
 
 
 def copy_top_level_legal_files(staging: Path) -> None:
-    for name in ("README.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "RELEASE_NOTES.md"):
+    for name in ("README.md", "LICENSE", "LICENSE.MIT", "LICENSE.GPL-3.0", "COPYING", "THIRD_PARTY_NOTICES.md", "RELEASE_NOTES.md"):
         src = ROOT / name
         if src.is_file():
             shutil.copy2(src, staging / name)
