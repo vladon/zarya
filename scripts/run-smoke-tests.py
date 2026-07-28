@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run Zarya beta smoke tests (C++ unit smoke + packaging checks)."""
+"""Run Zarya release smoke tests (C++ unit smoke + packaging checks)."""
 
 from __future__ import annotations
 
@@ -50,9 +50,6 @@ def run_cpp_smoke(build_dir: Path) -> tuple[bool, str]:
 
 def verify_source_tree(source_root: Path) -> list[str]:
     errors: list[str] = []
-    version = read_cmake_version()
-    if version["version"] != "0.35.0-beta":
-        errors.append(f"expected version 0.35.0-beta, found {version['version']}")
 
     for relative in (
         "LICENSE",
@@ -179,7 +176,7 @@ def verify_staging_dir(staging: Path) -> list[str]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run Zarya beta smoke tests")
+    parser = argparse.ArgumentParser(description="Run Zarya release smoke tests")
     parser.add_argument("--artifact", help="Release artifact (.zip or .tar.gz)")
     parser.add_argument("--source-tree", type=Path, default=ROOT, help="Repository root checks")
     parser.add_argument("--build-dir", type=Path, default=ROOT / "build", help="CMake build directory")

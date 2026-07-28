@@ -1,4 +1,4 @@
-# Known Issues for 1.0 Stable
+# Known Issues for Zarya 1.4.0
 
 ## Experimental features
 

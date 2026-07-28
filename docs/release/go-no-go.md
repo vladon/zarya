@@ -1,8 +1,8 @@
-# 1.0 Stable Go / No-Go
+# Zarya 1.4.0 Stable Go / No-Go
 
 ## Required
 
-- [ ] version 1.0.0
+- [ ] version 1.4.0
 - [ ] channel stable
 - [ ] portable Windows artifact verified
 - [ ] macOS artifact verified
