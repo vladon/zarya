@@ -135,8 +135,10 @@ if(ZARYA_STATIC_QT AND WIN32)
 endif()
 
 find_package(OpenSSL REQUIRED)
-find_package(ZLIB)
-find_package(JPEG)
+# Prefer system ZLIB/JPEG when present; otherwise Externals fall back to Qt bundled.
+# QUIET: static Qt has no system libs — avoid noisy "Could NOT find" configure spam.
+find_package(ZLIB QUIET)
+find_package(JPEG QUIET)
 
 # Qt modules required by toolkit.
 find_package(Qt6 REQUIRED COMPONENTS OpenGL OpenGLWidgets)
