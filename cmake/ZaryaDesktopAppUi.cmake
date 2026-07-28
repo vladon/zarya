@@ -107,25 +107,6 @@ INTERFACE
 )
 if(WIN32)
     include(${cmake_helpers_loc}/options_win.cmake)
-    # desktop-app sets /DEPENDENTLOADFLAG:0x800 (LOAD_LIBRARY_SEARCH_SYSTEM32).
-    # That blocks loading Qt (and other) DLLs from PATH or the app directory, so
-    # shared-Qt tools like codegen_style die with STATUS_DLL_NOT_FOUND (0xC0000135).
-    # Static Qt binaries do not load Qt DLLs — keep the hardening flag there.
-    if(NOT ZARYA_STATIC_QT AND TARGET common_options)
-        get_target_property(_zarya_co_linkopts common_options INTERFACE_LINK_OPTIONS)
-        if(_zarya_co_linkopts)
-            set(_zarya_co_linkopts_new)
-            foreach(_zarya_co_opt IN LISTS _zarya_co_linkopts)
-                if(NOT _zarya_co_opt MATCHES "DEPENDENTLOADFLAG")
-                    list(APPEND _zarya_co_linkopts_new "${_zarya_co_opt}")
-                endif()
-            endforeach()
-            set_property(TARGET common_options PROPERTY
-                INTERFACE_LINK_OPTIONS "${_zarya_co_linkopts_new}")
-            message(STATUS
-                "Cleared /DEPENDENTLOADFLAG on common_options for shared Qt DLL load")
-        endif()
-    endif()
 elseif(APPLE)
     include(${cmake_helpers_loc}/options_mac.cmake)
 elseif(LINUX)
@@ -269,46 +250,6 @@ add_subdirectory(${submodules_loc}/codegen/codegen/style
 add_subdirectory(${submodules_loc}/codegen/codegen/emoji
     ${CMAKE_BINARY_DIR}/desktop_app/codegen_emoji)
 
-# Shared Qt on Windows: codegen tools need Qt (+ OpenSSL / vcpkg) DLLs at runtime.
-# Do NOT windeployqt next to the tools — a partial deploy shadows PATH and still
-# misses OpenSSL. Instead wrap generate_* commands with a PATH-setting .cmd.
-if(WIN32 AND NOT ZARYA_STATIC_QT)
-    get_filename_component(_zarya_qt_bin "${Qt6_DIR}/../../../bin" ABSOLUTE)
-    set(_zarya_codegen_path "${_zarya_qt_bin}")
-    if(OPENSSL_ROOT_DIR AND EXISTS "${OPENSSL_ROOT_DIR}/bin")
-        string(APPEND _zarya_codegen_path ";${OPENSSL_ROOT_DIR}/bin")
-    endif()
-    if(DEFINED ENV{VCPKG_PREFIX} AND EXISTS "$ENV{VCPKG_PREFIX}/bin")
-        string(APPEND _zarya_codegen_path ";$ENV{VCPKG_PREFIX}/bin")
-    endif()
-
-    set(ZARYA_CODEGEN_LAUNCH
-        "${CMAKE_BINARY_DIR}/desktop_app/zarya_codegen_launch.cmd")
-    # Bracket args avoid \" quote-escaping traps that break CMake parsing.
-    file(WRITE "${ZARYA_CODEGEN_LAUNCH}"
-[=[@echo off
-set PATH=]=] "${_zarya_codegen_path}" [=[;%PATH%
-%*
-exit /b %ERRORLEVEL%
-]=])
-    set(ZARYA_CODEGEN_LAUNCH "${ZARYA_CODEGEN_LAUNCH}" CACHE FILEPATH
-        "PATH launcher for lib_ui codegen tools" FORCE)
-    message(STATUS "codegen PATH launcher: ${ZARYA_CODEGEN_LAUNCH}")
-    message(STATUS "codegen PATH prefix: ${_zarya_codegen_path}")
-
-    if(EXISTS "${_zarya_qt_bin}")
-        set(CMAKE_MSVCIDE_RUN_PATH "${_zarya_codegen_path}" CACHE STRING "" FORCE)
-    endif()
-endif()
-
-# Prefer Zarya generate_* wrappers (PATH launcher on Windows shared Qt).
-foreach(_zarya_gen_script palette styles emoji)
-    configure_file(
-        "${CMAKE_SOURCE_DIR}/cmake/desktop_app_generate/generate_${_zarya_gen_script}.cmake"
-        "${submodules_loc}/lib_ui/cmake/generate_${_zarya_gen_script}.cmake"
-        COPYONLY)
-endforeach()
-
 if(NOT ZARYA_HAS_QT_SVG)
     # Replace SVG-dependent translation unit with a stub and inject a
     # minimal QSvgRenderer so generator.cpp / style_core_icon.cpp still compile.
@@ -321,7 +262,6 @@ if(NOT ZARYA_HAS_QT_SVG)
         ${CMAKE_SOURCE_DIR}/cmake/desktop_app_stubs)
 endif()
 
-# Prefer Zarya generate_* wrappers already installed above.
 add_subdirectory(${submodules_loc}/lib_ui ${CMAKE_BINARY_DIR}/desktop_app/lib_ui)
 
 # Swap toolkit TUs for older Qt — build-tree copies, no submodule dirt.

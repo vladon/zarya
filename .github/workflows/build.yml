@@ -9,6 +9,10 @@ on:
 jobs:
   build-windows:
     runs-on: windows-latest
+    env:
+      QT_VERSION: "6.8.3"
+      QT_STATIC_DIR: C:\Qt\Static\6.8.3\msvc2022_64
+      QT_STATIC_CACHE_KEY: qt-static-6.8.3-msvc2022_64-v1
     steps:
       - uses: actions/checkout@v4
         with:
@@ -22,7 +26,7 @@ jobs:
       - name: Install OpenSSL
         shell: pwsh
         run: |
-          choco install openssl -y --no-progress
+          choco install openssl 7zip -y --no-progress
           $roots = @(
             'C:\Program Files\OpenSSL-Win64',
             'C:\Program Files\OpenSSL',
@@ -40,72 +44,59 @@ jobs:
           if (-not $found) {
             throw 'OpenSSL headers not found after choco install'
           }
-      - name: Install JPEG / ZLIB (vcpkg)
-        shell: pwsh
-        run: |
-          & "$env:VCPKG_INSTALLATION_ROOT\vcpkg.exe" install libjpeg-turbo:x64-windows zlib:x64-windows
-          $prefix = Join-Path $env:VCPKG_INSTALLATION_ROOT 'installed\x64-windows'
-          "VCPKG_PREFIX=$prefix" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          Write-Host "VCPKG_PREFIX=$prefix"
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v4
+      - name: Restore static Qt cache
+        id: qt-cache
+        uses: actions/cache@v4
         with:
-          version: "6.8.3"
-          host: windows
-          target: desktop
-          arch: win64_msvc2022_64
+          path: ${{ env.QT_STATIC_DIR }}
+          key: ${{ env.QT_STATIC_CACHE_KEY }}
+      - name: Download static Qt release asset
+        if: steps.qt-cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "ci-qt-static-$env:QT_VERSION"
+          $archive = Join-Path $env:RUNNER_TEMP "qt-static-$env:QT_VERSION-msvc2022_64.7z"
+          $destParent = Split-Path -Parent $env:QT_STATIC_DIR
+          New-Item -ItemType Directory -Force -Path $destParent | Out-Null
+          gh release download $tag -p "qt-static-$env:QT_VERSION-msvc2022_64.7z" -O $archive
+          if ($LASTEXITCODE -ne 0 -or -not (Test-Path $archive)) {
+            throw @"
+Static Qt asset missing (release $tag).
+Bootstrap once: Actions → 'Qt static Windows' → Run workflow
+(or pack locally with .\scripts\pack-qt-static-ci.ps1 and upload to that release).
+"@
+          }
+          $seven = "${env:ProgramFiles}\7-Zip\7z.exe"
+          & $seven x $archive "-o$destParent" -y
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (-not (Test-Path (Join-Path $env:QT_STATIC_DIR 'lib\cmake\Qt6\Qt6Config.cmake'))) {
+            throw "Extracted static Qt incomplete at $($env:QT_STATIC_DIR)"
+          }
+      - name: Save static Qt cache
+        if: steps.qt-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.QT_STATIC_DIR }}
+          key: ${{ env.QT_STATIC_CACHE_KEY }}
       - uses: ilammy/msvc-dev-cmd@v1
       - name: Install Ninja
         run: choco install ninja -y --no-progress
       - name: Check translations
         run: python scripts/check-translations.py
       - name: Configure
-        shell: bash
+        shell: pwsh
         run: |
-          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
-            -DOPENSSL_ROOT_DIR="${OPENSSL_ROOT_DIR}" \
-            -DOPENSSL_USE_STATIC_LIBS=TRUE \
-            -DCMAKE_PREFIX_PATH="${VCPKG_PREFIX};${CMAKE_PREFIX_PATH}"
-      # Do not use bash `export PATH=D:\...` — backslashes are escapes and break the PATH.
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release `
+            -DZARYA_STATIC_QT=ON `
+            -DCMAKE_PREFIX_PATH="$env:QT_STATIC_DIR" `
+            -DOPENSSL_ROOT_DIR="$env:OPENSSL_ROOT_DIR" `
+            -DOPENSSL_USE_STATIC_LIBS=TRUE
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Build
         shell: pwsh
         run: |
-          $parts = @()
-          if ($env:QT_ROOT_DIR) { $parts += (Join-Path $env:QT_ROOT_DIR 'bin') }
-          if ($env:OPENSSL_ROOT_DIR) { $parts += (Join-Path $env:OPENSSL_ROOT_DIR 'bin') }
-          if ($env:VCPKG_PREFIX) { $parts += (Join-Path $env:VCPKG_PREFIX 'bin') }
-          foreach ($p in $parts) {
-            if ($p -and (Test-Path $p)) { $env:Path = "$p;$env:Path" }
-          }
-          Write-Host "PATH prefixes: $($parts -join '; ')"
-
-          cmake --build build --target codegen_style
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-          $exe = Join-Path $pwd 'build/desktop_app/codegen_style/codegen_style.exe'
-          Write-Host "Smoke-testing $exe"
-          & $exe 2>&1 | Out-Host
-          $code = $LASTEXITCODE
-          Write-Host "codegen_style smoke exit=$code"
-          if ($code -eq 3221225781 -or $code -eq -1073741515) {
-            Write-Host "STATUS_DLL_NOT_FOUND — dependents and search paths:"
-            $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
-            if (Test-Path $vswhere) {
-              $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
-              $dumpbin = Get-ChildItem "$vs\VC\Tools\MSVC" -Recurse -Filter dumpbin.exe |
-                Where-Object { $_.FullName -match 'Hostx64\\x64' } |
-                Select-Object -First 1 -ExpandProperty FullName
-              if ($dumpbin) { & $dumpbin /dependents $exe }
-            }
-            foreach ($p in $parts) {
-              if (Test-Path $p) {
-                Write-Host "--- $p ---"
-                Get-ChildItem $p -Filter '*.dll' | Select-Object -ExpandProperty Name
-              }
-            }
-            exit 1
-          }
-
           cmake --build build --target zarya_lrelease zarya zarya-helper zarya_xray_config_test
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Test

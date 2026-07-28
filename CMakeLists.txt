@@ -33,7 +33,19 @@ if(_zarya_qt_is_static AND NOT ZARYA_STATIC_QT)
     set(ZARYA_STATIC_QT ON)
 endif()
 
-if(ZARYA_STATIC_QT AND NOT _zarya_qt_is_static)
+if(WIN32)
+    if(NOT _zarya_qt_is_static)
+        message(FATAL_ERROR
+            "Windows builds require static Qt (ZARYA_STATIC_QT). "
+            "Point CMAKE_PREFIX_PATH at a static prefix "
+            "(e.g. C:/Qt/Static/6.8.3/msvc2022_64) and pass -DZARYA_STATIC_QT=ON. "
+            "Build once with: .\\scripts\\build-qt-static-msvc2026.ps1")
+    endif()
+    if(NOT ZARYA_STATIC_QT)
+        message(FATAL_ERROR
+            "Windows builds require -DZARYA_STATIC_QT=ON (shared Qt is not supported).")
+    endif()
+elseif(ZARYA_STATIC_QT AND NOT _zarya_qt_is_static)
     message(WARNING "ZARYA_STATIC_QT is ON but Qt6::Core does not appear to be static. "
                     "Point CMAKE_PREFIX_PATH to a static qtbase install, e.g. C:/Qt/Static/6.8.3/msvc2022_64")
 endif()

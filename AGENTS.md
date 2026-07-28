@@ -16,24 +16,22 @@ Zarya is a cross-platform **Qt 6 / C++20** desktop client for proxy profiles and
 
 ## Build (Windows primary)
 
-Local/release builds use **static Qt** unless the user asks for shared. Desktop App Toolkit (`lib_ui`) is **always** linked — requires `git submodule update --init --recursive` and OpenSSL.
+Local/release builds on Windows use **static Qt only**. Desktop App Toolkit (`lib_ui`) is **always** linked — requires `git submodule update --init --recursive` and OpenSSL.
 
 ```powershell
 git submodule update --init --recursive
-.\scripts\configure-msvc2026.ps1 -Static
+.\scripts\configure-msvc2026.ps1
 cmake --build build --config Release --target zarya
-# or: .\scripts\build.ps1          # static by default
-#      .\scripts\build.ps1 -Shared  # faster iteration
+# or: .\scripts\build.ps1
 ```
 
 **macOS:** `./scripts/build-macos.sh` (Homebrew `qt@6`; `--test`, `--force`).
 
 - Static Qt prefix: `C:\Qt\Static\6.8.3\msvc2022_64` (`QT_STATIC_DIR` to override).
-- One-time static Qt build: `.\scripts\build-qt-static-msvc2026.ps1` (qtbase + qtsvg). Add `-SvgOnly` to install Svg into an existing static prefix.
-- Do not change CMake defaults for static linking; use `-Static` / `ZARYA_STATIC_QT=ON` via the configure script.
-- CI uses shared Qt + lib_ui (submodules + OpenSSL). Use `build/` for local work (ignore `build-ci-test*`).
+- One-time static Qt build: `.\scripts\build-qt-static-msvc2026.ps1` (qtbase + qtsvg). Add `-SvgOnly` to install Svg into an existing prefix.
+- Windows CI restores a packed static Qt prefix (workflow `qt-static-windows` / release `ci-qt-static-6.8.3`). Linux/macOS CI use aqt/brew Qt.
 - OpenSSL (e.g. `C:\Program Files\OpenSSL-Win64`); configure passes `OPENSSL_ROOT_DIR` when present.
-- Static Qt kits without Svg use stubs under `cmake/desktop_app_stubs/` for codegen/`style_core_icon`. Shared Qt Svg is not mixed into static builds.
+- Static Qt kits without Svg use stubs under `cmake/desktop_app_stubs/` for codegen/`style_core_icon`.
 
 **Targets:** `zarya` (GUI), `zarya-helper`, `zarya-updater` (copied next to `zarya` post-build).
 

@@ -18,9 +18,13 @@ $BuildDir = if ($env:QT_STATIC_BUILD_DIR) { $env:QT_STATIC_BUILD_DIR } else { "C
 $SvgBuildDir = if ($env:QT_STATIC_SVG_BUILD_DIR) { $env:QT_STATIC_SVG_BUILD_DIR } else { "C:\Qt\Static\build\qtsvg-msvc2022_64" }
 $Ninja = if ($env:QT_NINJA) { $env:QT_NINJA } else { "C:\Qt\Tools\Ninja\ninja.exe" }
 
-$VcVars = "${env:ProgramFiles}\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvars64.bat"
+$VcVars = if ($env:QT_VCVARS) {
+    $env:QT_VCVARS
+} else {
+    "${env:ProgramFiles}\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvars64.bat"
+}
 if (-not (Test-Path $VcVars)) {
-    Write-Error "VS 2026 vcvars64.bat not found at $VcVars"
+    Write-Error "VS vcvars64.bat not found at $VcVars (set QT_VCVARS to override)"
 }
 
 function Invoke-VsCMake([string[]]$CMakeArgs) {

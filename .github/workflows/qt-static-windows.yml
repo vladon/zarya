@@ -1,0 +1,82 @@
+# Build / pack / publish static Qt for Windows CI (bootstrap + refresh).
+# workflow_dispatch only — cold build is long (~30–90 min).
+name: Qt static Windows
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  QT_VERSION: "6.8.3"
+  QT_STATIC_DIR: C:\Qt\Static\6.8.3\msvc2022_64
+  CACHE_KEY: qt-static-6.8.3-msvc2022_64-v1
+
+jobs:
+  build-pack:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Install tools
+        shell: pwsh
+        run: |
+          choco install ninja 7zip -y --no-progress
+          python -m pip install --upgrade pip
+          python -m pip install aqtinstall
+      - name: Locate vcvars
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $vcvars = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path $vcvars)) { throw "vcvars64.bat not found at $vcvars" }
+          "QT_VCVARS=$vcvars" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "QT_VCVARS=$vcvars"
+      - name: Restore static Qt cache
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.QT_STATIC_DIR }}
+          key: ${{ env.CACHE_KEY }}
+      - name: Build static Qt
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          & .\scripts\build-qt-static-msvc2026.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Pack static Qt
+        shell: pwsh
+        run: |
+          & .\scripts\pack-qt-static-ci.ps1 -Prefix $env:QT_STATIC_DIR
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Save static Qt cache
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.QT_STATIC_DIR }}
+          key: ${{ env.CACHE_KEY }}
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: qt-static-6.8.3-msvc2022_64
+          path: dist/qt-static-6.8.3-msvc2022_64.7z
+          if-no-files-found: error
+      - name: Publish release asset
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "ci-qt-static-$env:QT_VERSION"
+          $archive = Join-Path $pwd "dist\qt-static-$env:QT_VERSION-msvc2022_64.7z"
+          if (-not (Test-Path $archive)) { throw "Missing $archive" }
+          gh release view $tag 2>$null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $tag $archive `
+              --title "CI static Qt $env:QT_VERSION (MSVC)" `
+              --notes "Prebuilt static Qt for Windows CI. Restored by build.yml / release.yml." `
+              --latest=false
+          } else {
+            gh release upload $tag $archive --clobber
+          }
