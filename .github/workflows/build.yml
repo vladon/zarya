@@ -11,7 +11,7 @@ jobs:
     runs-on: windows-latest
     env:
       QT_VERSION: "6.8.3"
-      QT_STATIC_DIR: C:\Qt\Static\6.8.3\msvc2022_64
+      QT_STATIC_DIR: 'C:\Qt\Static\6.8.3\msvc2022_64'
       QT_STATIC_CACHE_KEY: qt-static-6.8.3-msvc2022_64-v1
     steps:
       - uses: actions/checkout@v4
@@ -62,11 +62,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path $destParent | Out-Null
           gh release download $tag -p "qt-static-$env:QT_VERSION-msvc2022_64.7z" -O $archive
           if ($LASTEXITCODE -ne 0 -or -not (Test-Path $archive)) {
-            throw @"
-Static Qt asset missing (release $tag).
-Bootstrap once: Actions → 'Qt static Windows' → Run workflow
-(or pack locally with .\scripts\pack-qt-static-ci.ps1 and upload to that release).
-"@
+            throw "Static Qt asset missing (release $tag). Bootstrap: Actions → Qt static Windows, or .\scripts\pack-qt-static-ci.ps1"
           }
           $seven = "${env:ProgramFiles}\7-Zip\7z.exe"
           & $seven x $archive "-o$destParent" -y

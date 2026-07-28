@@ -10,7 +10,7 @@ permissions:
 
 env:
   QT_VERSION: "6.8.3"
-  QT_STATIC_DIR: C:\Qt\Static\6.8.3\msvc2022_64
+  QT_STATIC_DIR: 'C:\Qt\Static\6.8.3\msvc2022_64'
   CACHE_KEY: qt-static-6.8.3-msvc2022_64-v1
 
 jobs:
