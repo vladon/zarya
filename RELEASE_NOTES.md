@@ -1,14 +1,16 @@
-# Zarya 1.3.0
+# Zarya 1.4.0
 
 ## Stable release
 
-1.3.0 ships a pinned runetfreedom geo data seed with release packages and expands built-in geo sources.
+1.4.0 adds WireGuard profiles through Xray, silent startup recovery, and the new Desktop App Toolkit UI foundation.
 
-- Bundled pinned runetfreedom `geoip.dat` / `geosite.dat` next to Xray in release artifacts — bypass routing works offline on first launch; Geo Data Manager can still update or switch sources
-- Additional built-in geo sources: runetfreedom (default) and Chocolate4U alongside Loyalsoldier
-- Continues shipping the pinned Xray seed from 1.2.0
+- Import `wireguard://` / `wg://` links and run complete WireGuard profiles through Xray userspace mode
+- Restore stale system-proxy/runtime state silently after an unclean shutdown
+- System, light, and dark themes with a `lib_ui`-based configured status strip
+- Desktop App Toolkit is mandatory in official builds; Windows releases use static Qt
+- Continues shipping pinned Xray and runetfreedom geo data for offline first start
 
-See [docs/release-notes/1.3.0.md](docs/release-notes/1.3.0.md) and [docs/stable/stable-scope.md](docs/stable/stable-scope.md).
+See [docs/release-notes/1.4.0.md](docs/release-notes/1.4.0.md) and [docs/stable/stable-scope.md](docs/stable/stable-scope.md).
 
 ## Recommended path
 

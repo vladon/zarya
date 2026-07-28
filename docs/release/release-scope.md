@@ -1,11 +1,11 @@
-# Zarya 1.0 Stable Release Scope
+# Zarya Stable Release Scope
 
 ## Included in stable
 
 - Xray system-proxy runtime
 - Profile management
 - Subscription management
-- VLESS / VMess / Trojan / Shadowsocks via Xray
+- VLESS / VMess / Trojan / Shadowsocks / Hysteria2 / WireGuard via Xray
 - Routing profiles for Xray
 - DNS profiles for Xray
 - Xray Geo Data Manager

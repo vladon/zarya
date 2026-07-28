@@ -1,13 +1,13 @@
 # Zarya Stable Scope
 
-## Stable in 1.0
+## Stable in the current release
 
-The following features are candidates for stable support:
+The following features are supported on the stable channel:
 
 - Xray system-proxy runtime
 - Profile management
 - Subscription management
-- VLESS / VMess / Trojan / Shadowsocks through Xray
+- VLESS / VMess / Trojan / Shadowsocks / Hysteria2 / WireGuard through Xray
 - Routing profiles for Xray
 - DNS profiles for Xray
 - Xray Geo Data Manager
@@ -35,4 +35,4 @@ The following features are candidates for stable support:
 
 Use **Xray system-proxy mode**.
 
-Production TUN is **not** required for 1.0. Experimental networking features remain available on beta/dev channels with explicit opt-in. **1.0.0 stable** builds hide experimental features by default (same policy as RC).
+Production TUN is not part of the stable scope. Experimental networking features remain available on beta/dev channels with explicit opt-in. Stable builds hide experimental features by default.

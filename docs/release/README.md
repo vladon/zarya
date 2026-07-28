@@ -1,6 +1,6 @@
-# Zarya 1.0 Stable Release
+# Zarya Stable Release
 
-Release engineering documents for the first stable channel release.
+Release engineering documents for the stable channel.
 
 | Doc | Purpose |
 |-----|---------|
