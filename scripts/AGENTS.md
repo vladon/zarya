@@ -6,11 +6,11 @@ Build, package, sign, smoke, and release helpers. Prefer these over ad-hoc cmake
 
 | Script | Use |
 |--------|-----|
-| `configure-msvc2026.ps1 -Static` | Configure local/release (static Qt; Desktop App UI ON by default) |
-| `configure-msvc2026.ps1 -Static -NoDesktopAppUi` | Static Qt without lib_ui |
-| `build.ps1` | Configure+build wrapper (static default; Desktop App UI ON; `-Shared`, `-NoDesktopAppUi`, `-Test`) |
+| `configure-msvc2026.ps1` | Configure local/release (static Qt + required lib_ui) |
+| `build.ps1` | Configure+build wrapper (static Qt; `-Test`, `-Force`) |
 | `build-macos.sh` | macOS configure+build wrapper (Homebrew `qt@6`; `--test`, `--force`) |
 | `build-qt-static-msvc2026.ps1` | Static Qt (qtbase+qtsvg) → `C:\Qt\Static\6.8.3\msvc2022_64`; `-SvgOnly` adds Svg to an existing prefix |
+| `pack-qt-static-ci.ps1` | Pack static Qt prefix to `dist/qt-static-*-msvc2022_64.7z` for CI |
 | `run-xray-config-test.ps1` | Xray config unit tests |
 | `check-translations.py` | Translation completeness (CI) |
 | `package-windows.ps1` | Portable ZIP packaging (bundles pinned Xray by default) |
@@ -22,8 +22,8 @@ Build, package, sign, smoke, and release helpers. Prefer these over ad-hoc cmake
 
 ## Rules
 
-- Windows local/release: static Qt via `-Static` unless user requests `-Shared`.
-- Do not hardcode machine-specific Qt paths without `QT_STATIC_DIR` / `QT_ROOT` overrides.
+- Windows local/release/CI app builds: **static Qt only** (`QT_STATIC_DIR` / `C:\Qt\Static\…`).
+- Do not hardcode machine-specific Qt paths without `QT_STATIC_DIR` override.
 - Packaging must not ship secrets, forbidden files, or unredacted diagnostics samples.
 - Keep scripts non-interactive and CI-friendly (flags over prompts).
 

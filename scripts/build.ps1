@@ -1,14 +1,9 @@
-# Build Zarya (adds CMake to PATH for shells where it is not preconfigured).
-# Static Qt is the default on Windows; pass -Shared for shared Qt (faster iteration).
-# Desktop App UI (lib_ui) is ON by default for static builds; pass -NoDesktopAppUi to disable.
-# Pass -DesktopAppUi to force-enable (e.g. with -Shared). Reconfigures if the flag changed.
+# Build Zarya with static Qt on Windows (adds CMake to PATH when needed).
+# Desktop App Toolkit (lib_ui) is always linked (needs OpenSSL + submodules).
 param(
     [string]$Config = "Release",
     [string]$Target = "zarya",
     [switch]$Test,
-    [switch]$Shared,
-    [switch]$DesktopAppUi,
-    [switch]$NoDesktopAppUi,
     [switch]$Force
 )
 
@@ -20,36 +15,18 @@ if (-not (Test-Path "$cmakeBin\cmake.exe")) {
 }
 
 $QtVersion = if ($env:QT_VERSION) { $env:QT_VERSION } else { "6.8.3" }
-if ($Shared) {
-    $QtRoot = if ($env:QT_ROOT) { $env:QT_ROOT } else { "C:\Qt" }
-    $QtMsvc = "$QtRoot\$QtVersion\msvc2022_64"
-} else {
-    $QtMsvc = if ($env:QT_STATIC_DIR) { $env:QT_STATIC_DIR } else { "C:\Qt\Static\$QtVersion\msvc2022_64" }
-}
+$QtMsvc = if ($env:QT_STATIC_DIR) { $env:QT_STATIC_DIR } else { "C:\Qt\Static\$QtVersion\msvc2022_64" }
 $QtBin = "$QtMsvc\bin"
 $env:Path = "$cmakeBin;$QtBin;$env:Path"
-
-# Desktop App UI ON by default for static (not -Shared) unless -NoDesktopAppUi
-$useDesktopAppUi = if ($NoDesktopAppUi) { $false }
-                   elseif ($DesktopAppUi) { $true }
-                   elseif (-not $Shared) { $true }
-                   else { $false }
 
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 Push-Location $RepoRoot
 try {
     $cache = "build\CMakeCache.txt"
     $needConfigure = $Force -or -not (Test-Path $cache)
-    if (-not $needConfigure -and (Test-Path $cache)) {
-        $wasDesktopUi = Select-String -Path $cache -Pattern "^ZARYA_DESKTOP_APP_UI:BOOL=ON" -Quiet
-        if ($useDesktopAppUi -ne [bool]$wasDesktopUi) { $needConfigure = $true }
-    }
     if ($needConfigure) {
         Write-Host "Running configure-msvc2026.ps1 ..."
         $configureArgs = @()
-        if (-not $Shared) { $configureArgs += "-Static" }
-        if ($useDesktopAppUi) { $configureArgs += "-DesktopAppUi" }
-        elseif ($NoDesktopAppUi) { $configureArgs += "-NoDesktopAppUi" }
         if ($Force) { $configureArgs += "-Force" }
         & "$PSScriptRoot\configure-msvc2026.ps1" @configureArgs
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

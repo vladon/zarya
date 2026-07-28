@@ -31,3 +31,6 @@
 [submodule "third_party/desktop-app/lz4"]
 	path = third_party/desktop-app/lz4
 	url = https://github.com/lz4/lz4.git
+[submodule "third_party/desktop-app/kcoreaddons"]
+	path = third_party/desktop-app/kcoreaddons
+	url = https://github.com/KDE/kcoreaddons.git

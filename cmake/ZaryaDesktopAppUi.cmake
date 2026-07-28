@@ -1,18 +1,15 @@
-# Optional Desktop App Toolkit (lib_ui) integration for Zarya.
-# Enabled with -DZARYA_DESKTOP_APP_UI=ON. Produces a GPLv3+ derivative binary.
+# Desktop App Toolkit (lib_ui) — required. Official binaries are GPLv3+ derivatives.
 
-option(ZARYA_DESKTOP_APP_UI
-    "Link desktop-app lib_ui (GPLv3+). Spike UI; OFF by default for CI."
-    OFF)
+set(ZARYA_DESKTOP_APP_UI ON CACHE BOOL "Link desktop-app lib_ui (required; GPLv3+)" FORCE)
 
-if(NOT ZARYA_DESKTOP_APP_UI)
-    return()
-endif()
+message(STATUS "Linking Desktop App Toolkit (lib_ui) — GPLv3+ binary")
 
-message(STATUS "ZARYA_DESKTOP_APP_UI=ON — linking Desktop App Toolkit (GPLv3+)")
-
-# lz4 and other bundled deps ship .c sources.
+# lz4 and other bundled deps ship .c sources; macOS toolkit uses ObjC++ (.mm).
 enable_language(C)
+if(APPLE)
+    enable_language(OBJC)
+    enable_language(OBJCXX)
+endif()
 
 set(DESKTOP_APP_SPECIAL_TARGET "" CACHE STRING "" FORCE)
 set(DESKTOP_APP_USE_PACKAGED ON CACHE BOOL "" FORCE)
@@ -30,30 +27,56 @@ if(NOT EXISTS "${cmake_helpers_loc}/init_target.cmake")
     message(FATAL_ERROR "Desktop App cmake_helpers missing. Run: git submodule update --init --recursive")
 endif()
 
-# Qt 6.8 lacks QAccessible::Attribute::Orientation (added in 6.9+).
-# Write a patched TU into the build tree so we never dirty the lib_ui submodule
-# (git apply was easy to lose when build.ps1 skipped reconfigure).
+# Qt::NoTitleBarBackgroundHint is Qt 6.9+; upstream lib_ui incorrectly gates at 6.8.
+# Write a patched TU into the build tree so we never dirty the lib_ui submodule.
+function(zarya_write_lib_ui_qt69_window_mac_patch out_path)
+    set(_orig "${submodules_loc}/lib_ui/ui/platform/mac/ui_window_mac.mm")
+    if(NOT EXISTS "${_orig}")
+        message(FATAL_ERROR "Missing ${_orig}")
+    endif()
+    file(READ "${_orig}" _src)
+    string(REPLACE
+        "QT_VERSION_CHECK(6, 8, 0)"
+        "QT_VERSION_CHECK(6, 9, 0)"
+        _src "${_src}")
+    if(NOT _src MATCHES "QT_VERSION_CHECK\\(6, 9, 0\\)")
+        message(FATAL_ERROR
+            "Failed to patch ui_window_mac.mm for Qt < 6.9 "
+            "(Qt::NoTitleBarBackgroundHint). Upstream lib_ui may have changed.")
+    endif()
+    if(_src MATCHES "QT_VERSION_CHECK\\(6, 8, 0\\)")
+        message(FATAL_ERROR
+            "ui_window_mac.mm still has Qt 6.8 gates after patch")
+    endif()
+    file(WRITE "${out_path}" "${_src}")
+endfunction()
+
+# QAccessible::Attribute::Orientation is not in Qt 6.8–6.9; gate it for Qt 6.10+.
+# Write a patched TU into the build tree so we never dirty the lib_ui submodule.
 function(zarya_write_lib_ui_qt68_accessible_patch out_path)
     set(_orig "${submodules_loc}/lib_ui/ui/accessible/ui_accessible_widget.cpp")
     if(NOT EXISTS "${_orig}")
         message(FATAL_ERROR "Missing ${_orig}")
     endif()
     file(READ "${_orig}" _src)
-    if(_src MATCHES "QT_VERSION_CHECK\\(6, 9, 0\\)")
-        file(WRITE "${out_path}" "${_src}")
-        return()
+    # Normalize any existing 6.9 gate up to 6.10 (Orientation is not in 6.9.x).
+    string(REPLACE
+        "QT_VERSION_CHECK(6, 9, 0)"
+        "QT_VERSION_CHECK(6, 10, 0)"
+        _src "${_src}")
+    if(NOT _src MATCHES "QT_VERSION_CHECK\\(6, 10, 0\\)")
+        string(REPLACE
+            "QList<QAccessible::Attribute> Widget::attributeKeys() const {\n\tauto result = QList<QAccessible::Attribute>();\n\tif (rp()->accessibilityOrientation().has_value()) {\n\t\tresult.append(QAccessible::Attribute::Orientation);\n\t}\n\treturn result;\n}"
+            "QList<QAccessible::Attribute> Widget::attributeKeys() const {\n\tauto result = QList<QAccessible::Attribute>();\n#if QT_VERSION >= QT_VERSION_CHECK(6, 10, 0)\n\tif (rp()->accessibilityOrientation().has_value()) {\n\t\tresult.append(QAccessible::Attribute::Orientation);\n\t}\n#else\n\tQ_UNUSED(result);\n#endif\n\treturn result;\n}"
+            _src "${_src}")
+        string(REPLACE
+            "QVariant Widget::attributeValue(QAccessible::Attribute key) const {\n\tif (key == QAccessible::Attribute::Orientation) {\n\t\tif (const auto orientation = rp()->accessibilityOrientation()) {\n\t\t\t// Plain int by design: the UIA bridge reads this back with\n\t\t\t// QVariant::toInt(), and Qt::Orientation isn't a registered\n\t\t\t// metatype here - QVariant::fromValue() of it wouldn't round-trip.\n\t\t\treturn int(*orientation);\n\t\t}\n\t}\n\treturn QVariant();\n}"
+            "QVariant Widget::attributeValue(QAccessible::Attribute key) const {\n#if QT_VERSION >= QT_VERSION_CHECK(6, 10, 0)\n\tif (key == QAccessible::Attribute::Orientation) {\n\t\tif (const auto orientation = rp()->accessibilityOrientation()) {\n\t\t\t// Plain int by design: the UIA bridge reads this back with\n\t\t\t// QVariant::toInt(), and Qt::Orientation isn't a registered\n\t\t\t// metatype here - QVariant::fromValue() of it wouldn't round-trip.\n\t\t\treturn int(*orientation);\n\t\t}\n\t}\n#else\n\tQ_UNUSED(key);\n#endif\n\treturn QVariant();\n}"
+            _src "${_src}")
     endif()
-    string(REPLACE
-        "QList<QAccessible::Attribute> Widget::attributeKeys() const {\n\tauto result = QList<QAccessible::Attribute>();\n\tif (rp()->accessibilityOrientation().has_value()) {\n\t\tresult.append(QAccessible::Attribute::Orientation);\n\t}\n\treturn result;\n}"
-        "QList<QAccessible::Attribute> Widget::attributeKeys() const {\n\tauto result = QList<QAccessible::Attribute>();\n#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)\n\tif (rp()->accessibilityOrientation().has_value()) {\n\t\tresult.append(QAccessible::Attribute::Orientation);\n\t}\n#else\n\tQ_UNUSED(result);\n#endif\n\treturn result;\n}"
-        _src "${_src}")
-    string(REPLACE
-        "QVariant Widget::attributeValue(QAccessible::Attribute key) const {\n\tif (key == QAccessible::Attribute::Orientation) {\n\t\tif (const auto orientation = rp()->accessibilityOrientation()) {\n\t\t\t// Plain int by design: the UIA bridge reads this back with\n\t\t\t// QVariant::toInt(), and Qt::Orientation isn't a registered\n\t\t\t// metatype here - QVariant::fromValue() of it wouldn't round-trip.\n\t\t\treturn int(*orientation);\n\t\t}\n\t}\n\treturn QVariant();\n}"
-        "QVariant Widget::attributeValue(QAccessible::Attribute key) const {\n#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)\n\tif (key == QAccessible::Attribute::Orientation) {\n\t\tif (const auto orientation = rp()->accessibilityOrientation()) {\n\t\t\t// Plain int by design: the UIA bridge reads this back with\n\t\t\t// QVariant::toInt(), and Qt::Orientation isn't a registered\n\t\t\t// metatype here - QVariant::fromValue() of it wouldn't round-trip.\n\t\t\treturn int(*orientation);\n\t\t}\n\t}\n#else\n\tQ_UNUSED(key);\n#endif\n\treturn QVariant();\n}"
-        _src "${_src}")
-    if(NOT _src MATCHES "QT_VERSION_CHECK\\(6, 9, 0\\)")
+    if(NOT _src MATCHES "QT_VERSION_CHECK\\(6, 10, 0\\)")
         message(FATAL_ERROR
-            "Failed to patch ui_accessible_widget.cpp for Qt 6.8 "
+            "Failed to patch ui_accessible_widget.cpp for Qt < 6.10 "
             "(QAccessible::Attribute::Orientation). Upstream lib_ui may have changed.")
     endif()
     file(WRITE "${out_path}" "${_src}")
@@ -117,6 +140,48 @@ find_package(JPEG)
 
 # Qt modules required by toolkit.
 find_package(Qt6 REQUIRED COMPONENTS OpenGL OpenGLWidgets)
+if(LINUX)
+    find_package(Qt6 REQUIRED COMPONENTS DBus)
+endif()
+
+# macOS 15+ SDKs dropped AGL; strip it from OpenGL imported targets and provide
+# a tiny stub framework so any remaining -framework AGL resolves at link time.
+if(APPLE)
+    foreach(_zarya_gl_tgt OpenGL::GL OpenGL::OpenGL Qt6::OpenGL Qt6::OpenGLWidgets)
+        if(TARGET ${_zarya_gl_tgt})
+            get_target_property(_zarya_gl_libs ${_zarya_gl_tgt} INTERFACE_LINK_LIBRARIES)
+            if(_zarya_gl_libs)
+                list(FILTER _zarya_gl_libs EXCLUDE REGEX "[Aa][Gg][Ll]")
+                set_property(TARGET ${_zarya_gl_tgt} PROPERTY INTERFACE_LINK_LIBRARIES "${_zarya_gl_libs}")
+            endif()
+            get_target_property(_zarya_gl_opts ${_zarya_gl_tgt} INTERFACE_LINK_OPTIONS)
+            if(_zarya_gl_opts)
+                list(FILTER _zarya_gl_opts EXCLUDE REGEX "[Aa][Gg][Ll]")
+                set_property(TARGET ${_zarya_gl_tgt} PROPERTY INTERFACE_LINK_OPTIONS "${_zarya_gl_opts}")
+            endif()
+        endif()
+    endforeach()
+    set(_zarya_agl_stub_root "${CMAKE_BINARY_DIR}/macos-stubs")
+    set(_zarya_agl_fw "${_zarya_agl_stub_root}/AGL.framework")
+    file(MAKE_DIRECTORY "${_zarya_agl_fw}/Versions/A")
+    file(WRITE "${_zarya_agl_stub_root}/agl_stub.c" "void zarya_agl_stub(void) {}\n")
+    execute_process(
+        COMMAND ${CMAKE_C_COMPILER} -dynamiclib
+            -install_name "/System/Library/Frameworks/AGL.framework/Versions/A/AGL"
+            -o "${_zarya_agl_fw}/Versions/A/AGL"
+            "${_zarya_agl_stub_root}/agl_stub.c"
+        RESULT_VARIABLE _zarya_agl_stub_rc
+        OUTPUT_VARIABLE _zarya_agl_stub_out
+        ERROR_VARIABLE _zarya_agl_stub_err)
+    if(NOT _zarya_agl_stub_rc EQUAL 0)
+        message(WARNING "Failed to build AGL stub framework: ${_zarya_agl_stub_err}")
+    else()
+        file(CREATE_LINK "A" "${_zarya_agl_fw}/Versions/Current" SYMBOLIC)
+        file(CREATE_LINK "Versions/Current/AGL" "${_zarya_agl_fw}/AGL" SYMBOLIC)
+        add_link_options("LINKER:-F${_zarya_agl_stub_root}")
+        message(STATUS "Using stub AGL.framework at ${_zarya_agl_fw}")
+    endif()
+endif()
 
 # Static Qt kits often omit Svg; codegen_style / lib_ui need QSvgRenderer.
 # find_package(Qt6 COMPONENTS Svg) only searches the already-resolved Qt6 prefix,
@@ -156,11 +221,22 @@ else()
     set(ZARYA_HAS_QT_SVG OFF)
     message(WARNING "Qt6 Svg not found — codegen_style will use a stub RenderSvg")
 endif()
+# Qt 6.10+ ships GuiPrivate/WidgetsPrivate as separate CMake packages.
+# Older Qt still exposes private headers via *_PRIVATE_INCLUDE_DIRS (see Externals).
+find_package(Qt6 QUIET COMPONENTS GuiPrivate WidgetsPrivate)
 if(QT_VERSION VERSION_GREATER_EQUAL 6.10)
     find_package(Qt6 REQUIRED COMPONENTS GuiPrivate WidgetsPrivate)
 endif()
 
 include(${CMAKE_SOURCE_DIR}/cmake/ZaryaDesktopAppExternals.cmake)
+
+# Linux lib_base needs glib/cppgir D-Bus codegen and kcoreaddons (packaged KF or bundled).
+if(LINUX)
+    add_subdirectory(${cmake_helpers_loc}/external/glib
+        ${CMAKE_BINARY_DIR}/desktop_app/external_glib)
+    add_subdirectory(${cmake_helpers_loc}/external/kcoreaddons
+        ${CMAKE_BINARY_DIR}/desktop_app/external_kcoreaddons)
+endif()
 
 add_subdirectory(${submodules_loc}/lib_crl ${CMAKE_BINARY_DIR}/desktop_app/lib_crl)
 add_subdirectory(${submodules_loc}/lib_rpl ${CMAKE_BINARY_DIR}/desktop_app/lib_rpl)
@@ -188,24 +264,44 @@ endif()
 
 add_subdirectory(${submodules_loc}/lib_ui ${CMAKE_BINARY_DIR}/desktop_app/lib_ui)
 
-# Swap accessibility TU for Qt 6.8-compatible build-tree copy (no submodule dirt).
-if(TARGET lib_ui AND QT_VERSION VERSION_LESS 6.9.0)
-    set(_zarya_a11y_patched_dir "${CMAKE_BINARY_DIR}/desktop_app/patched")
-    file(MAKE_DIRECTORY "${_zarya_a11y_patched_dir}")
-    set(_zarya_a11y_patched
-        "${_zarya_a11y_patched_dir}/ui_accessible_widget.cpp")
-    zarya_write_lib_ui_qt68_accessible_patch("${_zarya_a11y_patched}")
-    get_target_property(_zarya_lib_ui_sources lib_ui SOURCES)
-    set(_zarya_lib_ui_new_sources)
-    foreach(_zarya_src IN LISTS _zarya_lib_ui_sources)
-        if(_zarya_src MATCHES "ui_accessible_widget\\.cpp$")
-            list(APPEND _zarya_lib_ui_new_sources "${_zarya_a11y_patched}")
-        else()
-            list(APPEND _zarya_lib_ui_new_sources "${_zarya_src}")
-        endif()
-    endforeach()
-    set_property(TARGET lib_ui PROPERTY SOURCES ${_zarya_lib_ui_new_sources})
-    message(STATUS "lib_ui: using Qt 6.8-safe ui_accessible_widget.cpp from build tree")
+# Swap toolkit TUs for older Qt — build-tree copies, no submodule dirt.
+if(TARGET lib_ui)
+    set(_zarya_patched_dir "${CMAKE_BINARY_DIR}/desktop_app/patched")
+    file(MAKE_DIRECTORY "${_zarya_patched_dir}")
+    set(_zarya_lib_ui_need_rescan FALSE)
+
+    if(APPLE AND QT_VERSION VERSION_LESS 6.9.0)
+        set(_zarya_mac_window_patched
+            "${_zarya_patched_dir}/ui_window_mac.mm")
+        zarya_write_lib_ui_qt69_window_mac_patch("${_zarya_mac_window_patched}")
+        set_source_files_properties("${_zarya_mac_window_patched}" PROPERTIES
+            LANGUAGE OBJCXX)
+        set(_zarya_lib_ui_need_rescan TRUE)
+        message(STATUS "lib_ui: using Qt < 6.9-safe ui_window_mac.mm from build tree")
+    endif()
+
+    if(QT_VERSION VERSION_LESS 6.10.0)
+        set(_zarya_a11y_patched
+            "${_zarya_patched_dir}/ui_accessible_widget.cpp")
+        zarya_write_lib_ui_qt68_accessible_patch("${_zarya_a11y_patched}")
+        set(_zarya_lib_ui_need_rescan TRUE)
+        message(STATUS "lib_ui: using Qt < 6.10-safe ui_accessible_widget.cpp from build tree")
+    endif()
+
+    if(_zarya_lib_ui_need_rescan)
+        get_target_property(_zarya_lib_ui_sources lib_ui SOURCES)
+        set(_zarya_lib_ui_new_sources)
+        foreach(_zarya_src IN LISTS _zarya_lib_ui_sources)
+            if(DEFINED _zarya_a11y_patched AND _zarya_src MATCHES "ui_accessible_widget\\.cpp$")
+                list(APPEND _zarya_lib_ui_new_sources "${_zarya_a11y_patched}")
+            elseif(DEFINED _zarya_mac_window_patched AND _zarya_src MATCHES "ui_window_mac\\.mm$")
+                list(APPEND _zarya_lib_ui_new_sources "${_zarya_mac_window_patched}")
+            else()
+                list(APPEND _zarya_lib_ui_new_sources "${_zarya_src}")
+            endif()
+        endforeach()
+        set_property(TARGET lib_ui PROPERTY SOURCES ${_zarya_lib_ui_new_sources})
+    endif()
 endif()
 
 if(NOT ZARYA_HAS_QT_SVG AND TARGET lib_ui)
@@ -231,9 +327,17 @@ set(ZARYA_DESKTOP_APP_UI_SOURCES
 
 
 # Spike sources consume toolkit headers that assume QT_NO_KEYWORDS + base PCH.
-set_source_files_properties(${ZARYA_DESKTOP_APP_UI_SOURCES} PROPERTIES
-    COMPILE_DEFINITIONS "QT_NO_KEYWORDS"
-    COMPILE_OPTIONS "/FI${submodules_loc}/lib_ui/ui/ui_pch.h")
+# MSVC: /FI; GCC/Clang: -include (never pass /FI to non-MSVC).
+set(_zarya_ui_pch "${submodules_loc}/lib_ui/ui/ui_pch.h")
+if(MSVC)
+    set_source_files_properties(${ZARYA_DESKTOP_APP_UI_SOURCES} PROPERTIES
+        COMPILE_DEFINITIONS "QT_NO_KEYWORDS"
+        COMPILE_OPTIONS "/FI${_zarya_ui_pch}")
+else()
+    set_source_files_properties(${ZARYA_DESKTOP_APP_UI_SOURCES} PROPERTIES
+        COMPILE_DEFINITIONS "QT_NO_KEYWORDS"
+        COMPILE_OPTIONS "-include;${_zarya_ui_pch}")
+endif()
 
 # lz4 is PRIVATE on lib_ui; static link requires the final exe to pull it in.
 set(ZARYA_DESKTOP_APP_UI_LIBS

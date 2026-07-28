@@ -9,29 +9,94 @@ on:
 jobs:
   build-windows:
     runs-on: windows-latest
+    env:
+      QT_VERSION: "6.8.3"
+      QT_STATIC_DIR: 'C:\Qt\Static\6.8.3\msvc2022_64'
+      QT_STATIC_CACHE_KEY: qt-static-6.8.3-msvc2022_64-v1
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: Read version
         id: ver
         shell: bash
         run: |
           VERSION=$(python -c "import sys; sys.path.insert(0, 'scripts'); from release_common import read_cmake_version; print(read_cmake_version()['version'])")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v4
+      - name: Install OpenSSL
+        shell: pwsh
+        run: |
+          choco install openssl 7zip -y --no-progress
+          $roots = @(
+            'C:\Program Files\OpenSSL-Win64',
+            'C:\Program Files\OpenSSL',
+            'C:\OpenSSL-Win64'
+          )
+          $found = $null
+          foreach ($r in $roots) {
+            if (Test-Path "$r\include\openssl\ssl.h") {
+              $found = $r
+              "OPENSSL_ROOT_DIR=$r" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+              Write-Host "OPENSSL_ROOT_DIR=$r"
+              break
+            }
+          }
+          if (-not $found) {
+            throw 'OpenSSL headers not found after choco install'
+          }
+      - name: Restore static Qt cache
+        id: qt-cache
+        uses: actions/cache@v4
         with:
-          version: "6.8.3"
-          host: windows
-          target: desktop
-          arch: win64_msvc2022_64
+          path: ${{ env.QT_STATIC_DIR }}
+          key: ${{ env.QT_STATIC_CACHE_KEY }}
+      - name: Download static Qt release asset
+        if: steps.qt-cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "ci-qt-static-$env:QT_VERSION"
+          $archive = Join-Path $env:RUNNER_TEMP "qt-static-$env:QT_VERSION-msvc2022_64.7z"
+          $destParent = Split-Path -Parent $env:QT_STATIC_DIR
+          New-Item -ItemType Directory -Force -Path $destParent | Out-Null
+          gh release download $tag -p "qt-static-$env:QT_VERSION-msvc2022_64.7z" -O $archive
+          if ($LASTEXITCODE -ne 0 -or -not (Test-Path $archive)) {
+            throw "Static Qt asset missing (release $tag). Bootstrap: Actions → Qt static Windows, or .\scripts\pack-qt-static-ci.ps1"
+          }
+          $seven = "${env:ProgramFiles}\7-Zip\7z.exe"
+          & $seven x $archive "-o$destParent" -y
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (-not (Test-Path (Join-Path $env:QT_STATIC_DIR 'lib\cmake\Qt6\Qt6Config.cmake'))) {
+            throw "Extracted static Qt incomplete at $($env:QT_STATIC_DIR)"
+          }
+      - name: Save static Qt cache
+        if: steps.qt-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.QT_STATIC_DIR }}
+          key: ${{ env.QT_STATIC_CACHE_KEY }}
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Install Ninja
+        run: choco install ninja -y --no-progress
       - name: Check translations
         run: python scripts/check-translations.py
       - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+        shell: pwsh
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release `
+            -DZARYA_STATIC_QT=ON `
+            -DCMAKE_PREFIX_PATH="$env:QT_STATIC_DIR" `
+            -DOPENSSL_ROOT_DIR="$env:OPENSSL_ROOT_DIR" `
+            -DOPENSSL_USE_STATIC_LIBS=TRUE
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Build
-        run: cmake --build build --config Release --target zarya_lrelease zarya zarya-helper zarya_xray_config_test
+        shell: pwsh
+        run: |
+          cmake --build build --target zarya_lrelease zarya zarya-helper zarya_xray_config_test
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Test
-        run: ./build/Release/zarya_xray_config_test.exe
+        run: ./build/zarya_xray_config_test.exe
       - name: Package (unsigned)
         run: .\scripts\package-windows.ps1 -Configuration Release -OutputDir dist -SkipBuild -SkipSigning
       - name: Verify release artifact
@@ -41,17 +106,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: Read version
         id: ver
         run: |
           VERSION=$(python3 -c "import sys; sys.path.insert(0, 'scripts'); from release_common import read_cmake_version; print(read_cmake_version()['version'])")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libssl-dev zlib1g-dev libjpeg-dev libgl1-mesa-dev libegl1-mesa-dev \
+            libglib2.0-dev libglib2.0-bin libdbus-1-dev libxkbcommon-dev \
+            libxkbcommon-x11-dev libxcb-cursor0 libxcb-xinerama0 \
+            gobject-introspection libgirepository1.0-dev \
+            libboost-dev pkg-config \
+            cmake ninja-build build-essential xvfb
       - name: Install Qt
-        run: sudo apt-get update && sudo apt-get install -y qt6-base-dev cmake build-essential xvfb
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.8.3"
+          host: linux
+          target: desktop
+          arch: linux_gcc_64
       - name: Check translations
         run: python scripts/check-translations.py
       - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
       - name: Build
         run: cmake --build build --target zarya zarya_xray_config_test
       - name: Test
@@ -74,17 +156,28 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: Read version
         id: ver
         run: |
           VERSION=$(python3 -c "import sys; sys.path.insert(0, 'scripts'); from release_common import read_cmake_version; print(read_cmake_version()['version'])")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Install OpenSSL / cmake / ninja
+        run: brew install cmake ninja openssl@3
       - name: Install Qt
-        run: brew install qt@6 cmake
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.8.3"
+          host: mac
+          target: desktop
+          arch: clang_64
       - name: Check translations
         run: python scripts/check-translations.py
       - name: Configure
-        run: cmake -S . -B build -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6)"
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DOPENSSL_ROOT_DIR="$(brew --prefix openssl@3)"
       - name: Build
         run: cmake --build build --target zarya zarya_xray_config_test
       - name: Test

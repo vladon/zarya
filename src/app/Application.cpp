@@ -5,9 +5,7 @@
 #include "packaging/PackagingInfo.h"
 #include "storage/AppPaths.h"
 #include "ui/theme/ThemeManager.h"
-#if defined(ZARYA_DESKTOP_APP_UI)
 #include "ui/desktopapp/ZaryaUiIntegration.h"
-#endif
 
 #include <QAbstractButton>
 #include <QKeyEvent>
@@ -99,9 +97,7 @@ Application::Application(int& argc, char** argv)
 
     AppPaths::initialize(m_startupOptions.portable);
     LanguageManager::instance().installTranslators();
-#if defined(ZARYA_DESKTOP_APP_UI)
     initDesktopAppUiIntegrations(argc, argv);
-#endif
     ThemeManager::instance().apply();
 
     if (QSystemTrayIcon::isSystemTrayAvailable()) {
