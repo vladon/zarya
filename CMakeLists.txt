@@ -647,6 +647,8 @@ zarya_link_qt_core(zarya_xray_config_test)
 
 add_executable(zarya_singbox_config_test
     tests/singbox_config_test.cpp
+    src/app/BuildInfo.cpp
+    src/app/StartupOptions.cpp
     src/runtime/ConfigWarning.cpp
     src/runtime/singbox/SingBoxRouteGenerator.cpp
     src/runtime/singbox/SingBoxDnsGenerator.cpp
@@ -662,10 +664,21 @@ add_executable(zarya_singbox_config_test
     src/killswitch/KillSwitchMode.cpp
     src/geodata/GeoDataDownloader.cpp
     src/packaging/PackagingInfo.cpp
+    src/packaging/InstallationMode.cpp
+    src/packaging/WindowsInstallInfo.cpp
+    src/storage/DefaultSettings.cpp
+    src/storage/SafeJsonWriter.cpp
+    src/migration/JsonFileMigrator.cpp
+    src/diagnostics/DiagnosticsRedactor.cpp
+    src/i18n/TranslatableEnums.cpp
+    ${ZARYA_FEATURE_SOURCES}
     ${ZARYA_RULESET_SOURCES}
 )
 
-target_include_directories(zarya_singbox_config_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_include_directories(zarya_singbox_config_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${ZARYA_GENERATED_DIR}
+)
 
 target_compile_definitions(zarya_singbox_config_test PRIVATE
     ZARYA_VERSION_STRING="${ZARYA_VERSION_STRING}"
@@ -728,13 +741,29 @@ add_executable(zarya_testing_test
     ${ZARYA_DOMAIN_SOURCES}
     src/storage/RoutingStore.cpp
     src/storage/DnsStore.cpp
+    src/storage/SafeJsonWriter.cpp
     src/storage/AppSettings.cpp
+    src/storage/DefaultSettings.cpp
     src/storage/AppPaths.cpp
+    src/migration/JsonFileMigrator.cpp
     src/runtime/RuntimeBackendType.cpp
+    src/killswitch/KillSwitchMode.cpp
+    src/app/StartupOptions.cpp
+    src/app/BuildInfo.cpp
+    src/packaging/PackagingInfo.cpp
+    src/packaging/InstallationMode.cpp
+    src/packaging/WindowsInstallInfo.cpp
+    src/diagnostics/DiagnosticsRedactor.cpp
+    src/i18n/TranslatableEnums.cpp
+    ${ZARYA_FEATURE_SOURCES}
     src/platform/Platform.cpp
+    src/platform/KillOnCloseProcessJob.cpp
 )
 
-target_include_directories(zarya_testing_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_include_directories(zarya_testing_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${ZARYA_GENERATED_DIR}
+)
 
 zarya_link_qt_core(zarya_testing_test)
 target_link_libraries(zarya_testing_test PRIVATE Qt6::Network)
@@ -743,6 +772,7 @@ add_executable(zarya_geodata_verifier_test
     tests/geodata_verifier_test.cpp
     src/geodata/GeoDataVerifier.cpp
     src/geodata/GeoDataFileStatus.cpp
+    src/i18n/TranslatableEnums.cpp
 )
 
 target_include_directories(zarya_geodata_verifier_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -776,6 +806,9 @@ add_executable(zarya_smoke_test
     src/killswitch/KillSwitchMode.cpp
     src/platform/Platform.cpp
     src/packaging/PackagingInfo.cpp
+    src/packaging/InstallationMode.cpp
+    src/packaging/WindowsInstallInfo.cpp
+    ${ZARYA_FEATURE_SOURCES}
 )
 
 target_include_directories(zarya_smoke_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${ZARYA_GENERATED_DIR})
