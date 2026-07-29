@@ -31,9 +31,16 @@ LinuxSystemProxyManager::LinuxSystemProxyManager(LinuxDesktopEnvironment desktop
             QStringLiteral("gsettings is not available for GNOME proxy control."));
         break;
     }
-    case LinuxDesktopEnvironment::Kde:
-        m_backend = std::make_unique<KdeSystemProxyManager>();
+    case LinuxDesktopEnvironment::Kde: {
+        auto kde = std::make_unique<KdeSystemProxyManager>(std::move(processRunner));
+        if (kde->isSupported()) {
+            m_backend = std::move(kde);
+            break;
+        }
+        m_backend = std::make_unique<StubSystemProxyManager>(
+            QStringLiteral("KDE config tools are not available for proxy control."));
         break;
+    }
     case LinuxDesktopEnvironment::Unknown:
         m_backend = std::make_unique<StubSystemProxyManager>(
             QStringLiteral("Desktop environment is not supported for system proxy yet."));

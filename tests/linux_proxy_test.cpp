@@ -97,6 +97,100 @@ public:
     }
 };
 
+class FakeKdeConfig {
+public:
+    bool version6Available = true;
+    bool version5Available = true;
+    bool sessionBusAvailable = true;
+    QString failWriteKey;
+    int writeFailuresRemaining = 0;
+    int reloadFailuresRemaining = 0;
+    int reloadCount = 0;
+    QMap<QString, QString> values;
+    QList<RecordedCommand> commands;
+
+    zarya::PlatformProcessRunner runner()
+    {
+        return [this](const QString& program, const QStringList& arguments, int timeoutMs) {
+            commands.append({program, arguments, timeoutMs});
+
+            zarya::ProcessResult result;
+            result.exitCode = 0;
+
+            const bool readTool =
+                program == QStringLiteral("kreadconfig6")
+                || program == QStringLiteral("kreadconfig5");
+            const bool writeTool =
+                program == QStringLiteral("kwriteconfig6")
+                || program == QStringLiteral("kwriteconfig5");
+            const bool versionAvailable =
+                program.endsWith(QLatin1Char('6')) ? version6Available : version5Available;
+
+            if ((readTool || writeTool)
+                && arguments == QStringList{QStringLiteral("--help")}) {
+                result.success = versionAvailable;
+                if (!versionAvailable) {
+                    result.exitCode = 1;
+                    result.errorMessage = QStringLiteral("KConfig tool unavailable");
+                }
+                return result;
+            }
+
+            const qsizetype keyIndex = arguments.indexOf(QStringLiteral("--key"));
+            if (readTool && versionAvailable && keyIndex >= 0
+                && keyIndex + 1 < arguments.size()) {
+                const QString key = arguments.at(keyIndex + 1);
+                result.success = true;
+                result.standardOutput =
+                    values.contains(key)
+                        ? values.value(key) + QLatin1Char('\n')
+                        : QStringLiteral("__zarya_kde_proxy_key_missing_5e83f262__\n");
+                return result;
+            }
+            if (writeTool && versionAvailable && keyIndex >= 0
+                && keyIndex + 1 < arguments.size()) {
+                const QString key = arguments.at(keyIndex + 1);
+                if (key == failWriteKey && writeFailuresRemaining > 0) {
+                    --writeFailuresRemaining;
+                    result.exitCode = 1;
+                    result.errorMessage = QStringLiteral("Injected KDE write failure");
+                    return result;
+                }
+                if (arguments.last() == QStringLiteral("--delete")) {
+                    values.remove(key);
+                } else {
+                    values.insert(key, arguments.last());
+                }
+                result.success = true;
+                return result;
+            }
+            if (program == QStringLiteral("dbus-send")) {
+                if (arguments.contains(QStringLiteral("org.freedesktop.DBus.ListNames"))) {
+                    result.success = sessionBusAvailable;
+                    if (!sessionBusAvailable) {
+                        result.exitCode = 1;
+                        result.errorMessage = QStringLiteral("Session bus unavailable");
+                    }
+                    return result;
+                }
+                ++reloadCount;
+                if (reloadFailuresRemaining > 0) {
+                    --reloadFailuresRemaining;
+                    result.exitCode = 1;
+                    result.errorMessage = QStringLiteral("Injected KDE reload failure");
+                    return result;
+                }
+                result.success = true;
+                return result;
+            }
+
+            result.exitCode = 1;
+            result.errorMessage = QStringLiteral("Unexpected KDE command");
+            return result;
+        };
+    }
+};
+
 QMap<QString, QString> initialGsettings()
 {
     return {
@@ -115,6 +209,18 @@ QMap<QString, QString> initialGsettings()
         {QStringLiteral("org.gnome.system.proxy.socks.host"),
          QStringLiteral("'old-socks.example'")},
         {QStringLiteral("org.gnome.system.proxy.socks.port"), QStringLiteral("1080")},
+    };
+}
+
+QMap<QString, QString> initialKdeConfig()
+{
+    return {
+        {QStringLiteral("ProxyType"), QStringLiteral("2")},
+        {QStringLiteral("httpProxy"), QStringLiteral("http://old-http.example:8080")},
+        {QStringLiteral("NoProxyFor"), QStringLiteral("intranet.example,localhost")},
+        {QStringLiteral("Proxy Config Script"),
+         QStringLiteral("https://config.example/proxy.pac")},
+        {QStringLiteral("ReversedException"), QStringLiteral("true")},
     };
 }
 
@@ -174,13 +280,31 @@ void testLinuxBackendSelection()
     expectTrue(unsupportedGnome.limitations().contains(QStringLiteral("not available")),
                "missing gsettings reports actionable limitation");
 
+    FakeKdeConfig kdeConfig;
     zarya::LinuxSystemProxyManager kde(zarya::LinuxDesktopEnvironment::Kde,
-                                       available.runner());
-    expectTrue(!kde.isSupported(), "KDE placeholder remains unsupported");
-    expectEqual(kde.supportLevel(), QStringLiteral("partial"),
-                "KDE placeholder remains partial");
+                                       kdeConfig.runner());
+    expectTrue(kde.isSupported(), "KDE config tools enable KDE backend");
+    expectEqual(kde.supportLevel(), QStringLiteral("full"),
+                "KDE backend reports full integration");
+    expectEqual(kde.backendName(), QStringLiteral("KDE/Plasma kioslaverc"),
+                "KDE backend selected");
     expectEqual(kde.detectedDesktopName(), QStringLiteral("KDE/Plasma"),
                 "KDE desktop name retained");
+
+    kdeConfig.version6Available = false;
+    kdeConfig.version5Available = false;
+    zarya::LinuxSystemProxyManager unsupportedKde(
+        zarya::LinuxDesktopEnvironment::Kde, kdeConfig.runner());
+    expectTrue(!unsupportedKde.isSupported(), "missing KConfig tools disables KDE backend");
+    expectEqual(unsupportedKde.supportLevel(), QStringLiteral("unsupported"),
+                "missing KConfig tools reports unsupported");
+
+    FakeKdeConfig noSessionBus;
+    noSessionBus.sessionBusAvailable = false;
+    zarya::LinuxSystemProxyManager unsupportedKdeBus(
+        zarya::LinuxDesktopEnvironment::Kde, noSessionBus.runner());
+    expectTrue(!unsupportedKdeBus.isSupported(),
+               "missing KDE session bus disables KDE backend");
 
     zarya::LinuxSystemProxyManager unknown(zarya::LinuxDesktopEnvironment::Unknown,
                                            available.runner());
@@ -262,14 +386,155 @@ void testGnomeFailures()
                "missing GNOME snapshot has actionable error");
 }
 
-void testKdePlaceholder()
+void testKdeSnapshotApplyRestore()
 {
-    zarya::KdeSystemProxyManager manager;
+    FakeKdeConfig fake;
+    fake.values = initialKdeConfig();
+    const QMap<QString, QString> before = fake.values;
+    zarya::KdeSystemProxyManager manager(fake.runner());
+
     QString error;
-    expectTrue(!manager.applyHttpProxy(QStringLiteral("127.0.0.1"), 10808, &error),
-               "KDE placeholder does not modify desktop settings");
-    expectTrue(error.contains(QStringLiteral("does not modify KDE proxy settings")),
-               "KDE placeholder explains its limitation");
+    const zarya::SystemProxyState snapshot = manager.readCurrentState(&error);
+    expectTrue(error.isEmpty(), "KDE snapshot succeeds");
+    expectTrue(!snapshot.proxyEnabled, "KDE PAC mode is not reported as manual proxy");
+    expectEqual(snapshot.proxyServer, QStringLiteral("old-http.example:8080"),
+                "KDE snapshot exposes prior HTTP endpoint");
+    const QVariantMap raw = snapshot.rawValues.value(QStringLiteral("kioslaverc")).toMap();
+    expectTrue(raw.size() == 6, "KDE snapshot preserves proxy and PAC keys");
+    expectTrue(!raw.value(QStringLiteral("httpsProxy")).toMap()
+                    .value(QStringLiteral("present")).toBool(),
+               "KDE snapshot preserves a missing key");
+
+    expectTrue(manager.applyHttpProxy(QStringLiteral("127.0.0.1"), 10808, &error),
+               "KDE proxy apply succeeds");
+    expectTrue(error.isEmpty(), "KDE proxy apply has no error");
+    expectEqual(fake.values.value(QStringLiteral("ProxyType")), QStringLiteral("1"),
+                "KDE mode changed to manual");
+    expectEqual(fake.values.value(QStringLiteral("httpProxy")),
+                QStringLiteral("http://127.0.0.1:10808"),
+                "KDE HTTP proxy uses loopback mixed inbound");
+    expectEqual(fake.values.value(QStringLiteral("httpsProxy")),
+                QStringLiteral("http://127.0.0.1:10808"),
+                "KDE HTTPS proxy uses loopback mixed inbound");
+    expectEqual(fake.values.value(QStringLiteral("ReversedException")),
+                QStringLiteral("false"), "KDE exclusions are not reversed");
+    expectTrue(fake.reloadCount == 1, "KDE apply reloads running KIO applications");
+
+    zarya::KdeSystemProxyManager restartedManager(fake.runner());
+    expectTrue(restartedManager.restoreState(snapshot, &error),
+               "KDE proxy restore succeeds after manager restart");
+    expectTrue(error.isEmpty(), "KDE proxy restore has no error");
+    expectTrue(fake.values == before,
+               "KDE restore reproduces values and removes originally missing keys");
+    expectTrue(fake.reloadCount == 2, "KDE restore reloads running KIO applications");
+
+    expectTrue(restartedManager.restoreState(snapshot, &error),
+               "restoring the same KDE snapshot twice is safe");
+    expectTrue(fake.values == before, "second KDE restore remains exact");
+
+    const bool noShell = std::all_of(
+        fake.commands.cbegin(), fake.commands.cend(), [](const RecordedCommand& command) {
+            return command.program != QStringLiteral("sh")
+                && command.program != QStringLiteral("bash");
+        });
+    expectTrue(noShell, "KDE runner never invokes a shell");
+
+    const bool boundedTimeouts = std::all_of(
+        fake.commands.cbegin(), fake.commands.cend(), [](const RecordedCommand& command) {
+            return command.timeoutMs == 5000;
+        });
+    expectTrue(boundedTimeouts, "KDE runner uses bounded timeouts");
+}
+
+void testKdeFallbackAndFailures()
+{
+    FakeKdeConfig fallback;
+    fallback.version6Available = false;
+    fallback.values = initialKdeConfig();
+    zarya::KdeSystemProxyManager fallbackManager(fallback.runner());
+    expectTrue(fallbackManager.isSupported(), "KDE backend falls back to KConfig 5 tools");
+    QString error;
+    expectTrue(fallbackManager.applyHttpProxy(QStringLiteral("127.0.0.1"), 10808, &error),
+               "KConfig 5 fallback applies proxy");
+    const bool usedVersion5 = std::any_of(
+        fallback.commands.cbegin(), fallback.commands.cend(),
+        [](const RecordedCommand& command) {
+            return command.program == QStringLiteral("kwriteconfig5");
+        });
+    expectTrue(usedVersion5, "KDE fallback writes with kwriteconfig5");
+
+    FakeKdeConfig modes;
+    zarya::KdeSystemProxyManager modesManager(modes.runner());
+    modes.values.insert(QStringLiteral("ProxyType"), QStringLiteral("0"));
+    zarya::SystemProxyState modeSnapshot = modesManager.readCurrentState(&error);
+    expectTrue(!modeSnapshot.proxyEnabled, "KDE no-proxy mode is reported as disabled");
+    modes.values.insert(QStringLiteral("ProxyType"), QStringLiteral("1"));
+    modes.values.insert(QStringLiteral("httpProxy"),
+                        QStringLiteral("http://manual.example:3128"));
+    modeSnapshot = modesManager.readCurrentState(&error);
+    expectTrue(modeSnapshot.proxyEnabled, "KDE manual mode is reported as enabled");
+    modes.values.insert(QStringLiteral("ProxyType"), QStringLiteral("3"));
+    modeSnapshot = modesManager.readCurrentState(&error);
+    expectTrue(!modeSnapshot.proxyEnabled,
+               "KDE automatic discovery mode is not reported as manual");
+
+    const QMap<QString, QString> beforeRepeatedApply = modes.values;
+    expectTrue(modesManager.applyHttpProxy(QStringLiteral("127.0.0.1"), 10808, &error),
+               "first repeated KDE apply succeeds");
+    expectTrue(modesManager.applyHttpProxy(QStringLiteral("127.0.0.1"), 10808, &error),
+               "applying the same KDE proxy twice is safe");
+    expectEqual(modes.values.value(QStringLiteral("ProxyType")), QStringLiteral("1"),
+                "repeated KDE apply remains in manual mode");
+    expectTrue(modes.values != beforeRepeatedApply,
+               "repeated KDE apply keeps the requested proxy active");
+
+    FakeKdeConfig writeFailure;
+    writeFailure.values = initialKdeConfig();
+    const QMap<QString, QString> beforeWriteFailure = writeFailure.values;
+    writeFailure.failWriteKey = QStringLiteral("NoProxyFor");
+    writeFailure.writeFailuresRemaining = 1;
+    zarya::KdeSystemProxyManager writeFailureManager(writeFailure.runner());
+    error.clear();
+    expectTrue(!writeFailureManager.applyHttpProxy(
+                   QStringLiteral("127.0.0.1"), 10808, &error),
+               "partial KDE write failure is propagated");
+    expectTrue(error.contains(QStringLiteral("Previous KDE proxy settings were restored")),
+               "partial KDE write failure reports successful rollback");
+    expectTrue(writeFailure.values == beforeWriteFailure,
+               "partial KDE write failure rolls back all changed keys");
+
+    FakeKdeConfig reloadFailure;
+    reloadFailure.values = initialKdeConfig();
+    const QMap<QString, QString> beforeReloadFailure = reloadFailure.values;
+    reloadFailure.reloadFailuresRemaining = 1;
+    zarya::KdeSystemProxyManager reloadFailureManager(reloadFailure.runner());
+    error.clear();
+    expectTrue(!reloadFailureManager.applyHttpProxy(
+                   QStringLiteral("127.0.0.1"), 10808, &error),
+               "KDE reload failure is propagated");
+    expectTrue(error.contains(QStringLiteral("Previous KDE proxy settings were restored")),
+               "KDE reload failure reports successful rollback");
+    expectTrue(reloadFailure.values == beforeReloadFailure,
+               "KDE reload failure rolls back the config");
+    expectTrue(reloadFailure.reloadCount == 2,
+               "KDE reload failure retries notification after rollback");
+
+    const qsizetype commandCount = reloadFailure.commands.size();
+    error.clear();
+    expectTrue(!reloadFailureManager.applyHttpProxy(
+                   QStringLiteral("127.0.0.1"), 0, &error),
+               "invalid KDE proxy port is rejected");
+    expectTrue(error.contains(QStringLiteral("Invalid HTTP proxy port")),
+               "invalid KDE proxy port has actionable error");
+    expectTrue(reloadFailure.commands.size() == commandCount,
+               "invalid KDE proxy port executes no command");
+
+    zarya::SystemProxyState emptySnapshot;
+    error.clear();
+    expectTrue(!reloadFailureManager.restoreState(emptySnapshot, &error),
+               "missing KDE snapshot is rejected");
+    expectTrue(error.contains(QStringLiteral("Missing KDE kioslaverc snapshot")),
+               "missing KDE snapshot has actionable error");
 }
 
 } // namespace
@@ -282,7 +547,8 @@ int main(int argc, char* argv[])
     testLinuxBackendSelection();
     testGnomeSnapshotApplyRestore();
     testGnomeFailures();
-    testKdePlaceholder();
+    testKdeSnapshotApplyRestore();
+    testKdeFallbackAndFailures();
 
     if (g_failures == 0) {
         std::fprintf(stdout, "All Linux proxy tests passed.\n");
