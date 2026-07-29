@@ -5,8 +5,10 @@
 #include "platform/linux/LinuxSystemProxyManager.h"
 
 #include <QCoreApplication>
+#include <QFile>
 #include <QMap>
 #include <QProcessEnvironment>
+#include <QTemporaryDir>
 
 #include <algorithm>
 #include <cstdio>
@@ -537,6 +539,81 @@ void testKdeFallbackAndFailures()
                "missing KDE snapshot has actionable error");
 }
 
+void testNativeKdeSnapshotApplyRestore()
+{
+    QTemporaryDir configHome;
+    expectTrue(configHome.isValid(), "native KDE smoke creates isolated config home");
+    if (!configHome.isValid()) {
+        return;
+    }
+
+    qputenv("XDG_CONFIG_HOME", configHome.path().toUtf8());
+    qputenv("XDG_CURRENT_DESKTOP", "KDE");
+    qputenv("KDE_FULL_SESSION", "true");
+
+    const QString configPath = configHome.filePath(QStringLiteral("kioslaverc"));
+    const QByteArray fixture =
+        "[Other Group]\n"
+        "Keep=untouched\n"
+        "\n"
+        "[Proxy Settings]\n"
+        "NoProxyFor=intranet.invalid,localhost\n"
+        "Proxy Config Script=https://config.invalid/proxy.pac\n"
+        "ProxyType=2\n"
+        "ReversedException=true\n"
+        "Unrelated=preserved\n"
+        "httpProxy=http://old-http.invalid:8080\n";
+    QFile config(configPath);
+    expectTrue(config.open(QIODevice::WriteOnly | QIODevice::Truncate),
+               "native KDE smoke seeds kioslaverc fixture");
+    if (!config.isOpen()) {
+        return;
+    }
+    expectTrue(config.write(fixture) == fixture.size(),
+               "native KDE smoke writes complete kioslaverc fixture");
+    config.close();
+
+    zarya::LinuxSystemProxyManager manager;
+    expectTrue(manager.isSupported(),
+               "native KDE backend detects KConfig and session D-Bus");
+    expectEqual(manager.backendName(), QStringLiteral("KDE/Plasma kioslaverc"),
+                "native Linux desktop selection chooses the KDE backend");
+
+    QString error;
+    const zarya::SystemProxyState snapshot = manager.readCurrentState(&error);
+    expectTrue(error.isEmpty(), "native KDE backend captures the prior snapshot");
+    expectTrue(!snapshot.rawValues.value(QStringLiteral("kioslaverc")).toMap().isEmpty(),
+               "native KDE snapshot contains managed keys");
+
+    expectTrue(manager.applyHttpProxy(QStringLiteral("127.0.0.1"), 10808, &error),
+               "native KDE backend applies HTTP/HTTPS proxy");
+    expectTrue(error.isEmpty(), "native KDE apply has no error");
+
+    const zarya::SystemProxyState applied = manager.readCurrentState(&error);
+    expectTrue(error.isEmpty(), "native KDE backend reads applied state");
+    expectTrue(applied.proxyEnabled, "native KDE backend reports successful apply as enabled");
+    expectEqual(applied.proxyServer, QStringLiteral("127.0.0.1:10808"),
+                "native KDE backend reports the applied endpoint");
+
+    zarya::LinuxSystemProxyManager restartedManager;
+    expectTrue(restartedManager.restoreState(snapshot, &error),
+               "native KDE backend restores through a restarted manager");
+    expectTrue(error.isEmpty(), "native KDE restore has no error");
+
+    const zarya::SystemProxyState restored = restartedManager.readCurrentState(&error);
+    expectTrue(error.isEmpty(), "native KDE backend reads restored state");
+    expectTrue(restored.rawValues == snapshot.rawValues,
+               "native KDE restore is logically identical to the prior snapshot");
+
+    QFile restoredConfig(configPath);
+    expectTrue(restoredConfig.open(QIODevice::ReadOnly),
+               "native KDE smoke reads restored kioslaverc");
+    if (restoredConfig.isOpen()) {
+        expectTrue(restoredConfig.readAll() == fixture,
+                   "native KDE restore is byte-identical for canonical KConfig input");
+    }
+}
+
 } // namespace
 
 int main(int argc, char* argv[])
@@ -549,6 +626,9 @@ int main(int argc, char* argv[])
     testGnomeFailures();
     testKdeSnapshotApplyRestore();
     testKdeFallbackAndFailures();
+    if (qEnvironmentVariableIntValue("ZARYA_RUN_NATIVE_KDE_PROXY_SMOKE") == 1) {
+        testNativeKdeSnapshotApplyRestore();
+    }
 
     if (g_failures == 0) {
         std::fprintf(stdout, "All Linux proxy tests passed.\n");
