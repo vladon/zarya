@@ -43,8 +43,16 @@ require_command() {
 
 require_command dbus-run-session
 require_command dbus-send
-require_command kreadconfig6
-require_command kwriteconfig6
+if command -v kreadconfig6 >/dev/null 2>&1 \
+    && command -v kwriteconfig6 >/dev/null 2>&1; then
+    :
+elif command -v kreadconfig5 >/dev/null 2>&1 \
+    && command -v kwriteconfig5 >/dev/null 2>&1; then
+    :
+else
+    echo "A matching KConfig 6 or KConfig 5 read/write tool pair is required." >&2
+    exit 1
+fi
 
 if [[ ! -x "$test_binary" ]]; then
     echo "Build zarya_linux_proxy_test first: cmake --build \"$build_dir\" --target zarya_linux_proxy_test" >&2

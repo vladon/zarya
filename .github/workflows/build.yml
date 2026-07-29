@@ -125,7 +125,7 @@ jobs:
             libglib2.0-dev libglib2.0-bin libdbus-1-dev libxkbcommon-dev \
             libxkbcommon-x11-dev libxcb-cursor0 libxcb-xinerama0 \
             gobject-introspection libgirepository1.0-dev \
-            libboost-dev pkg-config libkf6config-bin dbus-x11 \
+            libboost-dev pkg-config libkf5config-bin dbus-x11 \
             cmake ninja-build build-essential xvfb
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
