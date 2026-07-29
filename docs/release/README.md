@@ -4,6 +4,7 @@ Release engineering documents for the stable channel.
 
 | Doc | Purpose |
 |-----|---------|
+| [1.5.0-plan.md](1.5.0-plan.md) | Planned stable desktop parity and reliability work |
 | [release-scope.md](release-scope.md) | What ships in 1.0 stable |
 | [known-issues.md](known-issues.md) | Documented limitations |
 | [blockers.md](blockers.md) | Blocking vs non-blocking issues |
