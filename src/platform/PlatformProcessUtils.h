@@ -3,6 +3,8 @@
 #include <QString>
 #include <QStringList>
 
+#include <functional>
+
 namespace zarya {
 
 struct ProcessResult {
@@ -15,5 +17,10 @@ struct ProcessResult {
 
 ProcessResult runProcess(const QString& program, const QStringList& arguments,
                          int timeoutMs = 5000);
+
+using PlatformProcessRunner =
+    std::function<ProcessResult(const QString&, const QStringList&, int timeoutMs)>;
+
+PlatformProcessRunner defaultPlatformProcessRunner();
 
 } // namespace zarya

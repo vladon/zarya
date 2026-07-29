@@ -135,9 +135,11 @@ jobs:
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
       - name: Build
-        run: cmake --build build --target zarya zarya_xray_config_test
+        run: cmake --build build --target zarya zarya_xray_config_test zarya_linux_proxy_test
       - name: Test
-        run: ./build/zarya_xray_config_test
+        run: |
+          ./build/zarya_xray_config_test
+          ./build/zarya_linux_proxy_test
       - name: Package (unsigned)
         if: github.ref == 'refs/heads/main'
         run: ./scripts/package-linux.sh --skip-build --skip-signing

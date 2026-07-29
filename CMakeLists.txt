@@ -699,6 +699,21 @@ if(WIN32)
 
     zarya_link_qt_core(zarya_system_proxy_test)
     target_link_libraries(zarya_system_proxy_test PRIVATE wininet)
+elseif(UNIX AND NOT APPLE)
+    add_executable(zarya_linux_proxy_test
+        tests/linux_proxy_test.cpp
+        src/platform/PlatformProcessUtils.cpp
+        src/platform/stub/StubSystemProxyManager.cpp
+        src/platform/linux/LinuxDesktopEnvironment.cpp
+        src/platform/linux/GnomeSystemProxyManager.cpp
+        src/platform/linux/KdeSystemProxyManager.cpp
+        src/platform/linux/LinuxSystemProxyManager.cpp
+    )
+
+    target_include_directories(zarya_linux_proxy_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+    zarya_link_qt_core(zarya_linux_proxy_test)
+    add_test(NAME linux_proxy COMMAND zarya_linux_proxy_test)
 endif()
 
 add_executable(zarya_subscription_test
