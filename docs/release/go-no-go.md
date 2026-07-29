@@ -4,10 +4,10 @@
 
 - [x] version set to 1.5.0
 - [x] channel remains stable
-- [ ] release PR checks pass on Windows, macOS, and Linux
-- [ ] portable Windows artifact verified and secret-audited
-- [ ] macOS artifact verified and secret-audited
-- [ ] Linux artifact verified and secret-audited
+- [x] release PR checks pass on Windows, macOS, and Linux
+- [x] portable Windows artifact verified and secret-audited
+- [x] macOS artifact verified and secret-audited
+- [x] Linux artifact verified and secret-audited
 - [ ] release workflow checksums and manifests verified after tagging
 - [x] stable feature gating covered by `stable_hardening`
 - [x] system-proxy restore and rollback covered on Windows/GNOME/KDE
@@ -26,4 +26,6 @@
 
 - Release readiness: `docs/release/1.5.0-checklist.md`
 - Regression matrix: `docs/release/regression-matrix.md`
-- CI and release URLs are recorded after the corresponding workflows complete.
+- Release PR #97: GitHub Actions run `30494569223` (Windows 20m21s,
+  Ubuntu 13m58s, macOS 11m09s).
+- Tag release URL is recorded after the release workflow completes.
