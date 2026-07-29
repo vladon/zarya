@@ -100,9 +100,9 @@ In **Settings**, you can use a relative path such as `.\cores\xray\xray.exe` (fr
 
 The app **starts and runs without** Xray installed. Profile management, import, and config generation work offline. Starting a profile runs `xray run -test` first; if Xray is missing or validation fails, the core is not started and the log panel shows details.
 
-## Stable status (1.4.0)
+## Stable status (1.5.0)
 
-Zarya **1.4.0** is the current stable release. The recommended path is **Xray system-proxy mode** (Routing: Bypass LAN, DNS: Secure Remote DNS or System DNS).
+Zarya **1.5.0** is the current stable release. The recommended path is **Xray system-proxy mode** (Routing: Bypass LAN, DNS: Secure Remote DNS or System DNS). Windows, macOS, GNOME, and KDE Plasma 5/6 have native system-proxy backends.
 
 Experimental sing-box TUN, zarya-helper, and kill switch exist but are **disabled/hidden by default** in stable builds. See [docs/stable/stable-scope.md](docs/stable/stable-scope.md) and [docs/public-beta/experimental-features.md](docs/public-beta/experimental-features.md).
 
@@ -110,7 +110,7 @@ Quick start: [docs/public-beta/quick-start.md](docs/public-beta/quick-start.md).
 
 ## Installation status
 
-Zarya **1.4.0** is distributed primarily as **portable/bundle artifacts** (ZIP, tarball, `.app` archive).
+Zarya **1.5.0** is distributed primarily as **portable/bundle artifacts** (ZIP, tarball, `.app` archive).
 
 Production installers are planned but not part of the current stable portable distribution:
 
@@ -133,15 +133,15 @@ Core Manager updates Xray/sing-box. App updates update Zarya itself.
 
 ## Stable scope
 
-**1.4.0 stable:** Xray system-proxy desktop client with WireGuard share-link support, silent startup recovery, bundled Xray and runetfreedom geo seeds, and a `lib_ui`-based status surface.
+**1.5.0 stable:** Xray system-proxy desktop client with native Windows, macOS, GNOME, and KDE Plasma integration; failure-safe proxy restore; six stable share-link protocols; bundled Xray and runetfreedom geo seeds; and a `lib_ui`-based status surface.
 
 **Experimental (beta/dev or explicit opt-in):** TUN, helper, kill switch.
 
-Docs: [docs/stable/README.md](docs/stable/README.md), [docs/release-notes/1.4.0.md](docs/release-notes/1.4.0.md)
+Docs: [docs/stable/README.md](docs/stable/README.md), [docs/release-notes/1.5.0.md](docs/release-notes/1.5.0.md)
 
 ## Windows MSI PoC
 
-WiX-based installer proof of concept. **Portable ZIP remains the recommended 1.4.0 distribution.**
+WiX-based installer proof of concept. **Portable ZIP remains the recommended 1.5.0 distribution.**
 
 ```powershell
 .\scripts\package-windows-msi.ps1 -Configuration Release -OutputDir .\dist -SkipSigning
@@ -456,15 +456,15 @@ Non-portable mode continues to use the OS app data directory.
 
 | Platform | Artifact | Script |
 |----------|----------|--------|
-| Windows (portable) | `Zarya-1.4.0-windows-x64-portable.zip` | `scripts/package-windows.ps1` |
-| Windows (MSI PoC) | `Zarya-1.4.0-windows-x64-installer-poc.msi` | `scripts/package-windows-msi.ps1` |
-| macOS | `Zarya-1.4.0-macos-<arch>.zip` | `scripts/package-macos.sh` |
-| Linux | `Zarya-1.4.0-linux-<arch>.tar.gz` | `scripts/package-linux.sh` |
+| Windows (portable) | `Zarya-1.5.0-windows-x64-portable.zip` | `scripts/package-windows.ps1` |
+| Windows (MSI PoC) | `Zarya-1.5.0-windows-x64-installer-poc.msi` | `scripts/package-windows-msi.ps1` |
+| macOS | `Zarya-1.5.0-macos-<arch>.zip` | `scripts/package-macos.sh` |
+| Linux | `Zarya-1.5.0-linux-<arch>.tar.gz` | `scripts/package-linux.sh` |
 
 ```powershell
 .\scripts\package-windows.ps1 -Configuration Release -OutputDir .\dist -SkipSigning
-python scripts\run-smoke-tests.py --artifact .\dist\Zarya-1.4.0-windows-x64-portable.zip --build-dir build
-python scripts\verify-release-artifacts.py --artifact .\dist\Zarya-1.4.0-windows-x64-portable.zip --expected-version 1.4.0 --release-stable --allow-unsigned
+python scripts\run-smoke-tests.py --artifact .\dist\Zarya-1.5.0-windows-x64-portable.zip --build-dir build
+python scripts\verify-release-artifacts.py --artifact .\dist\Zarya-1.5.0-windows-x64-portable.zip --expected-version 1.5.0 --release-stable --allow-unsigned
 ```
 
 See [docs/release-packaging.md](docs/release-packaging.md), [docs/release/release-process.md](docs/release/release-process.md), [docs/signing/README.md](docs/signing/README.md), and `packaging/windows/portable-layout.md`. Artifacts include `release-manifest.json`, SHA256 checksums, translations, docs, a **bundled Xray seed** under `cores/xray/`, and **pinned runetfreedom geo data** (`geoip.dat` / `geosite.dat`) in the same folder (sing-box is not bundled). Signing is optional.

@@ -1,16 +1,24 @@
-# Zarya 1.4.0
+# Zarya 1.5.0
 
 ## Stable release
 
-1.4.0 adds WireGuard profiles through Xray, silent startup recovery, and the new Desktop App Toolkit UI foundation.
+1.5.0 adds full KDE Plasma system-proxy integration and strengthens proxy
+recovery, profile import, diagnostics redaction, and release verification.
 
-- Import `wireguard://` / `wg://` links and run complete WireGuard profiles through Xray userspace mode
-- Restore stale system-proxy/runtime state silently after an unclean shutdown
-- System, light, and dark themes with a `lib_ui`-based configured status strip
-- Desktop App Toolkit is mandatory in official builds; Windows releases use static Qt
-- Continues shipping pinned Xray and runetfreedom geo data for offline first start
+- Apply and exactly restore KDE Plasma 5/6 proxy and PAC settings through
+  native KConfig tools, with rollback if a write or KIO reload fails
+- Use consistent system-proxy status and recovery behavior on Windows, macOS,
+  GNOME, KDE, and unsupported Linux desktops
+- Protect all six stable share-link protocols with valid, invalid,
+  persistence, mixed-subscription, and secret-redaction regressions
+- Preserve existing profiles when a subscription refresh fails
+- Run full CTest, package verification, and archive secret audits on Windows,
+  Linux, and macOS
+- Continue shipping pinned Xray and runetfreedom geo data for offline first
+  start
 
-See [docs/release-notes/1.4.0.md](docs/release-notes/1.4.0.md) and [docs/stable/stable-scope.md](docs/stable/stable-scope.md).
+See [docs/release-notes/1.5.0.md](docs/release-notes/1.5.0.md) and
+[docs/stable/stable-scope.md](docs/stable/stable-scope.md).
 
 ## Recommended path
 
@@ -18,4 +26,4 @@ Xray system-proxy mode (stable scope).
 
 ## Reporting issues
 
-**Help → Create Diagnostics Bundle** or **Help → Copy Support Summary**.
+Use **Help → Create Diagnostics Bundle** or **Help → Copy Support Summary**.
