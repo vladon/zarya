@@ -604,6 +604,8 @@ add_custom_command(TARGET zarya POST_BUILD
     COMMENT "Copy zarya-updater next to zarya"
 )
 
+enable_testing()
+
 # Config generation checks (unit-like; uses shared or static Qt Core)
 add_executable(zarya_xray_config_test
     tests/xray_config_test.cpp
@@ -644,6 +646,7 @@ target_compile_definitions(zarya_xray_config_test PRIVATE
 )
 
 zarya_link_qt_core(zarya_xray_config_test)
+add_test(NAME xray_config COMMAND zarya_xray_config_test)
 
 add_executable(zarya_singbox_config_test
     tests/singbox_config_test.cpp
@@ -686,6 +689,7 @@ target_compile_definitions(zarya_singbox_config_test PRIVATE
 
 zarya_link_qt_core(zarya_singbox_config_test)
 target_link_libraries(zarya_singbox_config_test PRIVATE Qt6::Network)
+add_test(NAME singbox_config COMMAND zarya_singbox_config_test)
 
 if(WIN32)
     add_executable(zarya_system_proxy_test
@@ -699,6 +703,7 @@ if(WIN32)
 
     zarya_link_qt_core(zarya_system_proxy_test)
     target_link_libraries(zarya_system_proxy_test PRIVATE wininet)
+    add_test(NAME system_proxy COMMAND zarya_system_proxy_test)
 elseif(UNIX AND NOT APPLE)
     add_executable(zarya_linux_proxy_test
         tests/linux_proxy_test.cpp
@@ -746,6 +751,7 @@ target_include_directories(zarya_subscription_test PRIVATE ${CMAKE_CURRENT_SOURC
 
 zarya_link_qt_core(zarya_subscription_test)
 target_link_libraries(zarya_subscription_test PRIVATE Qt6::Network)
+add_test(NAME subscription COMMAND zarya_subscription_test)
 
 add_executable(zarya_testing_test
     tests/testing_test.cpp
@@ -782,6 +788,7 @@ target_include_directories(zarya_testing_test PRIVATE
 
 zarya_link_qt_core(zarya_testing_test)
 target_link_libraries(zarya_testing_test PRIVATE Qt6::Network)
+add_test(NAME testing COMMAND zarya_testing_test)
 
 add_executable(zarya_geodata_verifier_test
     tests/geodata_verifier_test.cpp
@@ -793,6 +800,7 @@ add_executable(zarya_geodata_verifier_test
 target_include_directories(zarya_geodata_verifier_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 zarya_link_qt_core(zarya_geodata_verifier_test)
+add_test(NAME geodata_verifier COMMAND zarya_geodata_verifier_test)
 
 add_executable(zarya_core_checksum_test
     tests/core_checksum_test.cpp
@@ -836,7 +844,6 @@ add_executable(zarya_version_test
 target_include_directories(zarya_version_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${ZARYA_GENERATED_DIR})
 zarya_link_qt_core(zarya_version_test)
 
-enable_testing()
 add_test(NAME smoke COMMAND zarya_smoke_test)
 add_test(NAME version COMMAND zarya_version_test)
 
@@ -853,3 +860,22 @@ add_executable(zarya_stable_hardening_test
 target_include_directories(zarya_stable_hardening_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${ZARYA_GENERATED_DIR})
 zarya_link_qt_core(zarya_stable_hardening_test)
 add_test(NAME stable_hardening COMMAND zarya_stable_hardening_test)
+
+set(ZARYA_TEST_TARGETS
+    zarya_xray_config_test
+    zarya_singbox_config_test
+    zarya_subscription_test
+    zarya_testing_test
+    zarya_geodata_verifier_test
+    zarya_core_checksum_test
+    zarya_smoke_test
+    zarya_version_test
+    zarya_stable_hardening_test
+)
+if(TARGET zarya_system_proxy_test)
+    list(APPEND ZARYA_TEST_TARGETS zarya_system_proxy_test)
+endif()
+if(TARGET zarya_linux_proxy_test)
+    list(APPEND ZARYA_TEST_TARGETS zarya_linux_proxy_test)
+endif()
+add_custom_target(zarya_tests DEPENDS ${ZARYA_TEST_TARGETS})

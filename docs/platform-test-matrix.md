@@ -1,17 +1,18 @@
-# Zarya Platform Test Matrix (0.26 Beta)
+# Zarya 1.5.0 Platform Test Matrix
 
-Minimum environments for manual beta validation. TUN/kill-switch tests are separate (experimental).
+Minimum environments for stable validation. TUN/kill-switch tests are separate (experimental).
 
 ## Matrix
 
-| Environment | Clean start | Core Manager install Xray | Import VLESS | Start/stop | Proxy restore | Diagnostics | Backup export |
-|-------------|-------------|----------------------------|--------------|------------|---------------|-------------|---------------|
+| Environment | Clean start | Core install | Import | Proxy apply | Stop/exit restore | Diagnostics | Backup |
+|-------------|-------------|--------------|--------|-------------|-------------------|-------------|--------|
 | Windows 10 x64 | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] |
 | Windows 11 x64 | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] |
 | macOS Apple Silicon | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] |
 | macOS Intel (if available) | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] |
 | Ubuntu 24.04 GNOME | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| KDE Plasma Linux (if available) | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] |
+| KDE Plasma 6 | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] |
+| KDE Plasma 5 fallback | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] |
 
 ## Automated smoke (all platforms in CI)
 
@@ -25,7 +26,7 @@ Windows packaging:
 
 ```powershell
 .\scripts\package-windows.ps1 -Configuration Release -OutputDir .\dist
-python .\scripts\run-smoke-tests.py --artifact .\dist\Zarya-0.26.0-beta-windows-x64-portable.zip --build-dir .\build
+python .\scripts\run-smoke-tests.py --artifact .\dist\Zarya-1.5.0-windows-x64-portable.zip --build-dir .\build
 ```
 
 ## Proxy restore verification
@@ -36,8 +37,12 @@ python .\scripts\run-smoke-tests.py --artifact .\dist\Zarya-0.26.0-beta-windows-
 
 **GNOME:** `gsettings get org.gnome.system.proxy mode`
 
-**KDE/Plasma:** `kreadconfig6 --file kioslaverc --group "Proxy Settings" --key ProxyType`
-(use `kreadconfig5` on Plasma 5), plus the HTTP/HTTPS and PAC keys before and after restore.
+**KDE/Plasma:** capture every managed key with `kreadconfig6 --file kioslaverc
+--group "Proxy Settings" --key KEY` (use `kreadconfig5` on Plasma 5). Exercise
+apply, normal stop, tray exit, and startup recovery. Confirm the HTTP/HTTPS,
+no-proxy, PAC, reversed-exception, and proxy-type values and key presence match
+the snapshot after each restore. Record the desktop version, KConfig tool
+version, commands, and result in the release checklist.
 
 ## Secret audit (diagnostics / redacted backup)
 
@@ -52,6 +57,11 @@ grep -R "helper.token" .
 ```
 
 Redacted diagnostics must not contain raw secrets. Full backups may contain secrets by design.
+Release archives must also pass:
+
+```bash
+python scripts/audit-release-artifact.py --artifact dist/Zarya-1.5.0-linux-x64.tar.gz
+```
 
 ## Experimental matrix (optional)
 
