@@ -1,5 +1,6 @@
 #include "platform/linux/GnomeSystemProxyManager.h"
 
+#include "i18n/ZaryaTr.h"
 #include "platform/PlatformProcessUtils.h"
 
 #include <utility>
@@ -49,7 +50,7 @@ QString GnomeSystemProxyManager::supportLevel() const
 
 QString GnomeSystemProxyManager::limitations() const
 {
-    return QStringLiteral(
+    return ZaryaTr::tr(
         "Uses gsettings (org.gnome.system.proxy). Affects GNOME/GTK applications that respect "
         "desktop proxy settings. CLI tools may need http_proxy environment variables.");
 }

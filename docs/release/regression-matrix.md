@@ -37,8 +37,10 @@ Same essential path as Windows 11 x64.
 
 ## Linux KDE
 
-- [ ] system proxy unsupported/partial warning
-- [ ] app does not pretend proxy is enabled
+- [ ] KConfig 6 or KConfig 5 backend detected
+- [ ] kioslaverc HTTP/HTTPS apply and KIO reload
+- [ ] stop restores exact prior proxy/PAC settings
+- [ ] missing native facilities reports unavailable and never proxy-on
 
 ## Experimental matrix (non-blocking)
 

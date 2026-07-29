@@ -4,6 +4,10 @@
 
 Zarya system-proxy mode configures the OS to send application traffic through a local mixed SOCKS/HTTP proxy. It does not create a VPN tunnel and does not route all traffic automatically for every application.
 
+Supported backends are Windows WinINet, macOS `networksetup`, GNOME `gsettings`, and KDE/Plasma
+`kioslaverc` through KConfig 6 or 5. A backend is unavailable when its native tools or desktop
+session service are missing. CLI applications may still require `HTTP_PROXY` / `HTTPS_PROXY`.
+
 ## TUN mode is experimental
 
 sing-box TUN mode requires elevated privileges or the privileged helper. Route/DNS recovery after crashes is limited. Use only for testing.

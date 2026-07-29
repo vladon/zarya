@@ -233,22 +233,25 @@ Data files:
 - `…/Zarya/subscriptions.json`
 - `…/Zarya/profiles.json` (includes `sourceType`, `subscriptionId`, `sourceKey`)
 
-## Windows system proxy
+## System proxy controls
 
-On **Windows**, Zarya can set the system HTTP/HTTPS proxy to the local Xray mixed inbound (`127.0.0.1:<mixedPort>`, default **10808**).
+Zarya can set the operating-system or desktop HTTP/HTTPS proxy to the local Xray mixed
+inbound (`127.0.0.1:<mixedPort>`, default **10808**).
 
-- **Settings → Windows system proxy**: enable proxy automatically when a profile starts, and restore previous settings on stop/exit (both on by default on Windows).
+- **Settings → Proxy Mode**: enable proxy automatically when a profile starts and restore
+  previous settings on stop/exit.
 - **Tools → Enable System Proxy** / **Restore Previous Proxy** for manual control (enable requires a running core).
-- Before enabling, Zarya saves your current WinINet proxy settings (`ProxyEnable`, `ProxyServer`, `ProxyOverride`, `AutoDetect`, `AutoConfigURL`) and restores them on **Stop** or application exit.
-- Registry path: `HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings`
+- Before enabling, Zarya saves every platform proxy value it changes and restores the exact
+  snapshot on **Stop**, safe exit, or startup recovery.
+- The confirmation dialog identifies the change as an OS/desktop proxy operation rather than a
+  Windows-only operation.
 
 **Notes:**
 
-- Many browsers respect Windows system proxy; some apps ignore it.
+- Only applications that respect the selected OS/desktop proxy backend are affected.
 - CLI tools often need explicit `HTTP_PROXY` / `HTTPS_PROXY` and are out of scope.
-- **macOS / Linux**: system proxy is not implemented yet (stub only; no registry changes).
 
-Verify proxy state in PowerShell:
+Windows state can be verified in PowerShell:
 
 ```powershell
 Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings' |
@@ -267,7 +270,8 @@ ProxyOverride = <local>
 
 - Closing the main window can **hide Zarya to the system tray** instead of quitting (default on Windows when a tray is available).
 - Use **tray → Exit** or **File → Exit** to fully quit.
-- On full exit, Zarya stops the core, cancels tests, and attempts to restore Windows system proxy settings.
+- On full exit, Zarya stops the core, cancels tests, and attempts to restore the previous system
+  proxy settings.
 - **Double-click** the tray icon to show or hide the main window.
 - Some Linux desktops do not provide a system tray; close-to-tray is disabled automatically there.
 - Change behavior in **Settings → Desktop behavior**.
@@ -408,12 +412,13 @@ Zarya can enable a **local HTTP proxy** as the OS/desktop system proxy. This is 
 | Windows | WinINet registry | Full |
 | macOS | `networksetup` | Full (may require admin on some systems) |
 | Linux GNOME | `gsettings` / `org.gnome.system.proxy` | Full when `gsettings` is available |
-| Linux KDE/Plasma | — | Partial / unsupported in this milestone |
+| Linux KDE/Plasma | `kioslaverc` via KConfig 6 or 5 | Full when KConfig tools and the session D-Bus are available |
 | Other Linux | — | Unsupported |
 
 - **macOS**: applies HTTP and HTTPS proxy to a selected network service (or all services if configured in Settings). Previous per-service proxy state is restored on stop/exit.
 - **Linux GNOME**: sets manual HTTP/HTTPS proxy to the local inbound port. Previous gsettings values are restored on stop/exit.
-- **Linux KDE**: reported as partial; Zarya does not modify KDE proxy settings yet. Core can still run; auto system proxy logs a clear message.
+- **Linux KDE/Plasma**: sets manual HTTP/HTTPS proxy in `kioslaverc`, notifies running KIO
+  applications, and restores the exact prior mode, endpoints, bypass rules, and PAC setting.
 - **CLI tools** on Linux may need `http_proxy` / `https_proxy` environment variables manually.
 
 TUN transparent proxy is planned separately.
@@ -557,13 +562,15 @@ src/
 
 - **Xray**: VLESS, VMess, Trojan, Shadowsocks, Hysteria2, WireGuard (see table above); sing-box still stub.
 - **sing-box**: adapter stub only; cannot start.
-- **System proxy**: Windows (full), macOS `networksetup` (full), Linux GNOME `gsettings` (full); KDE partial; no TUN/PAC.
+- **System proxy**: Windows WinINet, macOS `networksetup`, Linux GNOME `gsettings`, and Linux
+  KDE/Plasma KConfig are supported when their native facilities are available. This is not TUN;
+  PAC configurations are preserved and restored but Zarya itself applies a manual local proxy.
 - **Subscriptions**: no scheduled auto-update; no Clash/sing-box subscription formats.
 - No DNS editor, adblock rule providers, TUN mode, speedtest/download benchmark, or auto best-node selection.
 - Beta packaging scripts exist; signed installers and store publishing are not included.
 - Milestone 0.1 `profiles.json` files still load; missing fields get safe defaults.
 
-Expected log after **Start** (with auto system proxy on Windows):
+Expected backend-neutral log after **Start** with automatic system proxy:
 
 ```
 Generating config…
@@ -573,10 +580,12 @@ Validation OK
 Starting Xray…
 Xray started
 Proxy: 127.0.0.1:10808 (mixed SOCKS/HTTP)
-Reading current Windows proxy settings…
+System proxy backend: …
+Reading current proxy state…
 Previous proxy state saved
-Applying system proxy: http=127.0.0.1:10808;https=127.0.0.1:10808
-Windows proxy settings changed notification sent.
+Applying HTTP/HTTPS proxy 127.0.0.1:10808
+Applying proxy settings via …
+System proxy applied successfully.
 ```
 
 Run `zarya_xray_config_test` (or `.\scripts\run-xray-config-test.ps1`) to verify REALITY JSON generation.

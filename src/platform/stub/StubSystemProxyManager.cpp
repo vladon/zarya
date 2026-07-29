@@ -1,12 +1,14 @@
 #include "platform/stub/StubSystemProxyManager.h"
 
+#include "i18n/ZaryaTr.h"
+
 namespace zarya {
 
 StubSystemProxyManager::StubSystemProxyManager(QString reason)
     : m_reason(std::move(reason))
 {
     if (m_reason.isEmpty()) {
-        m_reason = QStringLiteral("System proxy is not supported on this platform.");
+        m_reason = ZaryaTr::tr("System proxy is not supported on this platform.");
     }
 }
 

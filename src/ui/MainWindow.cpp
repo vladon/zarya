@@ -120,7 +120,7 @@ MainWindow::MainWindow(QWidget* parent)
     updateStatusBar();
     appendLog(QStringLiteral("Zarya %1 started. Profiles: %2")
                   .arg(PackagingInfo::versionString(), m_profileStore.filePath()));
-    appendLog(QStringLiteral("System proxy backend: %1 (support: %2)")
+    appendLog(tr("System proxy backend: %1 (support: %2)")
                   .arg(m_systemProxy.backendName(), m_systemProxy.supportLevel()));
     if (!m_systemProxy.limitations().isEmpty()) {
         appendLog(m_systemProxy.limitations());
@@ -133,7 +133,7 @@ MainWindow::MainWindow(QWidget* parent)
     appendLog(QStringLiteral("Subscriptions: %1").arg(m_subscriptionStore.filePath()));
     appendLog(QStringLiteral("Xray path: %1").arg(AppSettings::instance().resolvedXrayPath()));
     if (!m_systemProxy.isSupported()) {
-        appendLog(QStringLiteral("System proxy unsupported on this platform."));
+        appendLog(tr("System proxy is not supported on this platform."));
     }
 }
 
@@ -1258,7 +1258,7 @@ bool MainWindow::confirmSystemProxyChangeIfNeeded()
 
     return QMessageBox::question(
                this, tr("Change system proxy"),
-               tr("Zarya will change Windows system proxy settings. Continue?"))
+               tr("Zarya will change your operating system or desktop proxy settings. Continue?"))
            == QMessageBox::Yes;
 }
 
@@ -1384,15 +1384,9 @@ void MainWindow::tryAutoEnableSystemProxy(bool fromAutostart)
         return;
     }
 
-    if (m_systemProxy.supportLevel() == QStringLiteral("partial")) {
-        appendLog(QStringLiteral(
-            "Auto system proxy was requested, but this desktop is not supported yet."));
-        appendLog(m_systemProxy.limitations());
-        return;
-    }
-
     if (!m_systemProxy.isSupported()) {
-        appendLog(QStringLiteral("Auto system proxy was requested, but system proxy is unsupported."));
+        appendLog(tr("Automatic system proxy was requested, but the selected backend is "
+                     "unavailable."));
         if (!m_systemProxy.limitations().isEmpty()) {
             appendLog(m_systemProxy.limitations());
         }
@@ -1400,15 +1394,15 @@ void MainWindow::tryAutoEnableSystemProxy(bool fromAutostart)
     }
 
     if (!confirmSystemProxyChangeIfNeeded()) {
-        appendLog(QStringLiteral("System proxy change cancelled by user."));
+        appendLog(tr("System proxy change cancelled by user."));
         return;
     }
 
     QString error;
     const auto logLine = [this](const QString& line) { appendLog(line); };
     if (!m_systemProxy.enableLocalHttpProxy(settings.mixedPort(), logLine, &error)) {
-        QMessageBox::warning(this, QStringLiteral("System proxy"),
-                             QStringLiteral("Failed to enable system proxy:\n%1").arg(error));
+        QMessageBox::warning(this, tr("System proxy"),
+                             tr("Failed to enable system proxy:\n%1").arg(error));
     }
     updateStatusBar();
 }
@@ -2206,8 +2200,7 @@ void MainWindow::onEnableSystemProxy()
         return;
     }
 
-    if (m_systemProxy.supportLevel() == QStringLiteral("partial")
-        || !m_systemProxy.isSupported()) {
+    if (!m_systemProxy.isSupported()) {
         QMessageBox::information(
             this, tr("System proxy"),
             m_systemProxy.limitations().isEmpty()
