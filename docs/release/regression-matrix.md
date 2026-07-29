@@ -3,6 +3,11 @@
 Automated rows are release gates. Desktop interaction rows use the evidence
 procedure in `docs/platform-test-matrix.md`.
 
+For 1.5.0, all automated release gates passed in tagged workflow
+`30497172838`. Hardware-dependent interactive rows left unchecked below were
+not executed and remain explicit follow-ups; the Go decision and accepted
+residual risk are recorded in `docs/release/go-no-go.md`.
+
 ## Cross-platform automated
 
 - [x] all six stable protocols accept representative valid links
