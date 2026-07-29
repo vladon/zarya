@@ -2,6 +2,8 @@
 
 #include "platform/PlatformProcessUtils.h"
 
+#include <utility>
+
 namespace zarya {
 
 namespace {
@@ -22,10 +24,16 @@ QString stripQuotes(const QString& raw)
 
 } // namespace
 
+GnomeSystemProxyManager::GnomeSystemProxyManager(PlatformProcessRunner processRunner)
+    : m_processRunner(processRunner ? std::move(processRunner)
+                                    : defaultPlatformProcessRunner())
+{
+}
+
 bool GnomeSystemProxyManager::isSupported() const
 {
     const ProcessResult result =
-        runProcess(QStringLiteral("gsettings"), {QStringLiteral("help")});
+        m_processRunner(QStringLiteral("gsettings"), {QStringLiteral("help")}, 5000);
     return result.success;
 }
 
@@ -50,7 +58,8 @@ QString GnomeSystemProxyManager::readGsettingsValue(const QString& schemaKey,
                                                     QString* errorMessage) const
 {
     const ProcessResult result =
-        runProcess(QStringLiteral("gsettings"), {QStringLiteral("get"), schemaKey});
+        m_processRunner(QStringLiteral("gsettings"),
+                        {QStringLiteral("get"), schemaKey}, 5000);
     if (!result.success) {
         if (errorMessage) {
             *errorMessage =
@@ -64,8 +73,9 @@ QString GnomeSystemProxyManager::readGsettingsValue(const QString& schemaKey,
 bool GnomeSystemProxyManager::setGsettingsValue(const QString& schemaKey, const QString& rawValue,
                                                 QString* errorMessage) const
 {
-    const ProcessResult result = runProcess(
-        QStringLiteral("gsettings"), {QStringLiteral("set"), schemaKey, rawValue});
+    const ProcessResult result =
+        m_processRunner(QStringLiteral("gsettings"),
+                        {QStringLiteral("set"), schemaKey, rawValue}, 5000);
     if (!result.success) {
         if (errorMessage) {
             *errorMessage =
@@ -80,8 +90,9 @@ bool GnomeSystemProxyManager::setGsettingsValue(const QString& schemaKey, const 
 bool GnomeSystemProxyManager::setGsettingsValue(const QString& schemaKey, int value,
                                                 QString* errorMessage) const
 {
-    const ProcessResult result = runProcess(
-        QStringLiteral("gsettings"), {QStringLiteral("set"), schemaKey, QString::number(value)});
+    const ProcessResult result =
+        m_processRunner(QStringLiteral("gsettings"),
+                        {QStringLiteral("set"), schemaKey, QString::number(value)}, 5000);
     if (!result.success) {
         if (errorMessage) {
             *errorMessage =

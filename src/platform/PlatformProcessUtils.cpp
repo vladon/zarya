@@ -36,4 +36,11 @@ ProcessResult runProcess(const QString& program, const QStringList& arguments, i
     return result;
 }
 
+PlatformProcessRunner defaultPlatformProcessRunner()
+{
+    return [](const QString& program, const QStringList& arguments, int timeoutMs) {
+        return runProcess(program, arguments, timeoutMs);
+    };
+}
+
 } // namespace zarya

@@ -5,15 +5,24 @@
 #include "platform/linux/LinuxDesktopEnvironment.h"
 #include "platform/stub/StubSystemProxyManager.h"
 
+#include <utility>
+
 namespace zarya {
 
 LinuxSystemProxyManager::LinuxSystemProxyManager()
+    : LinuxSystemProxyManager(LinuxDesktopEnvironmentDetector::detect(),
+                              defaultPlatformProcessRunner())
 {
-    m_detectedDesktop = LinuxDesktopEnvironmentDetector::detectDisplayName();
+}
 
-    switch (LinuxDesktopEnvironmentDetector::detect()) {
+LinuxSystemProxyManager::LinuxSystemProxyManager(LinuxDesktopEnvironment desktop,
+                                                 PlatformProcessRunner processRunner)
+{
+    m_detectedDesktop = LinuxDesktopEnvironmentDetector::displayName(desktop);
+
+    switch (desktop) {
     case LinuxDesktopEnvironment::Gnome: {
-        auto gnome = std::make_unique<GnomeSystemProxyManager>();
+        auto gnome = std::make_unique<GnomeSystemProxyManager>(std::move(processRunner));
         if (gnome->isSupported()) {
             m_backend = std::move(gnome);
             break;

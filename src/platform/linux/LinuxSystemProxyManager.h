@@ -1,6 +1,8 @@
 #pragma once
 
 #include "platform/ISystemProxyManager.h"
+#include "platform/PlatformProcessUtils.h"
+#include "platform/linux/LinuxDesktopEnvironment.h"
 
 #include <memory>
 
@@ -9,6 +11,8 @@ namespace zarya {
 class LinuxSystemProxyManager : public ISystemProxyManager {
 public:
     LinuxSystemProxyManager();
+    LinuxSystemProxyManager(LinuxDesktopEnvironment desktop,
+                            PlatformProcessRunner processRunner);
 
     bool isSupported() const override;
     SystemProxyState readCurrentState(QString* errorMessage = nullptr) override;

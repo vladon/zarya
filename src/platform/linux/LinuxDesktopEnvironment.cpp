@@ -15,11 +15,17 @@ bool containsToken(const QString& haystack, const QString& token)
 
 LinuxDesktopEnvironment LinuxDesktopEnvironmentDetector::detect()
 {
-    const QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-    const QString currentDesktop = env.value(QStringLiteral("XDG_CURRENT_DESKTOP"));
-    const QString session = env.value(QStringLiteral("DESKTOP_SESSION"));
-    const QString kdeSession = env.value(QStringLiteral("KDE_FULL_SESSION"));
-    const QString gnomeSession = env.value(QStringLiteral("GNOME_DESKTOP_SESSION_ID"));
+    return detect(QProcessEnvironment::systemEnvironment());
+}
+
+LinuxDesktopEnvironment
+LinuxDesktopEnvironmentDetector::detect(const QProcessEnvironment& environment)
+{
+    const QString currentDesktop = environment.value(QStringLiteral("XDG_CURRENT_DESKTOP"));
+    const QString session = environment.value(QStringLiteral("DESKTOP_SESSION"));
+    const QString kdeSession = environment.value(QStringLiteral("KDE_FULL_SESSION"));
+    const QString gnomeSession =
+        environment.value(QStringLiteral("GNOME_DESKTOP_SESSION_ID"));
 
     if (!kdeSession.isEmpty() || containsToken(currentDesktop, QStringLiteral("KDE"))
         || containsToken(session, QStringLiteral("plasma"))
@@ -39,7 +45,12 @@ LinuxDesktopEnvironment LinuxDesktopEnvironmentDetector::detect()
 
 QString LinuxDesktopEnvironmentDetector::detectDisplayName()
 {
-    switch (detect()) {
+    return displayName(detect());
+}
+
+QString LinuxDesktopEnvironmentDetector::displayName(LinuxDesktopEnvironment environment)
+{
+    switch (environment) {
     case LinuxDesktopEnvironment::Gnome:
         return QStringLiteral("GNOME");
     case LinuxDesktopEnvironment::Kde:
