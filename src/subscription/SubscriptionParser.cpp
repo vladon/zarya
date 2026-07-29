@@ -38,8 +38,7 @@ SubscriptionParseResult parseLines(const QStringList& lines)
 
         if (!ShareLinkParser::isSupportedScheme(line)) {
             ++result.skippedLines;
-            result.warnings.append(
-                QStringLiteral("Skipped unsupported line: %1").arg(line.left(80)));
+            result.warnings.append(QStringLiteral("Skipped unsupported subscription line."));
             continue;
         }
 

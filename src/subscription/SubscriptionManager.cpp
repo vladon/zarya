@@ -53,7 +53,7 @@ SubscriptionUpdateResult SubscriptionManager::updateSubscription(Subscription& s
     const QString userAgent =
         subscription.userAgent.trimmed().isEmpty() ? defaultUserAgent : subscription.userAgent.trimmed();
 
-    emit logLine(QStringLiteral("Download started: %1").arg(subscription.url));
+    emit logLine(QStringLiteral("Subscription download started."));
     SubscriptionDownloader downloader;
     const SubscriptionDownloadResult download = downloader.download(subscription.url, userAgent);
     if (!download.success) {
