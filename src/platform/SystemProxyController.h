@@ -11,7 +11,6 @@ namespace zarya {
 
 enum class SystemProxyUiStatus {
     Unsupported,
-    Partial,
     Off,
     On,
     Failed,

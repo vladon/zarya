@@ -31,7 +31,11 @@ Same checks using gsettings proxy.
 
 ## KDE Linux
 
-System proxy unsupported/partial warning must be clear. Recommended path smoke should document limitations.
+- [ ] KConfig 6 or KConfig 5 backend detected
+- [ ] HTTP/HTTPS proxy applies to `127.0.0.1:<mixed-port>`
+- [ ] KIO reload signal is sent
+- [ ] stop restores mode, endpoints, bypass rules, and PAC setting
+- [ ] missing KConfig/session D-Bus reports the backend unavailable without claiming proxy-on
 
 ---
 

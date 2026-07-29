@@ -1,5 +1,7 @@
 #include "platform/windows/WindowsSystemProxyManager.h"
 
+#include "i18n/ZaryaTr.h"
+
 #include <QSettings>
 #include <windows.h>
 #include <wininet.h>
@@ -35,7 +37,7 @@ QString WindowsSystemProxyManager::supportLevel() const
 
 QString WindowsSystemProxyManager::limitations() const
 {
-    return QStringLiteral(
+    return ZaryaTr::tr(
         "Uses WinINet registry settings. Affects applications that use the Windows system proxy.");
 }
 

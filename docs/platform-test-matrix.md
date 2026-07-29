@@ -36,6 +36,9 @@ python .\scripts\run-smoke-tests.py --artifact .\dist\Zarya-0.26.0-beta-windows-
 
 **GNOME:** `gsettings get org.gnome.system.proxy mode`
 
+**KDE/Plasma:** `kreadconfig6 --file kioslaverc --group "Proxy Settings" --key ProxyType`
+(use `kreadconfig5` on Plasma 5), plus the HTTP/HTTPS and PAC keys before and after restore.
+
 ## Secret audit (diagnostics / redacted backup)
 
 After creating bundles, search extracted contents:

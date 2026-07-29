@@ -131,9 +131,8 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
 
     const std::unique_ptr<ISystemProxyManager> proxyManager = SystemProxyManagerFactory::create();
     m_proxyBackendLabel = new QLabel(proxyManager ? proxyManager->backendName() : QString(), this);
-    m_proxySupportLabel =
-        new QLabel(proxyManager ? proxyManager->supportLevel() : QStringLiteral("unsupported"),
-                   this);
+    m_proxySupportLabel = new QLabel(
+        proxyManager && proxyManager->isSupported() ? tr("Full") : tr("Unavailable"), this);
     m_proxyLimitationsLabel = new QLabel(proxyManager ? proxyManager->limitations() : QString(), this);
     m_proxyLimitationsLabel->setWordWrap(true);
 

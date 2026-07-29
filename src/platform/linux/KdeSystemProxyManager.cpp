@@ -1,5 +1,7 @@
 #include "platform/linux/KdeSystemProxyManager.h"
 
+#include "i18n/ZaryaTr.h"
+
 #include <QUrl>
 
 #include <array>
@@ -107,7 +109,7 @@ QString KdeSystemProxyManager::supportLevel() const
 
 QString KdeSystemProxyManager::limitations() const
 {
-    return QStringLiteral(
+    return ZaryaTr::tr(
         "Uses KDE kioslaverc proxy settings. Affects KDE/KIO and applications that respect "
         "desktop proxy settings; CLI tools may need http_proxy environment variables.");
 }

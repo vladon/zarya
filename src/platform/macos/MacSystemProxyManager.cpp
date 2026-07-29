@@ -1,5 +1,6 @@
 #include "platform/macos/MacSystemProxyManager.h"
 
+#include "i18n/ZaryaTr.h"
 #include "platform/PlatformProcessUtils.h"
 #include "storage/AppSettings.h"
 
@@ -45,7 +46,7 @@ QString MacSystemProxyManager::supportLevel() const
 
 QString MacSystemProxyManager::limitations() const
 {
-    return QStringLiteral(
+    return ZaryaTr::tr(
         "Uses networksetup for HTTP/HTTPS proxy on selected network services. May require "
         "administrator privileges on some systems. Not all applications respect macOS system "
         "proxy settings.");

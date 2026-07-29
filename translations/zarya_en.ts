@@ -1315,7 +1315,19 @@ Add a proxy profile manually, paste a share link, or add a subscription.</source
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Zarya will change Windows system proxy settings. Continue?</source>
+        <source>Zarya will change your operating system or desktop proxy settings. Continue?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>System proxy backend: %1 (support: %2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Automatic system proxy was requested, but the selected backend is unavailable.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>System proxy change cancelled by user.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2239,6 +2251,14 @@ What should happen?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Full</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unavailable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Limitations</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3033,6 +3053,106 @@ Cancel = abort</source>
     </message>
     <message>
         <source>Copy details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>System proxy is not supported on this platform.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>System proxy backend: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>System proxy unavailable: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reading current proxy state…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to read proxy settings: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous proxy state saved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Applying HTTP/HTTPS proxy %1:%2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Applying proxy settings via %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to apply system proxy: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>System proxy applied successfully.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No saved previous proxy state. Nothing to restore.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous proxy state is missing. Cannot restore.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restoring previous proxy state…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Proxy restore failed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Proxy restore succeeded.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No persisted previous proxy state.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Current proxy does not match Zarya HTTP endpoint.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clearing Zarya-owned proxy %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>gsettings is not available for GNOME proxy control.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>KDE config tools are not available for proxy control.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Desktop environment is not supported for system proxy.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Uses WinINet registry settings. Affects applications that use the Windows system proxy.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Uses networksetup for HTTP/HTTPS proxy on selected network services. May require administrator privileges on some systems. Not all applications respect macOS system proxy settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Uses gsettings (org.gnome.system.proxy). Affects GNOME/GTK applications that respect desktop proxy settings. CLI tools may need http_proxy environment variables.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Uses KDE kioslaverc proxy settings. Affects KDE/KIO and applications that respect desktop proxy settings; CLI tools may need http_proxy environment variables.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

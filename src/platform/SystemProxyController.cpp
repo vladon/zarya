@@ -1,5 +1,6 @@
 #include "platform/SystemProxyController.h"
 
+#include "i18n/ZaryaTr.h"
 #include "platform/SystemProxyDebug.h"
 #include "platform/SystemProxyManagerFactory.h"
 #include "platform/SystemProxyStateStore.h"
@@ -13,8 +14,6 @@ QString uiStatusToString(SystemProxyUiStatus status)
     switch (status) {
     case SystemProxyUiStatus::Unsupported:
         return QStringLiteral("unsupported");
-    case SystemProxyUiStatus::Partial:
-        return QStringLiteral("partial");
     case SystemProxyUiStatus::Off:
         return QStringLiteral("off");
     case SystemProxyUiStatus::On:
@@ -29,9 +28,6 @@ SystemProxyUiStatus initialUiStatus(const ISystemProxyManager* manager)
 {
     if (!manager) {
         return SystemProxyUiStatus::Unsupported;
-    }
-    if (manager->supportLevel() == QStringLiteral("partial")) {
-        return SystemProxyUiStatus::Partial;
     }
     return manager->isSupported() ? SystemProxyUiStatus::Off : SystemProxyUiStatus::Unsupported;
 }
@@ -75,9 +71,6 @@ QString SystemProxyController::uiStatusText() const
     if (m_uiStatus == SystemProxyUiStatus::On && m_manager) {
         return QStringLiteral("%1 via %2").arg(status, m_manager->backendName());
     }
-    if (m_uiStatus == SystemProxyUiStatus::Partial && m_manager) {
-        return QStringLiteral("%1 (%2)").arg(status, m_manager->backendName());
-    }
     return status;
 }
 
@@ -99,25 +92,25 @@ QString SystemProxyController::lastError() const
 void SystemProxyController::logCurrentState(const std::function<void(const QString&)>& logLine) const
 {
     if (!m_manager) {
-        logLine(QStringLiteral("System proxy unsupported on this platform."));
+        logLine(ZaryaTr::tr("System proxy is not supported on this platform."));
         return;
     }
 
-    logLine(QStringLiteral("System proxy backend: %1").arg(m_manager->backendName()));
+    logLine(ZaryaTr::tr("System proxy backend: %1").arg(m_manager->backendName()));
     if (!m_manager->limitations().isEmpty()) {
         logLine(m_manager->limitations());
     }
 
     if (!m_manager->isSupported()) {
-        logLine(QStringLiteral("System proxy unsupported: %1").arg(m_manager->limitations()));
+        logLine(ZaryaTr::tr("System proxy unavailable: %1").arg(m_manager->limitations()));
         return;
     }
 
-    logLine(QStringLiteral("Reading current proxy state…"));
+    logLine(ZaryaTr::tr("Reading current proxy state…"));
     QString error;
     const SystemProxyState state = m_manager->readCurrentState(&error);
     if (!error.isEmpty()) {
-        logLine(QStringLiteral("Failed to read proxy settings: %1").arg(error));
+        logLine(ZaryaTr::tr("Failed to read proxy settings: %1").arg(error));
         return;
     }
 
@@ -131,7 +124,7 @@ bool SystemProxyController::ensurePreviousStateSaved(
         return true;
     }
 
-    logLine(QStringLiteral("Reading current proxy state…"));
+    logLine(ZaryaTr::tr("Reading current proxy state…"));
     QString error;
     m_savedState = m_manager->readCurrentState(&error);
     if (!error.isEmpty()) {
@@ -144,7 +137,7 @@ bool SystemProxyController::ensurePreviousStateSaved(
 
     m_hasSavedState = true;
     SystemProxyStateStore::save(m_savedState);
-    logLine(QStringLiteral("Previous proxy state saved."));
+    logLine(ZaryaTr::tr("Previous proxy state saved."));
     logLine(formatSystemProxyStateForLog(m_savedState));
     return true;
 }
@@ -153,7 +146,7 @@ bool SystemProxyController::enableLocalHttpProxy(
     int port, const std::function<void(const QString&)>& logLine, QString* errorMessage)
 {
     if (!m_manager) {
-        m_lastError = QStringLiteral("System proxy unsupported on this platform.");
+        m_lastError = ZaryaTr::tr("System proxy is not supported on this platform.");
         m_uiStatus = SystemProxyUiStatus::Unsupported;
         logLine(m_lastError);
         if (errorMessage) {
@@ -162,25 +155,14 @@ bool SystemProxyController::enableLocalHttpProxy(
         return false;
     }
 
-    logLine(QStringLiteral("System proxy backend: %1").arg(m_manager->backendName()));
-
-    if (m_manager->supportLevel() == QStringLiteral("partial")) {
-        m_lastError = m_manager->limitations();
-        m_uiStatus = SystemProxyUiStatus::Partial;
-        logLine(QStringLiteral("KDE proxy support is partial/unsupported"));
-        logLine(m_lastError);
-        if (errorMessage) {
-            *errorMessage = m_lastError;
-        }
-        return false;
-    }
+    logLine(ZaryaTr::tr("System proxy backend: %1").arg(m_manager->backendName()));
 
     if (!isSupported()) {
         m_lastError = m_manager->limitations().isEmpty()
-                          ? QStringLiteral("System proxy unsupported on this platform.")
+                          ? ZaryaTr::tr("System proxy is not supported on this platform.")
                           : m_manager->limitations();
         m_uiStatus = SystemProxyUiStatus::Unsupported;
-        logLine(QStringLiteral("System proxy unsupported: %1").arg(m_lastError));
+        logLine(ZaryaTr::tr("System proxy unavailable: %1").arg(m_lastError));
         if (errorMessage) {
             *errorMessage = m_lastError;
         }
@@ -193,21 +175,14 @@ bool SystemProxyController::enableLocalHttpProxy(
     }
 
     const QString host = QStringLiteral("127.0.0.1");
-    logLine(QStringLiteral("Applying HTTP/HTTPS proxy %1:%2").arg(host).arg(port));
-
-    if (m_manager->backendName().contains(QStringLiteral("macOS"), Qt::CaseInsensitive)) {
-        for (const QString& service : m_savedState.affectedNetworkServices) {
-            logLine(QStringLiteral("Applying to macOS service: %1").arg(service));
-        }
-    } else if (m_manager->backendName().contains(QStringLiteral("GNOME"), Qt::CaseInsensitive)) {
-        logLine(QStringLiteral("Applying GNOME proxy settings"));
-    }
+    logLine(ZaryaTr::tr("Applying HTTP/HTTPS proxy %1:%2").arg(host).arg(port));
+    logLine(ZaryaTr::tr("Applying proxy settings via %1").arg(m_manager->backendName()));
 
     QString error;
     if (!m_manager->applyHttpProxy(host, port, &error)) {
         m_lastError = error;
         m_uiStatus = SystemProxyUiStatus::Failed;
-        logLine(QStringLiteral("Failed to apply system proxy: %1").arg(error));
+        logLine(ZaryaTr::tr("Failed to apply system proxy: %1").arg(error));
         if (errorMessage) {
             *errorMessage = error;
         }
@@ -217,7 +192,7 @@ bool SystemProxyController::enableLocalHttpProxy(
     m_enabledByZarya = true;
     m_uiStatus = SystemProxyUiStatus::On;
     m_lastError.clear();
-    logLine(QStringLiteral("System proxy applied successfully."));
+    logLine(ZaryaTr::tr("System proxy applied successfully."));
     return true;
 }
 
@@ -231,7 +206,7 @@ bool SystemProxyController::restorePreviousProxy(SystemProxyRestoreMode mode,
 
     if (mode == SystemProxyRestoreMode::Manual && !m_hasSavedState) {
         const QString message =
-            QStringLiteral("No saved previous proxy state. Nothing to restore.");
+            ZaryaTr::tr("No saved previous proxy state. Nothing to restore.");
         m_lastError = message;
         if (errorMessage) {
             *errorMessage = message;
@@ -241,7 +216,7 @@ bool SystemProxyController::restorePreviousProxy(SystemProxyRestoreMode mode,
 
     if (!m_hasSavedState) {
         const QString message =
-            QStringLiteral("Previous proxy state is missing. Cannot restore.");
+            ZaryaTr::tr("Previous proxy state is missing. Cannot restore.");
         m_lastError = message;
         m_uiStatus = SystemProxyUiStatus::Failed;
         if (errorMessage) {
@@ -251,28 +226,28 @@ bool SystemProxyController::restorePreviousProxy(SystemProxyRestoreMode mode,
     }
 
     if (!isSupported()) {
-        m_lastError = QStringLiteral("System proxy unsupported on this platform.");
+        m_lastError = ZaryaTr::tr("System proxy is not supported on this platform.");
         if (errorMessage) {
             *errorMessage = m_lastError;
         }
         return false;
     }
 
-    logLine(QStringLiteral("Restoring previous proxy state…"));
+    logLine(ZaryaTr::tr("Restoring previous proxy state…"));
     logLine(formatSystemProxyStateForLog(m_savedState));
 
     QString error;
     if (!m_manager->restoreState(m_savedState, &error)) {
         m_lastError = error;
         m_uiStatus = SystemProxyUiStatus::Failed;
-        logLine(QStringLiteral("Proxy restore failed: %1").arg(error));
+        logLine(ZaryaTr::tr("Proxy restore failed: %1").arg(error));
         if (errorMessage) {
             *errorMessage = error;
         }
         return false;
     }
 
-    logLine(QStringLiteral("Proxy restore success."));
+    logLine(ZaryaTr::tr("Proxy restore succeeded."));
     clearRuntimeState();
     return true;
 }
@@ -283,7 +258,7 @@ bool SystemProxyController::restorePersistedPreviousProxy(
     SystemProxyState persisted;
     if (!SystemProxyStateStore::load(&persisted)) {
         if (errorMessage) {
-            *errorMessage = QStringLiteral("No persisted previous proxy state.");
+            *errorMessage = ZaryaTr::tr("No persisted previous proxy state.");
         }
         return false;
     }
@@ -299,7 +274,7 @@ bool SystemProxyController::tryClearZaryaOwnedProxy(
 {
     if (!m_manager || !m_manager->isSupported()) {
         if (errorMessage) {
-            *errorMessage = QStringLiteral("System proxy unsupported on this platform.");
+            *errorMessage = ZaryaTr::tr("System proxy is not supported on this platform.");
         }
         return false;
     }
@@ -316,7 +291,8 @@ bool SystemProxyController::tryClearZaryaOwnedProxy(
     const QString expected = QStringLiteral("127.0.0.1:%1").arg(httpPort);
     if (!current.proxyEnabled || current.proxyServer.trimmed() != expected) {
         if (errorMessage) {
-            *errorMessage = QStringLiteral("Current proxy does not match Zarya HTTP endpoint.");
+            *errorMessage =
+                ZaryaTr::tr("Current proxy does not match Zarya HTTP endpoint.");
         }
         return false;
     }
@@ -324,7 +300,7 @@ bool SystemProxyController::tryClearZaryaOwnedProxy(
     SystemProxyState disabled = current;
     disabled.proxyEnabled = false;
     disabled.proxyServer.clear();
-    logLine(QStringLiteral("Clearing Zarya-owned proxy %1").arg(expected));
+    logLine(ZaryaTr::tr("Clearing Zarya-owned proxy %1").arg(expected));
     QString applyError;
     if (!m_manager->restoreState(disabled, &applyError)) {
         if (errorMessage) {

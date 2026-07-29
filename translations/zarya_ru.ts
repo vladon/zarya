@@ -1036,8 +1036,17 @@ Add a proxy profile manually, paste a share link, or add a subscription.</source
         <source>Change system proxy</source>
         <translation>Изменить системный прокси</translation></message>
     <message>
-        <source>Zarya will change Windows system proxy settings. Continue?</source>
-        <translation>Zarya изменит настройки системного прокси Windows. Продолжить?</translation></message>
+        <source>Zarya will change your operating system or desktop proxy settings. Continue?</source>
+        <translation>Zarya изменит настройки системного прокси операционной системы или рабочего стола. Продолжить?</translation></message>
+    <message>
+        <source>System proxy backend: %1 (support: %2)</source>
+        <translation>Бэкенд системного прокси: %1 (поддержка: %2)</translation></message>
+    <message>
+        <source>Automatic system proxy was requested, but the selected backend is unavailable.</source>
+        <translation>Запрошено автоматическое включение системного прокси, но выбранный бэкенд недоступен.</translation></message>
+    <message>
+        <source>System proxy change cancelled by user.</source>
+        <translation>Изменение системного прокси отменено пользователем.</translation></message>
     <message>
         <source>System proxy</source>
         <translation>Системный прокси</translation></message>
@@ -1757,6 +1766,12 @@ What should happen?</source>
         <source>Support level</source>
         <translation>Уровень поддержки</translation></message>
     <message>
+        <source>Full</source>
+        <translation>Полная</translation></message>
+    <message>
+        <source>Unavailable</source>
+        <translation>Недоступно</translation></message>
+    <message>
         <source>Limitations</source>
         <translation>Ограничения</translation></message>
     <message>
@@ -2392,6 +2407,81 @@ Cancel = abort</source>
     <message>
         <source>Copy details</source>
         <translation>Копировать подробности</translation></message>
+    <message>
+        <source>System proxy is not supported on this platform.</source>
+        <translation>Системный прокси не поддерживается на этой платформе.</translation></message>
+    <message>
+        <source>System proxy backend: %1</source>
+        <translation>Бэкенд системного прокси: %1</translation></message>
+    <message>
+        <source>System proxy unavailable: %1</source>
+        <translation>Системный прокси недоступен: %1</translation></message>
+    <message>
+        <source>Reading current proxy state…</source>
+        <translation>Чтение текущего состояния прокси…</translation></message>
+    <message>
+        <source>Failed to read proxy settings: %1</source>
+        <translation>Не удалось прочитать настройки прокси: %1</translation></message>
+    <message>
+        <source>Previous proxy state saved.</source>
+        <translation>Предыдущее состояние прокси сохранено.</translation></message>
+    <message>
+        <source>Applying HTTP/HTTPS proxy %1:%2</source>
+        <translation>Применение HTTP/HTTPS-прокси %1:%2</translation></message>
+    <message>
+        <source>Applying proxy settings via %1</source>
+        <translation>Применение настроек прокси через %1</translation></message>
+    <message>
+        <source>Failed to apply system proxy: %1</source>
+        <translation>Не удалось применить системный прокси: %1</translation></message>
+    <message>
+        <source>System proxy applied successfully.</source>
+        <translation>Системный прокси успешно применён.</translation></message>
+    <message>
+        <source>No saved previous proxy state. Nothing to restore.</source>
+        <translation>Нет сохранённого предыдущего состояния прокси. Нечего восстанавливать.</translation></message>
+    <message>
+        <source>Previous proxy state is missing. Cannot restore.</source>
+        <translation>Предыдущее состояние прокси отсутствует. Восстановление невозможно.</translation></message>
+    <message>
+        <source>Restoring previous proxy state…</source>
+        <translation>Восстановление предыдущего состояния прокси…</translation></message>
+    <message>
+        <source>Proxy restore failed: %1</source>
+        <translation>Не удалось восстановить прокси: %1</translation></message>
+    <message>
+        <source>Proxy restore succeeded.</source>
+        <translation>Прокси успешно восстановлен.</translation></message>
+    <message>
+        <source>No persisted previous proxy state.</source>
+        <translation>Нет сохранённого на диске предыдущего состояния прокси.</translation></message>
+    <message>
+        <source>Current proxy does not match Zarya HTTP endpoint.</source>
+        <translation>Текущий прокси не соответствует HTTP-конечной точке Zarya.</translation></message>
+    <message>
+        <source>Clearing Zarya-owned proxy %1</source>
+        <translation>Очистка прокси %1, установленного Zarya</translation></message>
+    <message>
+        <source>gsettings is not available for GNOME proxy control.</source>
+        <translation>gsettings недоступен для управления прокси GNOME.</translation></message>
+    <message>
+        <source>KDE config tools are not available for proxy control.</source>
+        <translation>Инструменты конфигурации KDE недоступны для управления прокси.</translation></message>
+    <message>
+        <source>Desktop environment is not supported for system proxy.</source>
+        <translation>Окружение рабочего стола не поддерживается для системного прокси.</translation></message>
+    <message>
+        <source>Uses WinINet registry settings. Affects applications that use the Windows system proxy.</source>
+        <translation>Использует настройки реестра WinINet. Влияет на приложения, использующие системный прокси Windows.</translation></message>
+    <message>
+        <source>Uses networksetup for HTTP/HTTPS proxy on selected network services. May require administrator privileges on some systems. Not all applications respect macOS system proxy settings.</source>
+        <translation>Использует networksetup для HTTP/HTTPS-прокси выбранных сетевых служб. На некоторых системах могут потребоваться права администратора. Не все приложения учитывают настройки системного прокси macOS.</translation></message>
+    <message>
+        <source>Uses gsettings (org.gnome.system.proxy). Affects GNOME/GTK applications that respect desktop proxy settings. CLI tools may need http_proxy environment variables.</source>
+        <translation>Использует gsettings (org.gnome.system.proxy). Влияет на приложения GNOME/GTK, учитывающие настройки прокси рабочего стола. Для CLI-инструментов могут потребоваться переменные окружения http_proxy.</translation></message>
+    <message>
+        <source>Uses KDE kioslaverc proxy settings. Affects KDE/KIO and applications that respect desktop proxy settings; CLI tools may need http_proxy environment variables.</source>
+        <translation>Использует настройки прокси KDE в kioslaverc. Влияет на KDE/KIO и приложения, учитывающие настройки прокси рабочего стола; для CLI-инструментов могут потребоваться переменные окружения http_proxy.</translation></message>
 </context>
 <context>
     <name>zarya::LibUiSpikeDialog</name>

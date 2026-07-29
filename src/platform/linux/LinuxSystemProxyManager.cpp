@@ -1,5 +1,6 @@
 #include "platform/linux/LinuxSystemProxyManager.h"
 
+#include "i18n/ZaryaTr.h"
 #include "platform/linux/GnomeSystemProxyManager.h"
 #include "platform/linux/KdeSystemProxyManager.h"
 #include "platform/linux/LinuxDesktopEnvironment.h"
@@ -28,7 +29,7 @@ LinuxSystemProxyManager::LinuxSystemProxyManager(LinuxDesktopEnvironment desktop
             break;
         }
         m_backend = std::make_unique<StubSystemProxyManager>(
-            QStringLiteral("gsettings is not available for GNOME proxy control."));
+            ZaryaTr::tr("gsettings is not available for GNOME proxy control."));
         break;
     }
     case LinuxDesktopEnvironment::Kde: {
@@ -38,12 +39,12 @@ LinuxSystemProxyManager::LinuxSystemProxyManager(LinuxDesktopEnvironment desktop
             break;
         }
         m_backend = std::make_unique<StubSystemProxyManager>(
-            QStringLiteral("KDE config tools are not available for proxy control."));
+            ZaryaTr::tr("KDE config tools are not available for proxy control."));
         break;
     }
     case LinuxDesktopEnvironment::Unknown:
         m_backend = std::make_unique<StubSystemProxyManager>(
-            QStringLiteral("Desktop environment is not supported for system proxy yet."));
+            ZaryaTr::tr("Desktop environment is not supported for system proxy."));
         break;
     }
 }
@@ -76,9 +77,6 @@ QString LinuxSystemProxyManager::backendName() const
 {
     if (!m_backend) {
         return QStringLiteral("Linux");
-    }
-    if (m_backend->supportLevel() == QStringLiteral("partial")) {
-        return QStringLiteral("%1 (%2)").arg(m_backend->backendName(), m_detectedDesktop);
     }
     return m_backend->backendName();
 }
