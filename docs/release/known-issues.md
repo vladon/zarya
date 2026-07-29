@@ -1,4 +1,4 @@
-# Known Issues for Zarya 1.4.0
+# Known Issues for Zarya 1.5.0
 
 ## Experimental features
 
@@ -16,3 +16,6 @@
 
 - System proxy mode is not VPN mode.
 - Some applications may ignore OS proxy settings.
+- KDE integration requires KConfig 5 or 6 command-line tools and a usable
+  session D-Bus. The UI reports system-proxy integration unavailable when
+  either facility is missing.
