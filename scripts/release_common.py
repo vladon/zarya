@@ -162,6 +162,7 @@ RC_DOC_FILES = (
 
 STABLE_RELEASE_DOC_FILES = (
     "README.md",
+    "1.5.0-checklist.md",
     "release-scope.md",
     "known-issues.md",
     "blockers.md",

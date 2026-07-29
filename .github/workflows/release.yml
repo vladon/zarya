@@ -14,7 +14,7 @@ jobs:
       QT_STATIC_DIR: 'C:\Qt\Static\6.8.3\msvc2022_64'
       QT_STATIC_CACHE_KEY: qt-static-6.8.3-msvc2022_64-v1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
       - name: Read version
@@ -46,7 +46,7 @@ jobs:
           }
       - name: Restore static Qt cache
         id: qt-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ env.QT_STATIC_DIR }}
           key: ${{ env.QT_STATIC_CACHE_KEY }}
@@ -72,13 +72,17 @@ jobs:
           }
       - name: Save static Qt cache
         if: steps.qt-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: ${{ env.QT_STATIC_DIR }}
           key: ${{ env.QT_STATIC_CACHE_KEY }}
-      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Enable MSVC developer environment
+        shell: pwsh
+        run: .\scripts\setup-msvc-actions.ps1
       - name: Install Ninja
         run: choco install ninja -y --no-progress
+      - name: Check translations
+        run: python scripts/check-translations.py
       - name: Configure
         shell: pwsh
         run: |
@@ -91,8 +95,10 @@ jobs:
       - name: Build
         shell: pwsh
         run: |
-          cmake --build build --target zarya_lrelease zarya zarya-helper
+          cmake --build build --target zarya_lrelease zarya zarya-helper zarya_tests
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Test
+        run: ctest --test-dir build -C Release --output-on-failure
       - name: Package (unsigned by default)
         run: .\scripts\package-windows.ps1 -Configuration Release -OutputDir dist -SkipBuild -SkipSigning
       - name: Verify release artifact
@@ -104,10 +110,108 @@ jobs:
         run: |
           Write-Host "Signing enabled for tag release"
           .\scripts\package-windows.ps1 -Configuration Release -OutputDir dist -SkipBuild -Sign -SigningIdentity $env:ZARYA_WINDOWS_CERT_THUMBPRINT
+      - name: Audit release artifact secrets
+        run: python scripts/audit-release-artifact.py --artifact dist/Zarya-${{ steps.ver.outputs.version }}-windows-x64-portable.zip
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: zarya-windows-release
+          path: |
+            dist/*.zip
+            dist/*.sha256
+            dist/SHA256SUMS.txt
+
+  release-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - name: Read version
+        id: ver
+        run: |
+          VERSION=$(python3 -c "import sys; sys.path.insert(0, 'scripts'); from release_common import read_cmake_version; print(read_cmake_version()['version'])")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libssl-dev zlib1g-dev libjpeg-dev libgl1-mesa-dev libegl1-mesa-dev \
+            libglib2.0-dev libglib2.0-bin libdbus-1-dev libxkbcommon-dev \
+            libxkbcommon-x11-dev libxcb-cursor0 libxcb-xinerama0 \
+            gobject-introspection libgirepository1.0-dev \
+            libboost-dev pkg-config \
+            cmake ninja-build build-essential xvfb
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.8.3"
+          host: linux
+          target: desktop
+          arch: linux_gcc_64
+      - name: Check translations
+        run: python3 scripts/check-translations.py
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --target zarya zarya_tests
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+      - name: Package
+        run: ./scripts/package-linux.sh --skip-build --skip-signing
+      - name: Verify release artifact
+        run: python3 scripts/verify-release-artifacts.py --artifact dist/Zarya-${{ steps.ver.outputs.version }}-linux-x64.tar.gz --expected-version ${{ steps.ver.outputs.version }} --stable-release --require-checksum --allow-unsigned
+      - name: Audit release artifact secrets
+        run: python3 scripts/audit-release-artifact.py --artifact dist/Zarya-${{ steps.ver.outputs.version }}-linux-x64.tar.gz
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: zarya-linux-release
+          path: |
+            dist/*.tar.gz
+            dist/*.sha256
+            dist/SHA256SUMS.txt
+
+  release-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - name: Read version
+        id: ver
+        run: |
+          VERSION=$(python3 -c "import sys; sys.path.insert(0, 'scripts'); from release_common import read_cmake_version; print(read_cmake_version()['version'])")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Install OpenSSL / cmake / ninja
+        run: brew install cmake ninja openssl@3
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.8.3"
+          host: mac
+          target: desktop
+          arch: clang_64
+      - name: Check translations
+        run: python3 scripts/check-translations.py
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DOPENSSL_ROOT_DIR="$(brew --prefix openssl@3)"
+      - name: Build
+        run: cmake --build build --target zarya zarya_tests
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+      - name: Package
+        run: ./scripts/package-macos.sh --skip-build --skip-signing
+      - name: Verify release artifact
+        run: python3 scripts/verify-release-artifacts.py --artifact dist/Zarya-${{ steps.ver.outputs.version }}-macos-arm64.zip --expected-version ${{ steps.ver.outputs.version }} --stable-release --require-checksum --allow-unsigned
+      - name: Audit release artifact secrets
+        run: python3 scripts/audit-release-artifact.py --artifact dist/Zarya-${{ steps.ver.outputs.version }}-macos-arm64.zip
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: zarya-macos-release
           path: |
             dist/*.zip
             dist/*.sha256

@@ -17,8 +17,10 @@ jobs:
   build-pack:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: ilammy/msvc-dev-cmd@v1
+      - uses: actions/checkout@v5
+      - name: Enable MSVC developer environment
+        shell: pwsh
+        run: .\scripts\setup-msvc-actions.ps1
       - name: Install tools
         shell: pwsh
         run: |
@@ -36,7 +38,7 @@ jobs:
           Write-Host "QT_VCVARS=$vcvars"
       - name: Restore static Qt cache
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ env.QT_STATIC_DIR }}
           key: ${{ env.CACHE_KEY }}
@@ -53,7 +55,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Save static Qt cache
         if: steps.cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: ${{ env.QT_STATIC_DIR }}
           key: ${{ env.CACHE_KEY }}

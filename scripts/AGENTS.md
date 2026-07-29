@@ -11,6 +11,7 @@ Build, package, sign, smoke, and release helpers. Prefer these over ad-hoc cmake
 | `build-macos.sh` | macOS configure+build wrapper (Homebrew `qt@6`; `--test`, `--force`) |
 | `build-qt-static-msvc2026.ps1` | Static Qt (qtbase+qtsvg) → `C:\Qt\Static\6.8.3\msvc2022_64`; `-SvgOnly` adds Svg to an existing prefix |
 | `pack-qt-static-ci.ps1` | Pack static Qt prefix to `dist/qt-static-*-msvc2022_64.7z` for CI |
+| `setup-msvc-actions.ps1` | Enable the hosted-runner MSVC environment without a Node action |
 | `run-xray-config-test.ps1` | Xray config unit tests |
 | `check-translations.py` | Translation completeness (CI) |
 | `package-windows.ps1` | Portable ZIP packaging (bundles pinned Xray by default) |

@@ -11,6 +11,7 @@
 #include <QDir>
 #include <QFile>
 #include <QJsonDocument>
+#include <QTemporaryDir>
 #include <QTemporaryFile>
 #include <QUrl>
 
@@ -378,13 +379,11 @@ bool runSubscriptionUpdateCases()
 
 bool runPersistedProfileCompatibilityCase()
 {
-    QTemporaryFile file;
-    if (!file.open()) {
-        return fail("Could not create profile store fixture");
+    QTemporaryDir directory;
+    if (!directory.isValid()) {
+        return fail("Could not create profile store fixture directory");
     }
-    const QString path = file.fileName();
-    file.close();
-    QFile::remove(path);
+    const QString path = directory.filePath(QStringLiteral("profiles.json"));
 
     zarya::Profile original =
         zarya::ShareLinkParser::parse(QStringLiteral(
@@ -397,7 +396,6 @@ bool runPersistedProfileCompatibilityCase()
         return fail("Could not save imported profile");
     }
     const QVector<zarya::Profile> loaded = store.load(&error);
-    QFile::remove(path);
     if (loaded.size() != 1 || loaded.constFirst().protocol != zarya::ProtocolType::WireGuard
         || loaded.constFirst().password != original.password
         || loaded.constFirst().publicKey != original.publicKey
