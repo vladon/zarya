@@ -222,4 +222,13 @@ void initDesktopAppUiIntegrations(int argc, char** argv)
     }
 }
 
+bool desktopAppUiIntegrationsReady()
+{
+    return g_baseIntegration
+        && g_uiIntegration
+        && g_mainQueueProcessor
+        && g_animationsManager
+        && g_styleStarted;
+}
+
 } // namespace zarya

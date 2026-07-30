@@ -36,6 +36,10 @@ unmigrated surface when it owns no visual styling or interaction.
      chips, form rows, dialog actions, and asynchronous feedback.
    - Replace `QMessageBox` use through a central `lib_ui` presenter, retaining a native fallback
      only for startup failures before toolkit initialization.
+   - Progress: the shared button roles and synchronous message presenter are available, including
+     long-message scrolling, keyboard handling, semantic text, and the pre-toolkit native
+     fallback. Share-link import is the first migrated workflow; multi-action recovery and update
+     prompts remain on the Qt presenter until their action models are migrated.
 3. **Main application shell**
    - Migrate profile actions, filters, empty state, log controls, and operational feedback.
    - Keep `QTableView` and the log text engine behind toolkit-styled hosts until their replacement

@@ -2307,6 +2307,33 @@ Cancel = abort</source>
         <translation>Выход</translation></message>
 </context>
 <context>
+    <name>UiMessagePresenter</name>
+    <message>
+        <source>Information</source>
+        <translation>Информация</translation>
+    </message>
+    <message>
+        <source>Attention</source>
+        <translation>Внимание</translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation>Ошибка</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>Продолжить</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
+</context>
+<context>
     <name>ZaryaTr</name>
     <message>
         <source>Xray not found</source>
