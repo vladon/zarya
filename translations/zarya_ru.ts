@@ -2113,8 +2113,14 @@ Select a profile and press Start, or use a running TUN session.</source>
         <source>Subscriptions</source>
         <translation>Подписки</translation></message>
     <message>
-        <source>Runtime: Running</source>
-        <translation>Runtime: работает</translation></message>
+        <source>Runtime: Running — %1</source>
+        <translation>Runtime: работает — %1</translation></message>
+    <message>
+        <source>Experimental runtime active</source>
+        <translation>Активен экспериментальный runtime</translation></message>
+    <message>
+        <source>Recommended: %1</source>
+        <translation>Рекомендуется: %1</translation></message>
     <message>
         <source>Running</source>
         <translation>Работает</translation></message>
@@ -2134,8 +2140,8 @@ Routing: %4</source>
         <source>Create Diagnostics</source>
         <translation>Создать диагностику</translation></message>
     <message>
-        <source>Runtime: Stopped</source>
-        <translation>Runtime: остановлен</translation></message>
+        <source>Runtime: Stopped — %1</source>
+        <translation>Runtime: остановлен — %1</translation></message>
     <message>
         <source>Stopped</source>
         <translation>Остановлен</translation></message>
@@ -2482,17 +2488,5 @@ Cancel = abort</source>
     <message>
         <source>Uses KDE kioslaverc proxy settings. Affects KDE/KIO and applications that respect desktop proxy settings; CLI tools may need http_proxy environment variables.</source>
         <translation>Использует настройки прокси KDE в kioslaverc. Влияет на KDE/KIO и приложения, учитывающие настройки прокси рабочего стола; для CLI-инструментов могут потребоваться переменные окружения http_proxy.</translation></message>
-</context>
-<context>
-    <name>zarya::LibUiSpikeDialog</name>
-    <message>
-        <source>Desktop App UI spike</source>
-        <translation>Desktop App UI spike</translation></message>
-    <message>
-        <source>This dialog uses desktop-app/lib_ui (FlatLabel + RoundButton). The rest of Zarya still uses Qt Widgets + ThemeManager.</source>
-        <translation>Этот диалог использует desktop-app/lib_ui (FlatLabel + RoundButton). Остальной интерфейс Zarya по-прежнему на Qt Widgets + ThemeManager.</translation></message>
-    <message>
-        <source>Close</source>
-        <translation>Закрыть</translation></message>
 </context>
 </TS>

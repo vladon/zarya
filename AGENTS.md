@@ -71,6 +71,7 @@ Helper: GUI → helperclient/ipc → zarya-helper (elevated TUN / kill switch)
 | Topic | Path |
 |-------|------|
 | Stable scope / gating | `docs/stable/` |
+| UI / lib_ui migration | `PRODUCT.md`, `DESIGN.md`, `docs/libui-migration.md` |
 | Security | `docs/security-model.md` |
 | Helper | `docs/privileged-helper-design.md`, `docs/service/` |
 | TUN / kill switch | `docs/tun-design.md`, `docs/kill-switch-design.md` |
