@@ -22,6 +22,21 @@ cmake --build build --target zarya_smoke_test
 python scripts/run-smoke-tests.py --build-dir build --skip-cpp  # artifact optional
 ```
 
+The Ubuntu PR and release jobs also run the real KDE process boundary against
+an isolated KConfig home and session D-Bus:
+
+```bash
+cmake --build build --target zarya_linux_proxy_test
+./scripts/run-kde-proxy-smoke.sh build
+```
+
+For a manual smoke inside a running Plasma shell (requires `plasma-workspace`,
+`plasma-desktop`, and `xvfb`):
+
+```bash
+./scripts/run-kde-proxy-smoke.sh build --with-plasma-shell
+```
+
 Windows packaging:
 
 ```powershell

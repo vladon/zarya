@@ -13,6 +13,7 @@ Build, package, sign, smoke, and release helpers. Prefer these over ad-hoc cmake
 | `pack-qt-static-ci.ps1` | Pack static Qt prefix to `dist/qt-static-*-msvc2022_64.7z` for CI |
 | `setup-msvc-actions.ps1` | Enable the hosted-runner MSVC environment without a Node action |
 | `run-xray-config-test.ps1` | Xray config unit tests |
+| `run-kde-proxy-smoke.sh` | Isolated native KDE/KConfig proxy apply/restore smoke |
 | `check-translations.py` | Translation completeness (CI) |
 | `package-windows.ps1` | Portable ZIP packaging (bundles pinned Xray by default) |
 | `package-windows-msi.ps1` | WiX MSI PoC |
