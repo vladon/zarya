@@ -27,6 +27,23 @@ Zarya links libraries from the [Desktop App Toolkit](https://github.com/desktop-
 These are licensed under **GPLv3+** with an OpenSSL linking exception. See
 [desktop-app/legal](https://github.com/desktop-app/legal/blob/master/LEGAL).
 A Zarya binary that includes them is a GPLv3+ derivative for distribution purposes.
+Their source, together with the source of the supporting dependencies below,
+is vendored under `third_party/desktop-app/`. Exact upstream revisions are
+recorded in `third_party/desktop-app/README.md`.
+
+## Vendored supporting dependencies
+
+The vendored Desktop App Toolkit tree also includes:
+
+- Microsoft GSL (MIT)
+- TartanLlama `expected` (CC0-1.0)
+- range-v3 and expected-lite (Boost Software License 1.0)
+- LZ4 (BSD 2-Clause)
+- xxHash (BSD 2-Clause)
+- cppgir (MIT)
+- KDE KCoreAddons sources, with per-file SPDX licensing under its `LICENSES/`
+
+The upstream license and copyright files are retained next to each dependency.
 
 ## Platform libraries (Windows helper)
 

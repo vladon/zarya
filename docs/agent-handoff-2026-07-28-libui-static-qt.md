@@ -46,7 +46,6 @@ Helper: GUI → helperclient/ipc → zarya-helper (elevated TUN / kill switch)
 ## Build (Windows)
 
 ```powershell
-git submodule update --init --recursive
 .\scripts\configure-msvc2026.ps1   # always static; no -Static / -Shared
 cmake --build build --config Release --target zarya
 # or:
@@ -108,13 +107,15 @@ Flow:
 | Force ON | [`cmake/ZaryaDesktopAppUi.cmake`](../cmake/ZaryaDesktopAppUi.cmake) — always ON (`FORCE`); no OFF early-return |
 | Externals | [`cmake/ZaryaDesktopAppExternals.cmake`](../cmake/ZaryaDesktopAppExternals.cmake) — zlib/jpeg → system or `Qt6::BundledZLIB` / `Qt6::BundledLibjpeg` |
 | Quiet find | `find_package(ZLIB/JPEG QUIET)` — avoid configure spam when only Qt bundled exists (#87) |
-| Linux | Vendored portal XMLs; submodule `third_party/desktop-app/kcoreaddons` @ KDE `v6.11.0`; glib + `Qt6::DBus` |
+| Linux | Vendored portal XMLs and `third_party/desktop-app/kcoreaddons` @ KDE `v6.11.0`; glib + `Qt6::DBus` |
 | macOS | `enable_language(OBJC/OBJCXX)`; stub `AGL.framework`; strip AGL from OpenGL INTERFACE |
 | Qt version gates | Build-tree patches: `QAccessible::Attribute::Orientation` at **Qt 6.10+**; `Qt::NoTitleBarBackgroundHint` at **Qt 6.9+** (`ui_window_mac.mm`) |
 | MSVC PCH | `/FI` on MSVC vs `-include` on GCC/Clang for desktop-app sources |
 | UI forks | `#if ZARYA_DESKTOP_APP_UI` removed from Application / MainWindow / StatusBadge / StatusDashboardWidget |
 
-Submodules: `git submodule update --init --recursive` (includes `third_party/desktop-app/*`).
+Desktop App dependencies are ordinary vendored files under
+`third_party/desktop-app/`; pinned revisions are listed in that directory's
+`README.md`. No submodule initialization is required.
 
 ---
 

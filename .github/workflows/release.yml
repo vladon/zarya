@@ -15,8 +15,6 @@ jobs:
       QT_STATIC_CACHE_KEY: qt-static-6.8.3-msvc2022_64-v1
     steps:
       - uses: actions/checkout@v5
-        with:
-          submodules: recursive
       - name: Read version
         id: ver
         shell: bash
@@ -125,8 +123,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-        with:
-          submodules: recursive
       - name: Read version
         id: ver
         run: |
@@ -178,8 +174,6 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v5
-        with:
-          submodules: recursive
       - name: Read version
         id: ver
         run: |

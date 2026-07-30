@@ -1,5 +1,5 @@
 # Configure Zarya with Visual Studio 2026 (MSVC) and static Qt only.
-# Desktop App Toolkit (lib_ui) is always linked (GPLv3+); needs OpenSSL + third_party/desktop-app submodules.
+# Desktop App Toolkit (lib_ui) is always linked (GPLv3+); vendored sources and OpenSSL are required.
 param(
     [switch]$Force
 )

@@ -16,10 +16,9 @@ Zarya is a cross-platform **Qt 6 / C++20** desktop client for proxy profiles and
 
 ## Build (Windows primary)
 
-Local/release builds on Windows use **static Qt only**. Desktop App Toolkit (`lib_ui`) is **always** linked — requires `git submodule update --init --recursive` and OpenSSL.
+Local/release builds on Windows use **static Qt only**. Desktop App Toolkit (`lib_ui`) is **always** linked and its dependencies are vendored under `third_party/desktop-app/`; OpenSSL is still required.
 
 ```powershell
-git submodule update --init --recursive
 .\scripts\configure-msvc2026.ps1
 cmake --build build --config Release --target zarya
 # or: .\scripts\build.ps1

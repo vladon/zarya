@@ -119,7 +119,7 @@ endif()
 add_library(external_crash_reports INTERFACE IMPORTED GLOBAL)
 add_library(desktop-app::external_crash_reports ALIAS external_crash_reports)
 
-# ---- GSL / ranges / expected (headers from submodules) ----
+# ---- GSL / ranges / expected (headers from vendored sources) ----
 add_library(external_gsl INTERFACE IMPORTED GLOBAL)
 add_library(desktop-app::external_gsl ALIAS external_gsl)
 target_include_directories(external_gsl SYSTEM INTERFACE ${third_party_loc}/GSL/include)
@@ -138,7 +138,7 @@ add_library(desktop-app::external_xxhash ALIAS external_xxhash)
 target_include_directories(external_xxhash SYSTEM INTERFACE ${third_party_loc}/xxHash)
 target_compile_definitions(external_xxhash INTERFACE XXH_INLINE_ALL)
 
-# ---- lz4 (build from submodule; skip bundled xxhash.c — use XXH_INLINE_ALL) ----
+# ---- lz4 (build from vendored sources; skip bundled xxhash.c — use XXH_INLINE_ALL) ----
 add_library(external_lz4_bundled STATIC)
 init_target(external_lz4_bundled "(external)")
 set(lz4_loc ${third_party_loc}/lz4/lib)
