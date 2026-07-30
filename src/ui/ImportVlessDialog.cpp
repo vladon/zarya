@@ -2,10 +2,10 @@
 
 #include "i18n/ZaryaTr.h"
 #include "subscription/ShareLinkParser.h"
+#include "ui/desktopapp/UiMessagePresenter.h"
 
 #include <QDialogButtonBox>
 #include <QRegularExpression>
-#include <QMessageBox>
 #include <QPlainTextEdit>
 #include <QVBoxLayout>
 
@@ -43,7 +43,7 @@ void ImportVlessDialog::onImport()
         m_linksEdit->toPlainText().split(QRegularExpression(QStringLiteral("[\\r\\n]+")),
                                        Qt::SkipEmptyParts);
     if (lines.isEmpty()) {
-        QMessageBox::warning(this, tr("Import"), tr("No links to import."));
+        UiMessagePresenter::warning(this, tr("Import"), tr("No links to import."));
         return;
     }
 
@@ -63,13 +63,15 @@ void ImportVlessDialog::onImport()
     }
 
     if (m_imported.isEmpty()) {
-        QMessageBox::warning(this, tr("Import failed"),
-                             errors.join(QLatin1Char('\n')));
+        UiMessagePresenter::warning(
+            this,
+            tr("Import failed"),
+            errors.join(QLatin1Char('\n')));
         return;
     }
 
     if (!errors.isEmpty()) {
-        QMessageBox::warning(
+        UiMessagePresenter::warning(
             this, tr("Partial import"),
             ZaryaTr::plural("Imported %n profile(s). Some lines failed:", m_imported.size())
                 + QStringLiteral("\n")

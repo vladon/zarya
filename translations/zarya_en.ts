@@ -2922,6 +2922,33 @@ Cancel = abort</source>
     </message>
 </context>
 <context>
+    <name>UiMessagePresenter</name>
+    <message>
+        <source>Information</source>
+        <translation>Information</translation>
+    </message>
+    <message>
+        <source>Attention</source>
+        <translation>Attention</translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation>Error</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Cancel</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>Continue</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Close</translation>
+    </message>
+</context>
+<context>
     <name>ZaryaTr</name>
     <message>
         <source>Xray not found</source>
