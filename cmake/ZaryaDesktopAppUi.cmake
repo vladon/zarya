@@ -18,19 +18,25 @@ set(DESKTOP_APP_USE_PACKAGED_FONTS OFF CACHE BOOL "" FORCE)
 
 get_filename_component(cmake_helpers_loc
     "${CMAKE_SOURCE_DIR}/third_party/desktop-app/cmake_helpers" REALPATH)
-get_filename_component(submodules_loc
+get_filename_component(desktop_app_loc
     "${CMAKE_SOURCE_DIR}/third_party/desktop-app" REALPATH)
 get_filename_component(third_party_loc
     "${CMAKE_SOURCE_DIR}/third_party/desktop-app" REALPATH)
 
+# Upstream Desktop App CMake files still use this historical variable name for
+# their shared source root (for example, to locate Resources).
+set(submodules_loc "${desktop_app_loc}")
+
 if(NOT EXISTS "${cmake_helpers_loc}/init_target.cmake")
-    message(FATAL_ERROR "Desktop App cmake_helpers missing. Run: git submodule update --init --recursive")
+    message(FATAL_ERROR
+        "Vendored Desktop App cmake_helpers are missing. "
+        "Restore third_party/desktop-app from the repository checkout.")
 endif()
 
 # Qt::NoTitleBarBackgroundHint is Qt 6.9+; upstream lib_ui incorrectly gates at 6.8.
-# Write a patched TU into the build tree so we never dirty the lib_ui submodule.
+# Write a patched TU into the build tree so vendored lib_ui stays unmodified.
 function(zarya_write_lib_ui_qt69_window_mac_patch out_path)
-    set(_orig "${submodules_loc}/lib_ui/ui/platform/mac/ui_window_mac.mm")
+    set(_orig "${desktop_app_loc}/lib_ui/ui/platform/mac/ui_window_mac.mm")
     if(NOT EXISTS "${_orig}")
         message(FATAL_ERROR "Missing ${_orig}")
     endif()
@@ -52,9 +58,9 @@ function(zarya_write_lib_ui_qt69_window_mac_patch out_path)
 endfunction()
 
 # QAccessible::Attribute::Orientation is not in Qt 6.8–6.9; gate it for Qt 6.10+.
-# Write a patched TU into the build tree so we never dirty the lib_ui submodule.
+# Write a patched TU into the build tree so vendored lib_ui stays unmodified.
 function(zarya_write_lib_ui_qt68_accessible_patch out_path)
-    set(_orig "${submodules_loc}/lib_ui/ui/accessible/ui_accessible_widget.cpp")
+    set(_orig "${desktop_app_loc}/lib_ui/ui/accessible/ui_accessible_widget.cpp")
     if(NOT EXISTS "${_orig}")
         message(FATAL_ERROR "Missing ${_orig}")
     endif()
@@ -240,16 +246,16 @@ if(LINUX)
         ${CMAKE_BINARY_DIR}/desktop_app/external_kcoreaddons)
 endif()
 
-add_subdirectory(${submodules_loc}/lib_crl ${CMAKE_BINARY_DIR}/desktop_app/lib_crl)
-add_subdirectory(${submodules_loc}/lib_rpl ${CMAKE_BINARY_DIR}/desktop_app/lib_rpl)
-add_subdirectory(${submodules_loc}/lib_base ${CMAKE_BINARY_DIR}/desktop_app/lib_base)
+add_subdirectory(${desktop_app_loc}/lib_crl ${CMAKE_BINARY_DIR}/desktop_app/lib_crl)
+add_subdirectory(${desktop_app_loc}/lib_rpl ${CMAKE_BINARY_DIR}/desktop_app/lib_rpl)
+add_subdirectory(${desktop_app_loc}/lib_base ${CMAKE_BINARY_DIR}/desktop_app/lib_base)
 
 # Codegen tools (style + emoji generators).
-add_subdirectory(${submodules_loc}/codegen/codegen/common
+add_subdirectory(${desktop_app_loc}/codegen/codegen/common
     ${CMAKE_BINARY_DIR}/desktop_app/codegen_common)
-add_subdirectory(${submodules_loc}/codegen/codegen/style
+add_subdirectory(${desktop_app_loc}/codegen/codegen/style
     ${CMAKE_BINARY_DIR}/desktop_app/codegen_style)
-add_subdirectory(${submodules_loc}/codegen/codegen/emoji
+add_subdirectory(${desktop_app_loc}/codegen/codegen/emoji
     ${CMAKE_BINARY_DIR}/desktop_app/codegen_emoji)
 
 if(NOT ZARYA_HAS_QT_SVG)
@@ -264,9 +270,9 @@ if(NOT ZARYA_HAS_QT_SVG)
         ${CMAKE_SOURCE_DIR}/cmake/desktop_app_stubs)
 endif()
 
-add_subdirectory(${submodules_loc}/lib_ui ${CMAKE_BINARY_DIR}/desktop_app/lib_ui)
+add_subdirectory(${desktop_app_loc}/lib_ui ${CMAKE_BINARY_DIR}/desktop_app/lib_ui)
 
-# Swap toolkit TUs for older Qt — build-tree copies, no submodule dirt.
+# Swap toolkit TUs for older Qt using build-tree copies.
 if(TARGET lib_ui)
     set(_zarya_patched_dir "${CMAKE_BINARY_DIR}/desktop_app/patched")
     file(MAKE_DIRECTORY "${_zarya_patched_dir}")
@@ -333,7 +339,7 @@ set(ZARYA_DESKTOP_APP_UI_SOURCES
 
 # Zarya toolkit sources consume headers that assume QT_NO_KEYWORDS + the lib_ui PCH.
 # MSVC: /FI; GCC/Clang: -include (never pass /FI to non-MSVC).
-set(_zarya_ui_pch "${submodules_loc}/lib_ui/ui/ui_pch.h")
+set(_zarya_ui_pch "${desktop_app_loc}/lib_ui/ui/ui_pch.h")
 if(MSVC)
     set_source_files_properties(${ZARYA_DESKTOP_APP_UI_SOURCES} PROPERTIES
         COMPILE_DEFINITIONS "QT_NO_KEYWORDS"

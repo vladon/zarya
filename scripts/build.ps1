@@ -1,5 +1,5 @@
 # Build Zarya with static Qt on Windows (adds CMake to PATH when needed).
-# Desktop App Toolkit (lib_ui) is always linked (needs OpenSSL + submodules).
+# Desktop App Toolkit (lib_ui) is always linked (vendored sources + OpenSSL).
 param(
     [string]$Config = "Release",
     [string]$Target = "zarya",
