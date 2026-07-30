@@ -3,11 +3,10 @@
 #include <QString>
 #include <QWidget>
 
-class QLabel;
-
 namespace zarya {
 
 class StatusConfiguredStrip;
+class StatusUnconfiguredPanel;
 
 struct StatusDashboardModel {
     bool configured = false;
@@ -52,8 +51,7 @@ private:
     void showConfigured(const StatusDashboardModel& model);
     void showUnconfigured(const StatusDashboardModel& model);
 
-    QWidget* m_unconfiguredPanel = nullptr;
-    QLabel* m_unconfiguredStepsLabel = nullptr;
+    StatusUnconfiguredPanel* m_unconfiguredPanel = nullptr;
     StatusConfiguredStrip* m_configuredStrip = nullptr;
 };
 

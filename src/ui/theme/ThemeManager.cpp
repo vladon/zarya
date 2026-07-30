@@ -1,6 +1,7 @@
 #include "ui/theme/ThemeManager.h"
 
 #include "storage/AppSettings.h"
+#include "ui/desktopapp/ZaryaPalette.h"
 
 #include <QApplication>
 #include <QGuiApplication>
@@ -322,6 +323,7 @@ void ThemeManager::apply()
     m_tokens = m_isDark ? darkTokens() : lightTokens();
 
     applyPalette(m_tokens);
+    applyDesktopAppPalette(m_tokens);
     app->setStyleSheet(buildStyleSheet(m_tokens));
     emit themeChanged();
 }

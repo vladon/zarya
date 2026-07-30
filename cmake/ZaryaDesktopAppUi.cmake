@@ -323,12 +323,13 @@ set(ZARYA_DESKTOP_APP_UI_SOURCES
     src/ui/desktopapp/ZaryaBaseIntegration.cpp
     src/ui/desktopapp/ZaryaUiIntegration.cpp
     src/ui/desktopapp/ZaryaCrlIntegration.cpp
-    src/ui/desktopapp/LibUiSpikeDialog.cpp
+    src/ui/desktopapp/ZaryaPalette.cpp
     src/ui/desktopapp/StatusBadgeLibUiEmbed.cpp
-    src/ui/desktopapp/StatusConfiguredStrip.cpp)
+    src/ui/desktopapp/StatusConfiguredStrip.cpp
+    src/ui/desktopapp/StatusUnconfiguredPanel.cpp)
 
 
-# Spike sources consume toolkit headers that assume QT_NO_KEYWORDS + base PCH.
+# Zarya toolkit sources consume headers that assume QT_NO_KEYWORDS + the lib_ui PCH.
 # MSVC: /FI; GCC/Clang: -include (never pass /FI to non-MSVC).
 set(_zarya_ui_pch "${submodules_loc}/lib_ui/ui/ui_pch.h")
 if(MSVC)

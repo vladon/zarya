@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-30T00:00:00Z",
+  "title": "Design System: Zarya",
+  "extensions": {
+    "colorMeta": {
+      "signal-blue": {
+        "role": "primary",
+        "displayName": "Signal Blue",
+        "canonical": "#1f6feb",
+        "tonalRamp": ["#071a38", "#0d326c", "#12499f", "#1f6feb", "#5792e9", "#8bb5ef", "#c0d8f7", "#eef5fd"]
+      },
+      "light-canvas": {
+        "role": "neutral",
+        "displayName": "Light Canvas",
+        "canonical": "#f4f6f8",
+        "tonalRamp": ["#16191c", "#30353a", "#4e555d", "#707983", "#98a0a8", "#bcc2c8", "#dfe3e7", "#f4f6f8"]
+      },
+      "dark-canvas": {
+        "role": "neutral",
+        "displayName": "Dark Canvas",
+        "canonical": "#0d1117",
+        "tonalRamp": ["#0d1117", "#202832", "#36404b", "#505b67", "#737d87", "#9ba3ab", "#c7ccd1", "#f1f3f5"]
+      }
+    },
+    "typographyMeta": {
+      "title": {
+        "displayName": "Title",
+        "purpose": "Dialog and major surface headings."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Controls, descriptions, and operational detail."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Buttons, field labels, table headers, and status emphasis."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "state-fast",
+        "value": "120ms ease-out",
+        "purpose": "Hover, focus, and compact control feedback."
+      },
+      {
+        "name": "state-standard",
+        "value": "200ms ease-out",
+        "purpose": "Panel and modal state transitions."
+      }
+    ],
+    "breakpoints": []
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single primary action within an action group.",
+      "html": "<button class=\"ds-btn-primary\">Start</button>",
+      "css": ".ds-btn-primary { background:#1f6feb; color:#fff; border:0; border-radius:4px; padding:8px 16px; font:600 13px system-ui; transition:background 120ms ease-out; } .ds-btn-primary:hover { background:#1858c7; } .ds-btn-primary:focus-visible { outline:2px solid #1f6feb; outline-offset:2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "A compact supporting action without elevation.",
+      "html": "<button class=\"ds-btn-secondary\">Open logs</button>",
+      "css": ".ds-btn-secondary { background:#eef1f4; color:#1b1f24; border:1px solid #d0d7de; border-radius:4px; padding:8px 16px; font:600 13px system-ui; transition:border-color 120ms ease-out; } .ds-btn-secondary:hover { border-color:#1f6feb; } .ds-btn-secondary:focus-visible { outline:2px solid #1f6feb; outline-offset:2px; }"
+    },
+    {
+      "name": "Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "A familiar desktop field with explicit focus.",
+      "html": "<input class=\"ds-input\" aria-label=\"Profile name\" placeholder=\"Profile name\">",
+      "css": ".ds-input { background:#fff; color:#1b1f24; border:1px solid #d0d7de; border-radius:4px; padding:6px 8px; font:400 13px system-ui; } .ds-input:focus-visible { border-color:#1f6feb; outline:1px solid #1f6feb; } .ds-input:disabled { color:#5b6570; background:#eef1f4; }"
+    },
+    {
+      "name": "Status Chip",
+      "kind": "chip",
+      "description": "Semantic runtime state expressed by text and color.",
+      "html": "<span class=\"ds-status\" role=\"status\">Running</span>",
+      "css": ".ds-status { display:inline-block; background:#dafbe1; color:#1a7f37; border-radius:4px; padding:2px 6px; font:600 13px system-ui; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Control Surface",
+    "overview": "Zarya uses restrained neutral layers and a single signal-blue accent so the current state and next safe action remain obvious. Desktop App Toolkit supplies interaction quality while Zarya keeps its own information architecture.",
+    "keyCharacteristics": [
+      "Restrained neutral surfaces with one functional accent.",
+      "Compact system typography and predictable desktop density.",
+      "Clear semantic state labels that include text as well as color.",
+      "Short state transitions only; no decorative choreography.",
+      "Progressive disclosure for expert settings."
+    ],
+    "rules": [
+      {
+        "name": "The One Signal Rule",
+        "body": "Signal Blue occupies at most a small minority of a screen and appears only where interaction or current state earns it.",
+        "section": "colors"
+      },
+      {
+        "name": "The Desktop Scale Rule",
+        "body": "Do not use oversized display typography; hierarchy comes from weight, grouping, and spacing.",
+        "section": "typography"
+      },
+      {
+        "name": "The Physical Layer Rule",
+        "body": "A shadow is allowed only when a surface genuinely floats above another interaction layer.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use Signal Blue only for primary interaction, focus, selection, and links.",
+      "Do pair semantic color with explicit text.",
+      "Do preserve keyboard order, accessible names, and translated text lengths."
+    ],
+    "donts": [
+      "Don't make Zarya a visual clone of Telegram Desktop.",
+      "Don't introduce cyberpunk VPN dashboards, neon gradients, glowing maps, speed gauges, or decorative glass panels.",
+      "Don't communicate runtime, warning, or recovery state through color alone."
+    ]
+  }
+}

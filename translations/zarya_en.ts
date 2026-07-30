@@ -2686,7 +2686,15 @@ Select a profile and press Start, or use a running TUN session.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Runtime: Running</source>
+        <source>Runtime: Running — %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Experimental runtime active</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recommended: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2709,7 +2717,7 @@ Routing: %4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Runtime: Stopped</source>
+        <source>Runtime: Stopped — %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3153,21 +3161,6 @@ Cancel = abort</source>
     </message>
     <message>
         <source>Uses KDE kioslaverc proxy settings. Affects KDE/KIO and applications that respect desktop proxy settings; CLI tools may need http_proxy environment variables.</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>zarya::LibUiSpikeDialog</name>
-    <message>
-        <source>Desktop App UI spike</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This dialog uses desktop-app/lib_ui (FlatLabel + RoundButton). The rest of Zarya still uses Qt Widgets + ThemeManager.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

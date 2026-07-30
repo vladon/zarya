@@ -53,10 +53,11 @@ StatusConfiguredStrip::StatusConfiguredStrip(QWidget* parent)
     const auto primary = layout->add(
         object_ptr<Ui::RoundButton>(
             layout,
-            rpl::single(tr("Start")),
-            st::defaultBoxButton),
+            rpl::single(StatusDashboardWidget::tr("Start")),
+            st::defaultActiveButton),
         st::boxRowPadding);
     m_primary = primary;
+    primary->setAccessibleName(StatusDashboardWidget::tr("Start"));
     primary->setClickedCallback([this] {
         QMetaObject::invokeMethod(
             this,
@@ -73,10 +74,11 @@ StatusConfiguredStrip::StatusConfiguredStrip(QWidget* parent)
     const auto secondary = layout->add(
         object_ptr<Ui::RoundButton>(
             layout,
-            rpl::single(tr("Test")),
+            rpl::single(StatusDashboardWidget::tr("Test")),
             st::defaultBoxButton),
         st::boxRowPadding);
     m_secondary = secondary;
+    secondary->setAccessibleName(StatusDashboardWidget::tr("Test"));
     secondary->setClickedCallback([this] {
         QMetaObject::invokeMethod(
             this,
@@ -93,10 +95,11 @@ StatusConfiguredStrip::StatusConfiguredStrip(QWidget* parent)
     const auto diag = layout->add(
         object_ptr<Ui::RoundButton>(
             layout,
-            rpl::single(tr("Create Diagnostics")),
+            rpl::single(StatusDashboardWidget::tr("Create Diagnostics")),
             st::defaultBoxButton),
         st::boxRowPadding);
     m_diag = diag;
+    diag->setAccessibleName(StatusDashboardWidget::tr("Create Diagnostics"));
     diag->hide();
     diag->setClickedCallback([this] {
         QMetaObject::invokeMethod(
@@ -106,7 +109,7 @@ StatusConfiguredStrip::StatusConfiguredStrip(QWidget* parent)
     });
 
     root->sizeValue() | rpl::on_next(
-        [=](QSize size) {
+        [this, layout](QSize size) {
             layout->resizeToWidth(size.width());
             layout->move(0, 0);
             setFixedHeight(layout->height());
@@ -128,39 +131,48 @@ void StatusConfiguredStrip::updateModel(const StatusDashboardModel& model)
 
     if (model.experimentalRuntimeActive) {
         m_badge->setKind(StatusBadgeKind::Warning);
-        m_badge->setBadgeText(tr("Experimental runtime active"));
+        m_badge->setBadgeText(StatusDashboardWidget::tr("Experimental runtime active"));
     } else if (!model.recommendedRuntimeText.isEmpty()) {
         m_badge->setKind(StatusBadgeKind::Ok);
-        m_badge->setBadgeText(tr("Recommended: %1").arg(model.recommendedRuntimeText));
+        m_badge->setBadgeText(
+            StatusDashboardWidget::tr("Recommended: %1").arg(model.recommendedRuntimeText));
     }
 
     setRunning(model.running);
 
     if (model.running) {
-        title->setText(tr("Runtime: Running — %1").arg(model.runtimeText));
+        title->setText(
+            StatusDashboardWidget::tr("Runtime: Running — %1").arg(model.runtimeText));
         if (!model.experimentalRuntimeActive) {
             m_badge->setKind(StatusBadgeKind::Running);
-            m_badge->setBadgeText(tr("Running"));
+            m_badge->setBadgeText(StatusDashboardWidget::tr("Running"));
         }
         detail->setText(
-            tr("Profile: %1\nLocal proxy: %2\nSystem proxy: %3\nRouting: %4")
+            StatusDashboardWidget::tr(
+                "Profile: %1\nLocal proxy: %2\nSystem proxy: %3\nRouting: %4")
                 .arg(model.profileName, model.localEndpoint, model.systemProxyText,
                      model.routingText));
-        primary->setText(rpl::single(tr("Stop")));
-        secondary->setText(rpl::single(tr("Open Logs")));
+        primary->setText(rpl::single(StatusDashboardWidget::tr("Stop")));
+        secondary->setText(rpl::single(StatusDashboardWidget::tr("Open Logs")));
+        primary->setAccessibleName(StatusDashboardWidget::tr("Stop"));
+        secondary->setAccessibleName(StatusDashboardWidget::tr("Open Logs"));
         diag->show();
     } else {
-        title->setText(tr("Runtime: Stopped — %1").arg(model.runtimeText));
+        title->setText(
+            StatusDashboardWidget::tr("Runtime: Stopped — %1").arg(model.runtimeText));
         if (!model.experimentalRuntimeActive) {
             m_badge->setKind(StatusBadgeKind::Stopped);
-            m_badge->setBadgeText(tr("Stopped"));
+            m_badge->setBadgeText(StatusDashboardWidget::tr("Stopped"));
         }
         detail->setText(
-            tr("Selected profile: %1\nRouting: %2\nDNS: %3\nSystem proxy: %4\nCore: %5")
+            StatusDashboardWidget::tr(
+                "Selected profile: %1\nRouting: %2\nDNS: %3\nSystem proxy: %4\nCore: %5")
                 .arg(model.profileName.isEmpty() ? QStringLiteral("—") : model.profileName,
                      model.routingText, model.dnsText, model.systemProxyText, model.coreText));
-        primary->setText(rpl::single(tr("Start")));
-        secondary->setText(rpl::single(tr("Test")));
+        primary->setText(rpl::single(StatusDashboardWidget::tr("Start")));
+        secondary->setText(rpl::single(StatusDashboardWidget::tr("Test")));
+        primary->setAccessibleName(StatusDashboardWidget::tr("Start"));
+        secondary->setAccessibleName(StatusDashboardWidget::tr("Test"));
         diag->hide();
     }
 
