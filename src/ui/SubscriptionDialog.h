@@ -4,9 +4,10 @@
 
 #include <QDialog>
 
-class QCheckBox;
-class QLineEdit;
-class QPlainTextEdit;
+namespace Ui {
+class Checkbox;
+class InputField;
+} // namespace Ui
 
 namespace zarya {
 
@@ -16,15 +17,19 @@ class SubscriptionDialog : public QDialog {
 public:
     static bool editSubscription(QWidget* parent, Subscription& subscription);
 
+protected:
+    bool eventFilter(QObject* watched, QEvent* event) override;
+
 private:
     explicit SubscriptionDialog(QWidget* parent, Subscription& subscription);
+    void acceptChanges();
 
     Subscription& m_subscription;
-    QLineEdit* m_nameEdit = nullptr;
-    QLineEdit* m_urlEdit = nullptr;
-    QCheckBox* m_enabledCheck = nullptr;
-    QLineEdit* m_userAgentEdit = nullptr;
-    QPlainTextEdit* m_remarksEdit = nullptr;
+    Ui::InputField* m_nameEdit = nullptr;
+    Ui::InputField* m_urlEdit = nullptr;
+    Ui::Checkbox* m_enabledCheck = nullptr;
+    Ui::InputField* m_userAgentEdit = nullptr;
+    Ui::InputField* m_remarksEdit = nullptr;
 };
 
 } // namespace zarya

@@ -39,7 +39,9 @@ unmigrated surface when it owns no visual styling or interaction.
    - Progress: the shared button roles and synchronous message presenter are available, including
      long-message scrolling, keyboard handling, semantic text, and the pre-toolkit native
      fallback. Share-link import is the first migrated workflow; multi-action recovery and update
-     prompts remain on the Qt presenter until their action models are migrated.
+     prompts remain on the Qt presenter until their action models are migrated. Shared single-line
+     and multi-line fields plus checkboxes are available, and the subscription editor is the first
+     complete form migrated to them.
 3. **Main application shell**
    - Migrate profile actions, filters, empty state, log controls, and operational feedback.
    - Keep `QTableView` and the log text engine behind toolkit-styled hosts until their replacement

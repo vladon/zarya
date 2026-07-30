@@ -2180,6 +2180,12 @@ DNS: %3
     <message>
         <source>Remarks</source>
         <translation>Заметки</translation></message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation></message>
+    <message>
+        <source>Save</source>
+        <translation>Сохранить</translation></message>
 </context>
 <context>
     <name>SubscriptionManagerDialog</name>
