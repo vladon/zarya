@@ -1,5 +1,7 @@
 #include "ui/MainWindow.h"
 
+#include "base/algorithm.h"
+#include "base/basic_types.h"
 #include "ui/TrayController.h"
 
 #include "domain/CoreType.h"
@@ -46,6 +48,7 @@
 #include "ui/RoutingManagerDialog.h"
 #include "ui/SettingsDialog.h"
 #include "ui/AppUpdateDialog.h"
+#include "ui/desktopapp/ZaryaControls.h"
 #include "ui/theme/ThemeManager.h"
 #include "updater/AppUpdateChecker.h"
 #include "updater/AppUpdateStateManager.h"
@@ -57,6 +60,10 @@
 #include "storage/GeoDataSettingsStore.h"
 #include "ui/SubscriptionManagerDialog.h"
 #include "ui/SingBoxConfigPreviewDialog.h"
+
+#include "styles/style_layers.h"
+#include "ui/widgets/buttons.h"
+#include "ui/widgets/labels.h"
 
 #include <QApplication>
 #include <QClipboard>
@@ -192,25 +199,55 @@ void MainWindow::setupUi()
     });
 
     auto* logToolbar = new QWidget(this);
-    auto* copySelectedBtn = new QPushButton(tr("Copy selected"), logToolbar);
-    auto* copyAllBtn = new QPushButton(tr("Copy all visible"), logToolbar);
-    auto* clearViewBtn = new QPushButton(tr("Clear view"), logToolbar);
-    auto* diagBtn = new QPushButton(tr("Create diagnostics"), logToolbar);
-    connect(copySelectedBtn, &QPushButton::clicked, this, [this]() {
-        QApplication::clipboard()->setText(m_logView->textCursor().selectedText());
+    auto logFilterLabel = object_ptr<Ui::FlatLabel>(
+        logToolbar,
+        tr("Log filter:"),
+        st::boxLabel);
+    logFilterLabel->setAccessibleName(tr("Log filter:"));
+    auto copySelectedBtn = makeZaryaButton(
+        logToolbar,
+        tr("Copy selected"),
+        ZaryaButtonRole::Secondary);
+    auto copyAllBtn = makeZaryaButton(
+        logToolbar,
+        tr("Copy all visible"),
+        ZaryaButtonRole::Secondary);
+    auto clearViewBtn = makeZaryaButton(
+        logToolbar,
+        tr("Clear view"),
+        ZaryaButtonRole::Secondary);
+    auto diagBtn = makeZaryaButton(
+        logToolbar,
+        tr("Create diagnostics"),
+        ZaryaButtonRole::Primary);
+    copySelectedBtn->setClickedCallback([this] {
+        QMetaObject::invokeMethod(this, [this] {
+            QApplication::clipboard()->setText(m_logView->textCursor().selectedText());
+        }, Qt::QueuedConnection);
     });
-    connect(copyAllBtn, &QPushButton::clicked, this,
-            [this]() { QApplication::clipboard()->setText(m_logView->toPlainText()); });
-    connect(clearViewBtn, &QPushButton::clicked, this, [this]() { m_logView->clear(); });
-    connect(diagBtn, &QPushButton::clicked, this, &MainWindow::onCreateDiagnosticsBundle);
+    copyAllBtn->setClickedCallback([this] {
+        QMetaObject::invokeMethod(this, [this] {
+            QApplication::clipboard()->setText(m_logView->toPlainText());
+        }, Qt::QueuedConnection);
+    });
+    clearViewBtn->setClickedCallback([this] {
+        QMetaObject::invokeMethod(this, [this] { m_logView->clear(); }, Qt::QueuedConnection);
+    });
+    diagBtn->setClickedCallback([this] {
+        QMetaObject::invokeMethod(
+            this,
+            [this] { onCreateDiagnosticsBundle(); },
+            Qt::QueuedConnection);
+    });
     auto* logToolbarLayout = new QHBoxLayout(logToolbar);
     logToolbarLayout->setContentsMargins(0, 0, 0, 0);
-    logToolbarLayout->addWidget(new QLabel(tr("Log filter:"), logToolbar));
+    logToolbarLayout->setSpacing(8);
+    logToolbarLayout->addWidget(logFilterLabel.release());
     logToolbarLayout->addWidget(m_logFilterCombo);
-    logToolbarLayout->addWidget(copySelectedBtn);
-    logToolbarLayout->addWidget(copyAllBtn);
-    logToolbarLayout->addWidget(clearViewBtn);
-    logToolbarLayout->addWidget(diagBtn);
+    logToolbarLayout->addWidget(copySelectedBtn.release());
+    logToolbarLayout->addWidget(copyAllBtn.release());
+    logToolbarLayout->addWidget(clearViewBtn.release());
+    logToolbarLayout->addWidget(diagBtn.release());
     logToolbarLayout->addStretch();
 
     auto* logPanel = new QWidget(this);
