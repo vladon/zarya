@@ -515,6 +515,14 @@ elseif(APPLE)
         MACOSX_BUNDLE_BUNDLE_VERSION ${ZARYA_VERSION_STRING}
     )
     target_link_libraries(zarya PRIVATE "-framework AppKit")
+    add_custom_command(TARGET zarya POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory
+            "$<TARGET_FILE_DIR:zarya>/../Resources"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_BINARY_DIR}/lib_ui.rcc"
+            "$<TARGET_FILE_DIR:zarya>/../Resources/lib_ui.rcc"
+        COMMENT "Copy Desktop App Toolkit resources into the app bundle"
+    )
 endif()
 
 if(ZARYA_STATIC_QT AND WIN32)

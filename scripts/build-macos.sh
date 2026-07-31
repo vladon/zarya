@@ -88,6 +88,17 @@ if [[ "$FORCE" -eq 1 && -d "$BUILD_DIR" ]]; then
   rm -rf "$BUILD_DIR"
 fi
 
+# package-macos.sh used to deploy Qt into the build-tree app in place. A later
+# relink would then leave bundled plug-ins next to an executable linked against
+# Homebrew Qt, causing Qt to load two copies of QtCore/QtGui and abort at startup.
+# Recreate any package-contaminated app before an incremental local build.
+for app_path in "$BUILD_DIR/zarya.app" "$BUILD_DIR/$CONFIG/zarya.app"; do
+  if [[ -f "$app_path/Contents/Resources/portable.flag" ]]; then
+    echo "Removing packaged app bundle left in the build tree: $app_path"
+    rm -rf "$app_path"
+  fi
+done
+
 if [[ ! -f "$BUILD_DIR/CMakeCache.txt" ]]; then
   echo "No build tree — configuring with Qt at $QT_PREFIX ..."
   cmake -S "$ROOT" -B "$BUILD_DIR" \

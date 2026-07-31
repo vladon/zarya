@@ -174,6 +174,36 @@ fi
 
 
 
+SOURCE_APP_PATH="$APP_PATH"
+
+PACKAGE_STAGE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/zarya-package.XXXXXX")"
+
+cleanup_package_stage() {
+
+  rm -rf "$PACKAGE_STAGE_DIR"
+
+}
+
+trap cleanup_package_stage EXIT
+
+APP_PATH="$PACKAGE_STAGE_DIR/zarya.app"
+
+ditto "$SOURCE_APP_PATH" "$APP_PATH"
+
+# Never reuse a deployment left by an older in-place packaging run. macdeployqt
+# must inspect the freshly linked executable and produce one coherent Qt set.
+rm -rf "$APP_PATH/Contents/Frameworks" "$APP_PATH/Contents/PlugIns"
+
+if [[ ! -f "$APP_PATH/Contents/Resources/lib_ui.rcc" ]]; then
+
+  echo "lib_ui.rcc is missing from the macOS app bundle; rebuild zarya before packaging" >&2
+
+  exit 1
+
+fi
+
+
+
 HELPER_BIN="$BUILD_DIR/zarya-helper"
 
 [[ -x "$HELPER_BIN" ]] || HELPER_BIN="$BUILD_DIR/Release/zarya-helper"
@@ -306,13 +336,118 @@ PY
 
 
 
-if command -v macdeployqt >/dev/null 2>&1; then
+MACDEPLOYQT="${MACDEPLOYQT:-}"
 
-  macdeployqt "$APP_PATH"
+if [[ -z "$MACDEPLOYQT" && -f "$BUILD_DIR/CMakeCache.txt" ]]; then
 
-else
+  QT6_DIR="$(sed -n 's/^Qt6_DIR:PATH=//p' "$BUILD_DIR/CMakeCache.txt" | head -n 1)"
 
-  echo "warning: macdeployqt not found" >&2
+  if [[ -n "$QT6_DIR" && -x "$QT6_DIR/../../../bin/macdeployqt" ]]; then
+
+    MACDEPLOYQT="$(cd "$QT6_DIR/../../../bin" && pwd)/macdeployqt"
+
+  fi
+
+fi
+
+if [[ -z "$MACDEPLOYQT" ]]; then
+
+  MACDEPLOYQT="$(command -v macdeployqt || true)"
+
+fi
+
+if [[ ! -x "$MACDEPLOYQT" ]]; then
+
+  echo "macdeployqt not found; a portable macOS package cannot be created" >&2
+
+  exit 1
+
+fi
+
+
+
+# macdeployqt treats every entry under Contents/MacOS as a code object while
+# ad-hoc signing. Keep data files out of its scan, deploy the auxiliary
+# executables explicitly, then restore the complete package payload.
+DEPLOY_PAYLOAD_DIR="$PACKAGE_STAGE_DIR/macos-payload"
+
+mkdir -p "$DEPLOY_PAYLOAD_DIR"
+
+for entry in build-integrity.json cores translations; do
+
+  if [[ -e "$MACOS_DIR/$entry" ]]; then
+
+    mv "$MACOS_DIR/$entry" "$DEPLOY_PAYLOAD_DIR/$entry"
+
+  fi
+
+done
+
+
+
+MACDEPLOYQT_ARGS=("$APP_PATH")
+
+[[ -x "$MACOS_DIR/zarya-helper" ]] && MACDEPLOYQT_ARGS+=("-executable=$MACOS_DIR/zarya-helper")
+
+[[ -x "$MACOS_DIR/zarya-updater" ]] && MACDEPLOYQT_ARGS+=("-executable=$MACOS_DIR/zarya-updater")
+
+"$MACDEPLOYQT" "${MACDEPLOYQT_ARGS[@]}"
+
+
+
+for payload in "$DEPLOY_PAYLOAD_DIR"/*; do
+
+  [[ -e "$payload" ]] || continue
+
+  mv "$payload" "$MACOS_DIR/$(basename "$payload")"
+
+done
+
+
+
+if [[ ! -f "$APP_PATH/Contents/PlugIns/platforms/libqcocoa.dylib" ]]; then
+
+  echo "macdeployqt did not bundle the Cocoa platform plug-in" >&2
+
+  exit 1
+
+fi
+
+
+
+EXTERNAL_DEPENDENCIES=""
+
+while IFS= read -r candidate; do
+
+  if file "$candidate" | grep -q 'Mach-O'; then
+
+    INSTALL_NAME="$(otool -D "$candidate" 2>/dev/null | sed -n '2p')"
+
+    while IFS= read -r dependency; do
+
+      [[ -n "$INSTALL_NAME" && "$dependency" == "$INSTALL_NAME" ]] && continue
+
+      case "$dependency" in
+
+        @*|/System/Library/*|/usr/lib/*) ;;
+
+        /*) EXTERNAL_DEPENDENCIES+="$candidate -> $dependency"$'\n' ;;
+
+      esac
+
+    done < <(otool -L "$candidate" | tail -n +2 | awk '{print $1}')
+
+  fi
+
+done < <(find "$APP_PATH/Contents" -type f)
+
+if [[ -n "$EXTERNAL_DEPENDENCIES" ]]; then
+
+  echo "macOS bundle contains external dynamic-library dependencies:" >&2
+
+  echo "$EXTERNAL_DEPENDENCIES" >&2
+
+  exit 1
 
 fi
 
@@ -405,6 +540,44 @@ cp "$RESOURCES_DIR/build-integrity.json" "$MACOS_DIR/build-integrity.json" 2>/de
 
 
 
+# macdeployqt ad-hoc signs binaries before the package payload and manifest are
+# finalized. Refresh those ad-hoc signatures so unsigned artifacts remain
+# launchable on Apple silicon. Sign the main executables outside the bundle so
+# codesign does not mistake data under Contents/MacOS for nested code.
+if [[ "$SIGN" -eq 0 ]]; then
+
+  while IFS= read -r candidate; do
+
+    if file "$candidate" | grep -q 'Mach-O'; then
+
+      codesign --force --sign - "$candidate" >/dev/null
+
+    fi
+
+  done < <(find "$APP_PATH/Contents/Frameworks" "$APP_PATH/Contents/PlugIns" -type f)
+
+  for executable_name in zarya zarya-helper zarya-updater; do
+
+    if [[ -x "$MACOS_DIR/$executable_name" ]]; then
+
+      TEMP_EXECUTABLE="$PACKAGE_STAGE_DIR/$executable_name"
+
+      mv "$MACOS_DIR/$executable_name" "$TEMP_EXECUTABLE"
+
+      codesign --force --sign - "$TEMP_EXECUTABLE" >/dev/null
+
+      mv "$TEMP_EXECUTABLE" "$MACOS_DIR/$executable_name"
+
+    fi
+
+  done
+
+  rm -rf "$APP_PATH/Contents/_CodeSignature"
+
+fi
+
+
+
 mkdir -p "$OUTPUT_DIR"
 
 ZIP_PATH="$OUTPUT_DIR/$ARTIFACT_NAME"
@@ -426,4 +599,3 @@ if [[ "$SKIP_TESTS" -eq 0 ]]; then
   python3 "$ROOT/scripts/verify-release-artifacts.py" --artifact "$ZIP_PATH" --expected-version "$VERSION" --require-checksum --allow-unsigned
 
 fi
-
