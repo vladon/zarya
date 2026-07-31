@@ -63,6 +63,10 @@ Produces `Zarya-<version>-macos-<arch>.zip` containing `Zarya.app`.
 
 `zarya-helper` is copied into `Contents/MacOS/`. Translations and docs go under `Contents/Resources/`.
 
+Packaging works from a temporary copy of the CMake app bundle so `macdeployqt` cannot contaminate
+the local build tree. The package step also rejects missing Cocoa plug-ins and absolute dynamic-library
+dependencies outside macOS system locations.
+
 ## Linux tarball
 
 ```bash
