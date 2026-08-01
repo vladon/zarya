@@ -34,6 +34,41 @@ private:
     QWidget* m_field = nullptr; // Ui::InputField*
 };
 
+class ZaryaTextArea final : public QWidget {
+    Q_OBJECT
+
+public:
+    explicit ZaryaTextArea(
+        const QString& placeholder,
+        QWidget* parent = nullptr,
+        int minimumHeight = 140);
+
+    [[nodiscard]] QString text() const;
+    void setText(const QString& text);
+    void clear();
+
+Q_SIGNALS:
+    void textChanged(const QString& text);
+
+protected:
+    void resizeEvent(QResizeEvent* event) override;
+
+private:
+    QWidget* m_field = nullptr; // Ui::InputField*
+};
+
+class ZaryaBodyText final : public QWidget {
+    Q_OBJECT
+
+public:
+    explicit ZaryaBodyText(const QString& text = {}, QWidget* parent = nullptr);
+
+    void setText(const QString& text);
+
+private:
+    QWidget* m_label = nullptr; // Ui::FlatLabel*
+};
+
 class ZaryaNumberField final : public QWidget {
     Q_OBJECT
 
@@ -113,6 +148,10 @@ class ZaryaDialogActionRow final : public QWidget {
     Q_OBJECT
 
 public:
+    ZaryaDialogActionRow(
+        const QString& acceptText,
+        const QString& cancelText,
+        QWidget* parent);
     ZaryaDialogActionRow(
         const QString& acceptText,
         const QString& cancelText,

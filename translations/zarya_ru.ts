@@ -761,6 +761,58 @@ sing-box: %3 (%4)</translation></message>
     <message>
         <source>Partial import</source>
         <translation>Частичный импорт</translation></message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation></message>
+</context>
+<context>
+    <name>ProfileImportWidget</name>
+    <message>
+        <source>Paste vless://, vmess://, trojan://, ss://, hysteria2://, or wireguard:// links here.
+One link per line.</source>
+        <translation>Вставьте сюда ссылки vless://, vmess://, trojan://, ss://, hysteria2:// или wireguard://.
+Одна ссылка на строку.</translation></message>
+    <message>
+        <source>Paste links to see parse summary.</source>
+        <translation>Вставьте ссылки, чтобы увидеть сводку разбора.</translation></message>
+    <message>
+        <source>Parsed: VLESS %1, VMess %2, Trojan %3, Shadowsocks %4, Hysteria2 %5, WireGuard %6, Unsupported %7</source>
+        <translation>Разобрано: VLESS %1, VMess %2, Trojan %3, Shadowsocks %4, Hysteria2 %5, WireGuard %6, неподдерживаемых %7</translation></message>
+</context>
+<context>
+    <name>FirstRunChecklistWidget</name>
+    <message>
+        <source>Core: Xray installed (%1)</source>
+        <translation>Ядро: Xray установлен (%1)</translation></message>
+    <message>
+        <source>unknown version</source>
+        <translation>версия неизвестна</translation></message>
+    <message>
+        <source>Core: Xray missing</source>
+        <translation>Ядро: Xray отсутствует</translation></message>
+    <message>
+        <source>Profiles: %1 profile(s)</source>
+        <translation>Профили: %1</translation></message>
+    <message>
+        <source>Profiles: none</source>
+        <translation>Профили: нет</translation></message>
+    <message>
+        <source>Runtime: Experimental TUN via sing-box</source>
+        <translation>Режим: экспериментальный TUN через sing-box</translation></message>
+    <message>
+        <source>Runtime: System proxy via Xray</source>
+        <translation>Режим: системный прокси через Xray</translation></message>
+    <message>
+        <source>%1
+%2
+Routing: selected
+DNS: selected
+%3</source>
+        <translation>%1
+%2
+Маршрутизация: выбрана
+DNS: выбран
+%3</translation></message>
 </context>
 <context>
     <name>LanguageManager</name>

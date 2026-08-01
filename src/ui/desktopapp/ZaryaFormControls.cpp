@@ -114,6 +114,68 @@ void ZaryaTextField::resizeEvent(QResizeEvent* event)
     fitField(m_field, event->size().width());
 }
 
+ZaryaTextArea::ZaryaTextArea(
+    const QString& placeholder,
+    QWidget* parent,
+    int minimumHeight)
+    : QWidget(parent)
+{
+    auto* field = Ui::CreateChild<Ui::InputField>(
+        this,
+        st::defaultInputField,
+        Ui::InputField::Mode::MultiLine,
+        rpl::single(placeholder),
+        TextWithTags());
+    field->setMinHeight(minimumHeight);
+    m_field = field;
+    setFocusProxy(field);
+    setMinimumHeight(minimumHeight);
+    field->changes() | rpl::on_next(
+        [this, field] { Q_EMIT textChanged(field->getLastText()); },
+        field->lifetime());
+}
+
+QString ZaryaTextArea::text() const
+{
+    return static_cast<Ui::InputField*>(m_field)->getLastText();
+}
+
+void ZaryaTextArea::setText(const QString& text)
+{
+    static_cast<Ui::InputField*>(m_field)->setText(text);
+}
+
+void ZaryaTextArea::clear()
+{
+    setText(QString());
+}
+
+void ZaryaTextArea::resizeEvent(QResizeEvent* event)
+{
+    QWidget::resizeEvent(event);
+    auto* field = static_cast<Ui::InputField*>(m_field);
+    field->resizeToWidth(std::max(event->size().width(), 0));
+    field->resize(field->width(), std::max(event->size().height(), minimumHeight()));
+}
+
+ZaryaBodyText::ZaryaBodyText(const QString& text, QWidget* parent)
+    : QWidget(parent)
+{
+    auto* label = Ui::CreateChild<Ui::FlatLabel>(this, text, st::defaultFlatLabel);
+    label->setAccessibleName(text);
+    m_label = label;
+    auto* layout = new QHBoxLayout(this);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(label);
+}
+
+void ZaryaBodyText::setText(const QString& text)
+{
+    auto* label = static_cast<Ui::FlatLabel*>(m_label);
+    label->setText(text);
+    label->setAccessibleName(text);
+}
+
 ZaryaNumberField::ZaryaNumberField(
     const QString& placeholder,
     int minimum,
@@ -263,6 +325,18 @@ void ZaryaValidationMessage::updateColor()
 {
     static_cast<Ui::FlatLabel*>(m_label)->setTextColorOverride(
         ThemeManager::instance().tokens().danger);
+}
+
+ZaryaDialogActionRow::ZaryaDialogActionRow(
+    const QString& acceptText,
+    const QString& cancelText,
+    QWidget* parent)
+    : ZaryaDialogActionRow(
+        acceptText,
+        cancelText,
+        parent,
+        ZaryaButtonRole::Primary)
+{
 }
 
 ZaryaDialogActionRow::ZaryaDialogActionRow(

@@ -964,6 +964,65 @@ sing-box: %3 (%4)</source>
         <source>Partial import</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ProfileImportWidget</name>
+    <message>
+        <source>Paste vless://, vmess://, trojan://, ss://, hysteria2://, or wireguard:// links here.
+One link per line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste links to see parse summary.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Parsed: VLESS %1, VMess %2, Trojan %3, Shadowsocks %4, Hysteria2 %5, WireGuard %6, Unsupported %7</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>FirstRunChecklistWidget</name>
+    <message>
+        <source>Core: Xray installed (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>unknown version</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Core: Xray missing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Profiles: %1 profile(s)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Profiles: none</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Runtime: Experimental TUN via sing-box</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Runtime: System proxy via Xray</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1
+%2
+Routing: selected
+DNS: selected
+%3</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>LanguageManager</name>

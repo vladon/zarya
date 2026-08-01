@@ -3,10 +3,9 @@
 #include "i18n/ZaryaTr.h"
 #include "subscription/ShareLinkParser.h"
 #include "ui/desktopapp/UiMessagePresenter.h"
+#include "ui/desktopapp/ZaryaFormControls.h"
 
-#include <QDialogButtonBox>
 #include <QRegularExpression>
-#include <QPlainTextEdit>
 #include <QVBoxLayout>
 
 namespace zarya {
@@ -16,19 +15,22 @@ ImportVlessDialog::ImportVlessDialog(QWidget* parent)
 {
     setWindowTitle(tr("Import share links"));
 
-    m_linksEdit = new QPlainTextEdit(this);
-    m_linksEdit->setPlaceholderText(
+    m_linksEdit = new ZaryaTextArea(
         tr("Paste one vless://, vmess://, trojan://, ss://, hysteria2://, or wireguard:// "
-           "link per line…"));
-    m_linksEdit->setMinimumHeight(160);
+           "link per line…"),
+        this,
+        160);
 
-    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
-    connect(buttons, &QDialogButtonBox::accepted, this, &ImportVlessDialog::onImport);
-    connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
+    m_actions = new ZaryaDialogActionRow(
+        tr("Import"),
+        tr("Cancel"),
+        this);
+    connect(m_actions, &ZaryaDialogActionRow::accepted, this, &ImportVlessDialog::onImport);
+    connect(m_actions, &ZaryaDialogActionRow::rejected, this, &QDialog::reject);
 
     auto* layout = new QVBoxLayout(this);
     layout->addWidget(m_linksEdit);
-    layout->addWidget(buttons);
+    layout->addWidget(m_actions);
     resize(560, 280);
 }
 
@@ -40,8 +42,8 @@ QVector<Profile> ImportVlessDialog::importedProfiles() const
 void ImportVlessDialog::onImport()
 {
     const QStringList lines =
-        m_linksEdit->toPlainText().split(QRegularExpression(QStringLiteral("[\\r\\n]+")),
-                                       Qt::SkipEmptyParts);
+        m_linksEdit->text().split(QRegularExpression(QStringLiteral("[\\r\\n]+")),
+                                  Qt::SkipEmptyParts);
     if (lines.isEmpty()) {
         UiMessagePresenter::warning(this, tr("Import"), tr("No links to import."));
         return;
