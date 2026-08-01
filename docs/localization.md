@@ -85,7 +85,11 @@ Changing language shows a restart notice; a full restart applies translations ev
 python scripts/check-translations.py
 ```
 
-Verifies TS files exist, flags Russian text in C++ source strings, and reports Russian coverage.
+Verifies TS files exist, extracts translatable strings from all of `src/` with
+Qt `lupdate`, fails when either EN or RU is missing a context/source pair,
+flags Russian text in C++ source strings, and reports Russian coverage. Qt host
+tools are therefore required; `--skip-source-scan` is reserved for constrained
+environments where they cannot be installed.
 
 ## For translators
 

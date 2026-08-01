@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
-"""Lightweight translation checks for CI and local development."""
+"""Translation checks for CI and local development."""
 
 from __future__ import annotations
 
+import argparse
+import os
 import re
+import shutil
+import subprocess
 import sys
+import tempfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -73,6 +78,91 @@ def check_ru_coverage() -> tuple[list[str], float]:
     return errors, coverage
 
 
+def find_lupdate() -> Path | None:
+    names = ("lupdate", "lupdate6", "lupdate-qt6")
+    for name in names:
+        found = shutil.which(name)
+        if found:
+            return Path(found)
+
+    prefixes: list[Path] = []
+    for variable in ("QT_HOST_PATH", "QT_STATIC_DIR", "QTDIR"):
+        value = os.environ.get(variable)
+        if value:
+            prefixes.append(Path(value))
+    for value in os.environ.get("CMAKE_PREFIX_PATH", "").split(os.pathsep):
+        if value:
+            prefixes.append(Path(value))
+
+    suffixes = (Path("bin/lupdate"), Path("bin/lupdate.exe"))
+    for prefix in prefixes:
+        for suffix in suffixes:
+            candidate = prefix / suffix
+            if candidate.is_file():
+                return candidate
+    return None
+
+
+def catalog_pairs(path: Path) -> set[tuple[str, str]]:
+    pairs: set[tuple[str, str]] = set()
+    root = ET.parse(path).getroot()
+    for context in root.findall("context"):
+        name = (context.findtext("name") or "").removeprefix("zarya::")
+        for message in context.findall("message"):
+            source = message.findtext("source")
+            if source is not None:
+                pairs.add((name, source))
+    return pairs
+
+
+def check_source_catalog_coverage(skip_source_scan: bool) -> list[str]:
+    if skip_source_scan:
+        print("Note: full-source translation scan skipped by request")
+        return []
+
+    lupdate = find_lupdate()
+    if lupdate is None:
+        return [
+            "Qt lupdate was not found; install Qt host tools or pass "
+            "--skip-source-scan only for environments that cannot provide them"
+        ]
+
+    with tempfile.TemporaryDirectory(prefix="zarya-translations-") as directory:
+        generated = Path(directory) / "zarya_source.ts"
+        result = subprocess.run(
+            [
+                str(lupdate),
+                str(SRC_DIR),
+                "-recursive",
+                "-extensions",
+                "cpp,h,mm",
+                "-locations",
+                "none",
+                "-ts",
+                str(generated),
+            ],
+            capture_output=True,
+            check=False,
+            text=True,
+        )
+        if result.returncode != 0:
+            detail = (result.stderr or result.stdout).strip()
+            return [f"lupdate source scan failed: {detail or 'unknown error'}"]
+        source_pairs = catalog_pairs(generated)
+
+    errors: list[str] = []
+    for language, catalog in (("English", TS_EN), ("Russian", TS_RU)):
+        if not catalog.is_file():
+            continue
+        missing = sorted(source_pairs - catalog_pairs(catalog))
+        for context, source in missing:
+            printable = source.replace("\n", "\\n")
+            errors.append(
+                f"{language} catalog missing {context!r} source {printable!r}"
+            )
+    return errors
+
+
 def check_qm_files() -> list[str]:
     errors: list[str] = []
     for name in ("zarya_en.qm", "zarya_ru.qm"):
@@ -81,10 +171,22 @@ def check_qm_files() -> list[str]:
     return errors
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--skip-source-scan",
+        action="store_true",
+        help="skip lupdate catalog completeness scan when Qt host tools are unavailable",
+    )
+    return parser.parse_args()
+
+
 def main() -> int:
+    args = parse_args()
     all_errors: list[str] = []
     all_errors.extend(check_ts_exists())
     all_errors.extend(check_russian_source_strings())
+    all_errors.extend(check_source_catalog_coverage(args.skip_source_scan))
 
     coverage_errors, coverage = check_ru_coverage()
     all_errors.extend(coverage_errors)
