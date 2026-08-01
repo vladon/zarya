@@ -63,6 +63,8 @@ VISUAL_CONTROLS = {
     "QToolButton",
     "QTreeView",
     "QTreeWidget",
+    "QWizard",
+    "QWizardPage",
 }
 CONTROL_PATTERN = re.compile(
     r"\b(" + "|".join(sorted(VISUAL_CONTROLS)) + r")\b"

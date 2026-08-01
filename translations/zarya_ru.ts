@@ -793,6 +793,14 @@ sing-box: %3 (%4)</translation></message>
     <message>
         <source>Confirm that you understand TUN mode is experimental.</source>
         <translation>Подтвердите, что понимаете экспериментальный статус режима TUN.</translation></message>
+    <message><source>Back</source><translation>Назад</translation></message>
+    <message><source>Next</source><translation>Далее</translation></message>
+    <message><source>Configure Helper</source><translation>Настроить helper</translation></message>
+    <message><source>Continue without helper</source><translation>Продолжить без helper</translation></message>
+    <message><source>Core required</source><translation>Требуется ядро</translation></message>
+    <message><source>Install or choose an Xray binary before starting a profile.</source><translation>Перед запуском профиля установите или выберите исполняемый файл Xray.</translation></message>
+    <message><source>Profile required</source><translation>Требуется профиль</translation></message>
+    <message><source>Import or add at least one profile before starting.</source><translation>Перед запуском импортируйте или добавьте хотя бы один профиль.</translation></message>
 </context>
 <context>
     <name>GeoDataManagerDialog</name>
