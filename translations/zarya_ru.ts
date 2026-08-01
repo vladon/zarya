@@ -204,6 +204,33 @@ Pre-import backup:
     <message>
         <source>This core is outside Zarya-managed directory.</source>
         <translation>Это ядро находится вне каталога, управляемого Zarya.</translation></message>
+    <message>
+        <source>Provider: GitHub Releases</source>
+        <translation>Источник: GitHub Releases</translation></message>
+    <message>
+        <source>Selected asset: %1</source>
+        <translation>Выбранный файл: %1</translation></message>
+    <message>
+        <source>Checksum: %1</source>
+        <translation>Контрольная сумма: %1</translation></message>
+    <message>
+        <source>Last checked: %1</source>
+        <translation>Последняя проверка: %1</translation></message>
+    <message>
+        <source>Last updated: %1</source>
+        <translation>Последнее обновление: %1</translation></message>
+    <message>
+        <source>Last error: %1</source>
+        <translation>Последняя ошибка: %1</translation></message>
+    <message>
+        <source>Warning: core path is external and not managed by Zarya.</source>
+        <translation>Предупреждение: путь к ядру находится вне каталога, управляемого Zarya.</translation></message>
+    <message>
+        <source>Warning: core is running. Stop it before updating.</source>
+        <translation>Предупреждение: ядро запущено. Остановите его перед обновлением.</translation></message>
+    <message>
+        <source>Downloading %1: %2 / %3 bytes</source>
+        <translation>Загрузка %1: %2 / %3 байт</translation></message>
 </context>
 <context>
     <name>DiagnosticsDialog</name>
