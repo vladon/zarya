@@ -28,6 +28,8 @@
 #include "ui/DnsManagerDialog.h"
 #include "ui/RoutingManagerDialog.h"
 #include "ui/theme/ThemeManager.h"
+#include "ui/desktopapp/ZaryaFormControls.h"
+#include "ui/desktopapp/ZaryaSelector.h"
 #include "ui/theme/ThemeMode.h"
 
 #if defined(Q_OS_LINUX)
@@ -36,7 +38,6 @@
 
 #include <QCheckBox>
 #include <QComboBox>
-#include <QDialogButtonBox>
 #include <QFileDialog>
 #include <QFormLayout>
 #include <QFrame>
@@ -58,6 +59,7 @@
 #include <QProcess>
 #include <QUrl>
 #include <QVBoxLayout>
+#include <utility>
 
 namespace zarya {
 
@@ -74,35 +76,29 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
 
     const AppSettings& settings = AppSettings::instance();
 
-    m_languageCombo = new QComboBox(this);
+    m_languageCombo = new ZaryaSelector(this);
+    QVector<ZaryaSelectorItem> languages;
     for (const LanguageInfo& lang : LanguageManager::instance().availableLanguages()) {
-        m_languageCombo->addItem(lang.nativeName, lang.code);
+        languages.push_back({lang.code, lang.nativeName, true});
     }
-    const int langIndex =
-        m_languageCombo->findData(LanguageManager::instance().currentLanguageCode());
-    if (langIndex >= 0) {
-        m_languageCombo->setCurrentIndex(langIndex);
-    }
+    m_languageCombo->setItems(
+        std::move(languages), LanguageManager::instance().currentLanguageCode());
 
-    m_themeCombo = new QComboBox(this);
-    m_themeCombo->addItem(tr("System"), themeModeToString(ThemeMode::System));
-    m_themeCombo->addItem(tr("Light"), themeModeToString(ThemeMode::Light));
-    m_themeCombo->addItem(tr("Dark"), themeModeToString(ThemeMode::Dark));
-    const int themeIndex =
-        m_themeCombo->findData(themeModeToString(ThemeManager::instance().mode()));
-    if (themeIndex >= 0) {
-        m_themeCombo->setCurrentIndex(themeIndex);
-    }
-    connect(m_themeCombo, &QComboBox::currentIndexChanged, this, [this](int) {
-        const QString mode = m_themeCombo->currentData().toString();
+    m_themeCombo = new ZaryaSelector(this);
+    m_themeCombo->setItems(
+        {
+            {themeModeToString(ThemeMode::System), tr("System"), true},
+            {themeModeToString(ThemeMode::Light), tr("Light"), true},
+            {themeModeToString(ThemeMode::Dark), tr("Dark"), true},
+        },
+        themeModeToString(ThemeManager::instance().mode()));
+    connect(m_themeCombo, &ZaryaSelector::currentKeyChanged, this, [this](const QString& mode) {
         ThemeManager::instance().setMode(themeModeFromString(mode));
     });
 
-    auto* generalForm = new QFormLayout;
-    generalForm->addRow(tr("Language"), m_languageCombo);
-    generalForm->addRow(tr("Theme"), m_themeCombo);
-    auto* generalGroup = new QGroupBox(tr("General"), this);
-    generalGroup->setLayout(generalForm);
+    auto* generalGroup = new ZaryaFormSection(tr("General"), this);
+    generalGroup->addWidget(new ZaryaFormRow(tr("Language"), m_languageCombo, generalGroup));
+    generalGroup->addWidget(new ZaryaFormRow(tr("Theme"), m_themeCombo, generalGroup));
 
     m_xrayPathEdit = new QLineEdit(settings.xrayExecutablePath(), this);
     auto* browseButton = new QPushButton(tr("Browse…"), this);
@@ -194,46 +190,38 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
         new QCheckBox(tr("Skip TCP test before real delay"), this);
     m_skipTcpBeforeRealDelayCheck->setChecked(settings.skipTcpBeforeRealDelay());
 
-    m_minimizeToTrayOnCloseCheck =
-        new QCheckBox(tr("Close button hides to tray"), this);
-    m_minimizeToTrayOnCloseCheck->setChecked(settings.minimizeToTrayOnClose());
-    m_minimizeToTrayOnMinimizeCheck =
-        new QCheckBox(tr("Minimize hides to tray"), this);
-    m_minimizeToTrayOnMinimizeCheck->setChecked(settings.minimizeToTrayOnMinimize());
-    m_showTrayNotificationsCheck =
-        new QCheckBox(tr("Show tray notifications"), this);
-    m_showTrayNotificationsCheck->setChecked(settings.showTrayNotifications());
-    m_confirmExitWhileRunningCheck =
-        new QCheckBox(tr("Confirm exit while core is running"), this);
-    m_confirmExitWhileRunningCheck->setChecked(settings.confirmExitWhileRunning());
+    m_minimizeToTrayOnCloseCheck = new ZaryaCheckBox(
+        tr("Close button hides to tray"), this, settings.minimizeToTrayOnClose());
+    m_minimizeToTrayOnMinimizeCheck = new ZaryaCheckBox(
+        tr("Minimize hides to tray"), this, settings.minimizeToTrayOnMinimize());
+    m_showTrayNotificationsCheck = new ZaryaCheckBox(
+        tr("Show tray notifications"), this, settings.showTrayNotifications());
+    m_confirmExitWhileRunningCheck = new ZaryaCheckBox(
+        tr("Confirm exit while core is running"), this, settings.confirmExitWhileRunning());
 
     m_autostartManager = AutostartManagerFactory::create();
-    m_autostartBackendLabel =
-        new QLabel(m_autostartManager ? m_autostartManager->backendName() : QString(), this);
+    m_autostartBackendLabel = new ZaryaBodyText(
+        m_autostartManager ? m_autostartManager->backendName() : QString(), this);
 
-    m_startAtLoginCheck = new QCheckBox(tr("Start Zarya when I log in"), this);
     const bool osAutostartEnabled =
         m_autostartManager && m_autostartManager->isSupported()
         && m_autostartManager->isEnabled();
-    m_startAtLoginCheck->setChecked(settings.startAtLogin() && osAutostartEnabled);
+    m_startAtLoginCheck = new ZaryaCheckBox(
+        tr("Start Zarya when I log in"),
+        this,
+        settings.startAtLogin() && osAutostartEnabled);
     m_startAtLoginCheck->setEnabled(m_autostartManager && m_autostartManager->isSupported());
 
-    m_startMinimizedToTrayCheck =
-        new QCheckBox(tr("Start minimized to tray"), this);
-    m_startMinimizedToTrayCheck->setChecked(settings.startMinimizedToTray());
-
-    m_autoStartLastProfileCheck =
-        new QCheckBox(tr("Auto-start last used profile"), this);
-    m_autoStartLastProfileCheck->setChecked(settings.autoStartLastProfile());
-
-    m_autoEnableProxyAfterAutoStartCheck = new QCheckBox(
-        tr("Enable system proxy after auto-starting profile"), this);
-    m_autoEnableProxyAfterAutoStartCheck->setChecked(
+    m_startMinimizedToTrayCheck = new ZaryaCheckBox(
+        tr("Start minimized to tray"), this, settings.startMinimizedToTray());
+    m_autoStartLastProfileCheck = new ZaryaCheckBox(
+        tr("Auto-start last used profile"), this, settings.autoStartLastProfile());
+    m_autoEnableProxyAfterAutoStartCheck = new ZaryaCheckBox(
+        tr("Enable system proxy after auto-starting profile"),
+        this,
         settings.autoEnableSystemProxyAfterAutoStart());
 
-    m_autoStartDelaySpin = new QSpinBox(this);
-    m_autoStartDelaySpin->setRange(0, 120);
-    m_autoStartDelaySpin->setSuffix(QStringLiteral(" s"));
+    m_autoStartDelaySpin = new ZaryaNumberField(QStringLiteral("0–120"), 0, 120, this);
     m_autoStartDelaySpin->setValue(settings.autoStartDelaySeconds());
 
     auto* coreForm = new QFormLayout;
@@ -271,14 +259,11 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     auto* testingGroup = new QGroupBox(tr("Testing"), this);
     testingGroup->setLayout(testingForm);
 
-    auto* desktopForm = new QFormLayout;
-    desktopForm->addRow(QString(), m_minimizeToTrayOnCloseCheck);
-    desktopForm->addRow(QString(), m_minimizeToTrayOnMinimizeCheck);
-    desktopForm->addRow(QString(), m_showTrayNotificationsCheck);
-    desktopForm->addRow(QString(), m_confirmExitWhileRunningCheck);
-
-    auto* desktopGroup = new QGroupBox(tr("Desktop behavior"), this);
-    desktopGroup->setLayout(desktopForm);
+    auto* desktopGroup = new ZaryaFormSection(tr("Desktop behavior"), this);
+    desktopGroup->addWidget(m_minimizeToTrayOnCloseCheck);
+    desktopGroup->addWidget(m_minimizeToTrayOnMinimizeCheck);
+    desktopGroup->addWidget(m_showTrayNotificationsCheck);
+    desktopGroup->addWidget(m_confirmExitWhileRunningCheck);
 
     m_routingProfileCombo = new QComboBox(this);
     refreshRoutingCombo();
@@ -311,21 +296,20 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     auto* dnsGroup = new QGroupBox(tr("DNS"), this);
     dnsGroup->setLayout(dnsForm);
 
-    auto* startupForm = new QFormLayout;
-    startupForm->addRow(tr("Autostart backend"), m_autostartBackendLabel);
-    startupForm->addRow(QString(), m_startAtLoginCheck);
-    startupForm->addRow(QString(), m_startMinimizedToTrayCheck);
-    startupForm->addRow(QString(), m_autoStartLastProfileCheck);
-    startupForm->addRow(QString(), m_autoEnableProxyAfterAutoStartCheck);
-    startupForm->addRow(tr("Auto-start delay"), m_autoStartDelaySpin);
+    auto* startupGroup = new ZaryaFormSection(tr("Startup"), this);
+    startupGroup->addWidget(
+        new ZaryaFormRow(tr("Autostart backend"), m_autostartBackendLabel, startupGroup));
+    startupGroup->addWidget(m_startAtLoginCheck);
+    startupGroup->addWidget(m_startMinimizedToTrayCheck);
+    startupGroup->addWidget(m_autoStartLastProfileCheck);
+    startupGroup->addWidget(m_autoEnableProxyAfterAutoStartCheck);
+    startupGroup->addWidget(
+        new ZaryaFormRow(tr("Auto-start delay (seconds)"), m_autoStartDelaySpin, startupGroup));
     if (m_autostartManager && !m_autostartManager->limitations().isEmpty()) {
-        auto* autostartLimits = new QLabel(m_autostartManager->limitations(), this);
-        autostartLimits->setWordWrap(true);
-        startupForm->addRow(tr("Autostart notes"), autostartLimits);
+        auto* autostartLimits = new ZaryaBodyText(m_autostartManager->limitations(), this);
+        startupGroup->addWidget(
+            new ZaryaFormRow(tr("Autostart notes"), autostartLimits, startupGroup));
     }
-
-    auto* startupGroup = new QGroupBox(tr("Startup"), this);
-    startupGroup->setLayout(startupForm);
 
     m_enableExperimentalTunCheck =
         new QCheckBox(tr("Enable experimental TUN mode"), this);
@@ -759,14 +743,13 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     connect(m_tunHelperRadio, &QRadioButton::toggled, this, &SettingsDialog::updateKillSwitchControls);
     updateKillSwitchControls();
 
-    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel,
-                                         this);
-    connect(buttons, &QDialogButtonBox::accepted, this, [this]() {
+    auto* buttons = new ZaryaDialogActionRow(tr("Save"), tr("Cancel"), this);
+    connect(buttons, &ZaryaDialogActionRow::accepted, this, [this]() {
         if (validateAndSave()) {
             accept();
         }
     });
-    connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
+    connect(buttons, &ZaryaDialogActionRow::rejected, this, &QDialog::reject);
 
     auto* content = new QWidget(this);
     auto* contentLayout = new QVBoxLayout(content);
@@ -953,7 +936,7 @@ bool SettingsDialog::validateAndSave()
     }
 
     bool languageChanged = false;
-    const QString selectedLanguage = m_languageCombo->currentData().toString();
+    const QString selectedLanguage = m_languageCombo->currentKey();
     if (selectedLanguage != LanguageManager::instance().currentLanguageCode()) {
         QString langError;
         if (!LanguageManager::instance().setLanguage(selectedLanguage, &langError)) {
@@ -963,7 +946,7 @@ bool SettingsDialog::validateAndSave()
         languageChanged = true;
     }
 
-    const ThemeMode selectedTheme = themeModeFromString(m_themeCombo->currentData().toString());
+    const ThemeMode selectedTheme = themeModeFromString(m_themeCombo->currentKey());
     if (selectedTheme != ThemeManager::instance().mode()) {
         ThemeManager::instance().setMode(selectedTheme);
     }

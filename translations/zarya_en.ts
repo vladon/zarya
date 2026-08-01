@@ -2426,7 +2426,7 @@ What should happen?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Auto-start delay</source>
+        <source>Auto-start delay (seconds)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2715,6 +2715,14 @@ Select a profile and press Start, or use a running TUN session.</source>
     </message>
     <message>
         <source>running=%1, pid=%2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

@@ -4,6 +4,7 @@
 #include <QWidget>
 
 class QResizeEvent;
+class QVBoxLayout;
 
 namespace zarya {
 
@@ -82,6 +83,20 @@ public:
 
 private:
     QWidget* m_label = nullptr; // Ui::FlatLabel*
+};
+
+class ZaryaFormSection final : public QWidget {
+    Q_OBJECT
+
+public:
+    explicit ZaryaFormSection(const QString& title, QWidget* parent = nullptr);
+
+    void addWidget(QWidget* widget);
+    void addStretch();
+
+private:
+    QWidget* m_title = nullptr; // Ui::FlatLabel*
+    QVBoxLayout* m_layout = nullptr;
 };
 
 class ZaryaNumberField final : public QWidget {

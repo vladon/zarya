@@ -1905,8 +1905,8 @@ What should happen?</source>
         <source>Autostart backend</source>
         <translation>Бэкенд автозапуска</translation></message>
     <message>
-        <source>Auto-start delay</source>
-        <translation>Задержка автозапуска</translation></message>
+        <source>Auto-start delay (seconds)</source>
+        <translation>Задержка автозапуска (секунды)</translation></message>
     <message>
         <source>Autostart notes</source>
         <translation>Примечания автозапуска</translation></message>
@@ -2143,6 +2143,12 @@ Select a profile and press Start, or use a running TUN session.</source>
     <message>
         <source>running=%1, pid=%2</source>
         <translation>running=%1, pid=%2</translation></message>
+    <message>
+        <source>Save</source>
+        <translation>Сохранить</translation></message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation></message>
 </context>
 <context>
     <name>StatusDashboardWidget</name>

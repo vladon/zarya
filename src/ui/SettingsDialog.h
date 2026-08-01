@@ -22,6 +22,10 @@ class HelperProcessManager;
 class IHelperServiceManager;
 class ISystemProxyManager;
 class RoutingManager;
+class ZaryaBodyText;
+class ZaryaCheckBox;
+class ZaryaNumberField;
+class ZaryaSelector;
 
 class SettingsDialog : public QDialog {
     Q_OBJECT
@@ -82,13 +86,13 @@ private:
     QSpinBox* m_maxConcurrentTestsSpin = nullptr;
     QCheckBox* m_skipTcpBeforeRealDelayCheck = nullptr;
 
-    QCheckBox* m_minimizeToTrayOnCloseCheck = nullptr;
-    QCheckBox* m_minimizeToTrayOnMinimizeCheck = nullptr;
-    QCheckBox* m_showTrayNotificationsCheck = nullptr;
-    QCheckBox* m_confirmExitWhileRunningCheck = nullptr;
+    ZaryaCheckBox* m_minimizeToTrayOnCloseCheck = nullptr;
+    ZaryaCheckBox* m_minimizeToTrayOnMinimizeCheck = nullptr;
+    ZaryaCheckBox* m_showTrayNotificationsCheck = nullptr;
+    ZaryaCheckBox* m_confirmExitWhileRunningCheck = nullptr;
 
-    QComboBox* m_languageCombo = nullptr;
-    QComboBox* m_themeCombo = nullptr;
+    ZaryaSelector* m_languageCombo = nullptr;
+    ZaryaSelector* m_themeCombo = nullptr;
     QComboBox* m_routingProfileCombo = nullptr;
     QComboBox* m_dnsProfileCombo = nullptr;
 
@@ -153,12 +157,12 @@ private:
     QSpinBox* m_githubApiTimeoutSpin = nullptr;
     QCheckBox* m_checkCoreUpdatesOnStartupCheck = nullptr;
 
-    QCheckBox* m_startAtLoginCheck = nullptr;
-    QCheckBox* m_startMinimizedToTrayCheck = nullptr;
-    QCheckBox* m_autoStartLastProfileCheck = nullptr;
-    QCheckBox* m_autoEnableProxyAfterAutoStartCheck = nullptr;
-    QSpinBox* m_autoStartDelaySpin = nullptr;
-    QLabel* m_autostartBackendLabel = nullptr;
+    ZaryaCheckBox* m_startAtLoginCheck = nullptr;
+    ZaryaCheckBox* m_startMinimizedToTrayCheck = nullptr;
+    ZaryaCheckBox* m_autoStartLastProfileCheck = nullptr;
+    ZaryaCheckBox* m_autoEnableProxyAfterAutoStartCheck = nullptr;
+    ZaryaNumberField* m_autoStartDelaySpin = nullptr;
+    ZaryaBodyText* m_autostartBackendLabel = nullptr;
 
     RoutingManager& m_routingManager;
     DnsManager& m_dnsManager;

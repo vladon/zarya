@@ -18,6 +18,7 @@
 #include <QHBoxLayout>
 #include <QMetaObject>
 #include <QResizeEvent>
+#include <QVBoxLayout>
 #include <algorithm>
 #include <cstdlib>
 #include <rpl/rpl.h>
@@ -202,6 +203,29 @@ void ZaryaBodyText::setText(const QString& text)
     auto* label = static_cast<Ui::FlatLabel*>(m_label);
     label->setText(text);
     label->setAccessibleName(text);
+}
+
+ZaryaFormSection::ZaryaFormSection(const QString& title, QWidget* parent)
+    : QWidget(parent)
+{
+    auto* label = Ui::CreateChild<Ui::FlatLabel>(this, title, st::boxTitle);
+    label->setAccessibleName(title);
+    m_title = label;
+
+    m_layout = new QVBoxLayout(this);
+    m_layout->setContentsMargins(16, 16, 16, 16);
+    m_layout->setSpacing(10);
+    m_layout->addWidget(label);
+}
+
+void ZaryaFormSection::addWidget(QWidget* widget)
+{
+    m_layout->addWidget(widget);
+}
+
+void ZaryaFormSection::addStretch()
+{
+    m_layout->addStretch();
 }
 
 ZaryaNumberField::ZaryaNumberField(
