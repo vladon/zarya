@@ -108,6 +108,7 @@ Install and restart now?</source><translation>Zarya закроется на вр
 %1</source>
         <translation>Резервная копия создана:
 %1</translation></message>
+    <message><source>Continue</source><translation>Продолжить</translation></message>
 </context>
 <context>
     <name>BackupImportDialog</name>
@@ -206,6 +207,7 @@ Pre-import backup:
 
 Резервная копия перед импортом:
 %1</translation></message>
+    <message><source>Continue</source><translation>Продолжить</translation></message>
 </context>
 <context>
     <name>BetaBannerWidget</name>
@@ -215,6 +217,9 @@ Pre-import backup:
     <message>
         <source>Dismiss</source>
         <translation>Скрыть</translation></message>
+    <message><source>Experimental features are enabled. They are not part of the stable support scope. Use Diagnostics Bundle when reporting issues.</source><translation>Экспериментальные функции включены. Они не входят в стабильный объём поддержки. При сообщении о проблемах используйте пакет диагностики.</translation></message>
+    <message><source>Zarya release candidate — experimental features are disabled by default. Use Diagnostics Bundle when reporting issues.</source><translation>Релиз-кандидат Zarya — экспериментальные функции по умолчанию отключены. При сообщении о проблемах используйте пакет диагностики.</translation></message>
+    <message><source>Zarya stable release — experimental features are disabled by default. Use Diagnostics Bundle when reporting issues.</source><translation>Стабильный выпуск Zarya — экспериментальные функции по умолчанию отключены. При сообщении о проблемах используйте пакет диагностики.</translation></message>
 </context>
 <context>
     <name>CoreManagerDialog</name>
@@ -353,6 +358,14 @@ This bundle is redacted, but review it before sharing.</source>
 %1
 
 Этот пакет отредактирован, но проверьте его перед отправкой.</translation></message>
+    <message><source>Close</source><translation>Закрыть</translation></message>
+    <message><source>Diagnostics bundle created:
+%1</source><translation>Пакет диагностики создан:
+%1</translation></message>
+    <message><source>Issue reporting instructions are not bundled with this build.</source><translation>Инструкции по отправке отчёта о проблеме не включены в эту сборку.</translation></message>
+    <message><source>Open Folder</source><translation>Открыть папку</translation></message>
+    <message><source>Open Issue Template</source><translation>Открыть шаблон отчёта</translation></message>
+    <message><source>This bundle is redacted, but review the diagnostics archive before sharing it publicly.</source><translation>Секретные данные в пакете скрыты, но проверьте архив диагностики перед публичной отправкой.</translation></message>
 </context>
 <context>
     <name>DiagnosticsPreviewDialog</name>
@@ -1396,6 +1409,90 @@ Step %2 of %3</source>
     <message><source>Testing: %1/%2 | Core: %3 | Runtime: %4 | Kill switch: %5 | System proxy: %6 | Routing: %7 | DNS: %8</source><translation>Тестирование: %1/%2 | Ядро: %3 | Режим: %4 | Kill switch: %5 | Системный прокси: %6 | Маршрутизация: %7 | DNS: %8</translation></message>
     <message><source>Idle | Core: %1 | Runtime: %2 | Kill switch: %3 | System proxy: %4 | Routing: %5 | DNS: %6 | Tray: %7</source><translation>Ожидание | Ядро: %1 | Режим: %2 | Kill switch: %3 | Системный прокси: %4 | Маршрутизация: %5 | DNS: %6 | Трей: %7</translation></message>
     <message><source> | Proxy 127.0.0.1:%1</source><translation> | Прокси 127.0.0.1:%1</translation></message>
+    <message><source>&amp;Known Limitations</source><translation>&amp;Известные ограничения</translation></message>
+    <message><source>&amp;Quick Start</source><translation>&amp;Краткое руководство</translation></message>
+    <message><source>&amp;Report Issue…</source><translation>&amp;Сообщить о проблеме…</translation></message>
+    <message><source>A proxy core is currently running. Import is disabled until the core is stopped.
+
+Open import dialog anyway?</source><translation>Ядро прокси сейчас работает. Импорт отключён до остановки ядра.
+
+Всё равно открыть окно импорта?</translation></message>
+    <message><source>Check for App &amp;Updates…</source><translation>Проверить &amp;обновления приложения…</translation></message>
+    <message><source>Copy &amp;Support Summary</source><translation>Копировать &amp;сводку поддержки</translation></message>
+    <message><source>Could not copy support summary to the clipboard.</source><translation>Не удалось скопировать сводку поддержки в буфер обмена.</translation></message>
+    <message><source>Experimental TUN mode is disabled in stable builds by default.
+Effective runtime: Xray system proxy.
+
+Enable experimental features in Settings → Release channel if you intend to use TUN.</source><translation>Экспериментальный режим TUN по умолчанию отключён в стабильных сборках.
+Фактический режим: системный прокси Xray.
+
+Если вы хотите использовать TUN, включите экспериментальные функции в «Настройки → Канал выпуска».</translation></message>
+    <message><source>Experimental runtime disabled</source><translation>Экспериментальный режим отключён</translation></message>
+    <message><source>Experimental runtime is disabled.
+Effective runtime: Xray system proxy.
+
+Enable experimental features in Settings → Release channel if you intend to use TUN.</source><translation>Экспериментальный режим отключён.
+Фактический режим: системный прокси Xray.
+
+Если вы хотите использовать TUN, включите экспериментальные функции в «Настройки → Канал выпуска».</translation></message>
+    <message><source>Have a portable Zarya folder with profiles or subscriptions?
+
+You can import data from a portable Zarya folder without modifying the original folder.
+
+Import now?</source><translation>Есть переносимая папка Zarya с профилями или подписками?
+
+Можно импортировать данные из неё, не изменяя исходную папку.
+
+Импортировать сейчас?</translation></message>
+    <message><source>Help</source><translation>Справка</translation></message>
+    <message><source>Import from Portable Zarya &amp;Folder…</source><translation>Импортировать из &amp;переносимой папки Zarya…</translation></message>
+    <message><source>Import from Portable Zarya Folder</source><translation>Импорт из переносимой папки Zarya</translation></message>
+    <message><source>Issue reporting instructions are not bundled with this build.</source><translation>Инструкции по отправке отчёта о проблеме не включены в эту сборку.</translation></message>
+    <message><source>Known limitations doc is not bundled with this build.</source><translation>Документ с известными ограничениями не включён в эту сборку.</translation></message>
+    <message><source>Portable Import</source><translation>Переносимый импорт</translation></message>
+    <message><source>Portable Zarya data</source><translation>Переносимые данные Zarya</translation></message>
+    <message><source>Portable Zarya data found:
+
+Profiles: %1
+Subscriptions: %2
+Routing: %3
+DNS: %4
+Settings: %5
+
+A temporary backup archive will be created and opened in the import flow.
+The original portable folder will not be modified.
+
+Continue?</source><translation>Найдены переносимые данные Zarya:
+
+Профили: %1
+Подписки: %2
+Маршрутизация: %3
+DNS: %4
+Настройки: %5
+
+Будет создан временный архив резервной копии и открыт в процессе импорта.
+Исходная переносимая папка не будет изменена.
+
+Продолжить?</translation></message>
+    <message><source>Public Beta &amp;Guide</source><translation>&amp;Руководство по публичной бета-версии</translation></message>
+    <message><source>Public beta guide is not bundled with this build.</source><translation>Руководство по публичной бета-версии не включено в эту сборку.</translation></message>
+    <message><source>Quick start guide is not bundled with this build.</source><translation>Краткое руководство не включено в эту сборку.</translation></message>
+    <message><source>Select Xray executable</source><translation>Выберите исполняемый файл Xray</translation></message>
+    <message><source>Select sing-box executable</source><translation>Выберите исполняемый файл sing-box</translation></message>
+    <message><source>Support Summary</source><translation>Сводка поддержки</translation></message>
+    <message><source>Support summary copied to the clipboard.
+
+Review it before pasting into an issue. Do not include proxy links or passwords.</source><translation>Сводка поддержки скопирована в буфер обмена.
+
+Проверьте её перед добавлением в отчёт. Не включайте ссылки прокси или пароли.</translation></message>
+    <message><source>The selected folder does not look like a portable Zarya install.
+
+Expected portable.flag or a data/ folder with profiles, subscriptions, or settings.</source><translation>Выбранная папка не похожа на переносимую установку Zarya.
+
+Ожидался файл portable.flag или папка data/ с профилями, подписками или настройками.</translation></message>
+    <message><source>Xray system proxy</source><translation>Системный прокси Xray</translation></message>
+    <message><source>no</source><translation>нет</translation></message>
+    <message><source>yes</source><translation>да</translation></message>
 </context>
 <context>
     <name>ProfileDialog</name>
@@ -1956,6 +2053,7 @@ What should happen?</source>
     <message>
         <source>Exit Safely</source>
         <translation>Безопасный выход</translation></message>
+    <message><source>Cancel</source><translation>Отмена</translation></message>
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -3034,5 +3132,16 @@ Continue?</source><translation>Профиль маршрутизации сод�
     <message><source>Zarya could not restore previous system proxy settings. Retry restore or exit anyway?</source><translation>Zarya не удалось восстановить предыдущие настройки системного прокси. Повторить восстановление или всё равно выйти?</translation></message>
     <message><source>Retry</source><translation>Повторить</translation></message>
     <message><source>Exit Anyway</source><translation>Всё равно выйти</translation></message>
+</context>
+<context>
+    <name>QObject</name>
+    <message><source>A previous update attempt was not completed. The pending update plan for %1 is stale.</source><translation>Предыдущая попытка обновления не завершена. Ожидающий план обновления до %1 устарел.</translation></message>
+    <message><source>App Update</source><translation>Обновление приложения</translation></message>
+    <message><source>OK</source><translation>ОК</translation></message>
+    <message><source>Open Update Folder</source><translation>Открыть папку обновления</translation></message>
+    <message><source>Show Log</source><translation>Показать журнал</translation></message>
+    <message><source>The app update failed and was rolled back.</source><translation>Обновление приложения завершилось ошибкой и было отменено.</translation></message>
+    <message><source>Zarya was updated successfully.</source><translation>Zarya успешно обновлена.</translation></message>
+    <message><source>Zarya was updated to %1.</source><translation>Zarya обновлена до версии %1.</translation></message>
 </context>
 </TS>
