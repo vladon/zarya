@@ -2,20 +2,14 @@
 
 #include "backup/BackupCategory.h"
 #include "storage/AppPaths.h"
+#include "ui/desktopapp/UiMessagePresenter.h"
+#include "ui/desktopapp/ZaryaFormControls.h"
 
-#include <QCheckBox>
 #include <QDate>
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
-#include <QFormLayout>
-#include <QGroupBox>
 #include <QHBoxLayout>
-#include <QLabel>
-#include <QLineEdit>
-#include <QMessageBox>
-#include <QPushButton>
-#include <QRadioButton>
 #include <QVBoxLayout>
 
 namespace zarya {
@@ -30,76 +24,73 @@ BackupExportDialog::BackupExportDialog(BackupManager& manager,
     setWindowTitle(tr("Export Backup"));
     resize(520, 480);
 
-    m_fullBackupRadio = new QRadioButton(tr("Full configuration backup"), this);
-    m_diagnosticBackupRadio =
-        new QRadioButton(tr("Redacted diagnostic backup"), this);
-    m_fullBackupRadio->setChecked(true);
+    m_backupType = new ZaryaRadioGroup(0, this);
+    m_backupType->addOption(0, tr("Full configuration backup"));
+    m_backupType->addOption(1, tr("Redacted diagnostic backup"));
+    auto* typeSection = new ZaryaFormSection(tr("Backup type"), this);
+    typeSection->addWidget(m_backupType);
 
-    auto* typeGroup = new QGroupBox(tr("Backup type"), this);
-    auto* typeLayout = new QVBoxLayout(typeGroup);
-    typeLayout->addWidget(m_fullBackupRadio);
-    typeLayout->addWidget(m_diagnosticBackupRadio);
-
-    auto* includeGroup = new QGroupBox(tr("Include"), this);
-    auto* includeLayout = new QVBoxLayout(includeGroup);
-    m_profilesCheck = new QCheckBox(backupCategoryDisplayName(BackupCategory::Profiles), this);
+    auto* includeSection = new ZaryaFormSection(tr("Include"), this);
+    m_profilesCheck = new ZaryaCheckBox(
+        backupCategoryDisplayName(BackupCategory::Profiles), this);
     m_subscriptionsCheck =
-        new QCheckBox(backupCategoryDisplayName(BackupCategory::Subscriptions), this);
+        new ZaryaCheckBox(backupCategoryDisplayName(BackupCategory::Subscriptions), this);
     m_routingCheck =
-        new QCheckBox(backupCategoryDisplayName(BackupCategory::RoutingProfiles), this);
-    m_dnsCheck = new QCheckBox(backupCategoryDisplayName(BackupCategory::DnsProfiles), this);
-    m_settingsCheck = new QCheckBox(backupCategoryDisplayName(BackupCategory::AppSettings), this);
+        new ZaryaCheckBox(backupCategoryDisplayName(BackupCategory::RoutingProfiles), this);
+    m_dnsCheck = new ZaryaCheckBox(
+        backupCategoryDisplayName(BackupCategory::DnsProfiles), this);
+    m_settingsCheck = new ZaryaCheckBox(
+        backupCategoryDisplayName(BackupCategory::AppSettings), this);
     m_geoSettingsCheck =
-        new QCheckBox(backupCategoryDisplayName(BackupCategory::GeoDataSettings), this);
+        new ZaryaCheckBox(backupCategoryDisplayName(BackupCategory::GeoDataSettings), this);
     m_ruleSetMetaCheck =
-        new QCheckBox(backupCategoryDisplayName(BackupCategory::SingBoxRuleSetMetadata), this);
+        new ZaryaCheckBox(
+            backupCategoryDisplayName(BackupCategory::SingBoxRuleSetMetadata), this);
     m_ruleSetFilesCheck =
-        new QCheckBox(backupCategoryDisplayName(BackupCategory::SingBoxRuleSetFiles), this);
+        new ZaryaCheckBox(
+            backupCategoryDisplayName(BackupCategory::SingBoxRuleSetFiles), this);
     m_geoFilesCheck =
-        new QCheckBox(backupCategoryDisplayName(BackupCategory::XrayGeoDataFiles), this);
-    m_coreMetaCheck = new QCheckBox(backupCategoryDisplayName(BackupCategory::CoreMetadata), this);
+        new ZaryaCheckBox(backupCategoryDisplayName(BackupCategory::XrayGeoDataFiles), this);
+    m_coreMetaCheck = new ZaryaCheckBox(
+        backupCategoryDisplayName(BackupCategory::CoreMetadata), this);
 
-    for (QCheckBox* check :
+    for (ZaryaCheckBox* check :
          {m_profilesCheck, m_subscriptionsCheck, m_routingCheck, m_dnsCheck, m_settingsCheck,
           m_geoSettingsCheck, m_ruleSetMetaCheck, m_coreMetaCheck}) {
         check->setChecked(true);
-        includeLayout->addWidget(check);
+        includeSection->addWidget(check);
     }
-    includeLayout->addWidget(m_ruleSetFilesCheck);
-    includeLayout->addWidget(m_geoFilesCheck);
+    includeSection->addWidget(m_ruleSetFilesCheck);
+    includeSection->addWidget(m_geoFilesCheck);
 
     const QString defaultName =
         QStringLiteral("zarya-backup-%1.zarya-backup.zip")
             .arg(QDate::currentDate().toString(QStringLiteral("yyyy-MM-dd")));
-    m_outputEdit = new QLineEdit(defaultName, this);
-    auto* browseButton = new QPushButton(tr("Browse…"), this);
-    connect(browseButton, &QPushButton::clicked, this, &BackupExportDialog::onBrowse);
+    m_outputEdit = new ZaryaTextField(tr("Output"), this);
+    m_outputEdit->setText(defaultName);
+    auto* browseButton = new ZaryaActionButton(tr("Browse…"), this);
+    connect(browseButton, &ZaryaActionButton::clicked, this, &BackupExportDialog::onBrowse);
 
     auto* outputRow = new QHBoxLayout;
     outputRow->addWidget(m_outputEdit, 1);
     outputRow->addWidget(browseButton);
 
-    m_exportButton = new QPushButton(tr("Export"), this);
-    auto* cancelButton = new QPushButton(tr("Cancel"), this);
-    connect(m_exportButton, &QPushButton::clicked, this, &BackupExportDialog::onExport);
-    connect(cancelButton, &QPushButton::clicked, this, &QDialog::reject);
-
-    auto* buttons = new QHBoxLayout;
-    buttons->addStretch();
-    buttons->addWidget(m_exportButton);
-    buttons->addWidget(cancelButton);
+    auto* actions = new ZaryaDialogActionRow(tr("Export"), tr("Cancel"), this);
+    connect(actions, &ZaryaDialogActionRow::accepted, this, &BackupExportDialog::onExport);
+    connect(actions, &ZaryaDialogActionRow::rejected, this, &QDialog::reject);
 
     auto* layout = new QVBoxLayout(this);
-    layout->addWidget(typeGroup);
-    layout->addWidget(includeGroup);
-    layout->addWidget(new QLabel(tr("Output"), this));
+    layout->setContentsMargins(24, 24, 24, 24);
+    layout->setSpacing(12);
+    layout->addWidget(typeSection);
+    layout->addWidget(includeSection);
     layout->addLayout(outputRow);
-    layout->addLayout(buttons);
+    layout->addWidget(actions);
 
-    connect(m_diagnosticBackupRadio, &QRadioButton::toggled, this,
-            [this](bool checked) {
-                if (checked) {
-                    for (QCheckBox* check :
+    connect(m_backupType, &ZaryaRadioGroup::valueChanged, this,
+            [this](int value) {
+                if (value == 1) {
+                    for (ZaryaCheckBox* check :
                          {m_profilesCheck, m_subscriptionsCheck, m_routingCheck, m_dnsCheck,
                           m_settingsCheck, m_geoSettingsCheck, m_ruleSetMetaCheck}) {
                         check->setChecked(true);
@@ -146,8 +137,8 @@ void BackupExportDialog::onExport()
 {
     QString outputPath = m_outputEdit->text().trimmed();
     if (outputPath.isEmpty()) {
-        QMessageBox::warning(this, tr("Export Backup"),
-                             tr("Choose an output file."));
+        UiMessagePresenter::warning(
+            this, tr("Export Backup"), tr("Choose an output file."));
         return;
     }
     if (!outputPath.endsWith(QStringLiteral(".zarya-backup.zip"), Qt::CaseInsensitive)) {
@@ -156,18 +147,18 @@ void BackupExportDialog::onExport()
 
     const qint64 estimated = estimateSelectedSizeBytes();
     if (estimated > 20 * 1024 * 1024) {
-        const auto answer = QMessageBox::question(
-            this, tr("Large backup"),
-            tr("Selected optional files are about %1 MB. Continue?")
-                .arg(estimated / (1024 * 1024)));
-        if (answer != QMessageBox::Yes) {
+        if (!UiMessagePresenter::confirm(
+                this, tr("Large backup"),
+                tr("Selected optional files are about %1 MB. Continue?")
+                    .arg(estimated / (1024 * 1024)),
+                tr("Continue"))) {
             return;
         }
     }
 
     BackupExportOptions options;
     options.outputPath = outputPath;
-    options.diagnosticBackup = m_diagnosticBackupRadio->isChecked();
+    options.diagnosticBackup = (m_backupType->value() == 1);
     options.redactionMode = options.diagnosticBackup ? BackupRedactionMode::Strict
                                                      : BackupRedactionMode::None;
 
@@ -204,15 +195,15 @@ void BackupExportDialog::onExport()
 
     QString error;
     if (!m_manager.exportBackup(options, &error)) {
-        QMessageBox::critical(this, tr("Export Backup"), error);
+        UiMessagePresenter::error(this, tr("Export Backup"), error);
         return;
     }
 
     if (m_logCallback) {
         m_logCallback(tr("Backup exported: %1").arg(outputPath));
     }
-    QMessageBox::information(this, tr("Export Backup"),
-                             tr("Backup created:\n%1").arg(outputPath));
+    UiMessagePresenter::information(
+        this, tr("Export Backup"), tr("Backup created:\n%1").arg(outputPath));
     accept();
 }
 

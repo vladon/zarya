@@ -5,12 +5,11 @@
 #include <QDialog>
 #include <functional>
 
-class QCheckBox;
-class QLineEdit;
-class QPushButton;
-class QRadioButton;
-
 namespace zarya {
+
+class ZaryaCheckBox;
+class ZaryaRadioGroup;
+class ZaryaTextField;
 
 class BackupExportDialog : public QDialog {
     Q_OBJECT
@@ -20,7 +19,7 @@ public:
                                 const std::function<void(const QString&)>& logCallback,
                                 QWidget* parent = nullptr);
 
-private slots:
+private Q_SLOTS:
     void onBrowse();
     void onExport();
 
@@ -30,20 +29,18 @@ private:
     BackupManager& m_manager;
     std::function<void(const QString&)> m_logCallback;
 
-    QRadioButton* m_fullBackupRadio = nullptr;
-    QRadioButton* m_diagnosticBackupRadio = nullptr;
-    QCheckBox* m_profilesCheck = nullptr;
-    QCheckBox* m_subscriptionsCheck = nullptr;
-    QCheckBox* m_routingCheck = nullptr;
-    QCheckBox* m_dnsCheck = nullptr;
-    QCheckBox* m_settingsCheck = nullptr;
-    QCheckBox* m_geoSettingsCheck = nullptr;
-    QCheckBox* m_ruleSetMetaCheck = nullptr;
-    QCheckBox* m_ruleSetFilesCheck = nullptr;
-    QCheckBox* m_geoFilesCheck = nullptr;
-    QCheckBox* m_coreMetaCheck = nullptr;
-    QLineEdit* m_outputEdit = nullptr;
-    QPushButton* m_exportButton = nullptr;
+    ZaryaRadioGroup* m_backupType = nullptr;
+    ZaryaCheckBox* m_profilesCheck = nullptr;
+    ZaryaCheckBox* m_subscriptionsCheck = nullptr;
+    ZaryaCheckBox* m_routingCheck = nullptr;
+    ZaryaCheckBox* m_dnsCheck = nullptr;
+    ZaryaCheckBox* m_settingsCheck = nullptr;
+    ZaryaCheckBox* m_geoSettingsCheck = nullptr;
+    ZaryaCheckBox* m_ruleSetMetaCheck = nullptr;
+    ZaryaCheckBox* m_ruleSetFilesCheck = nullptr;
+    ZaryaCheckBox* m_geoFilesCheck = nullptr;
+    ZaryaCheckBox* m_coreMetaCheck = nullptr;
+    ZaryaTextField* m_outputEdit = nullptr;
 };
 
 } // namespace zarya

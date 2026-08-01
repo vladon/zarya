@@ -2,9 +2,14 @@
 
 #include <QString>
 #include <QWidget>
+#include <memory>
 
 class QResizeEvent;
 class QVBoxLayout;
+
+namespace Ui {
+class RadiobuttonGroup;
+}
 
 namespace zarya {
 
@@ -147,6 +152,24 @@ Q_SIGNALS:
 
 private:
     QWidget* m_checkbox = nullptr; // Ui::Checkbox*
+};
+
+class ZaryaRadioGroup final : public QWidget {
+    Q_OBJECT
+
+public:
+    explicit ZaryaRadioGroup(int value, QWidget* parent = nullptr);
+
+    void addOption(int value, const QString& text);
+    [[nodiscard]] int value() const;
+    void setValue(int value);
+
+Q_SIGNALS:
+    void valueChanged(int value);
+
+private:
+    std::shared_ptr<Ui::RadiobuttonGroup> m_group;
+    QVBoxLayout* m_layout = nullptr;
 };
 
 class ZaryaFormRow final : public QWidget {
