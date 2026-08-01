@@ -127,9 +127,6 @@
     "QLabel": 3,
     "QPushButton": 5
   },
-  "src/ui/ImportVlessDialog.cpp": {
-    "QDialogButtonBox": 6
-  },
   "src/ui/MainWindow.cpp": {
     "QPushButton": 2,
     "QScrollArea": 1
@@ -240,18 +237,6 @@
   "src/ui/desktopapp/UiMessagePresenter.cpp": {
     "QMessageBox": 21,
     "QPushButton": 1
-  },
-  "src/ui/import/ProfileImportWidget.cpp": {
-    "QLabel": 2
-  },
-  "src/ui/import/ProfileImportWidget.h": {
-    "QLabel": 2
-  },
-  "src/ui/onboarding/FirstRunChecklistWidget.cpp": {
-    "QLabel": 2
-  },
-  "src/ui/onboarding/FirstRunChecklistWidget.h": {
-    "QLabel": 2
   },
   "src/ui/onboarding/FirstRunWizard.cpp": {
     "QCheckBox": 8,

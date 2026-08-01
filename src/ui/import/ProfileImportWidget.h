@@ -4,10 +4,10 @@
 
 #include <QWidget>
 
-class QPlainTextEdit;
-class QLabel;
-
 namespace zarya {
+
+class ZaryaBodyText;
+class ZaryaTextArea;
 
 struct ProfileImportStats {
     int vless = 0;
@@ -30,15 +30,15 @@ public:
     ProfileImportStats lastStats() const;
     void clear();
 
-public slots:
+public Q_SLOTS:
     void parseLinks();
 
-signals:
+Q_SIGNALS:
     void parseCompleted(const ProfileImportStats& stats);
 
 private:
-    QPlainTextEdit* m_linksEdit = nullptr;
-    QLabel* m_statsLabel = nullptr;
+    ZaryaTextArea* m_linksEdit = nullptr;
+    ZaryaBodyText* m_statsLabel = nullptr;
     QVector<Profile> m_imported;
     ProfileImportStats m_stats;
 };

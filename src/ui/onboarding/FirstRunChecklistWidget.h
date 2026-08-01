@@ -2,11 +2,10 @@
 
 #include <QWidget>
 
-class QLabel;
-
 namespace zarya {
 
 struct FirstRunState;
+class ZaryaBodyText;
 
 class FirstRunChecklistWidget : public QWidget {
     Q_OBJECT
@@ -18,7 +17,7 @@ public:
                          const QString& xrayVersion);
 
 private:
-    QLabel* m_body = nullptr;
+    ZaryaBodyText* m_body = nullptr;
 };
 
 } // namespace zarya

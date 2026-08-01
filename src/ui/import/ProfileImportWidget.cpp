@@ -2,9 +2,8 @@
 
 #include "domain/ProtocolType.h"
 #include "subscription/ShareLinkParser.h"
+#include "ui/desktopapp/ZaryaFormControls.h"
 
-#include <QLabel>
-#include <QPlainTextEdit>
 #include <QRegularExpression>
 #include <QVBoxLayout>
 
@@ -13,18 +12,18 @@ namespace zarya {
 ProfileImportWidget::ProfileImportWidget(QWidget* parent)
     : QWidget(parent)
 {
-    m_linksEdit = new QPlainTextEdit(this);
-    m_linksEdit->setPlaceholderText(
-        QStringLiteral("Paste vless://, vmess://, trojan://, ss://, hysteria2://, or "
-                       "wireguard:// links here.\n"
-                       "One link per line."));
-    m_linksEdit->setMinimumHeight(140);
+    m_linksEdit = new ZaryaTextArea(
+        tr("Paste vless://, vmess://, trojan://, ss://, hysteria2://, or "
+           "wireguard:// links here.\n"
+           "One link per line."),
+        this,
+        140);
 
-    m_statsLabel = new QLabel(this);
-    m_statsLabel->setWordWrap(true);
-    m_statsLabel->setText(QStringLiteral("Paste links to see parse summary."));
+    m_statsLabel = new ZaryaBodyText(
+        tr("Paste links to see parse summary."),
+        this);
 
-    connect(m_linksEdit, &QPlainTextEdit::textChanged, this, &ProfileImportWidget::parseLinks);
+    connect(m_linksEdit, &ZaryaTextArea::textChanged, this, &ProfileImportWidget::parseLinks);
 
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -47,7 +46,7 @@ void ProfileImportWidget::clear()
     m_linksEdit->clear();
     m_imported.clear();
     m_stats = {};
-    m_statsLabel->setText(QStringLiteral("Paste links to see parse summary."));
+    m_statsLabel->setText(tr("Paste links to see parse summary."));
 }
 
 void ProfileImportWidget::parseLinks()
@@ -56,8 +55,8 @@ void ProfileImportWidget::parseLinks()
     m_stats = {};
 
     const QStringList lines =
-        m_linksEdit->toPlainText().split(QRegularExpression(QStringLiteral("[\\r\\n]+")),
-                                         Qt::SkipEmptyParts);
+        m_linksEdit->text().split(QRegularExpression(QStringLiteral("[\\r\\n]+")),
+                                  Qt::SkipEmptyParts);
     for (const QString& rawLine : lines) {
         const QString line = rawLine.trimmed();
         if (line.isEmpty() || line.startsWith(QLatin1Char('#'))) {
@@ -99,7 +98,7 @@ void ProfileImportWidget::parseLinks()
     m_stats.totalImported = m_imported.size();
 
     m_statsLabel->setText(
-        QStringLiteral(
+        tr(
             "Parsed: VLESS %1, VMess %2, Trojan %3, Shadowsocks %4, Hysteria2 %5, WireGuard %6, "
             "Unsupported %7")
             .arg(m_stats.vless)
