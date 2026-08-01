@@ -2041,6 +2041,22 @@ Recommended next steps:
         <source>No validation warnings.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>No routing rules yet. Add a rule to build a custom route.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>RoutingRuleEditorDialog</name>
@@ -2080,6 +2096,29 @@ domain:example.com</source>
     </message>
     <message>
         <source>At least one value is required.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>RoutingJsonPreviewDialog</name>
+    <message>
+        <source>Xray Routing JSON Preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
