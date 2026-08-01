@@ -32,6 +32,29 @@ void fitField(QWidget* field, int width)
 
 } // namespace
 
+ZaryaActionButton::ZaryaActionButton(
+    const QString& text,
+    QWidget* parent,
+    ZaryaButtonRole role)
+    : QWidget(parent)
+{
+    auto button = makeZaryaButton(this, text, role);
+    m_button = button.data();
+    static_cast<Ui::RoundButton*>(m_button)->setClickedCallback([this] {
+        QMetaObject::invokeMethod(this, [this] { Q_EMIT clicked(); }, Qt::QueuedConnection);
+    });
+    auto* layout = new QHBoxLayout(this);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(button.release());
+}
+
+void ZaryaActionButton::setText(const QString& text)
+{
+    auto* button = static_cast<Ui::RoundButton*>(m_button);
+    button->setText(rpl::single(text));
+    button->setAccessibleName(text);
+}
+
 ZaryaTextField::ZaryaTextField(
     const QString& placeholder,
     QWidget* parent,
