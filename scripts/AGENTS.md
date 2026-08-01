@@ -15,6 +15,7 @@ Build, package, sign, smoke, and release helpers. Prefer these over ad-hoc cmake
 | `run-xray-config-test.ps1` | Xray config unit tests |
 | `run-kde-proxy-smoke.sh` | Isolated native KDE/KConfig proxy apply/restore smoke |
 | `check-translations.py` | Translation completeness (CI) |
+| `check-libui-boundary.py` | Exact, shrinking allowlist for legacy Qt visual controls under `src/ui/` |
 | `package-windows.ps1` | Portable ZIP packaging (bundles pinned Xray by default) |
 | `package-windows-msi.ps1` | WiX MSI PoC |
 | `package-linux.sh` / `package-macos.sh` | Non-Windows packages |
