@@ -23,7 +23,7 @@ public:
                                   const std::function<void(const QString&)>& logCallback,
                                   QWidget* parent = nullptr);
 
-private slots:
+private Q_SLOTS:
     void onCheckStatus();
     void onUpdateGeoIp();
     void onUpdateGeoSite();

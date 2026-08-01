@@ -789,6 +789,9 @@ sing-box: %3 (%4)</translation></message>
         <source>Source:</source>
         <translation>Источник:</translation></message>
     <message>
+        <source>Source</source>
+        <translation>Источник</translation></message>
+    <message>
         <source>Xray resource directory:</source>
         <translation>Каталог ресурсов Xray:</translation></message>
     <message>
