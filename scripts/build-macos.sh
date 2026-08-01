@@ -81,9 +81,73 @@ if [[ ! -f "$QT_PREFIX/lib/cmake/Qt6/Qt6Config.cmake" ]]; then
   exit 1
 fi
 
+# A locally run app can contain mutable portable state and managed cores. The
+# app bundle itself is a build artifact, so preserve that state outside the
+# build tree while a force rebuild or package cleanup replaces the bundle.
+STATE_BACKUP_DIR=""
+
+preserve_app_state() {
+  local app_path="$1"
+  local slot="$2"
+  local macos_dir="$app_path/Contents/MacOS"
+  local entry
+
+  for entry in data runtime cores portable.flag; do
+    if [[ ! -e "$macos_dir/$entry" ]]; then
+      continue
+    fi
+    if [[ -z "$STATE_BACKUP_DIR" ]]; then
+      STATE_BACKUP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/zarya-build-state.XXXXXX")"
+    fi
+    mkdir -p "$STATE_BACKUP_DIR/$slot"
+    ditto "$macos_dir/$entry" "$STATE_BACKUP_DIR/$slot/$entry"
+  done
+}
+
+restore_app_state() {
+  if [[ -z "$STATE_BACKUP_DIR" || ! -d "$STATE_BACKUP_DIR" ]]; then
+    return
+  fi
+
+  local slot
+  local app_path
+  local entry
+  for slot in root config; do
+    if [[ ! -d "$STATE_BACKUP_DIR/$slot" ]]; then
+      continue
+    fi
+    if [[ "$slot" == "root" ]]; then
+      app_path="$BUILD_DIR/zarya.app"
+    else
+      app_path="$BUILD_DIR/$CONFIG/zarya.app"
+    fi
+    mkdir -p "$app_path/Contents/MacOS"
+    for entry in data runtime cores portable.flag; do
+      if [[ -e "$STATE_BACKUP_DIR/$slot/$entry" ]]; then
+        ditto "$STATE_BACKUP_DIR/$slot/$entry" "$app_path/Contents/MacOS/$entry"
+      fi
+    done
+  done
+
+  rm -rf "$STATE_BACKUP_DIR"
+  STATE_BACKUP_DIR=""
+  echo "Restored local Zarya data, runtime state, and managed cores."
+}
+
+restore_state_on_exit() {
+  local status=$?
+  trap - EXIT
+  restore_app_state
+  exit "$status"
+}
+
+trap restore_state_on_exit EXIT
+
 cd "$ROOT"
 
 if [[ "$FORCE" -eq 1 && -d "$BUILD_DIR" ]]; then
+  preserve_app_state "$BUILD_DIR/zarya.app" root
+  preserve_app_state "$BUILD_DIR/$CONFIG/zarya.app" config
   echo "Removing build tree for reconfigure..."
   rm -rf "$BUILD_DIR"
 fi
@@ -92,8 +156,13 @@ fi
 # relink would then leave bundled plug-ins next to an executable linked against
 # Homebrew Qt, causing Qt to load two copies of QtCore/QtGui and abort at startup.
 # Recreate any package-contaminated app before an incremental local build.
-for app_path in "$BUILD_DIR/zarya.app" "$BUILD_DIR/$CONFIG/zarya.app"; do
-  if [[ -f "$app_path/Contents/Resources/portable.flag" ]]; then
+# Detect deployment artifacts, not portable mode itself: a developer may keep
+# an intentional portable.flag next to the executable.
+for app_slot in "root:$BUILD_DIR/zarya.app" "config:$BUILD_DIR/$CONFIG/zarya.app"; do
+  slot="${app_slot%%:*}"
+  app_path="${app_slot#*:}"
+  if [[ -d "$app_path/Contents/Frameworks" || -d "$app_path/Contents/PlugIns" ]]; then
+    preserve_app_state "$app_path" "$slot"
     echo "Removing packaged app bundle left in the build tree: $app_path"
     rm -rf "$app_path"
   fi
@@ -112,6 +181,8 @@ if [[ -n "$JOBS" ]]; then
 fi
 
 cmake "${BUILD_ARGS[@]}"
+
+restore_app_state
 
 if [[ "$TEST" -eq 1 ]]; then
   TEST_BUILD_ARGS=(--build "$BUILD_DIR" --config "$CONFIG" --target zarya_stable_hardening_test)
