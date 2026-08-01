@@ -54,7 +54,9 @@ VISUAL_CONTROLS = {
     "QScrollArea",
     "QSlider",
     "QSpinBox",
+    "QSplitter",
     "QStackedWidget",
+    "QStatusBar",
     "QTabBar",
     "QTabWidget",
     "QTextBrowser",
@@ -138,6 +140,8 @@ def main() -> int:
                 and 'SOURCE_ROOT = REPO_ROOT / "src"' in previous_script.stdout
                 and '"QInputDialog"' in previous_script.stdout
                 and '"QProgressDialog"' in previous_script.stdout
+                and '"QSplitter"' in previous_script.stdout
+                and '"QStatusBar"' in previous_script.stdout
             )
             if full_source_baseline:
                 increases = []

@@ -1381,6 +1381,21 @@ Step %2 of %3</source>
 Шаг %2 из %3</translation></message>
     <message><source>Start</source><translation>Запустить</translation></message>
     <message><source>Cancel</source><translation>Отмена</translation></message>
+    <message><source>Running</source><translation>Работает</translation></message>
+    <message><source>Stopped</source><translation>Остановлено</translation></message>
+    <message><source>Unsupported</source><translation>Не поддерживается</translation></message>
+    <message><source>Off</source><translation>Выкл.</translation></message>
+    <message><source>On</source><translation>Вкл.</translation></message>
+    <message><source>On via %1</source><translation>Вкл. через %1</translation></message>
+    <message><source>Failed</source><translation>Ошибка</translation></message>
+    <message><source>Needs recovery</source><translation>Требуется восстановление</translation></message>
+    <message><source>Enabling</source><translation>Включение</translation></message>
+    <message><source>Disabling</source><translation>Отключение</translation></message>
+    <message><source>Available</source><translation>Доступен</translation></message>
+    <message><source>Unavailable</source><translation>Недоступен</translation></message>
+    <message><source>Testing: %1/%2 | Core: %3 | Runtime: %4 | Kill switch: %5 | System proxy: %6 | Routing: %7 | DNS: %8</source><translation>Тестирование: %1/%2 | Ядро: %3 | Режим: %4 | Kill switch: %5 | Системный прокси: %6 | Маршрутизация: %7 | DNS: %8</translation></message>
+    <message><source>Idle | Core: %1 | Runtime: %2 | Kill switch: %3 | System proxy: %4 | Routing: %5 | DNS: %6 | Tray: %7</source><translation>Ожидание | Ядро: %1 | Режим: %2 | Kill switch: %3 | Системный прокси: %4 | Маршрутизация: %5 | DNS: %6 | Трей: %7</translation></message>
+    <message><source> | Proxy 127.0.0.1:%1</source><translation> | Прокси 127.0.0.1:%1</translation></message>
 </context>
 <context>
     <name>ProfileDialog</name>
