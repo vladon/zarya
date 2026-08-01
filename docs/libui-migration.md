@@ -74,6 +74,8 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      number fields while retaining the existing settings persistence and autostart backend.
      Stable core, system-proxy, and testing settings also use toolkit fields, selectors, actions,
      checks, status text, and sections; native executable picking remains a platform boundary.
+     Active Routing and DNS selection and their management actions use toolkit sections and
+     selectors; the dedicated manager workflows remain in the management migration stage.
 5. **Management surfaces**
    - Migrate Core, Routing, DNS, Geo Data, Rule Set, backup, and diagnostics workflows using the
      shared interaction layer.

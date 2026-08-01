@@ -94,8 +94,8 @@ private:
 
     ZaryaSelector* m_languageCombo = nullptr;
     ZaryaSelector* m_themeCombo = nullptr;
-    QComboBox* m_routingProfileCombo = nullptr;
-    QComboBox* m_dnsProfileCombo = nullptr;
+    ZaryaSelector* m_routingProfileCombo = nullptr;
+    ZaryaSelector* m_dnsProfileCombo = nullptr;
 
     QCheckBox* m_enableExperimentalTunCheck = nullptr;
     QRadioButton* m_systemProxyRuntimeRadio = nullptr;
