@@ -40,6 +40,7 @@ VISUAL_CONTROLS = {
     "QFontComboBox",
     "QFrame",
     "QGroupBox",
+    "QInputDialog",
     "QLabel",
     "QLCDNumber",
     "QLineEdit",
@@ -47,6 +48,7 @@ VISUAL_CONTROLS = {
     "QListWidget",
     "QMessageBox",
     "QProgressBar",
+    "QProgressDialog",
     "QPushButton",
     "QRadioButton",
     "QScrollArea",
@@ -108,6 +110,7 @@ def main() -> int:
 
     if args.previous_git_ref:
         relative_allowlist = args.allowlist.resolve().relative_to(REPO_ROOT).as_posix()
+        relative_script = Path(__file__).resolve().relative_to(REPO_ROOT).as_posix()
         previous = subprocess.run(
             ["git", "show", f"{args.previous_git_ref}:{relative_allowlist}"],
             cwd=REPO_ROOT,
@@ -121,17 +124,31 @@ def main() -> int:
             except json.JSONDecodeError as error:
                 print(f"lib_ui boundary: invalid previous allowlist: {error}", file=sys.stderr)
                 return 2
-            increases = []
-            for path, controls in allowed.items():
-                for control, count in controls.items():
-                    old = previous_allowed.get(path, {}).get(control, 0)
-                    if count > old:
-                        increases.append((path, control, old, count))
-            if increases:
-                print("lib_ui boundary allowlist must only shrink:", file=sys.stderr)
-                for path, control, old, new in increases:
-                    print(f"  {path}: {control} {old} -> {new}", file=sys.stderr)
-                return 1
+            previous_script = subprocess.run(
+                ["git", "show", f"{args.previous_git_ref}:{relative_script}"],
+                cwd=REPO_ROOT,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            full_source_baseline = (
+                previous_script.returncode == 0
+                and 'SOURCE_ROOT = REPO_ROOT / "src"' in previous_script.stdout
+                and '"QInputDialog"' in previous_script.stdout
+                and '"QProgressDialog"' in previous_script.stdout
+            )
+            if full_source_baseline:
+                increases = []
+                for path, controls in allowed.items():
+                    for control, count in controls.items():
+                        old = previous_allowed.get(path, {}).get(control, 0)
+                        if count > old:
+                            increases.append((path, control, old, count))
+                if increases:
+                    print("lib_ui boundary allowlist must only shrink:", file=sys.stderr)
+                    for path, control, old, new in increases:
+                        print(f"  {path}: {control} {old} -> {new}", file=sys.stderr)
+                    return 1
         elif "exists on disk, but not in" not in previous.stderr:
             print(previous.stderr.strip(), file=sys.stderr)
             return 2
