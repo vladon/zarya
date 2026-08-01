@@ -5,14 +5,15 @@
 #include <QDialog>
 #include <functional>
 
-class QCheckBox;
-class QComboBox;
-class QLabel;
 class QPlainTextEdit;
-class QPushButton;
 class QTableWidget;
 
 namespace zarya {
+
+class ZaryaActionButton;
+class ZaryaBodyText;
+class ZaryaCheckBox;
+class ZaryaSelector;
 
 class GeoDataManagerDialog : public QDialog {
     Q_OBJECT
@@ -34,7 +35,7 @@ private slots:
     void onProgressChanged(GeoDataKind kind, qint64 received, qint64 total);
     void onUpdateFinished(bool ok);
     void onLogLine(const QString& line);
-    void onSourceChanged(int index);
+    void onSourceChanged(const QString& sourceId);
     void onOptionsChanged();
 
 private:
@@ -45,17 +46,17 @@ private:
     GeoDataManager& m_manager;
     std::function<void(const QString&)> m_logCallback;
 
-    QComboBox* m_sourceCombo = nullptr;
-    QLabel* m_sourceDescriptionLabel = nullptr;
-    QLabel* m_targetLabel = nullptr;
+    ZaryaSelector* m_sourceCombo = nullptr;
+    ZaryaBodyText* m_sourceDescriptionLabel = nullptr;
+    ZaryaBodyText* m_targetLabel = nullptr;
     QTableWidget* m_table = nullptr;
     QPlainTextEdit* m_logView = nullptr;
-    QCheckBox* m_autoCheckCheck = nullptr;
-    QCheckBox* m_warnMissingCheck = nullptr;
-    QPushButton* m_updateGeoIpButton = nullptr;
-    QPushButton* m_updateGeoSiteButton = nullptr;
-    QPushButton* m_updateAllButton = nullptr;
-    QPushButton* m_cancelButton = nullptr;
+    ZaryaCheckBox* m_autoCheckCheck = nullptr;
+    ZaryaCheckBox* m_warnMissingCheck = nullptr;
+    ZaryaActionButton* m_updateGeoIpButton = nullptr;
+    ZaryaActionButton* m_updateGeoSiteButton = nullptr;
+    ZaryaActionButton* m_updateAllButton = nullptr;
+    ZaryaActionButton* m_cancelButton = nullptr;
 };
 
 } // namespace zarya
