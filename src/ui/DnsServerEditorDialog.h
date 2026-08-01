@@ -4,13 +4,13 @@
 
 #include <QDialog>
 
-class QCheckBox;
-class QComboBox;
-class QLineEdit;
-class QPlainTextEdit;
-class QSpinBox;
-
 namespace zarya {
+
+class ZaryaCheckBox;
+class ZaryaNumberField;
+class ZaryaSelector;
+class ZaryaTextArea;
+class ZaryaTextField;
 
 class DnsServerEditorDialog : public QDialog {
     Q_OBJECT
@@ -22,15 +22,15 @@ public:
 
 private:
     DnsServer m_server;
-    QLineEdit* m_addressEdit = nullptr;
-    QComboBox* m_kindCombo = nullptr;
-    QSpinBox* m_portSpin = nullptr;
-    QPlainTextEdit* m_domainsEdit = nullptr;
-    QPlainTextEdit* m_expectIpsEdit = nullptr;
-    QLineEdit* m_tagEdit = nullptr;
-    QSpinBox* m_timeoutSpin = nullptr;
-    QCheckBox* m_skipFallbackCheck = nullptr;
-    QLineEdit* m_noteEdit = nullptr;
+    ZaryaTextField* m_addressEdit = nullptr;
+    ZaryaSelector* m_kindCombo = nullptr;
+    ZaryaNumberField* m_portSpin = nullptr;
+    ZaryaTextArea* m_domainsEdit = nullptr;
+    ZaryaTextArea* m_expectIpsEdit = nullptr;
+    ZaryaTextField* m_tagEdit = nullptr;
+    ZaryaNumberField* m_timeoutSpin = nullptr;
+    ZaryaCheckBox* m_skipFallbackCheck = nullptr;
+    ZaryaTextField* m_noteEdit = nullptr;
 };
 
 } // namespace zarya

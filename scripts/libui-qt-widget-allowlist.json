@@ -79,36 +79,6 @@
     "QListWidget": 2,
     "QPushButton": 1
   },
-  "src/ui/DnsProfileDialog.cpp": {
-    "QCheckBox": 5,
-    "QComboBox": 3,
-    "QDialogButtonBox": 9,
-    "QGroupBox": 1,
-    "QLabel": 2,
-    "QLineEdit": 2,
-    "QMessageBox": 3,
-    "QPushButton": 15,
-    "QTabWidget": 2
-  },
-  "src/ui/DnsProfileDialog.h": {
-    "QCheckBox": 5,
-    "QComboBox": 3,
-    "QLineEdit": 2,
-    "QTabWidget": 1
-  },
-  "src/ui/DnsServerEditorDialog.cpp": {
-    "QCheckBox": 2,
-    "QComboBox": 2,
-    "QDialogButtonBox": 6,
-    "QLineEdit": 4,
-    "QSpinBox": 3
-  },
-  "src/ui/DnsServerEditorDialog.h": {
-    "QCheckBox": 2,
-    "QComboBox": 2,
-    "QLineEdit": 4,
-    "QSpinBox": 3
-  },
   "src/ui/GeoDataManagerDialog.cpp": {
     "QCheckBox": 5,
     "QComboBox": 3,

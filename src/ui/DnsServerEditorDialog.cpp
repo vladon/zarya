@@ -1,12 +1,8 @@
 #include "ui/DnsServerEditorDialog.h"
 
-#include <QCheckBox>
-#include <QComboBox>
-#include <QDialogButtonBox>
-#include <QFormLayout>
-#include <QLineEdit>
-#include <QPlainTextEdit>
-#include <QSpinBox>
+#include "ui/desktopapp/ZaryaFormControls.h"
+#include "ui/desktopapp/ZaryaSelector.h"
+
 #include <QVBoxLayout>
 
 namespace zarya {
@@ -18,60 +14,64 @@ DnsServerEditorDialog::DnsServerEditorDialog(const DnsServer& server, QWidget* p
     setWindowTitle(tr("DNS Server"));
     resize(520, 420);
 
-    m_addressEdit = new QLineEdit(server.address, this);
-    m_kindCombo = new QComboBox(this);
-    m_kindCombo->addItem(dnsServerKindDisplayString(DnsServerKind::PlainIp),
-                         static_cast<int>(DnsServerKind::PlainIp));
-    m_kindCombo->addItem(dnsServerKindDisplayString(DnsServerKind::DoH),
-                         static_cast<int>(DnsServerKind::DoH));
-    m_kindCombo->addItem(dnsServerKindDisplayString(DnsServerKind::Local),
-                         static_cast<int>(DnsServerKind::Local));
-    m_kindCombo->setCurrentIndex(m_kindCombo->findData(static_cast<int>(server.kind)));
+    const auto key = [](int value) { return QString::number(value); };
 
-    m_portSpin = new QSpinBox(this);
-    m_portSpin->setRange(0, 65535);
+    m_addressEdit = new ZaryaTextField(tr("Address"), this);
+    m_addressEdit->setText(server.address);
+    m_kindCombo = new ZaryaSelector(this);
+    m_kindCombo->setItems({
+        {key(static_cast<int>(DnsServerKind::PlainIp)),
+         dnsServerKindDisplayString(DnsServerKind::PlainIp)},
+        {key(static_cast<int>(DnsServerKind::DoH)),
+         dnsServerKindDisplayString(DnsServerKind::DoH)},
+        {key(static_cast<int>(DnsServerKind::Local)),
+         dnsServerKindDisplayString(DnsServerKind::Local)},
+    }, key(static_cast<int>(server.kind)));
+
+    m_portSpin = new ZaryaNumberField(tr("Port"), 0, 65535, this);
     m_portSpin->setValue(server.port);
 
-    m_domainsEdit = new QPlainTextEdit(this);
-    m_domainsEdit->setPlainText(server.domains.join(QStringLiteral("\n")));
-    m_expectIpsEdit = new QPlainTextEdit(this);
-    m_expectIpsEdit->setPlainText(server.expectIPs.join(QStringLiteral("\n")));
-    m_tagEdit = new QLineEdit(server.tag, this);
-    m_timeoutSpin = new QSpinBox(this);
-    m_timeoutSpin->setRange(0, 600000);
+    m_domainsEdit = new ZaryaTextArea(tr("One domain per line"), this, 90);
+    m_domainsEdit->setText(server.domains.join(QStringLiteral("\n")));
+    m_expectIpsEdit = new ZaryaTextArea(tr("One expected IP per line"), this, 90);
+    m_expectIpsEdit->setText(server.expectIPs.join(QStringLiteral("\n")));
+    m_tagEdit = new ZaryaTextField(tr("Tag"), this);
+    m_tagEdit->setText(server.tag);
+    m_timeoutSpin = new ZaryaNumberField(tr("Timeout (ms)"), 0, 600000, this);
     m_timeoutSpin->setValue(server.timeoutMs);
-    m_skipFallbackCheck = new QCheckBox(tr("Skip fallback"), this);
-    m_skipFallbackCheck->setChecked(server.skipFallback);
-    m_noteEdit = new QLineEdit(server.note, this);
+    m_skipFallbackCheck = new ZaryaCheckBox(
+        tr("Skip fallback"), this, server.skipFallback);
+    m_noteEdit = new ZaryaTextField(tr("Note"), this);
+    m_noteEdit->setText(server.note);
 
-    auto* form = new QFormLayout;
-    form->addRow(tr("Address"), m_addressEdit);
-    form->addRow(tr("Kind"), m_kindCombo);
-    form->addRow(tr("Port"), m_portSpin);
-    form->addRow(tr("Domains"), m_domainsEdit);
-    form->addRow(tr("Expect IPs"), m_expectIpsEdit);
-    form->addRow(tr("Tag"), m_tagEdit);
-    form->addRow(tr("Timeout (ms)"), m_timeoutSpin);
-    form->addRow(QString(), m_skipFallbackCheck);
-    form->addRow(tr("Note"), m_noteEdit);
-
-    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
-    connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
-    connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
+    auto* actions = new ZaryaDialogActionRow(tr("OK"), tr("Cancel"), this);
+    connect(actions, &ZaryaDialogActionRow::accepted, this, &QDialog::accept);
+    connect(actions, &ZaryaDialogActionRow::rejected, this, &QDialog::reject);
 
     auto* layout = new QVBoxLayout(this);
-    layout->addLayout(form);
-    layout->addWidget(buttons);
+    layout->setContentsMargins(24, 24, 24, 24);
+    layout->setSpacing(12);
+    layout->addWidget(new ZaryaFormRow(tr("Address"), m_addressEdit, this));
+    layout->addWidget(new ZaryaFormRow(tr("Kind"), m_kindCombo, this));
+    layout->addWidget(new ZaryaFormRow(tr("Port"), m_portSpin, this));
+    layout->addWidget(new ZaryaFormRow(tr("Domains"), m_domainsEdit, this));
+    layout->addWidget(new ZaryaFormRow(tr("Expect IPs"), m_expectIpsEdit, this));
+    layout->addWidget(new ZaryaFormRow(tr("Tag"), m_tagEdit, this));
+    layout->addWidget(new ZaryaFormRow(tr("Timeout (ms)"), m_timeoutSpin, this));
+    layout->addWidget(m_skipFallbackCheck);
+    layout->addWidget(new ZaryaFormRow(tr("Note"), m_noteEdit, this));
+    layout->addWidget(actions);
+    resize(620, 650);
 }
 
 DnsServer DnsServerEditorDialog::server() const
 {
     DnsServer server = m_server;
     server.address = m_addressEdit->text().trimmed();
-    server.kind = static_cast<DnsServerKind>(m_kindCombo->currentData().toInt());
+    server.kind = static_cast<DnsServerKind>(m_kindCombo->currentKey().toInt());
     server.port = m_portSpin->value();
-    server.domains = m_domainsEdit->toPlainText().split(QLatin1Char('\n'), Qt::SkipEmptyParts);
-    server.expectIPs = m_expectIpsEdit->toPlainText().split(QLatin1Char('\n'), Qt::SkipEmptyParts);
+    server.domains = m_domainsEdit->text().split(QLatin1Char('\n'), Qt::SkipEmptyParts);
+    server.expectIPs = m_expectIpsEdit->text().split(QLatin1Char('\n'), Qt::SkipEmptyParts);
     server.tag = m_tagEdit->text().trimmed();
     server.timeoutMs = m_timeoutSpin->value();
     server.skipFallback = m_skipFallbackCheck->isChecked();
