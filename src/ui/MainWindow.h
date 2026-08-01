@@ -30,7 +30,6 @@ class QAction;
 class QCloseEvent;
 class QComboBox;
 class QEvent;
-class QLabel;
 class QPlainTextEdit;
 class QSplitter;
 class QTableView;
@@ -40,6 +39,7 @@ namespace zarya {
 
 class TrayController;
 class BetaBannerWidget;
+class ProfileEmptyStatePanel;
 class StatusDashboardWidget;
 struct FirstRunState;
 struct Profile;
@@ -207,7 +207,7 @@ private:
 
     BetaBannerWidget* m_betaBanner = nullptr;
     StatusDashboardWidget* m_statusDashboard = nullptr;
-    QLabel* m_emptyStateLabel = nullptr;
+    ProfileEmptyStatePanel* m_emptyStatePanel = nullptr;
     QSplitter* m_splitter = nullptr;
     QTableView* m_tableView = nullptr;
     QPlainTextEdit* m_logView = nullptr;

@@ -332,6 +332,7 @@ set(ZARYA_DESKTOP_APP_UI_SOURCES
     src/ui/desktopapp/ZaryaPalette.cpp
     src/ui/desktopapp/ZaryaControls.cpp
     src/ui/desktopapp/UiMessagePresenter.cpp
+    src/ui/desktopapp/ProfileEmptyStatePanel.cpp
     src/ui/desktopapp/StatusBadgeLibUiEmbed.cpp
     src/ui/desktopapp/StatusConfiguredStrip.cpp
     src/ui/desktopapp/StatusUnconfiguredPanel.cpp)
