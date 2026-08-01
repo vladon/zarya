@@ -2,6 +2,59 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="en_US">
 <context>
+    <name>AppUpdateDialog</name>
+    <message><source>Zarya App Updates</source><translation type="unfinished"></translation></message>
+    <message><source>No update checked yet.</source><translation type="unfinished"></translation></message>
+    <message><source>Check Now</source><translation type="unfinished"></translation></message>
+    <message><source>Choose Local Manifest…</source><translation type="unfinished"></translation></message>
+    <message><source>Download and Verify</source><translation type="unfinished"></translation></message>
+    <message><source>Install and Restart</source><translation type="unfinished"></translation></message>
+    <message><source>Open Downloads Folder</source><translation type="unfinished"></translation></message>
+    <message><source>Cancel</source><translation type="unfinished"></translation></message>
+    <message><source>Update information</source><translation type="unfinished"></translation></message>
+    <message><source>Current version</source><translation type="unfinished"></translation></message>
+    <message><source>Channel</source><translation type="unfinished"></translation></message>
+    <message><source>Installation mode</source><translation type="unfinished"></translation></message>
+    <message><source>Manifest</source><translation type="unfinished"></translation></message>
+    <message><source>Status</source><translation type="unfinished"></translation></message>
+    <message><source>Local file: %1</source><translation type="unfinished"></translation></message>
+    <message><source>Not configured</source><translation type="unfinished"></translation></message>
+    <message><source>Configured URL</source><translation type="unfinished"></translation></message>
+    <message><source>Update available: %1</source><translation type="unfinished"></translation></message>
+    <message><source>Selected asset:</source><translation type="unfinished"></translation></message>
+    <message><source>  Size: %1 bytes</source><translation type="unfinished"></translation></message>
+    <message><source>Self-update installation is experimental and disabled in this RC build.</source><translation type="unfinished"></translation></message>
+    <message><source>You can download and verify updates manually.</source><translation type="unfinished"></translation></message>
+    <message><source>Ready to install portable update.</source><translation type="unfinished"></translation></message>
+    <message><source>Zarya will close and restart.</source><translation type="unfinished"></translation></message>
+    <message><source>The update artifact was downloaded and verified.</source><translation type="unfinished"></translation></message>
+    <message><source>Install:</source><translation type="unfinished"></translation></message>
+    <message><source>You are using the latest version for the selected channel.</source><translation type="unfinished"></translation></message>
+    <message><source>Warning: %1</source><translation type="unfinished"></translation></message>
+    <message><source>Blocked: %1</source><translation type="unfinished"></translation></message>
+    <message><source>Choose Update Manifest</source><translation type="unfinished"></translation></message>
+    <message><source>Update manifest (*.json);;All files (*.*)</source><translation type="unfinished"></translation></message>
+    <message><source>App Updates</source><translation type="unfinished"></translation></message>
+    <message><source>This update asset has no checksum. Enable unsigned app update download in Settings or use a signed manifest asset.</source><translation type="unfinished"></translation></message>
+    <message><source>Downloading %1…</source><translation type="unfinished"></translation></message>
+    <message><source>Downloading… %1 / %2 bytes</source><translation type="unfinished"></translation></message>
+    <message><source>Download failed.</source><translation type="unfinished"></translation></message>
+    <message><source>SHA256 verification failed.</source><translation type="unfinished"></translation></message>
+    <message><source>Staging update…</source><translation type="unfinished"></translation></message>
+    <message><source>Staging failed.</source><translation type="unfinished"></translation></message>
+    <message><source>Download verified. Ready to install portable update.</source><translation type="unfinished"></translation></message>
+    <message><source>Download completed.
+SHA256 verified.
+
+%1</source><translation type="unfinished"></translation></message>
+    <message><source>Install Update</source><translation type="unfinished"></translation></message>
+    <message><source>Zarya will close while the updater replaces application files.
+User data under data/ will be preserved.
+
+Install and restart now?</source><translation type="unfinished"></translation></message>
+    <message><source>Checking for updates…</source><translation type="unfinished"></translation></message>
+</context>
+<context>
     <name>BackupExportDialog</name>
     <message>
         <source>Export Backup</source>

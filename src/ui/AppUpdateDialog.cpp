@@ -85,16 +85,14 @@ AppUpdateDialog::AppUpdateDialog(AppController* controller,
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(24, 24, 24, 24);
     layout->setSpacing(12);
-    layout->addWidget(new ZaryaBodyText(tr("<b>Current version</b>"), this));
-    layout->addWidget(m_currentVersionLabel);
-    layout->addWidget(new ZaryaBodyText(tr("<b>Channel</b>"), this));
-    layout->addWidget(m_channelLabel);
-    layout->addWidget(new ZaryaBodyText(tr("<b>Installation mode</b>"), this));
-    layout->addWidget(m_installationModeLabel);
-    layout->addWidget(new ZaryaBodyText(tr("<b>Manifest</b>"), this));
-    layout->addWidget(m_manifestLabel);
-    layout->addWidget(new ZaryaBodyText(tr("<b>Status</b>"), this));
-    layout->addWidget(m_statusLabel);
+    auto* infoSection = new ZaryaFormSection(tr("Update information"), this);
+    infoSection->addWidget(new ZaryaFormRow(tr("Current version"), m_currentVersionLabel, this));
+    infoSection->addWidget(new ZaryaFormRow(tr("Channel"), m_channelLabel, this));
+    infoSection->addWidget(
+        new ZaryaFormRow(tr("Installation mode"), m_installationModeLabel, this));
+    infoSection->addWidget(new ZaryaFormRow(tr("Manifest"), m_manifestLabel, this));
+    infoSection->addWidget(new ZaryaFormRow(tr("Status"), m_statusLabel, this));
+    layout->addWidget(infoSection);
     layout->addWidget(m_detailsText, 1);
     layout->addLayout(buttonRow);
 
@@ -303,7 +301,7 @@ void AppUpdateDialog::onDownloadAndVerify()
         setBusy(false);
         setStatusText(tr("Download failed."));
         AppUpdateStatus::instance().recordInstallAttempt(QStringLiteral("download_failed"));
-        UiMessagePresenter::warning(this, tr("App Updates"), downloadError);
+        UiMessagePresenter::error(this, tr("App Updates"), downloadError);
         return;
     }
 
@@ -313,7 +311,7 @@ void AppUpdateDialog::onDownloadAndVerify()
         setBusy(false);
         setStatusText(tr("SHA256 verification failed."));
         AppSettings::instance().setLastAppUpdateVerificationStatus(QStringLiteral("sha256_failed"));
-        UiMessagePresenter::warning(this, tr("App Updates"), verifyError);
+        UiMessagePresenter::error(this, tr("App Updates"), verifyError);
         return;
     }
 
@@ -328,7 +326,7 @@ void AppUpdateDialog::onDownloadAndVerify()
         m_stagingReady = false;
         setBusy(false);
         setStatusText(tr("Staging failed."));
-        UiMessagePresenter::warning(this, tr("App Updates"), staged.error);
+        UiMessagePresenter::error(this, tr("App Updates"), staged.error);
         updatePlanView(m_lastPlan);
         return;
     }
@@ -377,7 +375,7 @@ void AppUpdateDialog::onInstallAndRestart()
     QString launchError;
     if (!PortableUpdateInstaller::launchUpdaterAndQuit(plan, &launchError)) {
         AppUpdateStatus::instance().recordInstallAttempt(QStringLiteral("failed"));
-        UiMessagePresenter::warning(this, tr("App Updates"), launchError);
+        UiMessagePresenter::error(this, tr("App Updates"), launchError);
         return;
     }
 
