@@ -1705,6 +1705,14 @@ Open import dialog anyway?</source>
 Native proxy profile manager with system tray, Xray multi-protocol support, Windows system proxy, subscriptions, and node testing.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>%1
+
+Step %2 of %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message><source>Start</source><translation type="unfinished"></translation></message>
+    <message><source>Cancel</source><translation type="unfinished"></translation></message>
 </context>
 <context>
     <name>ProfileDialog</name>

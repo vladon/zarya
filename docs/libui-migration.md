@@ -126,6 +126,8 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
 7. **Convergence**
    - Complete: application QSS selectors for controls that no longer exist and obsolete Qt-only
      includes are removed. Settings scrolling and the diagnostics preview use toolkit controls.
+     Startup recovery progress and the ambiguous-profile selector also use toolkit content rather
+     than native `QProgressDialog` or `QInputDialog` surfaces.
    - The final exact allowlist contains only the `QMessageBox` startup fallback used before
      Desktop App Toolkit initialization. Model/view tables, log text engines, tray/native menus,
      file dialogs, and infrastructure Qt remain approved boundaries. The two exact native-message
