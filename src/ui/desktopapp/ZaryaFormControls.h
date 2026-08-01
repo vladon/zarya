@@ -13,6 +13,7 @@ class ZaryaActionButton final : public QWidget {
     Q_OBJECT
 
 public:
+    ZaryaActionButton(const QString& text, QWidget* parent);
     ZaryaActionButton(const QString& text, QWidget* parent, ZaryaButtonRole role);
     void setText(const QString& text);
 

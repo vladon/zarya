@@ -238,15 +238,6 @@
     "QMessageBox": 21,
     "QPushButton": 1
   },
-  "src/ui/onboarding/FirstRunWizard.cpp": {
-    "QCheckBox": 8,
-    "QGroupBox": 3,
-    "QLabel": 7,
-    "QLineEdit": 5,
-    "QMessageBox": 3,
-    "QPushButton": 24,
-    "QRadioButton": 18
-  },
   "src/ui/theme/ThemeManager.cpp": {
     "QComboBox": 3,
     "QDoubleSpinBox": 1,

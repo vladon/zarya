@@ -32,6 +32,11 @@ void fitField(QWidget* field, int width)
 
 } // namespace
 
+ZaryaActionButton::ZaryaActionButton(const QString& text, QWidget* parent)
+    : ZaryaActionButton(text, parent, ZaryaButtonRole::Secondary)
+{
+}
+
 ZaryaActionButton::ZaryaActionButton(
     const QString& text,
     QWidget* parent,

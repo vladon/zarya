@@ -65,7 +65,9 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
    - Progress: profile editing uses shared toolkit text/number fields, selectors, checkbox,
      labeled rows, inline validation, dialog actions, pill tabs, and scrolling while preserving
      the existing four-section profile model. Share-link import and the first-run parse/checklist
-     surfaces use shared toolkit multiline and body-text controls.
+     surfaces use shared toolkit multiline and body-text controls. The first-run wizard keeps
+     `QWizard` only as its temporary host; its content, selectors, fields, checks, actions, and
+     validation feedback use the shared toolkit layer.
 5. **Management surfaces**
    - Migrate Core, Routing, DNS, Geo Data, Rule Set, backup, and diagnostics workflows using the
      shared interaction layer.
