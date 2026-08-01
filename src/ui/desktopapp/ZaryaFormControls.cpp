@@ -18,6 +18,7 @@
 #include <QHBoxLayout>
 #include <QMetaObject>
 #include <QResizeEvent>
+#include <QTextEdit>
 #include <QVBoxLayout>
 #include <algorithm>
 #include <cstdlib>
@@ -120,6 +121,15 @@ void ZaryaTextField::setPlaceholder(const QString& placeholder)
     }
 }
 
+void ZaryaTextField::setReadOnly(bool readOnly)
+{
+    if (m_password) {
+        static_cast<Ui::PasswordInput*>(m_field)->setReadOnly(readOnly);
+    } else {
+        static_cast<Ui::InputField*>(m_field)->rawTextEdit()->setReadOnly(readOnly);
+    }
+}
+
 void ZaryaTextField::showError(bool show)
 {
     if (show) {
@@ -172,6 +182,11 @@ QString ZaryaTextArea::text() const
 void ZaryaTextArea::setText(const QString& text)
 {
     static_cast<Ui::InputField*>(m_field)->setText(text);
+}
+
+void ZaryaTextArea::setReadOnly(bool readOnly)
+{
+    static_cast<Ui::InputField*>(m_field)->rawTextEdit()->setReadOnly(readOnly);
 }
 
 void ZaryaTextArea::clear()
