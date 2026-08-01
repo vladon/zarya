@@ -144,8 +144,21 @@ int ZaryaNumberField::value() const
 
 void ZaryaNumberField::setValue(int value)
 {
+    const int clamped = std::clamp(value, m_minimum, m_maximum);
     static_cast<Ui::NumberInput*>(m_field)->setText(
-        QString::number(std::clamp(value, m_minimum, m_maximum)));
+        (clamped == m_minimum && !m_specialValueText.isEmpty())
+            ? QString()
+            : QString::number(clamped));
+}
+
+void ZaryaNumberField::setSpecialValueText(const QString& text)
+{
+    const bool wasMinimum = value() == m_minimum;
+    m_specialValueText = text;
+    static_cast<Ui::NumberInput*>(m_field)->setPlaceholder(rpl::single(text));
+    if (wasMinimum) {
+        setValue(m_minimum);
+    }
 }
 
 void ZaryaNumberField::showError(bool show)

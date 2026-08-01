@@ -46,6 +46,7 @@ public:
 
     [[nodiscard]] int value() const;
     void setValue(int value);
+    void setSpecialValueText(const QString& text);
     void showError(bool show = true);
 
 protected:
@@ -54,6 +55,7 @@ protected:
 private:
     int m_minimum = 0;
     int m_maximum = 0;
+    QString m_specialValueText;
     QWidget* m_field = nullptr; // Ui::NumberInput*
 };
 
