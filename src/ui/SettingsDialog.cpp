@@ -33,16 +33,23 @@
 #include "ui/desktopapp/ZaryaSelector.h"
 #include "ui/theme/ThemeMode.h"
 
+#include "base/algorithm.h"
+#include "base/basic_types.h"
+#include "base/object_ptr.h"
+#include <rpl/rpl.h>
+#include "styles/style_layers.h"
+#include "ui/qt_object_factory.h"
+#include "ui/rp_widget.h"
+#include "ui/widgets/scroll_area.h"
+
 #if defined(Q_OS_LINUX)
 #include "platform/linux/LinuxSystemProxyManager.h"
 #endif
 
 #include <QFileDialog>
-#include <QFrame>
 #include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QScreen>
-#include <QScrollArea>
 #include <QSizePolicy>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -726,8 +733,11 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     });
     connect(buttons, &ZaryaDialogActionRow::rejected, this, &QDialog::reject);
 
-    auto* content = new QWidget(this);
-    auto* contentLayout = new QVBoxLayout(content);
+    auto* scroll = Ui::CreateChild<Ui::ScrollArea>(this, st::boxScroll);
+    scroll->setWidgetResizable(true);
+    auto content = object_ptr<Ui::RpWidget>(scroll);
+    auto* contentWidget = content.data();
+    auto* contentLayout = new QVBoxLayout(contentWidget);
     contentLayout->setContentsMargins(0, 0, 0, 0);
     contentLayout->addWidget(generalGroup);
     contentLayout->addWidget(coreGroup);
@@ -744,11 +754,8 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     contentLayout->addWidget(m_killSwitchGroup);
     contentLayout->addStretch(1);
 
-    auto* scroll = new QScrollArea(this);
-    scroll->setWidgetResizable(true);
-    scroll->setFrameShape(QFrame::NoFrame);
     scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    scroll->setWidget(content);
+    scroll->setOwnedWidget(std::move(content));
 
     auto* layout = new QVBoxLayout(this);
     layout->addWidget(scroll, 1);

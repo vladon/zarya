@@ -71,11 +71,9 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QHBoxLayout>
-#include <QPushButton>
 #include <QJsonDocument>
 #include <QCloseEvent>
 #include <QInputDialog>
-#include <QScrollArea>
 #include <QEvent>
 #include <QSettings>
 #include <QTimer>
@@ -87,7 +85,6 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QProgressDialog>
-#include <QPushButton>
 #include <QPlainTextEdit>
 #include <QSplitter>
 #include <QStatusBar>

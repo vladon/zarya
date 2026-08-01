@@ -2,7 +2,6 @@
 
 #include "ui/desktopapp/ZaryaFormControls.h"
 
-#include <QListWidget>
 #include <QVBoxLayout>
 
 namespace zarya {
@@ -27,10 +26,9 @@ DiagnosticsPreviewDialog::DiagnosticsPreviewDialog(const DiagnosticsPreviewResul
         m_warningsLabel->setText(tr("Warnings:\n") + preview.warnings.join(QStringLiteral("\n")));
     }
 
-    m_filesList = new QListWidget(this);
-    for (const QString& file : preview.files) {
-        m_filesList->addItem(file);
-    }
+    m_filesList = new ZaryaTextArea({}, this, 260);
+    m_filesList->setReadOnly(true);
+    m_filesList->setText(preview.files.join(QStringLiteral("\n")));
 
     auto* closeButton = new ZaryaActionButton(tr("Close"), this);
     connect(closeButton, &ZaryaActionButton::clicked, this, &QDialog::accept);

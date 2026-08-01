@@ -50,8 +50,8 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      only for startup failures before toolkit initialization.
    - Progress: the shared button roles and synchronous message presenter are available, including
      long-message scrolling, keyboard handling, semantic text, and the pre-toolkit native
-     fallback. Share-link import, profile deletion, and kill-switch startup recovery use the
-     toolkit presenter and its multi-action model; update prompts remain on the Qt presenter.
+     fallback. Share-link import, profile deletion, kill-switch recovery, and update prompts use
+     the toolkit presenter and its multi-action model.
 3. **Main application shell**
    - Migrate profile actions, filters, empty state, log controls, and operational feedback.
    - Keep `QTableView` and the log text engine behind toolkit-styled hosts until their replacement
@@ -123,9 +123,12 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      desktop behavior controls, use shared toolkit form primitives and feedback while preserving
      the existing `FeatureGate`, persistence, native file pickers, and recovery behavior.
 7. **Convergence**
-   - Remove application QSS for controls that no longer exist.
-   - Delete obsolete Qt-only wrappers and verify that remaining Qt widgets match the boundary
-     above.
+   - Complete: application QSS selectors for controls that no longer exist and obsolete Qt-only
+     includes are removed. Settings scrolling and the diagnostics preview use toolkit controls.
+   - The final exact allowlist contains only the `QMessageBox` startup fallback used before
+     Desktop App Toolkit initialization. Model/view tables, log text engines, tray/native menus,
+     file dialogs, and infrastructure Qt remain approved boundaries and are intentionally absent
+     from the legacy-control inventory.
 
 Each numbered stage may span multiple focused PRs. A PR migrates one coherent user workflow and
 must not mix unrelated backend changes.
