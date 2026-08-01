@@ -1,13 +1,4 @@
 {
-  "src/ui/AppUpdateDialog.cpp": {
-    "QLabel": 11,
-    "QMessageBox": 13,
-    "QPushButton": 13
-  },
-  "src/ui/AppUpdateDialog.h": {
-    "QLabel": 6,
-    "QPushButton": 6
-  },
   "src/ui/BetaBannerWidget.cpp": {
     "QLabel": 2,
     "QPushButton": 3

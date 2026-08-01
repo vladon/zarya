@@ -16,15 +16,13 @@
 #include "updater/installers/MacosUpdateInstaller.h"
 #include "updater/installers/PortableUpdateInstaller.h"
 #include "updater/installers/WindowsInstalledUpdateInstaller.h"
+#include "ui/desktopapp/UiMessagePresenter.h"
+#include "ui/desktopapp/ZaryaFormControls.h"
 
 #include <QDesktopServices>
 #include <QDir>
 #include <QFileDialog>
 #include <QHBoxLayout>
-#include <QLabel>
-#include <QMessageBox>
-#include <QPlainTextEdit>
-#include <QPushButton>
 #include <QUrl>
 #include <QVBoxLayout>
 
@@ -38,37 +36,37 @@ AppUpdateDialog::AppUpdateDialog(AppController* controller,
     , m_isTestsRunning(isTestsRunning)
 {
     setWindowTitle(tr("Zarya App Updates"));
-    resize(640, 560);
+    resize(900, 620);
 
-    m_currentVersionLabel = new QLabel(this);
-    m_channelLabel = new QLabel(this);
-    m_installationModeLabel = new QLabel(this);
-    m_manifestLabel = new QLabel(this);
-    m_manifestLabel->setWordWrap(true);
-    m_statusLabel = new QLabel(tr("No update checked yet."), this);
-    m_statusLabel->setWordWrap(true);
+    m_currentVersionLabel = new ZaryaBodyText({}, this);
+    m_channelLabel = new ZaryaBodyText({}, this);
+    m_installationModeLabel = new ZaryaBodyText({}, this);
+    m_manifestLabel = new ZaryaBodyText({}, this);
+    m_statusLabel = new ZaryaBodyText(tr("No update checked yet."), this);
 
-    m_detailsText = new QPlainTextEdit(this);
+    m_detailsText = new ZaryaTextArea({}, this, 260);
     m_detailsText->setReadOnly(true);
 
-    m_checkButton = new QPushButton(tr("Check Now"), this);
-    m_chooseManifestButton = new QPushButton(tr("Choose Local Manifest…"), this);
-    m_downloadButton = new QPushButton(tr("Download and Verify"), this);
-    m_installButton = new QPushButton(tr("Install and Restart"), this);
-    m_openDownloadsButton = new QPushButton(tr("Open Downloads Folder"), this);
-    auto* cancelButton = new QPushButton(tr("Cancel"), this);
+    m_checkButton = new ZaryaActionButton(tr("Check Now"), this);
+    m_chooseManifestButton = new ZaryaActionButton(tr("Choose Local Manifest…"), this);
+    m_downloadButton = new ZaryaActionButton(tr("Download and Verify"), this);
+    m_installButton = new ZaryaActionButton(tr("Install and Restart"), this);
+    m_openDownloadsButton = new ZaryaActionButton(tr("Open Downloads Folder"), this);
+    auto* cancelButton = new ZaryaActionButton(tr("Cancel"), this);
 
     m_downloadButton->setEnabled(false);
     m_installButton->setEnabled(false);
 
-    connect(m_checkButton, &QPushButton::clicked, this, &AppUpdateDialog::onCheckNow);
-    connect(m_chooseManifestButton, &QPushButton::clicked, this,
+    connect(m_checkButton, &ZaryaActionButton::clicked, this, &AppUpdateDialog::onCheckNow);
+    connect(m_chooseManifestButton, &ZaryaActionButton::clicked, this,
             &AppUpdateDialog::onChooseLocalManifest);
-    connect(m_downloadButton, &QPushButton::clicked, this, &AppUpdateDialog::onDownloadAndVerify);
-    connect(m_installButton, &QPushButton::clicked, this, &AppUpdateDialog::onInstallAndRestart);
-    connect(m_openDownloadsButton, &QPushButton::clicked, this,
+    connect(m_downloadButton, &ZaryaActionButton::clicked,
+            this, &AppUpdateDialog::onDownloadAndVerify);
+    connect(m_installButton, &ZaryaActionButton::clicked,
+            this, &AppUpdateDialog::onInstallAndRestart);
+    connect(m_openDownloadsButton, &ZaryaActionButton::clicked, this,
             &AppUpdateDialog::onOpenDownloadsFolder);
-    connect(cancelButton, &QPushButton::clicked, this, &QDialog::reject);
+    connect(cancelButton, &ZaryaActionButton::clicked, this, &QDialog::reject);
 
     connect(&m_checker, &AppUpdateChecker::updateCheckStarted, this, &AppUpdateDialog::onCheckStarted);
     connect(&m_checker, &AppUpdateChecker::updateCheckFinished, this,
@@ -85,15 +83,17 @@ AppUpdateDialog::AppUpdateDialog(AppController* controller,
     buttonRow->addWidget(cancelButton);
 
     auto* layout = new QVBoxLayout(this);
-    layout->addWidget(new QLabel(tr("<b>Current version</b>"), this));
+    layout->setContentsMargins(24, 24, 24, 24);
+    layout->setSpacing(12);
+    layout->addWidget(new ZaryaBodyText(tr("<b>Current version</b>"), this));
     layout->addWidget(m_currentVersionLabel);
-    layout->addWidget(new QLabel(tr("<b>Channel</b>"), this));
+    layout->addWidget(new ZaryaBodyText(tr("<b>Channel</b>"), this));
     layout->addWidget(m_channelLabel);
-    layout->addWidget(new QLabel(tr("<b>Installation mode</b>"), this));
+    layout->addWidget(new ZaryaBodyText(tr("<b>Installation mode</b>"), this));
     layout->addWidget(m_installationModeLabel);
-    layout->addWidget(new QLabel(tr("<b>Manifest</b>"), this));
+    layout->addWidget(new ZaryaBodyText(tr("<b>Manifest</b>"), this));
     layout->addWidget(m_manifestLabel);
-    layout->addWidget(new QLabel(tr("<b>Status</b>"), this));
+    layout->addWidget(new ZaryaBodyText(tr("<b>Status</b>"), this));
     layout->addWidget(m_statusLabel);
     layout->addWidget(m_detailsText, 1);
     layout->addLayout(buttonRow);
@@ -221,7 +221,7 @@ void AppUpdateDialog::updatePlanView(const AppUpdatePlan& plan)
         lines << tr("Blocked: %1").arg(blocker);
     }
 
-    m_detailsText->setPlainText(lines.join(QStringLiteral("\n")));
+    m_detailsText->setText(lines.join(QStringLiteral("\n")));
     m_downloadButton->setEnabled(plan.updateAvailable);
     refreshInstallButtonState();
 }
@@ -261,7 +261,7 @@ void AppUpdateDialog::onDownloadAndVerify()
     const AppSettings& settings = AppSettings::instance();
     const AppUpdateAsset& asset = m_lastPlan.selectedAsset;
     if (!AppUpdateVerifier::canDownloadAsset(asset, settings.allowUnsignedAppUpdates())) {
-        QMessageBox::warning(
+        UiMessagePresenter::warning(
             this, tr("App Updates"),
             tr("This update asset has no checksum. Enable unsigned app update download in "
                "Settings or use a signed manifest asset."));
@@ -269,7 +269,7 @@ void AppUpdateDialog::onDownloadAndVerify()
     }
 
     for (const QString& blocker : m_lastPlan.blockers) {
-        QMessageBox::warning(this, tr("App Updates"), blocker);
+        UiMessagePresenter::warning(this, tr("App Updates"), blocker);
         return;
     }
 
@@ -303,7 +303,7 @@ void AppUpdateDialog::onDownloadAndVerify()
         setBusy(false);
         setStatusText(tr("Download failed."));
         AppUpdateStatus::instance().recordInstallAttempt(QStringLiteral("download_failed"));
-        QMessageBox::warning(this, tr("App Updates"), downloadError);
+        UiMessagePresenter::warning(this, tr("App Updates"), downloadError);
         return;
     }
 
@@ -313,7 +313,7 @@ void AppUpdateDialog::onDownloadAndVerify()
         setBusy(false);
         setStatusText(tr("SHA256 verification failed."));
         AppSettings::instance().setLastAppUpdateVerificationStatus(QStringLiteral("sha256_failed"));
-        QMessageBox::warning(this, tr("App Updates"), verifyError);
+        UiMessagePresenter::warning(this, tr("App Updates"), verifyError);
         return;
     }
 
@@ -328,7 +328,7 @@ void AppUpdateDialog::onDownloadAndVerify()
         m_stagingReady = false;
         setBusy(false);
         setStatusText(tr("Staging failed."));
-        QMessageBox::warning(this, tr("App Updates"), staged.error);
+        UiMessagePresenter::warning(this, tr("App Updates"), staged.error);
         updatePlanView(m_lastPlan);
         return;
     }
@@ -345,7 +345,7 @@ void AppUpdateDialog::onDownloadAndVerify()
     for (const QString& warning : signatureWarnings) {
         message += QStringLiteral("\n\n") + warning;
     }
-    QMessageBox::information(this, tr("App Updates"), message);
+    UiMessagePresenter::information(this, tr("App Updates"), message);
 }
 
 void AppUpdateDialog::onInstallAndRestart()
@@ -359,17 +359,16 @@ void AppUpdateDialog::onInstallAndRestart()
             m_lastPlan.selectedAsset, m_artifactVerified, m_stagingReady,
             m_controller->isCoreRunning(), m_isTestsRunning ? m_isTestsRunning() : false,
             killSwitchActive(), &reason)) {
-        QMessageBox::warning(this, tr("App Updates"), reason);
+        UiMessagePresenter::warning(this, tr("App Updates"), reason);
         return;
     }
 
-    const auto answer = QMessageBox::warning(
-        this, tr("Install Update"),
-        tr("Zarya will close while the updater replaces application files.\n"
-           "User data under data/ will be preserved.\n\n"
-           "Install and restart now?"),
-        QMessageBox::Yes | QMessageBox::No);
-    if (answer != QMessageBox::Yes) {
+    if (!UiMessagePresenter::confirm(
+            this, tr("Install Update"),
+            tr("Zarya will close while the updater replaces application files.\n"
+               "User data under data/ will be preserved.\n\n"
+               "Install and restart now?"),
+            tr("Install and Restart"))) {
         return;
     }
 
@@ -378,7 +377,7 @@ void AppUpdateDialog::onInstallAndRestart()
     QString launchError;
     if (!PortableUpdateInstaller::launchUpdaterAndQuit(plan, &launchError)) {
         AppUpdateStatus::instance().recordInstallAttempt(QStringLiteral("failed"));
-        QMessageBox::warning(this, tr("App Updates"), launchError);
+        UiMessagePresenter::warning(this, tr("App Updates"), launchError);
         return;
     }
 
