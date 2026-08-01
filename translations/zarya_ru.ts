@@ -849,6 +849,9 @@ sing-box: %3 (%4)</translation></message>
         <source>Log filter:</source>
         <translation>Фильтр журнала:</translation></message>
     <message>
+        <source>More actions</source>
+        <translation>Другие действия</translation></message>
+    <message>
         <source>Ready</source>
         <translation>Готово</translation></message>
     <message>
