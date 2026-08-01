@@ -25,6 +25,18 @@ Keep Qt where it is infrastructure or the safer native primitive:
 Qt host widgets may remain temporarily around migrated content. A host is not considered an
 unmigrated surface when it owns no visual styling or interaction.
 
+The boundary is enforced by `scripts/check-libui-boundary.py`. Its allowlist records the exact
+legacy visual-control references by file and control type. New references and silent growth fail
+the check, and CI rejects allowlist increases against the PR base. Removing a migrated control
+also fails until the reviewed inventory is regenerated:
+
+```sh
+python3 scripts/check-libui-boundary.py --print-current
+```
+
+Replace `scripts/libui-qt-widget-allowlist.json` with that output only when the PR demonstrably
+reduces the inventory. Approved infrastructure and native/model-view boundaries are not counted.
+
 ## Delivery sequence
 
 1. **Foundation and status**
@@ -64,6 +76,10 @@ unmigrated surface when it owns no visual styling or interaction.
 Each numbered stage may span multiple focused PRs. A PR migrates one coherent user workflow and
 must not mix unrelated backend changes.
 
+During the active migration, each focused PR is built and smoke-tested locally on macOS before
+merge. Cross-platform Windows and Linux verification is performed in dedicated hardening passes
+and remains required before a release, rather than blocking every migration PR.
+
 ## Acceptance for every migrated surface
 
 - Behavior, persistence, feature gating, and recovery actions remain unchanged.
@@ -74,5 +90,5 @@ must not mix unrelated backend changes.
   the existing setting explicitly requires one.
 - Semantic state always includes text; color is supplementary.
 - Animations are state-driven, short, and safe when reduced motion is requested.
-- Linux, macOS, and static-Qt Windows builds pass; the migrated workflow receives a targeted
-  smoke or unit test where feasible.
+- The local macOS build and relevant smoke or unit tests pass for each migration PR.
+- Linux and static-Qt Windows builds pass in the cross-platform hardening pass before release.

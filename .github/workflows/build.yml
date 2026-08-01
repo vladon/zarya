@@ -7,6 +7,18 @@ on:
     branches: [main]
 
 jobs:
+  libui-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+      - name: Check lib_ui boundary
+        run: python3 scripts/check-libui-boundary.py
+      - name: Require a shrinking allowlist
+        if: github.event_name == 'pull_request'
+        run: python3 scripts/check-libui-boundary.py --previous-git-ref "${{ github.event.pull_request.base.sha }}"
+
   build-windows:
     runs-on: windows-latest
     env:

@@ -1,0 +1,295 @@
+{
+  "src/ui/AppUpdateDialog.cpp": {
+    "QLabel": 11,
+    "QMessageBox": 13,
+    "QPushButton": 13
+  },
+  "src/ui/AppUpdateDialog.h": {
+    "QLabel": 6,
+    "QPushButton": 6
+  },
+  "src/ui/BackupExportDialog.cpp": {
+    "QCheckBox": 13,
+    "QGroupBox": 3,
+    "QLabel": 2,
+    "QLineEdit": 2,
+    "QMessageBox": 6,
+    "QPushButton": 7,
+    "QRadioButton": 4
+  },
+  "src/ui/BackupExportDialog.h": {
+    "QCheckBox": 11,
+    "QLineEdit": 2,
+    "QPushButton": 2,
+    "QRadioButton": 3
+  },
+  "src/ui/BackupImportDialog.cpp": {
+    "QCheckBox": 2,
+    "QComboBox": 4,
+    "QGroupBox": 2,
+    "QLabel": 3,
+    "QMessageBox": 7,
+    "QPushButton": 7
+  },
+  "src/ui/BackupImportDialog.h": {
+    "QCheckBox": 2,
+    "QComboBox": 7,
+    "QLabel": 3,
+    "QPushButton": 2
+  },
+  "src/ui/BetaBannerWidget.cpp": {
+    "QLabel": 2,
+    "QPushButton": 3
+  },
+  "src/ui/BetaBannerWidget.h": {
+    "QLabel": 2,
+    "QPushButton": 1
+  },
+  "src/ui/CoreManagerDialog.cpp": {
+    "QLabel": 3,
+    "QMessageBox": 3,
+    "QPushButton": 15
+  },
+  "src/ui/CoreManagerDialog.h": {
+    "QLabel": 2,
+    "QPushButton": 8
+  },
+  "src/ui/DiagnosticsDialog.cpp": {
+    "QCheckBox": 4,
+    "QGroupBox": 3,
+    "QLabel": 3,
+    "QLineEdit": 2,
+    "QMessageBox": 8,
+    "QPushButton": 11,
+    "QRadioButton": 3
+  },
+  "src/ui/DiagnosticsDialog.h": {
+    "QCheckBox": 4,
+    "QLineEdit": 2,
+    "QPushButton": 2,
+    "QRadioButton": 3
+  },
+  "src/ui/DiagnosticsPreviewDialog.cpp": {
+    "QLabel": 4,
+    "QListWidget": 2,
+    "QPushButton": 3
+  },
+  "src/ui/DiagnosticsPreviewDialog.h": {
+    "QLabel": 3,
+    "QListWidget": 2,
+    "QPushButton": 1
+  },
+  "src/ui/DnsManagerDialog.cpp": {
+    "QMessageBox": 7,
+    "QPushButton": 15
+  },
+  "src/ui/DnsProfileDialog.cpp": {
+    "QCheckBox": 5,
+    "QComboBox": 3,
+    "QDialogButtonBox": 9,
+    "QGroupBox": 1,
+    "QLabel": 2,
+    "QLineEdit": 2,
+    "QMessageBox": 3,
+    "QPushButton": 15,
+    "QTabWidget": 2
+  },
+  "src/ui/DnsProfileDialog.h": {
+    "QCheckBox": 5,
+    "QComboBox": 3,
+    "QLineEdit": 2,
+    "QTabWidget": 1
+  },
+  "src/ui/DnsServerEditorDialog.cpp": {
+    "QCheckBox": 2,
+    "QComboBox": 2,
+    "QDialogButtonBox": 6,
+    "QLineEdit": 4,
+    "QSpinBox": 3
+  },
+  "src/ui/DnsServerEditorDialog.h": {
+    "QCheckBox": 2,
+    "QComboBox": 2,
+    "QLineEdit": 4,
+    "QSpinBox": 3
+  },
+  "src/ui/GeoDataManagerDialog.cpp": {
+    "QCheckBox": 5,
+    "QComboBox": 3,
+    "QGroupBox": 2,
+    "QLabel": 5,
+    "QMessageBox": 2,
+    "QPushButton": 17
+  },
+  "src/ui/GeoDataManagerDialog.h": {
+    "QCheckBox": 3,
+    "QComboBox": 2,
+    "QLabel": 3,
+    "QPushButton": 5
+  },
+  "src/ui/ImportVlessDialog.cpp": {
+    "QDialogButtonBox": 6
+  },
+  "src/ui/MainWindow.cpp": {
+    "QPushButton": 2,
+    "QScrollArea": 1
+  },
+  "src/ui/ProfileDialog.cpp": {
+    "QCheckBox": 3,
+    "QComboBox": 7,
+    "QDialogButtonBox": 6,
+    "QLabel": 3,
+    "QLineEdit": 23,
+    "QMessageBox": 2,
+    "QSpinBox": 4,
+    "QTabWidget": 2
+  },
+  "src/ui/ProfileDialog.h": {
+    "QCheckBox": 3,
+    "QComboBox": 5,
+    "QLabel": 3,
+    "QLineEdit": 22,
+    "QSpinBox": 4,
+    "QTabWidget": 2
+  },
+  "src/ui/ReadinessDialog.cpp": {
+    "QLabel": 2,
+    "QPushButton": 9
+  },
+  "src/ui/RoutingJsonPreviewDialog.cpp": {
+    "QDialogButtonBox": 4
+  },
+  "src/ui/RoutingManagerDialog.cpp": {
+    "QMessageBox": 9,
+    "QPushButton": 15
+  },
+  "src/ui/RoutingProfileDialog.cpp": {
+    "QCheckBox": 2,
+    "QComboBox": 3,
+    "QDialogButtonBox": 8,
+    "QGroupBox": 2,
+    "QLabel": 1,
+    "QLineEdit": 2,
+    "QMessageBox": 5,
+    "QPushButton": 17
+  },
+  "src/ui/RoutingProfileDialog.h": {
+    "QCheckBox": 2,
+    "QComboBox": 3,
+    "QLineEdit": 2,
+    "QPushButton": 2
+  },
+  "src/ui/RoutingRuleEditorDialog.cpp": {
+    "QComboBox": 3,
+    "QDialogButtonBox": 8,
+    "QLabel": 1,
+    "QLineEdit": 2,
+    "QMessageBox": 2
+  },
+  "src/ui/RoutingRuleEditorDialog.h": {
+    "QComboBox": 3,
+    "QLineEdit": 2
+  },
+  "src/ui/RuleSetManagerDialog.cpp": {
+    "QGroupBox": 3,
+    "QLabel": 3,
+    "QMessageBox": 5,
+    "QPushButton": 11
+  },
+  "src/ui/RuleSetManagerDialog.h": {
+    "QPushButton": 3
+  },
+  "src/ui/SafeExitDialog.cpp": {
+    "QCheckBox": 4,
+    "QDialogButtonBox": 6,
+    "QLabel": 2,
+    "QPushButton": 1
+  },
+  "src/ui/SafeExitDialog.h": {
+    "QCheckBox": 4
+  },
+  "src/ui/SettingsDialog.cpp": {
+    "QCheckBox": 37,
+    "QComboBox": 12,
+    "QDialogButtonBox": 6,
+    "QFrame": 2,
+    "QGroupBox": 14,
+    "QLabel": 23,
+    "QLineEdit": 5,
+    "QMessageBox": 47,
+    "QPushButton": 43,
+    "QRadioButton": 6,
+    "QScrollArea": 2,
+    "QSpinBox": 9
+  },
+  "src/ui/SettingsDialog.h": {
+    "QCheckBox": 31,
+    "QComboBox": 9,
+    "QGroupBox": 3,
+    "QLabel": 15,
+    "QLineEdit": 5,
+    "QPushButton": 16,
+    "QRadioButton": 5,
+    "QSpinBox": 8
+  },
+  "src/ui/SingBoxConfigPreviewDialog.cpp": {
+    "QDialogButtonBox": 4,
+    "QLabel": 3,
+    "QMessageBox": 7,
+    "QPushButton": 7
+  },
+  "src/ui/SubscriptionDialog.cpp": {
+    "QCheckBox": 2,
+    "QDialogButtonBox": 6,
+    "QLineEdit": 4
+  },
+  "src/ui/SubscriptionDialog.h": {
+    "QCheckBox": 2,
+    "QLineEdit": 4
+  },
+  "src/ui/SubscriptionManagerDialog.cpp": {
+    "QLabel": 2,
+    "QMessageBox": 16,
+    "QPushButton": 13
+  },
+  "src/ui/SubscriptionManagerDialog.h": {
+    "QLabel": 2
+  },
+  "src/ui/desktopapp/UiMessagePresenter.cpp": {
+    "QMessageBox": 21,
+    "QPushButton": 1
+  },
+  "src/ui/import/ProfileImportWidget.cpp": {
+    "QLabel": 2
+  },
+  "src/ui/import/ProfileImportWidget.h": {
+    "QLabel": 2
+  },
+  "src/ui/onboarding/FirstRunChecklistWidget.cpp": {
+    "QLabel": 2
+  },
+  "src/ui/onboarding/FirstRunChecklistWidget.h": {
+    "QLabel": 2
+  },
+  "src/ui/onboarding/FirstRunWizard.cpp": {
+    "QCheckBox": 8,
+    "QGroupBox": 3,
+    "QLabel": 7,
+    "QLineEdit": 5,
+    "QMessageBox": 3,
+    "QPushButton": 24,
+    "QRadioButton": 18
+  },
+  "src/ui/theme/ThemeManager.cpp": {
+    "QComboBox": 3,
+    "QDoubleSpinBox": 1,
+    "QGroupBox": 2,
+    "QLineEdit": 2,
+    "QListView": 1,
+    "QPushButton": 8,
+    "QSpinBox": 2,
+    "QTabBar": 2,
+    "QTabWidget": 1,
+    "QTreeView": 1
+  }
+}
