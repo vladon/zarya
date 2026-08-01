@@ -87,7 +87,6 @@
 #include <QMenuBar>
 #include <QPlainTextEdit>
 #include <QSplitter>
-#include <QStatusBar>
 #include <QTableView>
 #include <QDateTime>
 #include <QEventLoop>
@@ -358,9 +357,9 @@ void MainWindow::setupUi()
     centralLayout->addWidget(m_statusDashboard);
     centralLayout->addWidget(m_emptyStatePanel);
     centralLayout->addWidget(m_splitter, 1);
+    m_statusText = new ZaryaBodyText(tr("Ready"), central);
+    centralLayout->addWidget(m_statusText);
     setCentralWidget(central);
-
-    statusBar()->showMessage(tr("Ready"));
 }
 
 void MainWindow::setupMenuBar()
@@ -632,12 +631,22 @@ bool MainWindow::lineMatchesLogFilter(const QString& line) const
 
 QString MainWindow::coreStatusText() const
 {
-    return m_coreManager.isRunning() ? QStringLiteral("running") : QStringLiteral("stopped");
+    return m_coreManager.isRunning() ? tr("Running") : tr("Stopped");
 }
 
 QString MainWindow::systemProxyStatusText() const
 {
-    return m_systemProxy.uiStatusText();
+    switch (m_systemProxy.uiStatus()) {
+    case SystemProxyUiStatus::Unsupported:
+        return tr("Unsupported");
+    case SystemProxyUiStatus::Off:
+        return tr("Off");
+    case SystemProxyUiStatus::On:
+        return tr("On via %1").arg(m_systemProxy.backendName());
+    case SystemProxyUiStatus::Failed:
+        return tr("Failed");
+    }
+    return tr("Off");
 }
 
 QString MainWindow::routingStatusText() const
@@ -662,25 +671,26 @@ QString MainWindow::killSwitchStatusText() const
 {
     HelperProcessManager* helper = m_appController.helperProcessManager();
     if (!helper) {
-        return QStringLiteral("off");
+        return tr("Off");
     }
     const KillSwitchState state = helper->killSwitchState();
     switch (state.status) {
     case KillSwitchStatus::Enabled:
-        return QStringLiteral("on");
+        return tr("On");
     case KillSwitchStatus::Failed:
-        return QStringLiteral("failed");
+        return tr("Failed");
     case KillSwitchStatus::NeedsRecovery:
-        return QStringLiteral("needs recovery");
+        return tr("Needs recovery");
     case KillSwitchStatus::Unsupported:
-        return QStringLiteral("unsupported");
+        return tr("Unsupported");
     case KillSwitchStatus::Enabling:
+        return tr("Enabling");
     case KillSwitchStatus::Disabling:
-        return killSwitchStatusToString(state.status);
+        return tr("Disabling");
     case KillSwitchStatus::Disabled:
         break;
     }
-    return QStringLiteral("off");
+    return tr("Off");
 }
 
 void MainWindow::checkKillSwitchRecoveryOnStartup()
@@ -1270,7 +1280,7 @@ void MainWindow::notifyTray(const QString& title, const QString& message)
 
 QString MainWindow::trayStatusText() const
 {
-    return trayIsAvailable() ? QStringLiteral("available") : QStringLiteral("unavailable");
+    return trayIsAvailable() ? tr("Available") : tr("Unavailable");
 }
 
 void MainWindow::saveWindowState()
@@ -1331,8 +1341,8 @@ void MainWindow::changeEvent(QEvent* event)
 void MainWindow::updateStatusBar()
 {
     if (m_testManager.isBusy()) {
-        statusBar()->showMessage(
-            QStringLiteral(
+        m_statusText->setText(
+            tr(
                 "Testing: %1/%2 | Core: %3 | Runtime: %4 | Kill switch: %5 | System proxy: %6 | "
                 "Routing: %7 | DNS: %8")
                 .arg(m_testProgressDone)
@@ -1348,14 +1358,14 @@ void MainWindow::updateStatusBar()
 
     const AppSettings& settings = AppSettings::instance();
     QString message =
-        QStringLiteral(
+        tr(
             "Idle | Core: %1 | Runtime: %2 | Kill switch: %3 | System proxy: %4 | Routing: %5 | "
             "DNS: %6 | Tray: %7")
             .arg(coreStatusText(), runtimeStatusText(), killSwitchStatusText(),
                  systemProxyStatusText(), routingStatusText(), dnsStatusText(), trayStatusText());
 
     if (m_coreManager.isRunning()) {
-        message += QStringLiteral(" | Proxy 127.0.0.1:%1").arg(settings.mixedPort());
+        message += tr(" | Proxy 127.0.0.1:%1").arg(settings.mixedPort());
         m_startAction->setEnabled(false);
         m_stopAction->setEnabled(true);
     } else {
@@ -1363,7 +1373,7 @@ void MainWindow::updateStatusBar()
         m_stopAction->setEnabled(false);
     }
 
-    statusBar()->showMessage(message);
+    m_statusText->setText(message);
     updateStatusDashboard();
 
     const bool coreRunning = m_coreManager.isRunning();

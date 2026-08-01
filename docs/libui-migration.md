@@ -58,8 +58,9 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
    - Keep `QTableView` and the log text engine behind toolkit-styled hosts until their replacement
      meets the boundary requirements.
    - Progress: profile actions, profile and log filter selectors, the profile-list empty state,
-     log toolbar actions, and single- and multi-action operational feedback use `lib_ui`; the log
-     text engine remains a Qt primitive under the documented boundary.
+     log toolbar actions, localized runtime status feedback, and single- and multi-action
+     operational feedback use `lib_ui`; the log text engine remains a Qt primitive under the
+     documented boundary.
 4. **Primary workflows**
    - Migrate first-run setup, link import, profile editing, subscriptions, and Settings.
    - Put advanced settings behind explicit progressive disclosure.
@@ -132,10 +133,11 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      Startup recovery progress and the ambiguous-profile selector also use toolkit content rather
      than native `QProgressDialog` or `QInputDialog` surfaces.
    - The final full-source allowlist contains only the centralized native `QMessageBox` fallback
-     used before Desktop App Toolkit initialization. Model/view tables, log text engines,
-     tray/native menus, file dialogs, and infrastructure Qt remain approved boundaries. The two
-     exact native-message keyboard handlers are excluded from the inventory; all other
-     application source directories are scanned.
+     used before Desktop App Toolkit initialization and the persisted splitter around the approved
+     profile-table/log-engine boundary. Model/view tables, log text engines, tray/native menus,
+     file dialogs, and infrastructure Qt remain approved boundaries. The two exact native-message
+     keyboard handlers are excluded from the inventory; all other application source directories
+     are scanned.
 
 Each numbered stage may span multiple focused PRs. A PR migrates one coherent user workflow and
 must not mix unrelated backend changes.

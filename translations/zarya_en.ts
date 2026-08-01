@@ -1721,6 +1721,21 @@ Step %2 of %3</source>
     </message>
     <message><source>Start</source><translation type="unfinished"></translation></message>
     <message><source>Cancel</source><translation type="unfinished"></translation></message>
+    <message><source>Running</source><translation type="unfinished"></translation></message>
+    <message><source>Stopped</source><translation type="unfinished"></translation></message>
+    <message><source>Unsupported</source><translation type="unfinished"></translation></message>
+    <message><source>Off</source><translation type="unfinished"></translation></message>
+    <message><source>On</source><translation type="unfinished"></translation></message>
+    <message><source>On via %1</source><translation type="unfinished"></translation></message>
+    <message><source>Failed</source><translation type="unfinished"></translation></message>
+    <message><source>Needs recovery</source><translation type="unfinished"></translation></message>
+    <message><source>Enabling</source><translation type="unfinished"></translation></message>
+    <message><source>Disabling</source><translation type="unfinished"></translation></message>
+    <message><source>Available</source><translation type="unfinished"></translation></message>
+    <message><source>Unavailable</source><translation type="unfinished"></translation></message>
+    <message><source>Testing: %1/%2 | Core: %3 | Runtime: %4 | Kill switch: %5 | System proxy: %6 | Routing: %7 | DNS: %8</source><translation type="unfinished"></translation></message>
+    <message><source>Idle | Core: %1 | Runtime: %2 | Kill switch: %3 | System proxy: %4 | Routing: %5 | DNS: %6 | Tray: %7</source><translation type="unfinished"></translation></message>
+    <message><source> | Proxy 127.0.0.1:%1</source><translation type="unfinished"></translation></message>
 </context>
 <context>
     <name>ProfileDialog</name>

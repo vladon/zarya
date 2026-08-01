@@ -40,6 +40,7 @@ class BetaBannerWidget;
 class ProfileEmptyStatePanel;
 class ProfileActionStrip;
 class StatusDashboardWidget;
+class ZaryaBodyText;
 class ZaryaSelector;
 struct FirstRunState;
 struct Profile;
@@ -208,6 +209,7 @@ private:
     BetaBannerWidget* m_betaBanner = nullptr;
     StatusDashboardWidget* m_statusDashboard = nullptr;
     ProfileEmptyStatePanel* m_emptyStatePanel = nullptr;
+    ZaryaBodyText* m_statusText = nullptr;
     QSplitter* m_splitter = nullptr;
     QTableView* m_tableView = nullptr;
     QPlainTextEdit* m_logView = nullptr;
