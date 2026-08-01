@@ -1608,6 +1608,18 @@ Recommended next steps:
     <message>
         <source>No validation warnings.</source>
         <translation>Предупреждений проверки нет.</translation></message>
+    <message>
+        <source>No routing rules yet. Add a rule to build a custom route.</source>
+        <translation>Правил маршрутизации пока нет. Добавьте правило для создания пользовательского маршрута.</translation></message>
+    <message>
+        <source>Save</source>
+        <translation>Сохранить</translation></message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation></message>
+    <message>
+        <source>Close</source>
+        <translation>Закрыть</translation></message>
 </context>
 <context>
     <name>RoutingRuleEditorDialog</name>
@@ -1642,6 +1654,24 @@ domain:example.com</translation></message>
     <message>
         <source>At least one value is required.</source>
         <translation>Требуется хотя бы одно значение.</translation></message>
+    <message>
+        <source>OK</source>
+        <translation>ОК</translation></message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation></message>
+    <message>
+        <source>Close</source>
+        <translation>Закрыть</translation></message>
+</context>
+<context>
+    <name>RoutingJsonPreviewDialog</name>
+    <message>
+        <source>Xray Routing JSON Preview</source>
+        <translation>Предпросмотр JSON маршрутизации Xray</translation></message>
+    <message>
+        <source>Close</source>
+        <translation>Закрыть</translation></message>
 </context>
 <context>
     <name>RuleSetManagerDialog</name>
