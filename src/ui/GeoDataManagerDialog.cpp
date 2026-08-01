@@ -1,19 +1,17 @@
 #include "ui/GeoDataManagerDialog.h"
 
+#include "base/algorithm.h"
 #include "geodata/GeoDataSource.h"
 #include "storage/GeoDataSettingsStore.h"
+#include "ui/desktopapp/UiMessagePresenter.h"
+#include "ui/desktopapp/ZaryaControls.h"
+#include "ui/desktopapp/ZaryaFormControls.h"
+#include "ui/desktopapp/ZaryaSelector.h"
 
-#include <QCheckBox>
-#include <QComboBox>
 #include <QDesktopServices>
-#include <QFormLayout>
-#include <QGroupBox>
 #include <QHBoxLayout>
 #include <QHeaderView>
-#include <QLabel>
-#include <QMessageBox>
 #include <QPlainTextEdit>
-#include <QPushButton>
 #include <QTableWidget>
 #include <QUrl>
 #include <QVBoxLayout>
@@ -30,23 +28,19 @@ GeoDataManagerDialog::GeoDataManagerDialog(GeoDataManager& manager,
     setWindowTitle(tr("Geo Data Manager"));
     resize(920, 560);
 
-    m_sourceCombo = new QComboBox(this);
+    m_sourceCombo = new ZaryaSelector(this);
     const QVector<GeoDataSource> sources = GeoDataSources::builtInSources();
+    QVector<ZaryaSelectorItem> sourceItems;
+    sourceItems.reserve(sources.size());
     for (const GeoDataSource& source : sources) {
-        m_sourceCombo->addItem(source.name, source.id);
+        sourceItems.push_back({source.id, source.name});
     }
     const QString selectedId = GeoDataSettingsStore::instance().selectedSourceId();
-    const int sourceIndex = m_sourceCombo->findData(selectedId);
-    if (sourceIndex >= 0) {
-        m_sourceCombo->setCurrentIndex(sourceIndex);
-    }
+    m_sourceCombo->setItems(std::move(sourceItems), selectedId);
 
-    m_sourceDescriptionLabel = new QLabel(this);
-    m_sourceDescriptionLabel->setWordWrap(true);
+    m_sourceDescriptionLabel = new ZaryaBodyText({}, this);
 
-    m_targetLabel = new QLabel(this);
-    m_targetLabel->setWordWrap(true);
-    m_targetLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    m_targetLabel = new ZaryaBodyText({}, this);
 
     m_table = new QTableWidget(this);
     m_table->setColumnCount(5);
@@ -62,40 +56,48 @@ GeoDataManagerDialog::GeoDataManagerDialog(GeoDataManager& manager,
     m_logView->setReadOnly(true);
     m_logView->setMaximumBlockCount(500);
 
-    m_autoCheckCheck = new QCheckBox(tr("Check geo data status on startup"), this);
-    m_autoCheckCheck->setChecked(GeoDataSettingsStore::instance().autoCheckOnStartup());
+    m_autoCheckCheck = new ZaryaCheckBox(
+        tr("Check geo data status on startup"), this,
+        GeoDataSettingsStore::instance().autoCheckOnStartup());
 
     m_warnMissingCheck =
-        new QCheckBox(tr("Warn if routing uses geo rules and files are missing"), this);
-    m_warnMissingCheck->setChecked(GeoDataSettingsStore::instance().warnIfMissing());
+        new ZaryaCheckBox(tr("Warn if routing uses geo rules and files are missing"), this,
+                          GeoDataSettingsStore::instance().warnIfMissing());
 
-    auto* limitations = new QLabel(
+    auto* limitations = new ZaryaBodyText(
         tr("Geo data files are used by Xray routing rules such as geoip:ru and geosite:ru."),
         this);
-    limitations->setWordWrap(true);
 
-    auto* checkButton = new QPushButton(tr("Check Status"), this);
-    m_updateGeoIpButton = new QPushButton(tr("Update geoip.dat"), this);
-    m_updateGeoSiteButton = new QPushButton(tr("Update geosite.dat"), this);
-    m_updateAllButton = new QPushButton(tr("Update All"), this);
-    auto* verifyButton = new QPushButton(tr("Verify"), this);
-    auto* openFolderButton = new QPushButton(tr("Open Folder"), this);
-    m_cancelButton = new QPushButton(tr("Cancel"), this);
-    auto* closeButton = new QPushButton(tr("Close"), this);
+    auto* checkButton = new ZaryaActionButton(tr("Check Status"), this);
+    m_updateGeoIpButton = new ZaryaActionButton(tr("Update geoip.dat"), this);
+    m_updateGeoSiteButton = new ZaryaActionButton(tr("Update geosite.dat"), this);
+    m_updateAllButton = new ZaryaActionButton(
+        tr("Update All"), this, ZaryaButtonRole::Primary);
+    auto* verifyButton = new ZaryaActionButton(tr("Verify"), this);
+    auto* openFolderButton = new ZaryaActionButton(tr("Open Folder"), this);
+    m_cancelButton = new ZaryaActionButton(tr("Cancel"), this);
+    auto* closeButton = new ZaryaActionButton(tr("Close"), this);
 
-    connect(checkButton, &QPushButton::clicked, this, &GeoDataManagerDialog::onCheckStatus);
-    connect(m_updateGeoIpButton, &QPushButton::clicked, this, &GeoDataManagerDialog::onUpdateGeoIp);
-    connect(m_updateGeoSiteButton, &QPushButton::clicked, this,
+    connect(checkButton, &ZaryaActionButton::clicked,
+            this, &GeoDataManagerDialog::onCheckStatus);
+    connect(m_updateGeoIpButton, &ZaryaActionButton::clicked,
+            this, &GeoDataManagerDialog::onUpdateGeoIp);
+    connect(m_updateGeoSiteButton, &ZaryaActionButton::clicked, this,
             &GeoDataManagerDialog::onUpdateGeoSite);
-    connect(m_updateAllButton, &QPushButton::clicked, this, &GeoDataManagerDialog::onUpdateAll);
-    connect(verifyButton, &QPushButton::clicked, this, &GeoDataManagerDialog::onVerify);
-    connect(openFolderButton, &QPushButton::clicked, this, &GeoDataManagerDialog::onOpenFolder);
-    connect(m_cancelButton, &QPushButton::clicked, this, &GeoDataManagerDialog::onCancelUpdate);
-    connect(closeButton, &QPushButton::clicked, this, &QDialog::accept);
-    connect(m_sourceCombo, qOverload<int>(&QComboBox::currentIndexChanged), this,
+    connect(m_updateAllButton, &ZaryaActionButton::clicked,
+            this, &GeoDataManagerDialog::onUpdateAll);
+    connect(verifyButton, &ZaryaActionButton::clicked,
+            this, &GeoDataManagerDialog::onVerify);
+    connect(openFolderButton, &ZaryaActionButton::clicked,
+            this, &GeoDataManagerDialog::onOpenFolder);
+    connect(m_cancelButton, &ZaryaActionButton::clicked,
+            this, &GeoDataManagerDialog::onCancelUpdate);
+    connect(closeButton, &ZaryaActionButton::clicked, this, &QDialog::accept);
+    connect(m_sourceCombo, &ZaryaSelector::currentKeyChanged, this,
             &GeoDataManagerDialog::onSourceChanged);
-    connect(m_autoCheckCheck, &QCheckBox::toggled, this, &GeoDataManagerDialog::onOptionsChanged);
-    connect(m_warnMissingCheck, &QCheckBox::toggled, this,
+    connect(m_autoCheckCheck, &ZaryaCheckBox::toggled,
+            this, &GeoDataManagerDialog::onOptionsChanged);
+    connect(m_warnMissingCheck, &ZaryaCheckBox::toggled, this,
             &GeoDataManagerDialog::onOptionsChanged);
 
     connect(&m_manager, &GeoDataManager::statusChanged, this,
@@ -117,36 +119,34 @@ GeoDataManagerDialog::GeoDataManagerDialog(GeoDataManager& manager,
     buttons->addWidget(m_cancelButton);
     buttons->addWidget(closeButton);
 
-    auto* sourceLayout = new QFormLayout;
-    sourceLayout->addRow(tr("Source:"), m_sourceCombo);
-    sourceLayout->addRow(QString(), m_sourceDescriptionLabel);
+    auto* sourceSection = new ZaryaFormSection(tr("Source"), this);
+    sourceSection->addWidget(new ZaryaFormRow(tr("Source:"), m_sourceCombo, this));
+    sourceSection->addWidget(m_sourceDescriptionLabel);
+    sourceSection->addWidget(
+        new ZaryaFormRow(tr("Xray resource directory:"), m_targetLabel, this));
 
-    auto* targetLayout = new QFormLayout;
-    targetLayout->addRow(tr("Xray resource directory:"), m_targetLabel);
-
-    auto* optionsBox = new QGroupBox(tr("Options"), this);
-    auto* optionsLayout = new QVBoxLayout(optionsBox);
-    optionsLayout->addWidget(m_autoCheckCheck);
-    optionsLayout->addWidget(m_warnMissingCheck);
+    auto* optionsSection = new ZaryaFormSection(tr("Options"), this);
+    optionsSection->addWidget(m_autoCheckCheck);
+    optionsSection->addWidget(m_warnMissingCheck);
 
     auto* layout = new QVBoxLayout(this);
-    layout->addLayout(sourceLayout);
-    layout->addLayout(targetLayout);
+    layout->setContentsMargins(24, 24, 24, 24);
+    layout->setSpacing(12);
+    layout->addWidget(sourceSection);
     layout->addWidget(m_table);
     layout->addWidget(limitations);
-    layout->addWidget(optionsBox);
-    layout->addWidget(new QLabel(tr("Log"), this));
+    layout->addWidget(optionsSection);
+    layout->addWidget(new ZaryaBodyText(tr("Log"), this));
     layout->addWidget(m_logView, 1);
     layout->addLayout(buttons);
 
-    onSourceChanged(m_sourceCombo->currentIndex());
+    onSourceChanged(m_sourceCombo->currentKey());
     m_targetLabel->setText(m_manager.targetDirectory());
     onCheckStatus();
 }
 
-void GeoDataManagerDialog::onSourceChanged(int index)
+void GeoDataManagerDialog::onSourceChanged(const QString& sourceId)
 {
-    const QString sourceId = m_sourceCombo->itemData(index).toString();
     GeoDataSettingsStore::instance().setSelectedSourceId(sourceId);
     const GeoDataSource source = GeoDataSources::sourceById(sourceId);
     m_sourceDescriptionLabel->setText(source.description);
@@ -191,8 +191,9 @@ void GeoDataManagerDialog::onOpenFolder()
 {
     const QString directory = m_manager.targetDirectory();
     if (directory.isEmpty()) {
-        QMessageBox::warning(this, tr("Geo Data Manager"),
-                             tr("Xray resource directory is not configured."));
+        UiMessagePresenter::warning(
+            this, tr("Geo Data Manager"),
+            tr("Xray resource directory is not configured."));
         return;
     }
     QDesktopServices::openUrl(QUrl::fromLocalFile(directory));

@@ -1002,6 +1002,10 @@ sing-box: %3 (%4)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Source</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Xray resource directory:</source>
         <translation type="unfinished"></translation>
     </message>
