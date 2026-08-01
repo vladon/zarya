@@ -2858,6 +2858,14 @@ Core: %5</source>
         <source>Remarks</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>SubscriptionManagerDialog</name>
@@ -2912,9 +2920,7 @@ Core: %5</source>
     <message>
         <source>Delete subscription &quot;%1&quot;?
 
-Yes = delete subscription and imported profiles
-No = delete subscription only (keep profiles as manual)
-Cancel = abort</source>
+Choose whether to delete its imported profiles or keep them as manual profiles.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2931,6 +2937,30 @@ Cancel = abort</source>
     </message>
     <message>
         <source>Update all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No subscriptions yet. Add one to import and update profiles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete with profiles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep profiles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Updating subscription…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Updating all subscriptions…</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

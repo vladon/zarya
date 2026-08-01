@@ -7,13 +7,12 @@
 #include "storage/SubscriptionStore.h"
 #include "subscription/SubscriptionManager.h"
 #include "ui/SubscriptionDialog.h"
+#include "ui/desktopapp/UiMessagePresenter.h"
+#include "ui/desktopapp/ZaryaFormControls.h"
 #include "ui/models/SubscriptionTableModel.h"
 
-#include <QLabel>
 #include <QHBoxLayout>
 #include <QHeaderView>
-#include <QMessageBox>
-#include <QPushButton>
 #include <QTableView>
 #include <QVBoxLayout>
 
@@ -43,22 +42,22 @@ SubscriptionManagerDialog::SubscriptionManagerDialog(
     m_tableView->setSelectionMode(QAbstractItemView::SingleSelection);
     m_tableView->horizontalHeader()->setStretchLastSection(true);
     m_tableView->setAlternatingRowColors(true);
-    refreshTable();
 
-    auto* addButton = new QPushButton(tr("Add"), this);
-    auto* editButton = new QPushButton(tr("Edit"), this);
-    auto* deleteButton = new QPushButton(tr("Delete"), this);
-    auto* updateButton = new QPushButton(tr("Update"), this);
-    auto* updateAllButton = new QPushButton(tr("Update All"), this);
-    auto* closeButton = new QPushButton(tr("Close"), this);
+    auto* addButton = new ZaryaActionButton(tr("Add"), this);
+    auto* editButton = new ZaryaActionButton(tr("Edit"), this);
+    auto* deleteButton = new ZaryaActionButton(tr("Delete"), this);
+    auto* updateButton = new ZaryaActionButton(tr("Update"), this);
+    auto* updateAllButton = new ZaryaActionButton(tr("Update All"), this);
+    auto* closeButton = new ZaryaActionButton(tr("Close"), this);
 
-    connect(addButton, &QPushButton::clicked, this, &SubscriptionManagerDialog::onAdd);
-    connect(editButton, &QPushButton::clicked, this, &SubscriptionManagerDialog::onEdit);
-    connect(deleteButton, &QPushButton::clicked, this, &SubscriptionManagerDialog::onDelete);
-    connect(updateButton, &QPushButton::clicked, this,
+    connect(addButton, &ZaryaActionButton::clicked, this, &SubscriptionManagerDialog::onAdd);
+    connect(editButton, &ZaryaActionButton::clicked, this, &SubscriptionManagerDialog::onEdit);
+    connect(deleteButton, &ZaryaActionButton::clicked, this, &SubscriptionManagerDialog::onDelete);
+    connect(updateButton, &ZaryaActionButton::clicked, this,
             &SubscriptionManagerDialog::onUpdateSelected);
-    connect(updateAllButton, &QPushButton::clicked, this, &SubscriptionManagerDialog::onUpdateAll);
-    connect(closeButton, &QPushButton::clicked, this, &QDialog::accept);
+    connect(updateAllButton, &ZaryaActionButton::clicked, this,
+            &SubscriptionManagerDialog::onUpdateAll);
+    connect(closeButton, &ZaryaActionButton::clicked, this, &QDialog::accept);
 
     auto* buttons = new QHBoxLayout;
     buttons->addWidget(addButton);
@@ -70,11 +69,15 @@ SubscriptionManagerDialog::SubscriptionManagerDialog(
     buttons->addStretch();
     buttons->addWidget(closeButton);
 
-    m_updateSummaryLabel = new QLabel(this);
-    m_updateSummaryLabel->setWordWrap(true);
-    m_updateSummaryLabel->setText(tr("Last update: —"));
+    m_emptyState = new ZaryaBodyText(
+        tr("No subscriptions yet. Add one to import and update profiles."), this);
+    m_updateSummaryLabel = new ZaryaBodyText(tr("Last update: —"), this);
+    refreshTable();
 
     auto* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(24, 24, 24, 24);
+    layout->setSpacing(12);
+    layout->addWidget(m_emptyState);
     layout->addWidget(m_tableView);
     layout->addWidget(m_updateSummaryLabel);
     layout->addLayout(buttons);
@@ -96,6 +99,8 @@ void SubscriptionManagerDialog::showUpdateSummary(const SubscriptionUpdateStats&
 void SubscriptionManagerDialog::refreshTable()
 {
     m_tableModel->setSubscriptions(m_subscriptions);
+    m_emptyState->setVisible(m_subscriptions.isEmpty());
+    m_tableView->setVisible(!m_subscriptions.isEmpty());
 }
 
 int SubscriptionManagerDialog::selectedRow() const
@@ -147,8 +152,8 @@ void SubscriptionManagerDialog::onEdit()
 {
     const int row = selectedRow();
     if (row < 0) {
-        QMessageBox::information(this, tr("Edit subscription"),
-                                 tr("Select a subscription first."));
+        UiMessagePresenter::information(
+            this, tr("Edit subscription"), tr("Select a subscription first."));
         return;
     }
 
@@ -166,26 +171,32 @@ void SubscriptionManagerDialog::onDelete()
 {
     const int row = selectedRow();
     if (row < 0) {
-        QMessageBox::information(this, tr("Delete subscription"),
-                                 tr("Select a subscription first."));
+        UiMessagePresenter::information(
+            this, tr("Delete subscription"), tr("Select a subscription first."));
         return;
     }
 
     const Subscription subscription = m_tableModel->subscriptionAt(row);
-    const auto answer = QMessageBox::question(
+    const QString answer = UiMessagePresenter::choose(
         this, tr("Delete subscription"),
         tr("Delete subscription \"%1\"?\n\n"
-           "Yes = delete subscription and imported profiles\n"
-           "No = delete subscription only (keep profiles as manual)\n"
-           "Cancel = abort")
+           "Choose whether to delete its imported profiles or keep them as manual profiles.")
             .arg(subscription.name),
-        QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Cancel);
+        UiMessageTone::Warning,
+        {
+            {QStringLiteral("delete-all"), tr("Delete with profiles"),
+             UiMessageActionRole::Destructive, false, false},
+            {QStringLiteral("keep-profiles"), tr("Keep profiles"),
+             UiMessageActionRole::Secondary, false, false},
+            {QStringLiteral("cancel"), tr("Cancel"),
+             UiMessageActionRole::Secondary, true, true},
+        });
 
-    if (answer == QMessageBox::Cancel) {
+    if (answer.isEmpty() || answer == QStringLiteral("cancel")) {
         return;
     }
 
-    if (answer == QMessageBox::Yes) {
+    if (answer == QStringLiteral("delete-all")) {
         QVector<Profile> kept;
         kept.reserve(m_profiles.size());
         for (const Profile& profile : m_profiles) {
@@ -209,7 +220,7 @@ void SubscriptionManagerDialog::onDelete()
     refreshTable();
     QString error;
     if (!persistAll(&error)) {
-        QMessageBox::warning(this, tr("Save failed"), error);
+        UiMessagePresenter::warning(this, tr("Save failed"), error);
     }
     notifyProfilesChanged();
 }
@@ -218,33 +229,35 @@ void SubscriptionManagerDialog::onUpdateSelected()
 {
     const int row = selectedRow();
     if (row < 0) {
-        QMessageBox::information(this, tr("Update subscription"),
-                                 tr("Select a subscription first."));
+        UiMessagePresenter::information(
+            this, tr("Update subscription"), tr("Select a subscription first."));
         return;
     }
 
+    m_updateSummaryLabel->setText(tr("Updating subscription…"));
     const SubscriptionUpdateResult result = m_manager.updateSubscription(m_subscriptions[row], m_profiles);
     refreshTable();
     QString error;
     if (!persistAll(&error)) {
-        QMessageBox::warning(this, tr("Save failed"), error);
+        UiMessagePresenter::warning(this, tr("Save failed"), error);
     }
     notifyProfilesChanged();
 
     showUpdateSummary(result.stats);
     if (!result.success) {
-        QMessageBox::warning(this, tr("Update failed"), result.errorMessage);
+        UiMessagePresenter::warning(this, tr("Update failed"), result.errorMessage);
     }
 }
 
 void SubscriptionManagerDialog::onUpdateAll()
 {
+    m_updateSummaryLabel->setText(tr("Updating all subscriptions…"));
     const QVector<SubscriptionUpdateResult> results =
         m_manager.updateAll(m_subscriptions, m_profiles);
     refreshTable();
     QString error;
     if (!persistAll(&error)) {
-        QMessageBox::warning(this, tr("Save failed"), error);
+        UiMessagePresenter::warning(this, tr("Save failed"), error);
     }
     notifyProfilesChanged();
 
@@ -261,8 +274,10 @@ void SubscriptionManagerDialog::onUpdateAll()
     }
     showUpdateSummary(total);
     if (failed > 0) {
-        QMessageBox::warning(this, tr("Update all"),
-                             ZaryaTr::plural("%n subscription(s) failed to update.", failed));
+        UiMessagePresenter::warning(
+            this,
+            tr("Update all"),
+            ZaryaTr::plural("%n subscription(s) failed to update.", failed));
     }
 }
 

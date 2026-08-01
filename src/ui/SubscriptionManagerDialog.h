@@ -3,7 +3,6 @@
 #include <QDialog>
 #include <functional>
 
-class QLabel;
 class QTableView;
 
 namespace zarya {
@@ -15,6 +14,7 @@ class SubscriptionManager;
 class SubscriptionStore;
 class ProfileStore;
 class SubscriptionTableModel;
+class ZaryaBodyText;
 
 class SubscriptionManagerDialog : public QDialog {
     Q_OBJECT
@@ -49,7 +49,8 @@ private:
 
     SubscriptionTableModel* m_tableModel = nullptr;
     QTableView* m_tableView = nullptr;
-    QLabel* m_updateSummaryLabel = nullptr;
+    ZaryaBodyText* m_emptyState = nullptr;
+    ZaryaBodyText* m_updateSummaryLabel = nullptr;
 
     void showUpdateSummary(const SubscriptionUpdateStats& stats);
 };

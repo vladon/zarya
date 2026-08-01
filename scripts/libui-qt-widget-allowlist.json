@@ -217,23 +217,6 @@
     "QMessageBox": 7,
     "QPushButton": 7
   },
-  "src/ui/SubscriptionDialog.cpp": {
-    "QCheckBox": 2,
-    "QDialogButtonBox": 6,
-    "QLineEdit": 4
-  },
-  "src/ui/SubscriptionDialog.h": {
-    "QCheckBox": 2,
-    "QLineEdit": 4
-  },
-  "src/ui/SubscriptionManagerDialog.cpp": {
-    "QLabel": 2,
-    "QMessageBox": 16,
-    "QPushButton": 13
-  },
-  "src/ui/SubscriptionManagerDialog.h": {
-    "QLabel": 2
-  },
   "src/ui/desktopapp/UiMessagePresenter.cpp": {
     "QMessageBox": 21,
     "QPushButton": 1
