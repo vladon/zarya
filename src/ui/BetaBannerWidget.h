@@ -2,8 +2,7 @@
 
 #include <QWidget>
 
-class QLabel;
-class QPushButton;
+class QPaintEvent;
 
 namespace zarya {
 
@@ -13,13 +12,14 @@ class BetaBannerWidget : public QWidget {
 public:
     explicit BetaBannerWidget(QWidget* parent = nullptr);
 
-signals:
+Q_SIGNALS:
     void dismissed();
+
+protected:
+    void paintEvent(QPaintEvent* event) override;
 
 private:
     void applyTheme();
-
-    QLabel* m_label = nullptr;
 };
 
 } // namespace zarya

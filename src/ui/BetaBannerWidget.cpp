@@ -2,12 +2,12 @@
 
 #include "packaging/PackagingInfo.h"
 #include "storage/AppSettings.h"
+#include "ui/desktopapp/ZaryaFormControls.h"
 #include "ui/theme/ThemeManager.h"
 #include "ui/theme/ThemeTokens.h"
 
-#include <QLabel>
-#include <QPushButton>
 #include <QHBoxLayout>
+#include <QPainter>
 
 namespace zarya {
 
@@ -39,16 +39,17 @@ BetaBannerWidget::BetaBannerWidget(QWidget* parent)
         bannerText = tr("Zarya beta — experimental features may break networking. "
                         "Use Diagnostics Bundle when reporting issues.");
     }
-    m_label = new QLabel(bannerText, this);
-    m_label->setWordWrap(true);
-    auto* dismiss = new QPushButton(tr("Dismiss"), this);
-    connect(dismiss, &QPushButton::clicked, this, [this]() {
+    auto* label = new ZaryaBodyText(bannerText, this);
+    auto* dismiss = new ZaryaActionButton(tr("Dismiss"), this);
+    connect(dismiss, &ZaryaActionButton::clicked, this, [this]() {
         AppSettings::instance().setDismissBetaBanner(true);
         hide();
         emit dismissed();
     });
     auto* layout = new QHBoxLayout(this);
-    layout->addWidget(m_label, 1);
+    layout->setContentsMargins(16, 12, 16, 12);
+    layout->setSpacing(12);
+    layout->addWidget(label, 1);
     layout->addWidget(dismiss);
 
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
@@ -58,17 +59,21 @@ BetaBannerWidget::BetaBannerWidget(QWidget* parent)
 
 void BetaBannerWidget::applyTheme()
 {
+    update();
+}
+
+void BetaBannerWidget::paintEvent(QPaintEvent* event)
+{
+    QWidget::paintEvent(event);
     const ThemeTokens tokens = ThemeManager::instance().tokens();
     const bool dark = ThemeManager::instance().effectiveIsDark();
     const QColor bg =
         dark ? QColor(QStringLiteral("#3d2e00")) : QColor(QStringLiteral("#fff8c5"));
     const QColor border = dark ? tokens.warning.darker(120) : QColor(QStringLiteral("#d4a72c"));
-    setStyleSheet(QStringLiteral("background:%1; border-bottom:1px solid %2;")
-                      .arg(bg.name(QColor::HexRgb), border.name(QColor::HexRgb)));
-    if (m_label) {
-        m_label->setStyleSheet(QStringLiteral("color:%1; background:transparent;")
-                                   .arg(tokens.warning.name(QColor::HexRgb)));
-    }
+    QPainter painter(this);
+    painter.fillRect(rect(), bg);
+    painter.setPen(border);
+    painter.drawLine(rect().bottomLeft(), rect().bottomRight());
 }
 
 } // namespace zarya

@@ -1,12 +1,4 @@
 {
-  "src/ui/BetaBannerWidget.cpp": {
-    "QLabel": 2,
-    "QPushButton": 3
-  },
-  "src/ui/BetaBannerWidget.h": {
-    "QLabel": 2,
-    "QPushButton": 1
-  },
   "src/ui/DiagnosticsPreviewDialog.cpp": {
     "QListWidget": 2
   },
