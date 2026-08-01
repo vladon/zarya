@@ -3,15 +3,13 @@
 #include "cores/CoreInstallStatus.h"
 #include "cores/CorePaths.h"
 #include "storage/AppSettings.h"
+#include "ui/desktopapp/UiMessagePresenter.h"
+#include "ui/desktopapp/ZaryaFormControls.h"
 
 #include <QDesktopServices>
-#include <QFormLayout>
 #include <QHBoxLayout>
 #include <QHeaderView>
-#include <QLabel>
-#include <QMessageBox>
 #include <QPlainTextEdit>
-#include <QPushButton>
 #include <QTableWidget>
 #include <QUrl>
 #include <QVBoxLayout>
@@ -36,28 +34,34 @@ CoreManagerDialog::CoreManagerDialog(CoreBinaryManager& manager,
     m_table->setSelectionMode(QAbstractItemView::SingleSelection);
     m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
-    m_detailsLabel = new QLabel(this);
-    m_detailsLabel->setWordWrap(true);
+    m_detailsLabel = new ZaryaBodyText({}, this);
 
     m_logView = new QPlainTextEdit(this);
     m_logView->setReadOnly(true);
     m_logView->setMaximumBlockCount(500);
 
-    m_checkButton = new QPushButton(tr("Check Versions"), this);
-    m_updateButton = new QPushButton(tr("Update Selected"), this);
-    m_updateAllButton = new QPushButton(tr("Update All"), this);
-    m_rollbackButton = new QPushButton(tr("Rollback"), this);
-    m_openFolderButton = new QPushButton(tr("Open Core Folder"), this);
-    m_resetPathButton = new QPushButton(tr("Reset to Managed Path"), this);
-    m_cancelButton = new QPushButton(tr("Cancel Download"), this);
+    m_checkButton = new ZaryaActionButton(tr("Check Versions"), this);
+    m_updateButton = new ZaryaActionButton(tr("Update Selected"), this);
+    m_updateAllButton = new ZaryaActionButton(tr("Update All"), this);
+    m_rollbackButton = new ZaryaActionButton(tr("Rollback"), this);
+    m_openFolderButton = new ZaryaActionButton(tr("Open Core Folder"), this);
+    m_resetPathButton = new ZaryaActionButton(tr("Reset to Managed Path"), this);
+    m_cancelButton = new ZaryaActionButton(tr("Cancel Download"), this);
 
-    connect(m_checkButton, &QPushButton::clicked, this, &CoreManagerDialog::onCheckVersions);
-    connect(m_updateButton, &QPushButton::clicked, this, &CoreManagerDialog::onUpdateSelected);
-    connect(m_updateAllButton, &QPushButton::clicked, this, &CoreManagerDialog::onUpdateAll);
-    connect(m_rollbackButton, &QPushButton::clicked, this, &CoreManagerDialog::onRollback);
-    connect(m_openFolderButton, &QPushButton::clicked, this, &CoreManagerDialog::onOpenFolder);
-    connect(m_resetPathButton, &QPushButton::clicked, this, &CoreManagerDialog::onResetManagedPath);
-    connect(m_cancelButton, &QPushButton::clicked, this, &CoreManagerDialog::onCancelDownload);
+    connect(m_checkButton, &ZaryaActionButton::clicked,
+            this, &CoreManagerDialog::onCheckVersions);
+    connect(m_updateButton, &ZaryaActionButton::clicked,
+            this, &CoreManagerDialog::onUpdateSelected);
+    connect(m_updateAllButton, &ZaryaActionButton::clicked,
+            this, &CoreManagerDialog::onUpdateAll);
+    connect(m_rollbackButton, &ZaryaActionButton::clicked,
+            this, &CoreManagerDialog::onRollback);
+    connect(m_openFolderButton, &ZaryaActionButton::clicked,
+            this, &CoreManagerDialog::onOpenFolder);
+    connect(m_resetPathButton, &ZaryaActionButton::clicked,
+            this, &CoreManagerDialog::onResetManagedPath);
+    connect(m_cancelButton, &ZaryaActionButton::clicked,
+            this, &CoreManagerDialog::onCancelDownload);
 
     auto* buttons = new QHBoxLayout;
     buttons->addWidget(m_checkButton);
@@ -70,10 +74,12 @@ CoreManagerDialog::CoreManagerDialog(CoreBinaryManager& manager,
     buttons->addStretch();
 
     auto* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(24, 24, 24, 24);
+    layout->setSpacing(12);
     layout->addWidget(m_table);
     layout->addWidget(m_detailsLabel);
     layout->addLayout(buttons);
-    layout->addWidget(new QLabel(tr("Log"), this));
+    layout->addWidget(new ZaryaBodyText(tr("Log"), this));
     layout->addWidget(m_logView, 1);
 
     connect(&m_manager, &CoreBinaryManager::coresChanged, this, &CoreManagerDialog::onCoresChanged);
@@ -107,28 +113,31 @@ void CoreManagerDialog::refreshTable(const QVector<CoreInfo>& infos)
 void CoreManagerDialog::refreshDetails()
 {
     const CoreInfo info = m_manager.infoFor(selectedCoreType());
-    QString details = QStringLiteral("Provider: GitHub Releases\n");
+    QString details = tr("Provider: GitHub Releases") + QLatin1Char('\n');
     if (!info.selectedAssetName.isEmpty()) {
-        details += QStringLiteral("Selected asset: %1\n").arg(info.selectedAssetName);
+        details += tr("Selected asset: %1").arg(info.selectedAssetName) + QLatin1Char('\n');
     }
     if (!info.checksumStatus.isEmpty()) {
-        details += QStringLiteral("Checksum: %1\n").arg(info.checksumStatus);
+        details += tr("Checksum: %1").arg(info.checksumStatus) + QLatin1Char('\n');
     }
     if (info.lastCheckedAt.isValid()) {
-        details += QStringLiteral("Last checked: %1\n").arg(info.lastCheckedAt.toString(Qt::ISODate));
+        details += tr("Last checked: %1").arg(info.lastCheckedAt.toString(Qt::ISODate))
+                   + QLatin1Char('\n');
     }
     if (info.lastUpdatedAt.isValid()) {
-        details += QStringLiteral("Last updated: %1\n").arg(info.lastUpdatedAt.toString(Qt::ISODate));
+        details += tr("Last updated: %1").arg(info.lastUpdatedAt.toString(Qt::ISODate))
+                   + QLatin1Char('\n');
     }
     if (!info.lastError.isEmpty()) {
-        details += QStringLiteral("Last error: %1\n").arg(info.lastError);
+        details += tr("Last error: %1").arg(info.lastError) + QLatin1Char('\n');
     }
     if (!info.managed) {
-        details += QStringLiteral(
-            "Warning: core path is external and not managed by Zarya.\n");
+        details += tr("Warning: core path is external and not managed by Zarya.")
+                   + QLatin1Char('\n');
     }
     if (info.running) {
-        details += QStringLiteral("Warning: core is running. Stop it before updating.\n");
+        details += tr("Warning: core is running. Stop it before updating.")
+                   + QLatin1Char('\n');
     }
     m_detailsLabel->setText(details);
 }
@@ -161,8 +170,9 @@ void CoreManagerDialog::onUpdateSelected()
 {
     const CoreInfo info = m_manager.infoFor(selectedCoreType());
     if (info.status == CoreInstallStatus::External) {
-        QMessageBox::warning(this, tr("Core Manager"),
-                               tr("This core is outside Zarya-managed directory."));
+        UiMessagePresenter::warning(
+            this, tr("Core Manager"),
+            tr("This core is outside Zarya-managed directory."));
         return;
     }
     const bool allowWithoutChecksum = AppSettings::instance().allowCoreUpdateWithoutChecksum();
@@ -220,7 +230,7 @@ void CoreManagerDialog::onOperationFinished(bool ok, const QString& message)
     setBusy(false);
     if (!ok && !message.isEmpty()) {
         // Success is already visible in the log and table; avoid a blocking popup.
-        QMessageBox::warning(this, tr("Core Manager"), message);
+        UiMessagePresenter::warning(this, tr("Core Manager"), message);
     }
     m_manager.refreshLocalState();
 }
@@ -229,7 +239,7 @@ void CoreManagerDialog::onDownloadProgress(CoreType type, qint64 received, qint6
 {
     const QString coreName = type == CoreType::Xray ? QStringLiteral("Xray") : QStringLiteral("sing-box");
     if (total > 0) {
-        m_detailsLabel->setText(QStringLiteral("Downloading %1: %2 / %3 bytes")
+        m_detailsLabel->setText(tr("Downloading %1: %2 / %3 bytes")
                                     .arg(coreName)
                                     .arg(received)
                                     .arg(total));

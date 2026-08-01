@@ -5,12 +5,13 @@
 #include <QDialog>
 #include <functional>
 
-class QLabel;
 class QPlainTextEdit;
-class QPushButton;
 class QTableWidget;
 
 namespace zarya {
+
+class ZaryaActionButton;
+class ZaryaBodyText;
 
 class CoreManagerDialog : public QDialog {
     Q_OBJECT
@@ -20,7 +21,7 @@ public:
                       const std::function<void(const QString&)>& logCallback,
                       QWidget* parent = nullptr);
 
-private slots:
+private Q_SLOTS:
     void onCheckVersions();
     void onUpdateSelected();
     void onUpdateAll();
@@ -43,15 +44,15 @@ private:
     std::function<void(const QString&)> m_logCallback;
 
     QTableWidget* m_table = nullptr;
-    QLabel* m_detailsLabel = nullptr;
+    ZaryaBodyText* m_detailsLabel = nullptr;
     QPlainTextEdit* m_logView = nullptr;
-    QPushButton* m_checkButton = nullptr;
-    QPushButton* m_updateButton = nullptr;
-    QPushButton* m_updateAllButton = nullptr;
-    QPushButton* m_rollbackButton = nullptr;
-    QPushButton* m_openFolderButton = nullptr;
-    QPushButton* m_resetPathButton = nullptr;
-    QPushButton* m_cancelButton = nullptr;
+    ZaryaActionButton* m_checkButton = nullptr;
+    ZaryaActionButton* m_updateButton = nullptr;
+    ZaryaActionButton* m_updateAllButton = nullptr;
+    ZaryaActionButton* m_rollbackButton = nullptr;
+    ZaryaActionButton* m_openFolderButton = nullptr;
+    ZaryaActionButton* m_resetPathButton = nullptr;
+    ZaryaActionButton* m_cancelButton = nullptr;
 };
 
 } // namespace zarya
