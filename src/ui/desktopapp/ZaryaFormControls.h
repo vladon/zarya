@@ -9,6 +9,20 @@ namespace zarya {
 
 enum class ZaryaButtonRole;
 
+class ZaryaActionButton final : public QWidget {
+    Q_OBJECT
+
+public:
+    ZaryaActionButton(const QString& text, QWidget* parent, ZaryaButtonRole role);
+    void setText(const QString& text);
+
+Q_SIGNALS:
+    void clicked();
+
+private:
+    QWidget* m_button = nullptr; // Ui::RoundButton*
+};
+
 class ZaryaTextField final : public QWidget {
     Q_OBJECT
 
