@@ -118,6 +118,9 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      verification, platform installers, and native file/folder integration remain unchanged.
    - Stable/beta/experimental banner text and dismissal use the toolkit layer, with a
      theme-aware painted warning surface and unchanged release-channel policy.
+   - Settings, including gated TUN, helper, kill-switch, update, routing, DNS, startup, and
+     desktop behavior controls, use shared toolkit form primitives and feedback while preserving
+     the existing `FeatureGate`, persistence, native file pickers, and recovery behavior.
 7. **Convergence**
    - Remove application QSS for controls that no longer exist.
    - Delete obsolete Qt-only wrappers and verify that remaining Qt widgets match the boundary

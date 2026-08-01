@@ -6,15 +6,6 @@
 
 #include <memory>
 
-class QCheckBox;
-class QComboBox;
-class QGroupBox;
-class QLabel;
-class QLineEdit;
-class QPushButton;
-class QRadioButton;
-class QSpinBox;
-
 namespace zarya {
 
 class DnsManager;
@@ -25,7 +16,9 @@ class RoutingManager;
 class ZaryaActionButton;
 class ZaryaBodyText;
 class ZaryaCheckBox;
+class ZaryaFormSection;
 class ZaryaNumberField;
+class ZaryaRadioGroup;
 class ZaryaSelector;
 class ZaryaTextField;
 
@@ -38,7 +31,7 @@ public:
                             IHelperServiceManager* serviceManager = nullptr,
                             QWidget* parent = nullptr);
 
-private slots:
+private Q_SLOTS:
     void onBrowseXray();
     void onBrowseSingBox();
     void onStartHelper();
@@ -98,48 +91,46 @@ private:
     ZaryaSelector* m_routingProfileCombo = nullptr;
     ZaryaSelector* m_dnsProfileCombo = nullptr;
 
-    QCheckBox* m_enableExperimentalTunCheck = nullptr;
-    QRadioButton* m_systemProxyRuntimeRadio = nullptr;
-    QRadioButton* m_tunRuntimeRadio = nullptr;
-    QLineEdit* m_singBoxPathEdit = nullptr;
-    QCheckBox* m_tunUseActiveRoutingCheck = nullptr;
-    QCheckBox* m_tunUseActiveDnsCheck = nullptr;
-    QCheckBox* m_tunEnableDnsHijackCheck = nullptr;
-    QComboBox* m_tunDnsHijackModeCombo = nullptr;
-    QRadioButton* m_tunDirectGuiRadio = nullptr;
-    QRadioButton* m_tunHelperRadio = nullptr;
-    QLabel* m_helperBackendLabel = nullptr;
-    QLabel* m_helperServiceStatusLabel = nullptr;
-    QLabel* m_helperStatusLabel = nullptr;
-    QLabel* m_helperServiceWarningLabel = nullptr;
-    QPushButton* m_installServiceButton = nullptr;
-    QPushButton* m_uninstallServiceButton = nullptr;
-    QPushButton* m_startServiceButton = nullptr;
-    QPushButton* m_stopServiceButton = nullptr;
-    QPushButton* m_restartServiceButton = nullptr;
-    QPushButton* m_startHelperButton = nullptr;
-    QPushButton* m_connectHelperButton = nullptr;
-    QPushButton* m_checkHelperStatusButton = nullptr;
-    QPushButton* m_serviceSelfTestButton = nullptr;
-    QPushButton* m_serviceRecoveryButton = nullptr;
-    QCheckBox* m_recoverKillSwitchOnUninstallCheck = nullptr;
+    ZaryaCheckBox* m_enableExperimentalTunCheck = nullptr;
+    ZaryaRadioGroup* m_runtimeModeGroup = nullptr;
+    ZaryaTextField* m_singBoxPathEdit = nullptr;
+    ZaryaCheckBox* m_tunUseActiveRoutingCheck = nullptr;
+    ZaryaCheckBox* m_tunUseActiveDnsCheck = nullptr;
+    ZaryaCheckBox* m_tunEnableDnsHijackCheck = nullptr;
+    ZaryaSelector* m_tunDnsHijackModeCombo = nullptr;
+    ZaryaRadioGroup* m_tunPrivilegeModeGroup = nullptr;
+    ZaryaBodyText* m_helperBackendLabel = nullptr;
+    ZaryaBodyText* m_helperServiceStatusLabel = nullptr;
+    ZaryaBodyText* m_helperStatusLabel = nullptr;
+    ZaryaBodyText* m_helperServiceWarningLabel = nullptr;
+    ZaryaActionButton* m_installServiceButton = nullptr;
+    ZaryaActionButton* m_uninstallServiceButton = nullptr;
+    ZaryaActionButton* m_startServiceButton = nullptr;
+    ZaryaActionButton* m_stopServiceButton = nullptr;
+    ZaryaActionButton* m_restartServiceButton = nullptr;
+    ZaryaActionButton* m_startHelperButton = nullptr;
+    ZaryaActionButton* m_connectHelperButton = nullptr;
+    ZaryaActionButton* m_checkHelperStatusButton = nullptr;
+    ZaryaActionButton* m_serviceSelfTestButton = nullptr;
+    ZaryaActionButton* m_serviceRecoveryButton = nullptr;
+    ZaryaCheckBox* m_recoverKillSwitchOnUninstallCheck = nullptr;
 
-    QCheckBox* m_tunRequireLocalRuleSetsCheck = nullptr;
-    QLabel* m_ruleSetDirLabel = nullptr;
+    ZaryaCheckBox* m_tunRequireLocalRuleSetsCheck = nullptr;
+    ZaryaBodyText* m_ruleSetDirLabel = nullptr;
 
-    QCheckBox* m_enableKillSwitchCheck = nullptr;
-    QLabel* m_killSwitchModeLabel = nullptr;
-    QCheckBox* m_killSwitchAllowLanCheck = nullptr;
-    QCheckBox* m_killSwitchAllowLoopbackCheck = nullptr;
-    QCheckBox* m_killSwitchAllowProxyCheck = nullptr;
-    QCheckBox* m_killSwitchAutoDisableOnStopCheck = nullptr;
-    QCheckBox* m_killSwitchKeepActiveAfterStopCheck = nullptr;
-    QLabel* m_killSwitchBackendLabel = nullptr;
-    QLabel* m_killSwitchWarningLabel = nullptr;
-    QPushButton* m_testKillSwitchButton = nullptr;
-    QPushButton* m_enableKillSwitchButton = nullptr;
-    QPushButton* m_disableKillSwitchButton = nullptr;
-    QPushButton* m_killSwitchRecoveryButton = nullptr;
+    ZaryaCheckBox* m_enableKillSwitchCheck = nullptr;
+    ZaryaBodyText* m_killSwitchModeLabel = nullptr;
+    ZaryaCheckBox* m_killSwitchAllowLanCheck = nullptr;
+    ZaryaCheckBox* m_killSwitchAllowLoopbackCheck = nullptr;
+    ZaryaCheckBox* m_killSwitchAllowProxyCheck = nullptr;
+    ZaryaCheckBox* m_killSwitchAutoDisableOnStopCheck = nullptr;
+    ZaryaCheckBox* m_killSwitchKeepActiveAfterStopCheck = nullptr;
+    ZaryaBodyText* m_killSwitchBackendLabel = nullptr;
+    ZaryaBodyText* m_killSwitchWarningLabel = nullptr;
+    ZaryaActionButton* m_testKillSwitchButton = nullptr;
+    ZaryaActionButton* m_enableKillSwitchButton = nullptr;
+    ZaryaActionButton* m_disableKillSwitchButton = nullptr;
+    ZaryaActionButton* m_killSwitchRecoveryButton = nullptr;
 
     ZaryaSelector* m_appUpdateChannelCombo = nullptr;
     ZaryaCheckBox* m_checkAppUpdatesOnStartupCheck = nullptr;
@@ -150,8 +141,8 @@ private:
     ZaryaCheckBox* m_showExperimentalFeaturesCheck = nullptr;
     QWidget* m_experimentalGatePanel = nullptr;
     ZaryaActionButton* m_showExperimentalFeaturesButton = nullptr;
-    QGroupBox* m_experimentalGroup = nullptr;
-    QGroupBox* m_killSwitchGroup = nullptr;
+    ZaryaFormSection* m_experimentalGroup = nullptr;
+    ZaryaFormSection* m_killSwitchGroup = nullptr;
 
     ZaryaCheckBox* m_allowCoreUpdateWithoutChecksumCheck = nullptr;
     ZaryaCheckBox* m_allowManageExternalCorePathsCheck = nullptr;
