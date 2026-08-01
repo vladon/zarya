@@ -116,6 +116,8 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
    - App updater metadata, progress/status text, plan details, actions, verification/staging
      errors, install confirmation, and result feedback use the toolkit layer; update planning,
      verification, platform installers, and native file/folder integration remain unchanged.
+   - Stable/beta/experimental banner text and dismissal use the toolkit layer, with a
+     theme-aware painted warning surface and unchanged release-channel policy.
 7. **Convergence**
    - Remove application QSS for controls that no longer exist.
    - Delete obsolete Qt-only wrappers and verify that remaining Qt widgets match the boundary
