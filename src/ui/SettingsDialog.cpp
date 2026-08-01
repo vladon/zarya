@@ -168,13 +168,14 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
         testUrlItems.push_back({preset, preset, true});
     }
     const QString currentTestUrl = settings.testUrl().trimmed();
-    m_testUrlEdit->setText(
-        currentTestUrl.isEmpty() ? DefaultSettings::testUrl() : currentTestUrl);
-    testUrlPreset->setItems(
-        std::move(testUrlItems),
-        DefaultSettings::testUrlPresets().contains(currentTestUrl)
-            ? currentTestUrl
-            : DefaultSettings::testUrl());
+    const QString effectiveTestUrl = currentTestUrl.isEmpty()
+        ? DefaultSettings::testUrl()
+        : currentTestUrl;
+    if (!DefaultSettings::testUrlPresets().contains(effectiveTestUrl)) {
+        testUrlItems.push_front({effectiveTestUrl, effectiveTestUrl, true});
+    }
+    m_testUrlEdit->setText(effectiveTestUrl);
+    testUrlPreset->setItems(std::move(testUrlItems), effectiveTestUrl);
     connect(testUrlPreset, &ZaryaSelector::currentKeyChanged, m_testUrlEdit,
             &ZaryaTextField::setText);
 
