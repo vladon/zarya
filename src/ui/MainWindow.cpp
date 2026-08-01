@@ -410,17 +410,23 @@ void MainWindow::setupActionStrip()
     actions.start = m_startAction;
     actions.stop = m_stopAction;
     actions.overflow = {
+        m_addAction,
         m_editAction,
         m_deleteAction,
+        m_importAction,
         nullptr,
+        m_subscriptionsAction,
         m_updateSubscriptionAction,
         m_updateAllSubscriptionsAction,
         nullptr,
+        m_testSelectedAction,
         m_testAllAction,
         m_testTcpSelectedAction,
         m_testDelaySelectedAction,
         m_cancelTestsAction,
         nullptr,
+        m_startAction,
+        m_stopAction,
         m_enableSystemProxyAction,
         m_restoreSystemProxyAction,
         nullptr,
@@ -429,7 +435,7 @@ void MainWindow::setupActionStrip()
     };
     m_actionStrip = new ProfileActionStrip(
         std::move(actions),
-        tr("More actions"),
+        tr("More…"),
         centralWidget());
     m_profileFilterSelector = m_actionStrip->profileSelector();
 
