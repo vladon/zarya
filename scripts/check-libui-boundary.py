@@ -13,8 +13,17 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-UI_ROOT = REPO_ROOT / "src" / "ui"
+SOURCE_ROOT = REPO_ROOT / "src"
 DEFAULT_ALLOWLIST = REPO_ROOT / "scripts" / "libui-qt-widget-allowlist.json"
+
+# These files support the centralized native QMessageBox fallback but do not create
+# application-owned surfaces. Keep the exclusions exact so direct Qt controls in any
+# other application layer are still inventoried.
+INFRASTRUCTURE_EXCLUSIONS = {
+    "src/app/Application.cpp",
+    "src/platform/macos/MacMessageBoxEscape.h",
+    "src/platform/macos/MacMessageBoxEscape.mm",
+}
 
 # Infrastructure, native integration, approved model/view boundaries, and host-only
 # QWidget/QDialog/QMainWindow classes are deliberately absent from this list.
@@ -60,12 +69,15 @@ CONTROL_PATTERN = re.compile(
 
 def scan() -> dict[str, dict[str, int]]:
     result: dict[str, dict[str, int]] = {}
-    for path in sorted(UI_ROOT.rglob("*")):
+    for path in sorted(SOURCE_ROOT.rglob("*")):
         if path.suffix not in {".cpp", ".h", ".mm"}:
+            continue
+        relative_path = path.relative_to(REPO_ROOT).as_posix()
+        if relative_path in INFRASTRUCTURE_EXCLUSIONS:
             continue
         counts = Counter(CONTROL_PATTERN.findall(path.read_text(encoding="utf-8")))
         if counts:
-            result[path.relative_to(REPO_ROOT).as_posix()] = dict(sorted(counts.items()))
+            result[relative_path] = dict(sorted(counts.items()))
     return result
 
 
