@@ -429,7 +429,10 @@ while IFS= read -r candidate; do
 
       case "$dependency" in
 
-        @*|/System/Library/*|/usr/lib/*) ;;
+        # Some macdeployqt distributions write absolute install names for code
+        # already copied into the staging bundle. Those paths are portable
+        # because the staging prefix disappears with the archive root.
+        "${APP_PATH}/Contents/"*|@*|/System/Library/*|/usr/lib/*) ;;
 
         /*) EXTERNAL_DEPENDENCIES+="$candidate -> $dependency"$'\n' ;;
 
