@@ -1364,6 +1364,15 @@ Native proxy profile manager with system tray, Xray multi-protocol support, Wind
         <translation>Zarya 0.7
 
 Нативный менеджер прокси-профилей с системным треем, поддержкой мультипротокольного Xray, системным прокси Windows, подписками и тестированием узлов.</translation></message>
+    <message>
+        <source>%1
+
+Step %2 of %3</source>
+        <translation>%1
+
+Шаг %2 из %3</translation></message>
+    <message><source>Start</source><translation>Запустить</translation></message>
+    <message><source>Cancel</source><translation>Отмена</translation></message>
 </context>
 <context>
     <name>ProfileDialog</name>

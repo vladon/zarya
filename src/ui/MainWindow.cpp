@@ -52,6 +52,7 @@
 #include "ui/desktopapp/ProfileEmptyStatePanel.h"
 #include "ui/desktopapp/UiMessagePresenter.h"
 #include "ui/desktopapp/ZaryaControls.h"
+#include "ui/desktopapp/ZaryaFormControls.h"
 #include "ui/desktopapp/ZaryaSelector.h"
 #include "updater/AppUpdateChecker.h"
 #include "updater/AppUpdateStateManager.h"
@@ -70,10 +71,10 @@
 
 #include <QApplication>
 #include <QClipboard>
+#include <QDialog>
 #include <QHBoxLayout>
 #include <QJsonDocument>
 #include <QCloseEvent>
-#include <QInputDialog>
 #include <QEvent>
 #include <QSettings>
 #include <QTimer>
@@ -84,16 +85,87 @@
 #include <QJsonDocument>
 #include <QMenu>
 #include <QMenuBar>
-#include <QProgressDialog>
 #include <QPlainTextEdit>
 #include <QSplitter>
 #include <QStatusBar>
 #include <QTableView>
 #include <QDateTime>
 #include <QEventLoop>
+#include <QVBoxLayout>
 #include <utility>
 
 namespace zarya {
+
+namespace {
+
+class RecoveryProgressDialog final : public QDialog {
+public:
+    RecoveryProgressDialog(const QString& title, const QString& text, QWidget* parent)
+        : QDialog(parent)
+        , m_status(new ZaryaBodyText(text, this))
+    {
+        setWindowTitle(title);
+        setWindowModality(Qt::ApplicationModal);
+        setModal(true);
+        setAccessibleName(title);
+
+        auto* layout = new QVBoxLayout(this);
+        layout->setContentsMargins(24, 24, 24, 24);
+        layout->addWidget(m_status);
+        resize(440, 140);
+    }
+
+    void setStatus(const QString& text)
+    {
+        m_status->setText(text);
+        setAccessibleDescription(text);
+    }
+
+private:
+    ZaryaBodyText* m_status = nullptr;
+};
+
+class ProfileSelectionDialog final : public QDialog {
+public:
+    ProfileSelectionDialog(
+        const QString& title,
+        const QString& label,
+        const QVector<ZaryaSelectorItem>& items,
+        const QString& acceptText,
+        const QString& cancelText,
+        QWidget* parent)
+        : QDialog(parent)
+        , m_selector(new ZaryaSelector(this))
+    {
+        setWindowTitle(title);
+        setAccessibleName(title);
+        setModal(true);
+        m_selector->setItems(items, items.isEmpty() ? QString() : items.front().key);
+
+        auto* row = new ZaryaFormRow(label, m_selector, this);
+        auto* actions = new ZaryaDialogActionRow(acceptText, cancelText, this);
+        connect(actions, &ZaryaDialogActionRow::accepted, this, &QDialog::accept);
+        connect(actions, &ZaryaDialogActionRow::rejected, this, &QDialog::reject);
+
+        auto* layout = new QVBoxLayout(this);
+        layout->setContentsMargins(24, 24, 24, 24);
+        layout->setSpacing(16);
+        layout->addWidget(row);
+        layout->addWidget(actions);
+        resize(440, 180);
+        actions->focusAccept();
+    }
+
+    [[nodiscard]] QString selectedKey() const
+    {
+        return m_selector->currentKey();
+    }
+
+private:
+    ZaryaSelector* m_selector = nullptr;
+};
+
+} // namespace
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -743,13 +815,7 @@ void MainWindow::runStartupRecovery()
         || QFile::exists(AppPaths::singBoxTunConfigPath())
         || (settings.restoreProxyOnExit() && SystemProxyStateStore::exists());
 
-    QProgressDialog progress(tr("Checking previous session…"), QString(), 0, 0, this);
-    progress.setWindowTitle(tr("Zarya"));
-    progress.setWindowModality(Qt::ApplicationModal);
-    progress.setMinimumDuration(0);
-    progress.setCancelButton(nullptr);
-    progress.setAutoClose(false);
-    progress.setAutoReset(false);
+    RecoveryProgressDialog progress(tr("Zarya"), tr("Checking previous session…"), this);
     if (likelyNeedsRecovery) {
         progress.show();
         QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
@@ -784,20 +850,26 @@ void MainWindow::runStartupRecovery()
     }
 
     const int totalSteps = StartupRecovery::plannedStepCount(plan);
-    progress.setLabelText(tr("Recovering from previous session…"));
-    progress.setRange(0, totalSteps);
-    progress.setValue(0);
+    progress.setStatus(
+        tr("%1\n\nStep %2 of %3")
+            .arg(tr("Recovering from previous session…"))
+            .arg(0)
+            .arg(totalSteps));
     progress.show();
     QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 
     const auto onProgress = [&](int currentStep, int stepCount) {
-        progress.setMaximum(stepCount);
+        QString status;
         if (currentStep < stepLabels.size()) {
-            progress.setLabelText(stepLabels.at(currentStep));
+            status = stepLabels.at(currentStep);
         } else if (currentStep >= stepCount && stepCount > 0) {
-            progress.setLabelText(tr("Recovery complete"));
+            status = tr("Recovery complete");
         }
-        progress.setValue(qMin(currentStep, stepCount));
+        progress.setStatus(
+            tr("%1\n\nStep %2 of %3")
+                .arg(status)
+                .arg(qMin(currentStep, stepCount))
+                .arg(stepCount));
         QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
     };
 
@@ -805,7 +877,11 @@ void MainWindow::runStartupRecovery()
     if (!StartupRecovery::apply(plan, &logLines, nullptr, onProgress)) {
         appendLog(QStringLiteral("Startup recovery encountered errors."));
     }
-    progress.setValue(totalSteps);
+    progress.setStatus(
+        tr("%1\n\nStep %2 of %3")
+            .arg(tr("Recovery complete"))
+            .arg(totalSteps)
+            .arg(totalSteps));
     progress.close();
 
     for (const QString& line : logLines) {
@@ -987,19 +1063,18 @@ Profile* MainWindow::resolveProfileForStart()
     if (enabled.isEmpty()) {
         return nullptr;
     }
-    QStringList names;
+    QVector<ZaryaSelectorItem> items;
+    items.reserve(enabled.size());
     for (Profile* p : enabled) {
-        names.append(p->name);
+        items.push_back({p->id, p->name, true});
     }
-    bool ok = false;
-    const QString chosen =
-        QInputDialog::getItem(this, tr("Select profile"), tr("Profile:"),
-                              names, 0, false, &ok);
-    if (!ok) {
+    ProfileSelectionDialog dialog(
+        tr("Select profile"), tr("Profile:"), items, tr("Start"), tr("Cancel"), this);
+    if (dialog.exec() != QDialog::Accepted) {
         return nullptr;
     }
     for (Profile* p : enabled) {
-        if (p->name == chosen) {
+        if (p->id == dialog.selectedKey()) {
             selectProfileById(p->id);
             return p;
         }

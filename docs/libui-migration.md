@@ -127,10 +127,12 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      recovery prompts, updater startup notices, and structured application errors use the shared
      toolkit presenter without changing backend behavior.
 7. **Convergence**
-   - Application QSS selectors for controls that no longer exist and obsolete Qt-only includes
-     are removed. Settings scrolling and the diagnostics preview use toolkit controls.
-   - The full-source allowlist contains only the pre-toolkit native message fallback and two
-     remaining MainWindow input/progress surfaces. Model/view tables, log text engines,
+   - Complete: application QSS selectors for controls that no longer exist and obsolete Qt-only
+     includes are removed. Settings scrolling and the diagnostics preview use toolkit controls.
+     Startup recovery progress and the ambiguous-profile selector also use toolkit content rather
+     than native `QProgressDialog` or `QInputDialog` surfaces.
+   - The final full-source allowlist contains only the centralized native `QMessageBox` fallback
+     used before Desktop App Toolkit initialization. Model/view tables, log text engines,
      tray/native menus, file dialogs, and infrastructure Qt remain approved boundaries. The two
      exact native-message keyboard handlers are excluded from the inventory; all other
      application source directories are scanned.
