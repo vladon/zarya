@@ -263,36 +263,38 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     desktopGroup->addWidget(m_showTrayNotificationsCheck);
     desktopGroup->addWidget(m_confirmExitWhileRunningCheck);
 
-    m_routingProfileCombo = new QComboBox(this);
+    m_routingProfileCombo = new ZaryaSelector(this);
     refreshRoutingCombo();
-    auto* manageRoutingButton = new QPushButton(tr("Manage Routing Profiles…"), this);
-    connect(manageRoutingButton, &QPushButton::clicked, this,
+    auto* manageRoutingButton = new ZaryaActionButton(tr("Manage Routing Profiles…"), this);
+    connect(manageRoutingButton, &ZaryaActionButton::clicked, this,
             &SettingsDialog::onManageRoutingProfiles);
 
-    auto* routingRow = new QHBoxLayout;
-    routingRow->addWidget(m_routingProfileCombo, 1);
-    routingRow->addWidget(manageRoutingButton);
+    auto* routingRow = new QWidget(this);
+    auto* routingRowLayout = new QHBoxLayout(routingRow);
+    routingRowLayout->setContentsMargins(0, 0, 0, 0);
+    routingRowLayout->setSpacing(8);
+    routingRowLayout->addWidget(m_routingProfileCombo, 1);
+    routingRowLayout->addWidget(manageRoutingButton);
 
-    auto* routingForm = new QFormLayout;
-    routingForm->addRow(tr("Active routing profile"), routingRow);
+    auto* routingGroup = new ZaryaFormSection(tr("Routing"), this);
+    routingGroup->addWidget(
+        new ZaryaFormRow(tr("Active routing profile"), routingRow, routingGroup));
 
-    auto* routingGroup = new QGroupBox(tr("Routing"), this);
-    routingGroup->setLayout(routingForm);
-
-    m_dnsProfileCombo = new QComboBox(this);
+    m_dnsProfileCombo = new ZaryaSelector(this);
     refreshDnsCombo();
-    auto* manageDnsButton = new QPushButton(tr("Manage DNS Profiles…"), this);
-    connect(manageDnsButton, &QPushButton::clicked, this, &SettingsDialog::onManageDnsProfiles);
+    auto* manageDnsButton = new ZaryaActionButton(tr("Manage DNS Profiles…"), this);
+    connect(manageDnsButton, &ZaryaActionButton::clicked, this,
+            &SettingsDialog::onManageDnsProfiles);
 
-    auto* dnsRow = new QHBoxLayout;
-    dnsRow->addWidget(m_dnsProfileCombo, 1);
-    dnsRow->addWidget(manageDnsButton);
+    auto* dnsRow = new QWidget(this);
+    auto* dnsRowLayout = new QHBoxLayout(dnsRow);
+    dnsRowLayout->setContentsMargins(0, 0, 0, 0);
+    dnsRowLayout->setSpacing(8);
+    dnsRowLayout->addWidget(m_dnsProfileCombo, 1);
+    dnsRowLayout->addWidget(manageDnsButton);
 
-    auto* dnsForm = new QFormLayout;
-    dnsForm->addRow(tr("Active DNS profile"), dnsRow);
-
-    auto* dnsGroup = new QGroupBox(tr("DNS"), this);
-    dnsGroup->setLayout(dnsForm);
+    auto* dnsGroup = new ZaryaFormSection(tr("DNS"), this);
+    dnsGroup->addWidget(new ZaryaFormRow(tr("Active DNS profile"), dnsRow, dnsGroup));
 
     auto* startupGroup = new ZaryaFormSection(tr("Startup"), this);
     startupGroup->addWidget(
@@ -875,18 +877,14 @@ void SettingsDialog::updateProxyEndpointLabel()
 
 void SettingsDialog::refreshRoutingCombo()
 {
-    m_routingProfileCombo->clear();
     const QString activeId = m_routingManager.activeProfileId();
     const QVector<RoutingProfile> profiles = m_routingManager.profiles();
-    int activeIndex = 0;
-    for (int i = 0; i < profiles.size(); ++i) {
-        const RoutingProfile& profile = profiles[i];
-        m_routingProfileCombo->addItem(profile.name, profile.id);
-        if (profile.id == activeId) {
-            activeIndex = i;
-        }
+    QVector<ZaryaSelectorItem> items;
+    items.reserve(profiles.size());
+    for (const RoutingProfile& profile : profiles) {
+        items.push_back({profile.id, profile.name, true});
     }
-    m_routingProfileCombo->setCurrentIndex(activeIndex);
+    m_routingProfileCombo->setItems(std::move(items), activeId);
 }
 
 void SettingsDialog::onManageRoutingProfiles()
@@ -900,18 +898,14 @@ void SettingsDialog::onManageRoutingProfiles()
 
 void SettingsDialog::refreshDnsCombo()
 {
-    m_dnsProfileCombo->clear();
     const QString activeId = m_dnsManager.activeProfileId();
     const QVector<DnsProfile> profiles = m_dnsManager.profiles();
-    int activeIndex = 0;
-    for (int i = 0; i < profiles.size(); ++i) {
-        const DnsProfile& profile = profiles[i];
-        m_dnsProfileCombo->addItem(profile.name, profile.id);
-        if (profile.id == activeId) {
-            activeIndex = i;
-        }
+    QVector<ZaryaSelectorItem> items;
+    items.reserve(profiles.size());
+    for (const DnsProfile& profile : profiles) {
+        items.push_back({profile.id, profile.name, true});
     }
-    m_dnsProfileCombo->setCurrentIndex(activeIndex);
+    m_dnsProfileCombo->setItems(std::move(items), activeId);
 }
 
 void SettingsDialog::onManageDnsProfiles()
@@ -990,13 +984,13 @@ bool SettingsDialog::validateAndSave()
         settings.setStartAtLogin(wantAutostart);
     }
 
-    const QString selectedRoutingId = m_routingProfileCombo->currentData().toString();
+    const QString selectedRoutingId = m_routingProfileCombo->currentKey();
     if (!selectedRoutingId.isEmpty()) {
         m_routingManager.setActiveProfileId(selectedRoutingId);
         m_routingManager.save();
     }
 
-    const QString selectedDnsId = m_dnsProfileCombo->currentData().toString();
+    const QString selectedDnsId = m_dnsProfileCombo->currentKey();
     if (!selectedDnsId.isEmpty()) {
         m_dnsManager.setActiveProfileId(selectedDnsId);
         m_dnsManager.save();
