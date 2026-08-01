@@ -6,13 +6,14 @@
 #include <functional>
 
 class QPlainTextEdit;
-class QPushButton;
 class QTableWidget;
 
 namespace zarya {
 
 class DnsManager;
 class RoutingManager;
+class ZaryaActionButton;
+class ZaryaBodyText;
 
 class RuleSetManagerDialog : public QDialog {
     Q_OBJECT
@@ -23,7 +24,7 @@ public:
                          const std::function<void(const QString&)>& logCallback,
                          QWidget* parent = nullptr);
 
-private slots:
+private Q_SLOTS:
     void onCheckStatus();
     void onImportSrs();
     void onCompileJson();
@@ -42,8 +43,10 @@ private:
     QTableWidget* m_requiredTable = nullptr;
     QTableWidget* m_allTable = nullptr;
     QPlainTextEdit* m_logView = nullptr;
-    QPushButton* m_importButton = nullptr;
-    QPushButton* m_compileButton = nullptr;
+    ZaryaBodyText* m_requiredEmptyState = nullptr;
+    ZaryaBodyText* m_allEmptyState = nullptr;
+    ZaryaActionButton* m_importButton = nullptr;
+    ZaryaActionButton* m_compileButton = nullptr;
 };
 
 } // namespace zarya

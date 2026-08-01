@@ -5,17 +5,14 @@
 #include "rulesets/RuleSetStatus.h"
 #include "storage/AppPaths.h"
 #include "storage/AppSettings.h"
+#include "ui/desktopapp/UiMessagePresenter.h"
+#include "ui/desktopapp/ZaryaFormControls.h"
 
 #include <QDesktopServices>
 #include <QFileDialog>
-#include <QFormLayout>
-#include <QGroupBox>
 #include <QHBoxLayout>
 #include <QHeaderView>
-#include <QLabel>
-#include <QMessageBox>
 #include <QPlainTextEdit>
-#include <QPushButton>
 #include <QTableWidget>
 #include <QUrl>
 #include <QVBoxLayout>
@@ -35,16 +32,13 @@ RuleSetManagerDialog::RuleSetManagerDialog(RuleSetManager& manager, RoutingManag
     setWindowTitle(tr("sing-box Rule Sets"));
     resize(960, 620);
 
-    auto* targetLabel = new QLabel(
+    auto* targetLabel = new ZaryaBodyText(
         tr("Target directory: %1").arg(m_manager.targetDirectory()), this);
-    targetLabel->setWordWrap(true);
-    targetLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
-  auto* singBoxLabel = new QLabel(
+    auto* singBoxLabel = new ZaryaBodyText(
         tr("sing-box executable: %1")
             .arg(AppSettings::instance().resolvedSingBoxPath()),
         this);
-    singBoxLabel->setWordWrap(true);
 
     m_requiredTable = new QTableWidget(this);
     m_requiredTable->setColumnCount(4);
@@ -68,17 +62,21 @@ RuleSetManagerDialog::RuleSetManagerDialog(RuleSetManager& manager, RoutingManag
     m_logView->setReadOnly(true);
     m_logView->setMaximumBlockCount(300);
 
-    auto* checkButton = new QPushButton(tr("Check Status"), this);
-    m_importButton = new QPushButton(tr("Import Local .srs"), this);
-    m_compileButton = new QPushButton(tr("Compile JSON"), this);
-    auto* openFolderButton = new QPushButton(tr("Open Folder"), this);
-    auto* closeButton = new QPushButton(tr("Close"), this);
+    auto* checkButton = new ZaryaActionButton(tr("Check Status"), this);
+    m_importButton = new ZaryaActionButton(tr("Import Local .srs"), this);
+    m_compileButton = new ZaryaActionButton(tr("Compile JSON"), this);
+    auto* openFolderButton = new ZaryaActionButton(tr("Open Folder"), this);
+    auto* closeButton = new ZaryaActionButton(tr("Close"), this);
 
-    connect(checkButton, &QPushButton::clicked, this, &RuleSetManagerDialog::onCheckStatus);
-    connect(m_importButton, &QPushButton::clicked, this, &RuleSetManagerDialog::onImportSrs);
-    connect(m_compileButton, &QPushButton::clicked, this, &RuleSetManagerDialog::onCompileJson);
-    connect(openFolderButton, &QPushButton::clicked, this, &RuleSetManagerDialog::onOpenFolder);
-    connect(closeButton, &QPushButton::clicked, this, &QDialog::accept);
+    connect(checkButton, &ZaryaActionButton::clicked,
+            this, &RuleSetManagerDialog::onCheckStatus);
+    connect(m_importButton, &ZaryaActionButton::clicked,
+            this, &RuleSetManagerDialog::onImportSrs);
+    connect(m_compileButton, &ZaryaActionButton::clicked,
+            this, &RuleSetManagerDialog::onCompileJson);
+    connect(openFolderButton, &ZaryaActionButton::clicked,
+            this, &RuleSetManagerDialog::onOpenFolder);
+    connect(closeButton, &ZaryaActionButton::clicked, this, &QDialog::accept);
     connect(&m_manager, &RuleSetManager::logLine, this, [this](const QString& line) {
         m_logView->appendPlainText(line);
         if (m_logCallback) {
@@ -95,19 +93,25 @@ RuleSetManagerDialog::RuleSetManagerDialog(RuleSetManager& manager, RoutingManag
     buttonRow->addStretch();
     buttonRow->addWidget(closeButton);
 
-    auto* requiredGroup = new QGroupBox(tr("Required by active TUN config"), this);
-    auto* requiredLayout = new QVBoxLayout(requiredGroup);
-    requiredLayout->addWidget(m_requiredTable);
+    m_requiredEmptyState = new ZaryaBodyText(
+        tr("No rule sets are required by the active TUN configuration."), this);
+    auto* requiredSection = new ZaryaFormSection(
+        tr("Required by active TUN config"), this);
+    requiredSection->addWidget(m_requiredEmptyState);
+    requiredSection->addWidget(m_requiredTable);
 
-    auto* allGroup = new QGroupBox(tr("All rule sets"), this);
-    auto* allLayout = new QVBoxLayout(allGroup);
-    allLayout->addWidget(m_allTable);
+    m_allEmptyState = new ZaryaBodyText(tr("No rule sets are available."), this);
+    auto* allSection = new ZaryaFormSection(tr("All rule sets"), this);
+    allSection->addWidget(m_allEmptyState);
+    allSection->addWidget(m_allTable);
 
     auto* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(24, 24, 24, 24);
+    layout->setSpacing(12);
     layout->addWidget(targetLabel);
     layout->addWidget(singBoxLabel);
-    layout->addWidget(requiredGroup);
-    layout->addWidget(allGroup);
+    layout->addWidget(requiredSection);
+    layout->addWidget(allSection);
     layout->addWidget(m_logView);
     layout->addLayout(buttonRow);
 
@@ -132,6 +136,8 @@ void RuleSetManagerDialog::refreshTables()
     const QVector<RequiredRuleSet> required = m_manager.detectRequired(routing, dns);
 
     m_requiredTable->setRowCount(required.size());
+    m_requiredEmptyState->setVisible(required.isEmpty());
+    m_requiredTable->setVisible(!required.isEmpty());
     for (int row = 0; row < required.size(); ++row) {
         const RequiredRuleSet& entry = required.at(row);
         m_requiredTable->setItem(row, 0, new QTableWidgetItem(entry.tag));
@@ -145,6 +151,8 @@ void RuleSetManagerDialog::refreshTables()
 
     const QVector<RuleSetItem> items = m_manager.items();
     m_allTable->setRowCount(items.size());
+    m_allEmptyState->setVisible(items.isEmpty());
+    m_allTable->setVisible(!items.isEmpty());
     for (int row = 0; row < items.size(); ++row) {
         const RuleSetItem& item = items.at(row);
         m_allTable->setItem(row, 0, new QTableWidgetItem(item.tag));
@@ -179,8 +187,8 @@ void RuleSetManagerDialog::onImportSrs()
 {
     const int row = m_allTable->currentRow();
     if (row < 0) {
-        QMessageBox::information(this, tr("Import"),
-                                 tr("Select a rule set row first."));
+        UiMessagePresenter::information(
+            this, tr("Import"), tr("Select a rule set row first."));
         return;
     }
     const QString tag = m_allTable->item(row, 0)->text();
@@ -191,7 +199,7 @@ void RuleSetManagerDialog::onImportSrs()
     }
     QString error;
     if (!m_manager.importLocalSrs(tag, path, &error)) {
-        QMessageBox::warning(this, tr("Import"), error);
+        UiMessagePresenter::warning(this, tr("Import"), error);
         return;
     }
     refreshTables();
@@ -201,8 +209,8 @@ void RuleSetManagerDialog::onCompileJson()
 {
     const int row = m_allTable->currentRow();
     if (row < 0) {
-        QMessageBox::information(this, tr("Compile"),
-                                 tr("Select a rule set row first."));
+        UiMessagePresenter::information(
+            this, tr("Compile"), tr("Select a rule set row first."));
         return;
     }
     const QString tag = m_allTable->item(row, 0)->text();
@@ -214,7 +222,7 @@ void RuleSetManagerDialog::onCompileJson()
     }
     QString error;
     if (!m_manager.importLocalJson(tag, path, &error)) {
-        QMessageBox::warning(this, tr("Compile"), error);
+        UiMessagePresenter::warning(this, tr("Compile"), error);
         return;
     }
     refreshTables();

@@ -78,15 +78,6 @@
     "QLabel": 2,
     "QPushButton": 9
   },
-  "src/ui/RuleSetManagerDialog.cpp": {
-    "QGroupBox": 3,
-    "QLabel": 3,
-    "QMessageBox": 5,
-    "QPushButton": 11
-  },
-  "src/ui/RuleSetManagerDialog.h": {
-    "QPushButton": 3
-  },
   "src/ui/SafeExitDialog.cpp": {
     "QCheckBox": 4,
     "QDialogButtonBox": 6,

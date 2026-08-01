@@ -2285,6 +2285,14 @@ domain:example.com</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>No rule sets are required by the active TUN configuration.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No rule sets are available.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>present</source>
         <translation type="unfinished"></translation>
     </message>
