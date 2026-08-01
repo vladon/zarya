@@ -134,24 +134,6 @@
     "QPushButton": 2,
     "QScrollArea": 1
   },
-  "src/ui/ProfileDialog.cpp": {
-    "QCheckBox": 3,
-    "QComboBox": 7,
-    "QDialogButtonBox": 6,
-    "QLabel": 3,
-    "QLineEdit": 23,
-    "QMessageBox": 2,
-    "QSpinBox": 4,
-    "QTabWidget": 2
-  },
-  "src/ui/ProfileDialog.h": {
-    "QCheckBox": 3,
-    "QComboBox": 5,
-    "QLabel": 3,
-    "QLineEdit": 22,
-    "QSpinBox": 4,
-    "QTabWidget": 2
-  },
   "src/ui/ReadinessDialog.cpp": {
     "QLabel": 2,
     "QPushButton": 9

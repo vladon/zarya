@@ -1292,6 +1292,12 @@ Native proxy profile manager with system tray, Xray multi-protocol support, Wind
     <message>
         <source>Validation</source>
         <translation>Проверка</translation></message>
+    <message>
+        <source>Save</source>
+        <translation>Сохранить</translation></message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation></message>
 </context>
 <context>
     <name>ProfileTableModel</name>
