@@ -1519,6 +1519,9 @@ Recommended next steps:
         <source>Delete routing profile "%1"?</source>
         <translation>Удалить профиль маршрутизации «%1»?</translation></message>
     <message>
+        <source>No routing profiles are available. Create one to get started.</source>
+        <translation>Нет доступных профилей маршрутизации. Создайте профиль, чтобы начать.</translation></message>
+    <message>
         <source>Routing profile changed: %1</source>
         <translation>Профиль маршрутизации изменён: %1</translation></message>
     <message>

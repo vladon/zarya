@@ -1923,6 +1923,10 @@ Recommended next steps:
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>No routing profiles are available. Create one to get started.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Routing profile changed: %1</source>
         <translation type="unfinished"></translation>
     </message>
