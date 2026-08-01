@@ -2554,7 +2554,7 @@ What should happen?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>GitHub API timeout</source>
+        <source>GitHub API timeout (seconds)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

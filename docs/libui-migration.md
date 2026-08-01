@@ -75,7 +75,10 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      Stable core, system-proxy, and testing settings also use toolkit fields, selectors, actions,
      checks, status text, and sections; native executable picking remains a platform boundary.
      Active Routing and DNS selection and their management actions use toolkit sections and
-     selectors; the dedicated manager workflows remain in the management migration stage.
+     selectors; the dedicated manager workflows remain in the management migration stage. App
+     updates, core updates, release-channel selection, and the stable experimental-feature gate
+     use toolkit selectors, fields, checks, actions, text, and number controls without changing
+     `FeatureGate` policy.
 5. **Management surfaces**
    - Migrate Core, Routing, DNS, Geo Data, Rule Set, backup, and diagnostics workflows using the
      shared interaction layer.

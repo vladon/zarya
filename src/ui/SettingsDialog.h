@@ -22,6 +22,7 @@ class HelperProcessManager;
 class IHelperServiceManager;
 class ISystemProxyManager;
 class RoutingManager;
+class ZaryaActionButton;
 class ZaryaBodyText;
 class ZaryaCheckBox;
 class ZaryaNumberField;
@@ -140,23 +141,23 @@ private:
     QPushButton* m_disableKillSwitchButton = nullptr;
     QPushButton* m_killSwitchRecoveryButton = nullptr;
 
-    QComboBox* m_appUpdateChannelCombo = nullptr;
-    QCheckBox* m_checkAppUpdatesOnStartupCheck = nullptr;
-    QLineEdit* m_appUpdateManifestUrlEdit = nullptr;
-    QCheckBox* m_allowUnsignedAppUpdatesCheck = nullptr;
+    ZaryaSelector* m_appUpdateChannelCombo = nullptr;
+    ZaryaCheckBox* m_checkAppUpdatesOnStartupCheck = nullptr;
+    ZaryaTextField* m_appUpdateManifestUrlEdit = nullptr;
+    ZaryaCheckBox* m_allowUnsignedAppUpdatesCheck = nullptr;
 
-    QComboBox* m_releaseChannelCombo = nullptr;
-    QCheckBox* m_showExperimentalFeaturesCheck = nullptr;
+    ZaryaSelector* m_releaseChannelCombo = nullptr;
+    ZaryaCheckBox* m_showExperimentalFeaturesCheck = nullptr;
     QWidget* m_experimentalGatePanel = nullptr;
-    QPushButton* m_showExperimentalFeaturesButton = nullptr;
+    ZaryaActionButton* m_showExperimentalFeaturesButton = nullptr;
     QGroupBox* m_experimentalGroup = nullptr;
     QGroupBox* m_killSwitchGroup = nullptr;
 
-    QCheckBox* m_allowCoreUpdateWithoutChecksumCheck = nullptr;
-    QCheckBox* m_allowManageExternalCorePathsCheck = nullptr;
-    QSpinBox* m_coreBackupRetentionSpin = nullptr;
-    QSpinBox* m_githubApiTimeoutSpin = nullptr;
-    QCheckBox* m_checkCoreUpdatesOnStartupCheck = nullptr;
+    ZaryaCheckBox* m_allowCoreUpdateWithoutChecksumCheck = nullptr;
+    ZaryaCheckBox* m_allowManageExternalCorePathsCheck = nullptr;
+    ZaryaNumberField* m_coreBackupRetentionSpin = nullptr;
+    ZaryaNumberField* m_githubApiTimeoutSpin = nullptr;
+    ZaryaCheckBox* m_checkCoreUpdatesOnStartupCheck = nullptr;
 
     ZaryaCheckBox* m_startAtLoginCheck = nullptr;
     ZaryaCheckBox* m_startMinimizedToTrayCheck = nullptr;

@@ -2001,8 +2001,8 @@ What should happen?</source>
         <source>Backup retention</source>
         <translation>Хранение резервных копий</translation></message>
     <message>
-        <source>GitHub API timeout</source>
-        <translation>Таймаут GitHub API</translation></message>
+        <source>GitHub API timeout (seconds)</source>
+        <translation>Таймаут GitHub API (секунды)</translation></message>
     <message>
         <source>Core updates</source>
         <translation>Обновления ядер</translation></message>
