@@ -28,7 +28,6 @@
 
 class QAction;
 class QCloseEvent;
-class QComboBox;
 class QEvent;
 class QPlainTextEdit;
 class QSplitter;
@@ -41,6 +40,7 @@ class TrayController;
 class BetaBannerWidget;
 class ProfileEmptyStatePanel;
 class StatusDashboardWidget;
+class ZaryaSelector;
 struct FirstRunState;
 struct Profile;
 struct Subscription;
@@ -98,7 +98,7 @@ private slots:
     void onSubscriptions();
     void onUpdateSelectedSubscription();
     void onUpdateAllSubscriptions();
-    void onProfileFilterChanged(int index);
+    void onProfileFilterChanged(const QString& key);
     void onTestSelected();
     void onTestAll();
     void onTestTcpSelected();
@@ -142,7 +142,7 @@ private:
     QString configPathFor(CoreType type) const;
     void loadAllOnStartup();
     bool saveAll(QString* errorMessage = nullptr);
-    void refreshProfileFilterCombo();
+    void refreshProfileFilterSelector();
     void refreshProfileView();
     QVector<QString> collectSelectedProfileIds() const;
     QVector<QString> collectAllTestableProfileIds() const;
@@ -211,10 +211,10 @@ private:
     QSplitter* m_splitter = nullptr;
     QTableView* m_tableView = nullptr;
     QPlainTextEdit* m_logView = nullptr;
-    QComboBox* m_logFilterCombo = nullptr;
+    ZaryaSelector* m_logFilterSelector = nullptr;
     QString m_logFilterKey;
     QToolBar* m_toolBar = nullptr;
-    QComboBox* m_profileFilterCombo = nullptr;
+    ZaryaSelector* m_profileFilterSelector = nullptr;
 
     QAction* m_showAction = nullptr;
     QAction* m_hideToTrayAction = nullptr;
