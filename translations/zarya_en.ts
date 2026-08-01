@@ -256,6 +256,42 @@ Pre-import backup:
         <source>This core is outside Zarya-managed directory.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Provider: GitHub Releases</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Selected asset: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Checksum: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Last checked: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Last updated: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Last error: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Warning: core path is external and not managed by Zarya.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Warning: core is running. Stop it before updating.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloading %1: %2 / %3 bytes</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>DiagnosticsDialog</name>
