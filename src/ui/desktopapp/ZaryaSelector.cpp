@@ -31,14 +31,14 @@ ZaryaSelector::ZaryaSelector(QWidget* parent)
 
 ZaryaSelector::~ZaryaSelector()
 {
-    delete m_menu;
+    delete m_menu.data();
 }
 
 void ZaryaSelector::setItems(QVector<ZaryaSelectorItem> items, const QString& currentKey)
 {
     m_items = std::move(items);
 
-    auto* menu = static_cast<Ui::DropdownMenu*>(m_menu);
+    auto* menu = static_cast<Ui::DropdownMenu*>(m_menu.data());
     menu->clearActions();
     for (const ZaryaSelectorItem& item : m_items) {
         const QString key = item.key;
@@ -111,7 +111,7 @@ void ZaryaSelector::applyCurrentItem()
 void ZaryaSelector::toggleMenu()
 {
     toggleZaryaDropdownMenu(
-        static_cast<Ui::DropdownMenu*>(m_menu),
+        static_cast<Ui::DropdownMenu*>(m_menu.data()),
         static_cast<Ui::RoundButton*>(m_button));
 }
 

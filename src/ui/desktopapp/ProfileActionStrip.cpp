@@ -69,14 +69,14 @@ ProfileActionStrip::ProfileActionStrip(
     static_cast<Ui::RoundButton*>(m_moreButton)->setClickedCallback([this] {
         rebuildOverflowMenu();
         toggleZaryaDropdownMenu(
-            static_cast<Ui::DropdownMenu*>(m_menu),
+            static_cast<Ui::DropdownMenu*>(m_menu.data()),
             static_cast<Ui::RoundButton*>(m_moreButton));
     });
 }
 
 ProfileActionStrip::~ProfileActionStrip()
 {
-    delete m_menu;
+    delete m_menu.data();
 }
 
 ZaryaSelector* ProfileActionStrip::profileSelector() const
@@ -109,7 +109,7 @@ void ProfileActionStrip::bindButton(QWidget* buttonWidget, QAction* action)
 
 void ProfileActionStrip::rebuildOverflowMenu()
 {
-    auto* menu = static_cast<Ui::DropdownMenu*>(m_menu);
+    auto* menu = static_cast<Ui::DropdownMenu*>(m_menu.data());
     menu->clearActions();
     bool hasAction = false;
     bool separatorPending = false;
