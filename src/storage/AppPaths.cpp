@@ -27,7 +27,22 @@ QString AppPaths::applicationDir()
 
 QString AppPaths::portableFlagPath()
 {
-    return QDir(applicationDir()).filePath(QStringLiteral("portable.flag"));
+    const QString besideExecutable =
+        QDir(applicationDir()).filePath(QStringLiteral("portable.flag"));
+    if (QFile::exists(besideExecutable)) {
+        return besideExecutable;
+    }
+#if defined(Q_OS_MACOS)
+    // A macOS bundle keeps packaged resources under Contents/Resources while
+    // the executable lives under Contents/MacOS. Release packaging places the
+    // marker in Resources so it is not mixed with executable code.
+    const QString bundleResources =
+        QDir(applicationDir()).filePath(QStringLiteral("../Resources/portable.flag"));
+    if (QFile::exists(bundleResources)) {
+        return QDir::cleanPath(bundleResources);
+    }
+#endif
+    return besideExecutable;
 }
 
 void AppPaths::initialize(bool portableRequested)

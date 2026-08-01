@@ -103,6 +103,11 @@ sha256sum -c SHA256SUMS.txt
 
 Release packaging downloads a **pinned** Xray binary into `cores/xray/` (see `packaging/cores/xray-pin.json`) so first launch works offline. Override with `ZARYA_BUNDLE_XRAY=0`, `-SkipBundleXray`, or `--skip-bundle-xray`.
 
+On macOS, `portable.flag` is stored in `Zarya.app/Contents/Resources`; mutable
+portable data, runtime state, managed cores, and Xray geo files remain under
+`Contents/MacOS`. The local macOS build wrapper preserves both the marker and
+those mutable directories when it has to replace the app bundle.
+
 Users can still:
 
 - replace the managed binary via **Tools → Core Manager**

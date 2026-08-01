@@ -90,6 +90,7 @@ preserve_app_state() {
   local app_path="$1"
   local slot="$2"
   local macos_dir="$app_path/Contents/MacOS"
+  local resources_dir="$app_path/Contents/Resources"
   local entry
 
   for entry in data runtime cores portable.flag; do
@@ -102,6 +103,15 @@ preserve_app_state() {
     mkdir -p "$STATE_BACKUP_DIR/$slot"
     ditto "$macos_dir/$entry" "$STATE_BACKUP_DIR/$slot/$entry"
   done
+
+  if [[ -f "$resources_dir/portable.flag" ]]; then
+    if [[ -z "$STATE_BACKUP_DIR" ]]; then
+      STATE_BACKUP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/zarya-build-state.XXXXXX")"
+    fi
+    mkdir -p "$STATE_BACKUP_DIR/$slot/resources"
+    ditto "$resources_dir/portable.flag" \
+      "$STATE_BACKUP_DIR/$slot/resources/portable.flag"
+  fi
 }
 
 restore_app_state() {
@@ -127,6 +137,11 @@ restore_app_state() {
         ditto "$STATE_BACKUP_DIR/$slot/$entry" "$app_path/Contents/MacOS/$entry"
       fi
     done
+    if [[ -f "$STATE_BACKUP_DIR/$slot/resources/portable.flag" ]]; then
+      mkdir -p "$app_path/Contents/Resources"
+      ditto "$STATE_BACKUP_DIR/$slot/resources/portable.flag" \
+        "$app_path/Contents/Resources/portable.flag"
+    fi
   done
 
   rm -rf "$STATE_BACKUP_DIR"
