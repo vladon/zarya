@@ -1,6 +1,7 @@
 #include "updater/AppUpdateStateManager.h"
 
 #include "diagnostics/DiagnosticsRedactor.h"
+#include "ui/desktopapp/UiMessagePresenter.h"
 #include "updater/AppUpdatePaths.h"
 #include "updater/runner/UpdatePlanFile.h"
 
@@ -10,8 +11,6 @@
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QMessageBox>
-#include <QPushButton>
 #include <QRegularExpression>
 #include <QUrl>
 
@@ -94,37 +93,42 @@ void AppUpdateStateManager::showStartupNotice(QWidget* parent,
             notice.targetVersion.isEmpty()
                 ? QObject::tr("Zarya was updated successfully.")
                 : QObject::tr("Zarya was updated to %1.").arg(notice.targetVersion);
-        QMessageBox::information(parent, QObject::tr("App Update"), message);
+        UiMessagePresenter::information(parent, QObject::tr("App Update"), message);
         cleanupAfterSuccessNotice();
         break;
     }
     case AppUpdateStartupNotice::Kind::Failed: {
-        QMessageBox box(parent);
-        box.setIcon(QMessageBox::Warning);
-        box.setWindowTitle(QObject::tr("App Update"));
-        box.setText(QObject::tr("The app update failed and was rolled back."));
+        QString message = QObject::tr("The app update failed and was rolled back.");
         if (!notice.reason.isEmpty()) {
-            box.setInformativeText(notice.reason);
+            message += QStringLiteral("\n\n") + notice.reason;
         }
-        QPushButton* showLogButton = box.addButton(QObject::tr("Show Log"), QMessageBox::ActionRole);
-        QPushButton* openFolderButton =
-            box.addButton(QObject::tr("Open Update Folder"), QMessageBox::ActionRole);
-        box.addButton(QMessageBox::Ok);
-        box.exec();
-        if (box.clickedButton() == showLogButton) {
+        const QString selected = UiMessagePresenter::choose(
+            parent,
+            QObject::tr("App Update"),
+            message,
+            UiMessageTone::Warning,
+            {
+                {QStringLiteral("show-log"), QObject::tr("Show Log"),
+                 UiMessageActionRole::Primary, true, false},
+                {QStringLiteral("open-folder"), QObject::tr("Open Update Folder"),
+                 UiMessageActionRole::Secondary, false, false},
+                {QStringLiteral("ok"), QObject::tr("OK"),
+                 UiMessageActionRole::Secondary, false, true},
+            });
+        if (selected == QStringLiteral("show-log")) {
             const QString logPath =
                 QDir(AppUpdatePaths::appUpdatesRootDir()).filePath(QStringLiteral("last-update.log"));
             if (QFile::exists(logPath)) {
                 QDesktopServices::openUrl(QUrl::fromLocalFile(logPath));
             }
-        } else if (box.clickedButton() == openFolderButton) {
+        } else if (selected == QStringLiteral("open-folder")) {
             QDesktopServices::openUrl(
                 QUrl::fromLocalFile(AppUpdatePaths::appUpdatesRootDir()));
         }
         break;
     }
     case AppUpdateStartupNotice::Kind::StalePending:
-        QMessageBox::warning(
+        UiMessagePresenter::warning(
             parent, QObject::tr("App Update"),
             QObject::tr("A previous update attempt was not completed. The pending update plan "
                         "for %1 is stale.")
