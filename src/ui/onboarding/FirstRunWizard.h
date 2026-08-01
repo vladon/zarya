@@ -7,8 +7,15 @@
 namespace zarya {
 
 class CoreBinaryManager;
-class RoutingManager;
 class DnsManager;
+class FirstRunChecklistWidget;
+class ProfileImportWidget;
+class RoutingManager;
+class ZaryaActionButton;
+class ZaryaBodyText;
+class ZaryaCheckBox;
+class ZaryaSelector;
+class ZaryaTextField;
 
 class FirstRunWizard : public QWizard {
     Q_OBJECT
@@ -20,7 +27,7 @@ public:
     FirstRunState state() const;
     bool wasSkipped() const;
 
-signals:
+Q_SIGNALS:
     void openCoreManagerRequested();
     void chooseXrayBinaryRequested();
     void chooseSingBoxBinaryRequested();
@@ -45,6 +52,17 @@ private:
     CoreBinaryManager* m_coreManager = nullptr;
     RoutingManager* m_routingManager = nullptr;
     DnsManager* m_dnsManager = nullptr;
+    ZaryaBodyText* m_coreStatus = nullptr;
+    ZaryaActionButton* m_installXray = nullptr;
+    ProfileImportWidget* m_importWidget = nullptr;
+    ZaryaTextField* m_subscriptionUrl = nullptr;
+    ZaryaTextField* m_subscriptionName = nullptr;
+    ZaryaSelector* m_routing = nullptr;
+    ZaryaSelector* m_dns = nullptr;
+    ZaryaSelector* m_runtime = nullptr;
+    ZaryaCheckBox* m_tunAccepted = nullptr;
+    FirstRunChecklistWidget* m_checklist = nullptr;
+    ZaryaCheckBox* m_startNow = nullptr;
     FirstRunState m_state;
     bool m_skipped = false;
 };

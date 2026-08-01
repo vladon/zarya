@@ -662,6 +662,12 @@ sing-box: %3 (%4)</translation></message>
     <message>
         <source>Subscription</source>
         <translation>Подписка</translation></message>
+    <message>
+        <source>Experimental mode</source>
+        <translation>Экспериментальный режим</translation></message>
+    <message>
+        <source>Confirm that you understand TUN mode is experimental.</source>
+        <translation>Подтвердите, что понимаете экспериментальный статус режима TUN.</translation></message>
 </context>
 <context>
     <name>GeoDataManagerDialog</name>
