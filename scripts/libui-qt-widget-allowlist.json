@@ -1,4 +1,8 @@
 {
+  "src/ui/MainWindow.cpp": {
+    "QInputDialog": 2,
+    "QProgressDialog": 2
+  },
   "src/ui/desktopapp/UiMessagePresenter.cpp": {
     "QMessageBox": 21,
     "QPushButton": 1

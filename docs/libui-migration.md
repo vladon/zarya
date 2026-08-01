@@ -25,9 +25,9 @@ Keep Qt where it is infrastructure or the safer native primitive:
 Qt host widgets may remain temporarily around migrated content. A host is not considered an
 unmigrated surface when it owns no visual styling or interaction.
 
-The boundary is enforced across the complete `src/` tree by
-`scripts/check-libui-boundary.py`. Its allowlist records the exact legacy visual-control
-references by file and control type. New references and silent growth fail the check, and CI
+The boundary is enforced by `scripts/check-libui-boundary.py` across the complete `src/` tree.
+Its allowlist records the exact legacy visual-control references by file and control type,
+including dialogs owned outside `src/ui`. New references and silent growth fail the check, and CI
 rejects allowlist increases against the PR base. Removing a migrated control also fails until the
 reviewed inventory is regenerated:
 
@@ -123,14 +123,17 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
    - Settings, including gated TUN, helper, kill-switch, update, routing, DNS, startup, and
      desktop behavior controls, use shared toolkit form primitives and feedback while preserving
      the existing `FeatureGate`, persistence, native file pickers, and recovery behavior.
+   - Controller/runtime start warnings, geo/DNS/rule-set choices, TUN privilege and kill-switch
+     recovery prompts, updater startup notices, and structured application errors use the shared
+     toolkit presenter without changing backend behavior.
 7. **Convergence**
-   - Complete: application QSS selectors for controls that no longer exist and obsolete Qt-only
-     includes are removed. Settings scrolling and the diagnostics preview use toolkit controls.
-   - The final exact allowlist contains only the `QMessageBox` startup fallback used before
-     Desktop App Toolkit initialization. Model/view tables, log text engines, tray/native menus,
-     file dialogs, and infrastructure Qt remain approved boundaries. The two exact native-message
-     keyboard handlers are explicitly excluded from the inventory; all other application source
-     directories are scanned.
+   - Application QSS selectors for controls that no longer exist and obsolete Qt-only includes
+     are removed. Settings scrolling and the diagnostics preview use toolkit controls.
+   - The full-source allowlist contains only the pre-toolkit native message fallback and two
+     remaining MainWindow input/progress surfaces. Model/view tables, log text engines,
+     tray/native menus, file dialogs, and infrastructure Qt remain approved boundaries. The two
+     exact native-message keyboard handlers are excluded from the inventory; all other
+     application source directories are scanned.
 
 Each numbered stage may span multiple focused PRs. A PR migrates one coherent user workflow and
 must not mix unrelated backend changes.
