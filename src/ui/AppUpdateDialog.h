@@ -6,13 +6,12 @@
 #include <QDialog>
 #include <functional>
 
-class QLabel;
-class QPlainTextEdit;
-class QPushButton;
-
 namespace zarya {
 
 class AppController;
+class ZaryaActionButton;
+class ZaryaBodyText;
+class ZaryaTextArea;
 
 class AppUpdateDialog : public QDialog {
     Q_OBJECT
@@ -22,7 +21,7 @@ public:
                              const std::function<bool()>& isTestsRunning,
                              QWidget* parent = nullptr);
 
-private slots:
+private Q_SLOTS:
     void onCheckNow();
     void onChooseLocalManifest();
     void onDownloadAndVerify();
@@ -51,17 +50,17 @@ private:
     QString m_verifiedArchivePath;
     QString m_stagingDir;
 
-    QLabel* m_currentVersionLabel = nullptr;
-    QLabel* m_channelLabel = nullptr;
-    QLabel* m_installationModeLabel = nullptr;
-    QLabel* m_manifestLabel = nullptr;
-    QLabel* m_statusLabel = nullptr;
-    QPlainTextEdit* m_detailsText = nullptr;
-    QPushButton* m_checkButton = nullptr;
-    QPushButton* m_chooseManifestButton = nullptr;
-    QPushButton* m_downloadButton = nullptr;
-    QPushButton* m_installButton = nullptr;
-    QPushButton* m_openDownloadsButton = nullptr;
+    ZaryaBodyText* m_currentVersionLabel = nullptr;
+    ZaryaBodyText* m_channelLabel = nullptr;
+    ZaryaBodyText* m_installationModeLabel = nullptr;
+    ZaryaBodyText* m_manifestLabel = nullptr;
+    ZaryaBodyText* m_statusLabel = nullptr;
+    ZaryaTextArea* m_detailsText = nullptr;
+    ZaryaActionButton* m_checkButton = nullptr;
+    ZaryaActionButton* m_chooseManifestButton = nullptr;
+    ZaryaActionButton* m_downloadButton = nullptr;
+    ZaryaActionButton* m_installButton = nullptr;
+    ZaryaActionButton* m_openDownloadsButton = nullptr;
 };
 
 } // namespace zarya

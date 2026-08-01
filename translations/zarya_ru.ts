@@ -1,6 +1,65 @@
 <?xml version='1.0' encoding='utf-8'?>
 <TS version="2.1" language="ru_RU">
 <context>
+    <name>AppUpdateDialog</name>
+    <message><source>Zarya App Updates</source><translation>Обновления Zarya</translation></message>
+    <message><source>No update checked yet.</source><translation>Проверка обновлений ещё не выполнялась.</translation></message>
+    <message><source>Check Now</source><translation>Проверить сейчас</translation></message>
+    <message><source>Choose Local Manifest…</source><translation>Выбрать локальный манифест…</translation></message>
+    <message><source>Download and Verify</source><translation>Скачать и проверить</translation></message>
+    <message><source>Install and Restart</source><translation>Установить и перезапустить</translation></message>
+    <message><source>Open Downloads Folder</source><translation>Открыть папку загрузок</translation></message>
+    <message><source>Cancel</source><translation>Отмена</translation></message>
+    <message><source>Update information</source><translation>Информация об обновлении</translation></message>
+    <message><source>Current version</source><translation>Текущая версия</translation></message>
+    <message><source>Channel</source><translation>Канал</translation></message>
+    <message><source>Installation mode</source><translation>Режим установки</translation></message>
+    <message><source>Manifest</source><translation>Манифест</translation></message>
+    <message><source>Status</source><translation>Статус</translation></message>
+    <message><source>Local file: %1</source><translation>Локальный файл: %1</translation></message>
+    <message><source>Not configured</source><translation>Не настроено</translation></message>
+    <message><source>Configured URL</source><translation>URL настроен</translation></message>
+    <message><source>Update available: %1</source><translation>Доступно обновление: %1</translation></message>
+    <message><source>Selected asset:</source><translation>Выбранный файл:</translation></message>
+    <message><source>  Size: %1 bytes</source><translation>  Размер: %1 байт</translation></message>
+    <message><source>Self-update installation is experimental and disabled in this RC build.</source><translation>Установка самообновлений экспериментальна и отключена в этой RC-сборке.</translation></message>
+    <message><source>You can download and verify updates manually.</source><translation>Обновления можно скачать и проверить вручную.</translation></message>
+    <message><source>Ready to install portable update.</source><translation>Переносимое обновление готово к установке.</translation></message>
+    <message><source>Zarya will close and restart.</source><translation>Zarya закроется и перезапустится.</translation></message>
+    <message><source>The update artifact was downloaded and verified.</source><translation>Файл обновления скачан и проверен.</translation></message>
+    <message><source>Install:</source><translation>Установка:</translation></message>
+    <message><source>You are using the latest version for the selected channel.</source><translation>Используется последняя версия для выбранного канала.</translation></message>
+    <message><source>Warning: %1</source><translation>Предупреждение: %1</translation></message>
+    <message><source>Blocked: %1</source><translation>Заблокировано: %1</translation></message>
+    <message><source>Choose Update Manifest</source><translation>Выбор манифеста обновления</translation></message>
+    <message><source>Update manifest (*.json);;All files (*.*)</source><translation>Манифест обновления (*.json);;Все файлы (*.*)</translation></message>
+    <message><source>App Updates</source><translation>Обновления приложения</translation></message>
+    <message><source>This update asset has no checksum. Enable unsigned app update download in Settings or use a signed manifest asset.</source><translation>У файла обновления нет контрольной суммы. Разрешите загрузку неподписанных обновлений в настройках или используйте файл из подписанного манифеста.</translation></message>
+    <message><source>Downloading %1…</source><translation>Загрузка %1…</translation></message>
+    <message><source>Downloading… %1 / %2 bytes</source><translation>Загрузка… %1 / %2 байт</translation></message>
+    <message><source>Download failed.</source><translation>Не удалось скачать обновление.</translation></message>
+    <message><source>SHA256 verification failed.</source><translation>Проверка SHA256 не пройдена.</translation></message>
+    <message><source>Staging update…</source><translation>Подготовка обновления…</translation></message>
+    <message><source>Staging failed.</source><translation>Не удалось подготовить обновление.</translation></message>
+    <message><source>Download verified. Ready to install portable update.</source><translation>Загрузка проверена. Переносимое обновление готово к установке.</translation></message>
+    <message><source>Download completed.
+SHA256 verified.
+
+%1</source><translation>Загрузка завершена.
+SHA256 проверен.
+
+%1</translation></message>
+    <message><source>Install Update</source><translation>Установка обновления</translation></message>
+    <message><source>Zarya will close while the updater replaces application files.
+User data under data/ will be preserved.
+
+Install and restart now?</source><translation>Zarya закроется на время замены файлов приложения.
+Пользовательские данные в data/ будут сохранены.
+
+Установить обновление и перезапустить сейчас?</translation></message>
+    <message><source>Checking for updates…</source><translation>Проверка обновлений…</translation></message>
+</context>
+<context>
     <name>BackupExportDialog</name>
     <message>
         <source>Export Backup</source>
