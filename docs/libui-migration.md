@@ -98,6 +98,9 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      remain Qt/platform boundaries.
    - Rule Set Manager status text, sections, empty states, actions, and feedback use the toolkit
      layer; rule-set tables, bounded log text, and native file/folder pickers remain boundaries.
+   - Backup export/import types, category options, mode selectors, paths, summary text, warnings,
+     confirmations, and actions use the toolkit layer; the import preview table and native file
+     pickers remain Qt/platform boundaries.
 6. **Experimental and update surfaces**
    - Migrate gated sing-box TUN, helper, kill-switch, and updater UI without changing
      `FeatureGate` behavior.

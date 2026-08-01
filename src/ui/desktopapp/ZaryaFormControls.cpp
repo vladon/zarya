@@ -338,6 +338,35 @@ void ZaryaCheckBox::setText(const QString& text)
     static_cast<Ui::Checkbox*>(m_checkbox)->setText(text);
 }
 
+ZaryaRadioGroup::ZaryaRadioGroup(int value, QWidget* parent)
+    : QWidget(parent)
+    , m_group(std::make_shared<Ui::RadiobuttonGroup>(value))
+{
+    m_layout = new QVBoxLayout(this);
+    m_layout->setContentsMargins(0, 0, 0, 0);
+    m_layout->setSpacing(8);
+    m_group->setChangedCallback([this](int current) {
+        Q_EMIT valueChanged(current);
+    });
+}
+
+void ZaryaRadioGroup::addOption(int value, const QString& text)
+{
+    auto* button = Ui::CreateChild<Ui::Radiobutton>(this, m_group, value, text);
+    button->setAccessibleName(text);
+    m_layout->addWidget(button);
+}
+
+int ZaryaRadioGroup::value() const
+{
+    return m_group->current();
+}
+
+void ZaryaRadioGroup::setValue(int value)
+{
+    m_group->setValue(value);
+}
+
 ZaryaFormRow::ZaryaFormRow(const QString& label, QWidget* field, QWidget* parent)
     : QWidget(parent)
 {

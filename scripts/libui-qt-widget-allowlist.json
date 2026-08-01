@@ -8,35 +8,6 @@
     "QLabel": 6,
     "QPushButton": 6
   },
-  "src/ui/BackupExportDialog.cpp": {
-    "QCheckBox": 13,
-    "QGroupBox": 3,
-    "QLabel": 2,
-    "QLineEdit": 2,
-    "QMessageBox": 6,
-    "QPushButton": 7,
-    "QRadioButton": 4
-  },
-  "src/ui/BackupExportDialog.h": {
-    "QCheckBox": 11,
-    "QLineEdit": 2,
-    "QPushButton": 2,
-    "QRadioButton": 3
-  },
-  "src/ui/BackupImportDialog.cpp": {
-    "QCheckBox": 2,
-    "QComboBox": 4,
-    "QGroupBox": 2,
-    "QLabel": 3,
-    "QMessageBox": 7,
-    "QPushButton": 7
-  },
-  "src/ui/BackupImportDialog.h": {
-    "QCheckBox": 2,
-    "QComboBox": 7,
-    "QLabel": 3,
-    "QPushButton": 2
-  },
   "src/ui/BetaBannerWidget.cpp": {
     "QLabel": 2,
     "QPushButton": 3
