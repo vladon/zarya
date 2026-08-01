@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QString>
+#include <QPointer>
 #include <QVector>
 #include <QWidget>
 
@@ -49,7 +50,7 @@ private:
     QWidget* m_subscriptionsButton = nullptr; // Ui::RoundButton*
     QWidget* m_testButton = nullptr; // Ui::RoundButton*
     QWidget* m_moreButton = nullptr; // Ui::RoundButton*
-    QWidget* m_menu = nullptr; // Ui::DropdownMenu*
+    QPointer<QWidget> m_menu; // Ui::DropdownMenu*
 };
 
 } // namespace zarya

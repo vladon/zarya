@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QString>
+#include <QPointer>
 #include <QVector>
 #include <QWidget>
 
@@ -38,7 +39,7 @@ private:
     QVector<ZaryaSelectorItem> m_items;
     QString m_currentKey;
     QWidget* m_button = nullptr; // Ui::RoundButton*
-    QWidget* m_menu = nullptr; // Ui::DropdownMenu*
+    QPointer<QWidget> m_menu; // Ui::DropdownMenu*
 };
 
 } // namespace zarya
