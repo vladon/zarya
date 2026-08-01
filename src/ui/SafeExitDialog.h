@@ -2,9 +2,9 @@
 
 #include <QDialog>
 
-class QCheckBox;
-
 namespace zarya {
+
+class ZaryaCheckBox;
 
 struct SafeExitOptions {
     bool stopRuntime = true;
@@ -21,9 +21,9 @@ public:
     SafeExitOptions options() const;
 
 private:
-    QCheckBox* m_stopRuntimeCheck = nullptr;
-    QCheckBox* m_restoreProxyCheck = nullptr;
-    QCheckBox* m_disableKillSwitchCheck = nullptr;
+    ZaryaCheckBox* m_stopRuntimeCheck = nullptr;
+    ZaryaCheckBox* m_restoreProxyCheck = nullptr;
+    ZaryaCheckBox* m_disableKillSwitchCheck = nullptr;
 };
 
 } // namespace zarya

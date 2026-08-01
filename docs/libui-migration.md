@@ -109,6 +109,8 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      `FeatureGate` behavior.
    - Progress: readiness/recovery guidance and its navigation actions use the toolkit layer
      without changing availability checks or recovery routing.
+   - Safe-exit recovery options and actions use the toolkit layer without changing runtime,
+     system-proxy, or kill-switch cleanup behavior.
 7. **Convergence**
    - Remove application QSS for controls that no longer exist.
    - Delete obsolete Qt-only wrappers and verify that remaining Qt widgets match the boundary

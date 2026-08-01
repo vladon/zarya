@@ -26,15 +26,6 @@
     "QPushButton": 2,
     "QScrollArea": 1
   },
-  "src/ui/SafeExitDialog.cpp": {
-    "QCheckBox": 4,
-    "QDialogButtonBox": 6,
-    "QLabel": 2,
-    "QPushButton": 1
-  },
-  "src/ui/SafeExitDialog.h": {
-    "QCheckBox": 4
-  },
   "src/ui/SettingsDialog.cpp": {
     "QCheckBox": 18,
     "QComboBox": 2,

@@ -1,9 +1,7 @@
 #include "ui/SafeExitDialog.h"
 
-#include <QCheckBox>
-#include <QDialogButtonBox>
-#include <QLabel>
-#include <QPushButton>
+#include "ui/desktopapp/ZaryaFormControls.h"
+
 #include <QVBoxLayout>
 
 namespace zarya {
@@ -13,31 +11,26 @@ SafeExitDialog::SafeExitDialog(QWidget* parent)
 {
     setWindowTitle(tr("Exit Zarya"));
 
-    auto* intro = new QLabel(tr("Zarya is running.\n\nWhat should happen?"), this);
-    intro->setWordWrap(true);
+    auto* intro = new ZaryaBodyText(tr("Zarya is running.\n\nWhat should happen?"), this);
 
-    m_stopRuntimeCheck = new QCheckBox(tr("Stop runtime"), this);
-    m_stopRuntimeCheck->setChecked(true);
-    m_restoreProxyCheck = new QCheckBox(tr("Restore system proxy"), this);
-    m_restoreProxyCheck->setChecked(true);
+    m_stopRuntimeCheck = new ZaryaCheckBox(tr("Stop runtime"), this, true);
+    m_restoreProxyCheck = new ZaryaCheckBox(tr("Restore system proxy"), this, true);
     m_disableKillSwitchCheck =
-        new QCheckBox(tr("Disable kill switch if active and configured for clean stop"),
-                      this);
-    m_disableKillSwitchCheck->setChecked(true);
+        new ZaryaCheckBox(
+            tr("Disable kill switch if active and configured for clean stop"), this, true);
 
-    auto* buttons = new QDialogButtonBox(this);
-    auto* exitButton = buttons->addButton(tr("Exit Safely"), QDialogButtonBox::AcceptRole);
-    buttons->addButton(QDialogButtonBox::Cancel);
-    connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
-    connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
-    Q_UNUSED(exitButton);
+    auto* actions = new ZaryaDialogActionRow(tr("Exit Safely"), tr("Cancel"), this);
+    connect(actions, &ZaryaDialogActionRow::accepted, this, &QDialog::accept);
+    connect(actions, &ZaryaDialogActionRow::rejected, this, &QDialog::reject);
 
     auto* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(24, 24, 24, 24);
+    layout->setSpacing(12);
     layout->addWidget(intro);
     layout->addWidget(m_stopRuntimeCheck);
     layout->addWidget(m_restoreProxyCheck);
     layout->addWidget(m_disableKillSwitchCheck);
-    layout->addWidget(buttons);
+    layout->addWidget(actions);
     resize(420, 220);
 }
 
