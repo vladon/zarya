@@ -2,6 +2,7 @@
 
 #include <QCoreApplication>
 #include <QString>
+#include <QVector>
 
 class QWidget;
 
@@ -11,6 +12,20 @@ enum class UiMessageTone {
     Information,
     Warning,
     Error,
+};
+
+enum class UiMessageActionRole {
+    Primary,
+    Secondary,
+    Destructive,
+};
+
+struct UiMessageAction {
+    QString id;
+    QString text;
+    UiMessageActionRole role = UiMessageActionRole::Secondary;
+    bool isDefault = false;
+    bool isCancel = false;
 };
 
 class UiMessagePresenter {
@@ -27,6 +42,13 @@ public:
         const QString& text,
         const QString& acceptText = {},
         bool destructive = false);
+
+    [[nodiscard]] static QString choose(
+        QWidget* parent,
+        const QString& title,
+        const QString& text,
+        UiMessageTone tone,
+        const QVector<UiMessageAction>& actions);
 
 private:
     static void show(

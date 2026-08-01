@@ -852,6 +852,18 @@ sing-box: %3 (%4)</translation></message>
         <source>More…</source>
         <translation>Ещё…</translation></message>
     <message>
+        <source>Continue</source>
+        <translation>Продолжить</translation></message>
+    <message>
+        <source>Delete</source>
+        <translation>Удалить</translation></message>
+    <message>
+        <source>Open</source>
+        <translation>Открыть</translation></message>
+    <message>
+        <source>Import</source>
+        <translation>Импортировать</translation></message>
+    <message>
         <source>Ready</source>
         <translation>Готово</translation></message>
     <message>
