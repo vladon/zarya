@@ -44,8 +44,8 @@ unmigrated surface when it owns no visual styling or interaction.
    - Migrate profile actions, filters, empty state, log controls, and operational feedback.
    - Keep `QTableView` and the log text engine behind toolkit-styled hosts until their replacement
      meets the boundary requirements.
-   - Progress: the log toolbar label and actions use `lib_ui`; the filter selector and log text
-     engine remain Qt primitives under the documented boundary.
+   - Progress: the log toolbar label and actions and the profile-list empty state use `lib_ui`;
+     the filter selector and log text engine remain Qt primitives under the documented boundary.
 4. **Primary workflows**
    - Migrate first-run setup, link import, profile editing, subscriptions, and Settings.
    - Put advanced settings behind explicit progressive disclosure.

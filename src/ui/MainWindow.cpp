@@ -48,8 +48,8 @@
 #include "ui/RoutingManagerDialog.h"
 #include "ui/SettingsDialog.h"
 #include "ui/AppUpdateDialog.h"
+#include "ui/desktopapp/ProfileEmptyStatePanel.h"
 #include "ui/desktopapp/ZaryaControls.h"
-#include "ui/theme/ThemeManager.h"
 #include "updater/AppUpdateChecker.h"
 #include "updater/AppUpdateStateManager.h"
 #include "features/FeatureGate.h"
@@ -73,7 +73,6 @@
 #include <QCloseEvent>
 #include <QComboBox>
 #include <QInputDialog>
-#include <QLabel>
 #include <QScrollArea>
 #include <QEvent>
 #include <QSettings>
@@ -163,21 +162,8 @@ void MainWindow::setupUi()
     m_logView->setMaximumBlockCount(5000);
     m_logView->setPlaceholderText(tr("Core and application logs appear here…"));
 
-    m_emptyStateLabel = new QLabel(this);
-    m_emptyStateLabel->setWordWrap(true);
-    m_emptyStateLabel->setAlignment(Qt::AlignCenter);
-    m_emptyStateLabel->hide();
-    const auto applyEmptyStateTheme = [this]() {
-        if (!m_emptyStateLabel) {
-            return;
-        }
-        const ThemeTokens tokens = ThemeManager::instance().tokens();
-        m_emptyStateLabel->setStyleSheet(
-            QStringLiteral("padding:12px; color:%1; background:transparent;")
-                .arg(tokens.textSecondary.name(QColor::HexRgb)));
-    };
-    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this, applyEmptyStateTheme);
-    applyEmptyStateTheme();
+    m_emptyStatePanel = new ProfileEmptyStatePanel(this);
+    m_emptyStatePanel->hide();
 
     m_logFilterCombo = new QComboBox(this);
     m_logFilterCombo->addItem(tr("All"), QStringLiteral("all"));
@@ -298,7 +284,7 @@ void MainWindow::setupUi()
         centralLayout->addWidget(m_betaBanner);
     }
     centralLayout->addWidget(m_statusDashboard);
-    centralLayout->addWidget(m_emptyStateLabel);
+    centralLayout->addWidget(m_emptyStatePanel);
     centralLayout->addWidget(m_splitter, 1);
     setCentralWidget(central);
 
@@ -918,25 +904,25 @@ void MainWindow::updateStatusDashboard()
 
 void MainWindow::updateEmptyState()
 {
-    if (!m_emptyStateLabel) {
+    if (!m_emptyStatePanel) {
         return;
     }
     const int visibleCount = m_tableModel.rowCount();
     if (visibleCount > 0) {
-        m_emptyStateLabel->hide();
+        m_emptyStatePanel->hide();
         return;
     }
-    m_emptyStateLabel->show();
+    m_emptyStatePanel->show();
     if (!m_subscriptions.isEmpty()) {
-        m_emptyStateLabel->setText(
+        m_emptyStatePanel->setMessage(
             tr("Subscriptions exist but no profiles are imported yet.\n\n"
                "Use Subscriptions → Update All to import profiles."));
     } else if (!m_profileFilterKey.isEmpty() && m_profileFilterKey != QStringLiteral("__manual__")
                && !m_allProfiles.isEmpty()) {
-        m_emptyStateLabel->setText(
+        m_emptyStatePanel->setMessage(
             tr("No profiles match the current filter.\n\nClear the filter to see all profiles."));
     } else {
-        m_emptyStateLabel->setText(
+        m_emptyStatePanel->setMessage(
             tr("No profiles yet.\n\nAdd a proxy profile manually, paste a share link, "
                "or add a subscription."));
     }
