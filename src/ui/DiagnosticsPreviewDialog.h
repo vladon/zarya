@@ -5,11 +5,10 @@
 
 #include <QDialog>
 
-class QListWidget;
-
 namespace zarya {
 
 class ZaryaBodyText;
+class ZaryaTextArea;
 
 class DiagnosticsPreviewDialog : public QDialog {
     Q_OBJECT
@@ -20,7 +19,7 @@ public:
 private:
     ZaryaBodyText* m_redactionLabel = nullptr;
     ZaryaBodyText* m_warningsLabel = nullptr;
-    QListWidget* m_filesList = nullptr;
+    ZaryaTextArea* m_filesList = nullptr;
 };
 
 } // namespace zarya

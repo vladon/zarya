@@ -1,32 +1,6 @@
 {
-  "src/ui/DiagnosticsPreviewDialog.cpp": {
-    "QListWidget": 2
-  },
-  "src/ui/DiagnosticsPreviewDialog.h": {
-    "QListWidget": 2
-  },
-  "src/ui/MainWindow.cpp": {
-    "QPushButton": 2,
-    "QScrollArea": 1
-  },
-  "src/ui/SettingsDialog.cpp": {
-    "QFrame": 2,
-    "QScrollArea": 2
-  },
   "src/ui/desktopapp/UiMessagePresenter.cpp": {
     "QMessageBox": 21,
     "QPushButton": 1
-  },
-  "src/ui/theme/ThemeManager.cpp": {
-    "QComboBox": 3,
-    "QDoubleSpinBox": 1,
-    "QGroupBox": 2,
-    "QLineEdit": 2,
-    "QListView": 1,
-    "QPushButton": 8,
-    "QSpinBox": 2,
-    "QTabBar": 2,
-    "QTabWidget": 1,
-    "QTreeView": 1
   }
 }

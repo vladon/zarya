@@ -113,13 +113,10 @@ QString ThemeManager::buildStyleSheet(const ThemeTokens& tokens) const
     const QString panelBg = colorCss(tokens.panelBg);
     const QString textPrimary = colorCss(tokens.textPrimary);
     const QString textSecondary = colorCss(tokens.textSecondary);
-    const QString textDisabled = colorCss(tokens.textDisabled);
     const QString accent = colorCss(tokens.accent);
-    const QString accentHover = colorCss(tokens.accentHover);
     const QString accentFg = colorCss(tokens.accentFg);
     const QString border = colorCss(tokens.border);
     const QString radiusSm = QString::number(tokens.radiusSm);
-    const QString radiusMd = QString::number(tokens.radiusMd);
 
     QString css = QStringLiteral(
         "QMainWindow, QDialog {"
@@ -144,58 +141,12 @@ QString ThemeManager::buildStyleSheet(const ThemeTokens& tokens) const
         "  background-color: @accent;"
         "  color: @accentFg;"
         "}"
-        "QToolBar {"
-        "  background-color: @panelBg;"
-        "  border-bottom: 1px solid @border;"
-        "  spacing: 6px;"
-        "  padding: 4px;"
-        "}"
         "QStatusBar {"
         "  background-color: @panelBg;"
         "  border-top: 1px solid @border;"
         "  color: @textSecondary;"
         "}"
-        "QGroupBox {"
-        "  border: 1px solid @border;"
-        "  border-radius: @radiusMdpx;"
-        "  margin-top: 12px;"
-        "  padding-top: 8px;"
-        "  background-color: @surfaceBg;"
-        "}"
-        "QGroupBox::title {"
-        "  subcontrol-origin: margin;"
-        "  left: 8px;"
-        "  padding: 0 4px;"
-        "  color: @textSecondary;"
-        "}"
-        "QPushButton {"
-        "  background-color: @panelBg;"
-        "  color: @textPrimary;"
-        "  border: 1px solid @border;"
-        "  border-radius: @radiusSmpx;"
-        "  padding: 5px 12px;"
-        "  min-height: 22px;"
-        "}"
-        "QPushButton:hover {"
-        "  border-color: @accent;"
-        "}"
-        "QPushButton:pressed {"
-        "  background-color: @surfaceBg;"
-        "}"
-        "QPushButton:disabled {"
-        "  color: @textDisabled;"
-        "  border-color: @border;"
-        "}"
-        "QPushButton:default, QPushButton[cssClass=\"primary\"] {"
-        "  background-color: @accent;"
-        "  color: @accentFg;"
-        "  border-color: @accent;"
-        "}"
-        "QPushButton:default:hover, QPushButton[cssClass=\"primary\"]:hover {"
-        "  background-color: @accentHover;"
-        "  border-color: @accentHover;"
-        "}"
-        "QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox, QPlainTextEdit, QTextEdit {"
+        "QPlainTextEdit {"
         "  background-color: @surfaceBg;"
         "  color: @textPrimary;"
         "  border: 1px solid @border;"
@@ -204,12 +155,8 @@ QString ThemeManager::buildStyleSheet(const ThemeTokens& tokens) const
         "  selection-background-color: @accent;"
         "  selection-color: @accentFg;"
         "}"
-        "QLineEdit:focus, QSpinBox:focus, QComboBox:focus, QPlainTextEdit:focus {"
+        "QPlainTextEdit:focus {"
         "  border-color: @accent;"
-        "}"
-        "QComboBox::drop-down {"
-        "  border: none;"
-        "  width: 20px;"
         "}"
         "QHeaderView::section {"
         "  background-color: @panelBg;"
@@ -219,7 +166,7 @@ QString ThemeManager::buildStyleSheet(const ThemeTokens& tokens) const
         "  border-bottom: 1px solid @border;"
         "  padding: 6px;"
         "}"
-        "QTableView, QTreeView, QListView {"
+        "QTableView {"
         "  background-color: @surfaceBg;"
         "  alternate-background-color: @panelBg;"
         "  color: @textPrimary;"
@@ -228,25 +175,6 @@ QString ThemeManager::buildStyleSheet(const ThemeTokens& tokens) const
         "  gridline-color: @border;"
         "  selection-background-color: @accent;"
         "  selection-color: @accentFg;"
-        "}"
-        "QTabWidget::pane {"
-        "  border: 1px solid @border;"
-        "  border-radius: @radiusSmpx;"
-        "  background-color: @surfaceBg;"
-        "}"
-        "QTabBar::tab {"
-        "  background-color: @panelBg;"
-        "  color: @textPrimary;"
-        "  border: 1px solid @border;"
-        "  border-bottom: none;"
-        "  border-top-left-radius: @radiusSmpx;"
-        "  border-top-right-radius: @radiusSmpx;"
-        "  padding: 6px 12px;"
-        "  margin-right: 2px;"
-        "}"
-        "QTabBar::tab:selected {"
-        "  background-color: @surfaceBg;"
-        "  color: @textPrimary;"
         "}"
         "QScrollBar:vertical {"
         "  background: @windowBg;"
@@ -283,12 +211,9 @@ QString ThemeManager::buildStyleSheet(const ThemeTokens& tokens) const
     css.replace(QStringLiteral("@panelBg"), panelBg);
     css.replace(QStringLiteral("@textPrimary"), textPrimary);
     css.replace(QStringLiteral("@textSecondary"), textSecondary);
-    css.replace(QStringLiteral("@textDisabled"), textDisabled);
-    css.replace(QStringLiteral("@accentHover"), accentHover);
     css.replace(QStringLiteral("@accentFg"), accentFg);
     css.replace(QStringLiteral("@accent"), accent);
     css.replace(QStringLiteral("@border"), border);
-    css.replace(QStringLiteral("@radiusMd"), radiusMd);
     css.replace(QStringLiteral("@radiusSm"), radiusSm);
     return css;
 }
