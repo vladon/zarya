@@ -50,6 +50,7 @@
 #include "ui/AppUpdateDialog.h"
 #include "ui/desktopapp/ProfileEmptyStatePanel.h"
 #include "ui/desktopapp/ZaryaControls.h"
+#include "ui/desktopapp/ZaryaSelector.h"
 #include "updater/AppUpdateChecker.h"
 #include "updater/AppUpdateStateManager.h"
 #include "features/FeatureGate.h"
@@ -71,7 +72,6 @@
 #include <QPushButton>
 #include <QJsonDocument>
 #include <QCloseEvent>
-#include <QComboBox>
 #include <QInputDialog>
 #include <QScrollArea>
 #include <QEvent>
@@ -165,17 +165,19 @@ void MainWindow::setupUi()
     m_emptyStatePanel = new ProfileEmptyStatePanel(this);
     m_emptyStatePanel->hide();
 
-    m_logFilterCombo = new QComboBox(this);
-    m_logFilterCombo->addItem(tr("All"), QStringLiteral("all"));
-    m_logFilterCombo->addItem(tr("Errors"), QStringLiteral("errors"));
-    m_logFilterCombo->addItem(tr("Warnings"), QStringLiteral("warnings"));
-    m_logFilterCombo->addItem(tr("Runtime"), QStringLiteral("runtime"));
-    m_logFilterCombo->addItem(tr("Subscriptions"), QStringLiteral("subscriptions"));
-    m_logFilterCombo->addItem(tr("Core"), QStringLiteral("core"));
-    m_logFilterCombo->addItem(tr("Helper"), QStringLiteral("helper"));
-    m_logFilterCombo->addItem(tr("Kill Switch"), QStringLiteral("killswitch"));
-    connect(m_logFilterCombo, &QComboBox::currentIndexChanged, this, [this]() {
-        m_logFilterKey = m_logFilterCombo->currentData().toString();
+    m_logFilterSelector = new ZaryaSelector(this);
+    m_logFilterSelector->setItems({
+        { QStringLiteral("all"), tr("All") },
+        { QStringLiteral("errors"), tr("Errors") },
+        { QStringLiteral("warnings"), tr("Warnings") },
+        { QStringLiteral("runtime"), tr("Runtime") },
+        { QStringLiteral("subscriptions"), tr("Subscriptions") },
+        { QStringLiteral("core"), tr("Core") },
+        { QStringLiteral("helper"), tr("Helper") },
+        { QStringLiteral("killswitch"), tr("Kill Switch") },
+    }, QStringLiteral("all"));
+    connect(m_logFilterSelector, &ZaryaSelector::currentKeyChanged, this, [this](const QString& key) {
+        m_logFilterKey = key;
         m_logView->clear();
         for (const QString& line : LogBuffer::instance().recentLines(5000)) {
             if (lineMatchesLogFilter(line)) {
@@ -229,7 +231,7 @@ void MainWindow::setupUi()
     logToolbarLayout->setContentsMargins(0, 0, 0, 0);
     logToolbarLayout->setSpacing(8);
     logToolbarLayout->addWidget(logFilterLabel.release());
-    logToolbarLayout->addWidget(m_logFilterCombo);
+    logToolbarLayout->addWidget(m_logFilterSelector);
     logToolbarLayout->addWidget(copySelectedBtn.release());
     logToolbarLayout->addWidget(copyAllBtn.release());
     logToolbarLayout->addWidget(clearViewBtn.release());
@@ -409,9 +411,9 @@ void MainWindow::setupToolBar()
     m_toolBar->addAction(m_subscriptionsAction);
     m_toolBar->addAction(m_updateSubscriptionAction);
     m_toolBar->addAction(m_updateAllSubscriptionsAction);
-    m_profileFilterCombo = new QComboBox(this);
-    m_profileFilterCombo->setMinimumWidth(180);
-    m_toolBar->addWidget(m_profileFilterCombo);
+    m_profileFilterSelector = new ZaryaSelector(this);
+    m_profileFilterSelector->setMinimumWidth(180);
+    m_toolBar->addWidget(m_profileFilterSelector);
     m_toolBar->addSeparator();
     m_toolBar->addAction(m_testSelectedAction);
     m_toolBar->addAction(m_testAllAction);
@@ -454,7 +456,7 @@ void MainWindow::setupConnections()
             &MainWindow::onUpdateSelectedSubscription);
     connect(m_updateAllSubscriptionsAction, &QAction::triggered, this,
             &MainWindow::onUpdateAllSubscriptions);
-    connect(m_profileFilterCombo, qOverload<int>(&QComboBox::currentIndexChanged), this,
+    connect(m_profileFilterSelector, &ZaryaSelector::currentKeyChanged, this,
             &MainWindow::onProfileFilterChanged);
     connect(m_startAction, &QAction::triggered, this, &MainWindow::onStartCore);
     connect(m_stopAction, &QAction::triggered, this, &MainWindow::onStopCore);
@@ -1482,7 +1484,7 @@ void MainWindow::loadAllOnStartup()
     m_routingManager.load();
     m_dnsManager.load();
 
-    refreshProfileFilterCombo();
+    refreshProfileFilterSelector();
     refreshProfileView();
 }
 
@@ -1516,21 +1518,19 @@ bool MainWindow::saveAll(QString* errorMessage)
     return true;
 }
 
-void MainWindow::refreshProfileFilterCombo()
+void MainWindow::refreshProfileFilterSelector()
 {
     const QString previous = m_profileFilterKey;
-    m_profileFilterCombo->blockSignals(true);
-    m_profileFilterCombo->clear();
-    m_profileFilterCombo->addItem(tr("All profiles"), QString());
-    m_profileFilterCombo->addItem(tr("Manual"), QStringLiteral("__manual__"));
+    QVector<ZaryaSelectorItem> items = {
+        { QString(), tr("All profiles") },
+        { QStringLiteral("__manual__"), tr("Manual") },
+    };
+    items.reserve(2 + m_subscriptions.size());
     for (const Subscription& subscription : m_subscriptions) {
-        m_profileFilterCombo->addItem(subscription.name, subscription.id);
+        items.push_back({ subscription.id, subscription.name });
     }
-
-    const int index = m_profileFilterCombo->findData(previous);
-    m_profileFilterCombo->setCurrentIndex(index >= 0 ? index : 0);
-    m_profileFilterKey = m_profileFilterCombo->currentData().toString();
-    m_profileFilterCombo->blockSignals(false);
+    m_profileFilterSelector->setItems(std::move(items), previous);
+    m_profileFilterKey = m_profileFilterSelector->currentKey();
 }
 
 void MainWindow::refreshProfileView()
@@ -1555,10 +1555,9 @@ void MainWindow::refreshProfileView()
     updateStatusDashboard();
 }
 
-void MainWindow::onProfileFilterChanged(int index)
+void MainWindow::onProfileFilterChanged(const QString& key)
 {
-    Q_UNUSED(index);
-    m_profileFilterKey = m_profileFilterCombo->currentData().toString();
+    m_profileFilterKey = key;
     refreshProfileView();
 }
 
@@ -1593,11 +1592,11 @@ void MainWindow::onSubscriptions()
         m_profileStore,
         [this](const QString& line) { appendLog(line); },
         [this]() {
-            refreshProfileFilterCombo();
+            refreshProfileFilterSelector();
             refreshProfileView();
         });
     dialog.exec();
-    refreshProfileFilterCombo();
+    refreshProfileFilterSelector();
     refreshProfileView();
 }
 
@@ -1631,7 +1630,7 @@ void MainWindow::onUpdateSelectedSubscription()
     if (!saveAll(&error)) {
         QMessageBox::warning(this, tr("Save failed"), error);
     }
-    refreshProfileFilterCombo();
+    refreshProfileFilterSelector();
     refreshProfileView();
 
     if (!result.success) {
@@ -1655,7 +1654,7 @@ void MainWindow::onUpdateAllSubscriptions()
     if (!saveAll(&error)) {
         QMessageBox::warning(this, tr("Save failed"), error);
     }
-    refreshProfileFilterCombo();
+    refreshProfileFilterSelector();
     refreshProfileView();
 
     int failed = 0;
@@ -1768,7 +1767,7 @@ void MainWindow::onLoadProfiles()
         appendLog(QStringLiteral("Subscription load warning: %1").arg(error));
     }
 
-    refreshProfileFilterCombo();
+    refreshProfileFilterSelector();
     refreshProfileView();
     appendLog(QStringLiteral("Loaded %1 profile(s) from %2")
                   .arg(m_allProfiles.size())
