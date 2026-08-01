@@ -1869,11 +1869,14 @@ What should happen?</source>
         <source>Test URL</source>
         <translation>URL теста</translation></message>
     <message>
-        <source>TCP timeout</source>
-        <translation>Таймаут TCP</translation></message>
+        <source>Test URL preset</source>
+        <translation>Предустановка URL теста</translation></message>
     <message>
-        <source>Real delay timeout</source>
-        <translation>Таймаут реальной задержки</translation></message>
+        <source>TCP timeout (ms)</source>
+        <translation>Таймаут TCP (мс)</translation></message>
+    <message>
+        <source>Real delay timeout (ms)</source>
+        <translation>Таймаут реальной задержки (мс)</translation></message>
     <message>
         <source>Max concurrent tests</source>
         <translation>Макс. параллельных тестов</translation></message>

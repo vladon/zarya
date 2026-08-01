@@ -72,6 +72,8 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      and message presenter; the subscription table remains a Qt model/view boundary. General,
      desktop-behavior, and startup settings use toolkit sections, selectors, checks, text, and
      number fields while retaining the existing settings persistence and autostart backend.
+     Stable core, system-proxy, and testing settings also use toolkit fields, selectors, actions,
+     checks, status text, and sections; native executable picking remains a platform boundary.
 5. **Management surfaces**
    - Migrate Core, Routing, DNS, Geo Data, Rule Set, backup, and diagnostics workflows using the
      shared interaction layer.

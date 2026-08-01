@@ -100,39 +100,45 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     generalGroup->addWidget(new ZaryaFormRow(tr("Language"), m_languageCombo, generalGroup));
     generalGroup->addWidget(new ZaryaFormRow(tr("Theme"), m_themeCombo, generalGroup));
 
-    m_xrayPathEdit = new QLineEdit(settings.xrayExecutablePath(), this);
-    auto* browseButton = new QPushButton(tr("Browse…"), this);
-    connect(browseButton, &QPushButton::clicked, this, &SettingsDialog::onBrowseXray);
+    m_xrayPathEdit = new ZaryaTextField(tr("Xray executable"), this);
+    m_xrayPathEdit->setText(settings.xrayExecutablePath());
+    auto* browseButton = new ZaryaActionButton(tr("Browse…"), this);
+    connect(browseButton, &ZaryaActionButton::clicked, this, &SettingsDialog::onBrowseXray);
 
-    auto* pathRow = new QHBoxLayout;
-    pathRow->addWidget(m_xrayPathEdit);
-    pathRow->addWidget(browseButton);
+    auto* pathRow = new QWidget(this);
+    auto* pathLayout = new QHBoxLayout(pathRow);
+    pathLayout->setContentsMargins(0, 0, 0, 0);
+    pathLayout->setSpacing(8);
+    pathLayout->addWidget(m_xrayPathEdit, 1);
+    pathLayout->addWidget(browseButton);
 
-    m_mixedPortSpin = new QSpinBox(this);
-    m_mixedPortSpin->setRange(1, 65535);
+    m_mixedPortSpin = new ZaryaNumberField(QStringLiteral("1–65535"), 1, 65535, this);
     m_mixedPortSpin->setValue(settings.mixedPort());
-    connect(m_mixedPortSpin, qOverload<int>(&QSpinBox::valueChanged), this,
+    connect(m_mixedPortSpin, &ZaryaNumberField::valueChanged, this,
             &SettingsDialog::updateProxyEndpointLabel);
 
-    m_proxyEndpointLabel = new QLabel(this);
+    m_proxyEndpointLabel = new ZaryaBodyText({}, this);
     updateProxyEndpointLabel();
 
-    m_autoEnableSystemProxyCheck =
-        new QCheckBox(tr("Enable system proxy when profile starts"), this);
-    m_autoEnableSystemProxyCheck->setChecked(settings.autoEnableSystemProxyOnStart());
+    m_autoEnableSystemProxyCheck = new ZaryaCheckBox(
+        tr("Enable system proxy when profile starts"),
+        this,
+        settings.autoEnableSystemProxyOnStart());
 
-    m_restoreProxyOnExitCheck =
-        new QCheckBox(tr("Restore previous proxy settings on stop/exit"), this);
-    m_restoreProxyOnExitCheck->setChecked(settings.restoreProxyOnExit());
+    m_restoreProxyOnExitCheck = new ZaryaCheckBox(
+        tr("Restore previous proxy settings on stop/exit"),
+        this,
+        settings.restoreProxyOnExit());
 
     const std::unique_ptr<ISystemProxyManager> proxyManager = SystemProxyManagerFactory::create();
-    m_proxyBackendLabel = new QLabel(proxyManager ? proxyManager->backendName() : QString(), this);
-    m_proxySupportLabel = new QLabel(
+    m_proxyBackendLabel = new ZaryaBodyText(
+        proxyManager ? proxyManager->backendName() : QString(), this);
+    m_proxySupportLabel = new ZaryaBodyText(
         proxyManager && proxyManager->isSupported() ? tr("Full") : tr("Unavailable"), this);
-    m_proxyLimitationsLabel = new QLabel(proxyManager ? proxyManager->limitations() : QString(), this);
-    m_proxyLimitationsLabel->setWordWrap(true);
+    m_proxyLimitationsLabel = new ZaryaBodyText(
+        proxyManager ? proxyManager->limitations() : QString(), this);
 
-    m_linuxDesktopLabel = new QLabel(this);
+    m_linuxDesktopLabel = new ZaryaBodyText({}, this);
 #if defined(Q_OS_LINUX)
     if (auto* linuxManager = dynamic_cast<LinuxSystemProxyManager*>(proxyManager.get())) {
         m_linuxDesktopLabel->setText(
@@ -144,51 +150,46 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     m_linuxDesktopLabel->hide();
 #endif
 
-    m_macApplyAllServicesCheck =
-        new QCheckBox(tr("Apply proxy to all network services"), this);
-    m_macApplyAllServicesCheck->setChecked(settings.macApplyProxyToAllServices());
-    m_macPreferredServiceEdit = new QLineEdit(settings.macPreferredNetworkService(), this);
-    m_macPreferredServiceEdit->setPlaceholderText(tr("e.g. Wi-Fi (optional)"));
+    m_macApplyAllServicesCheck = new ZaryaCheckBox(
+        tr("Apply proxy to all network services"),
+        this,
+        settings.macApplyProxyToAllServices());
+    m_macPreferredServiceEdit = new ZaryaTextField(tr("e.g. Wi-Fi (optional)"), this);
+    m_macPreferredServiceEdit->setText(settings.macPreferredNetworkService());
 #if !defined(Q_OS_MACOS)
     m_macApplyAllServicesCheck->hide();
     m_macPreferredServiceEdit->hide();
 #endif
 
-    m_testUrlCombo = new QComboBox(this);
-    m_testUrlCombo->setEditable(true);
-    m_testUrlCombo->setInsertPolicy(QComboBox::NoInsert);
-    m_testUrlCombo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    m_testUrlEdit = new ZaryaTextField(tr("Test URL"), this);
+    auto* testUrlPreset = new ZaryaSelector(this);
+    QVector<ZaryaSelectorItem> testUrlItems;
     for (const QString& preset : DefaultSettings::testUrlPresets()) {
-        m_testUrlCombo->addItem(preset);
+        testUrlItems.push_back({preset, preset, true});
     }
     const QString currentTestUrl = settings.testUrl().trimmed();
-    int testUrlIndex = m_testUrlCombo->findText(currentTestUrl);
-    if (testUrlIndex < 0 && !currentTestUrl.isEmpty()) {
-        m_testUrlCombo->insertItem(0, currentTestUrl);
-        testUrlIndex = 0;
-    }
-    if (testUrlIndex >= 0) {
-        m_testUrlCombo->setCurrentIndex(testUrlIndex);
-    } else {
-        m_testUrlCombo->setCurrentText(DefaultSettings::testUrl());
-    }
-    m_tcpTimeoutSpin = new QSpinBox(this);
-    m_tcpTimeoutSpin->setRange(1000, 60000);
-    m_tcpTimeoutSpin->setSuffix(QStringLiteral(" ms"));
+    m_testUrlEdit->setText(
+        currentTestUrl.isEmpty() ? DefaultSettings::testUrl() : currentTestUrl);
+    testUrlPreset->setItems(
+        std::move(testUrlItems),
+        DefaultSettings::testUrlPresets().contains(currentTestUrl)
+            ? currentTestUrl
+            : DefaultSettings::testUrl());
+    connect(testUrlPreset, &ZaryaSelector::currentKeyChanged, m_testUrlEdit,
+            &ZaryaTextField::setText);
+
+    m_tcpTimeoutSpin = new ZaryaNumberField(QStringLiteral("1000–60000"), 1000, 60000, this);
     m_tcpTimeoutSpin->setValue(settings.tcpTestTimeoutMs());
 
-    m_realDelayTimeoutSpin = new QSpinBox(this);
-    m_realDelayTimeoutSpin->setRange(1000, 60000);
-    m_realDelayTimeoutSpin->setSuffix(QStringLiteral(" ms"));
+    m_realDelayTimeoutSpin = new ZaryaNumberField(
+        QStringLiteral("1000–60000"), 1000, 60000, this);
     m_realDelayTimeoutSpin->setValue(settings.realDelayTimeoutMs());
 
-    m_maxConcurrentTestsSpin = new QSpinBox(this);
-    m_maxConcurrentTestsSpin->setRange(1, 10);
+    m_maxConcurrentTestsSpin = new ZaryaNumberField(QStringLiteral("1–10"), 1, 10, this);
     m_maxConcurrentTestsSpin->setValue(settings.maxConcurrentTests());
 
-    m_skipTcpBeforeRealDelayCheck =
-        new QCheckBox(tr("Skip TCP test before real delay"), this);
-    m_skipTcpBeforeRealDelayCheck->setChecked(settings.skipTcpBeforeRealDelay());
+    m_skipTcpBeforeRealDelayCheck = new ZaryaCheckBox(
+        tr("Skip TCP test before real delay"), this, settings.skipTcpBeforeRealDelay());
 
     m_minimizeToTrayOnCloseCheck = new ZaryaCheckBox(
         tr("Close button hides to tray"), this, settings.minimizeToTrayOnClose());
@@ -224,40 +225,36 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     m_autoStartDelaySpin = new ZaryaNumberField(QStringLiteral("0–120"), 0, 120, this);
     m_autoStartDelaySpin->setValue(settings.autoStartDelaySeconds());
 
-    auto* coreForm = new QFormLayout;
-    coreForm->addRow(tr("Xray executable"), pathRow);
-    coreForm->addRow(tr("Local proxy port"), m_mixedPortSpin);
+    auto* coreGroup = new ZaryaFormSection(tr("Cores"), this);
+    coreGroup->addWidget(new ZaryaFormRow(tr("Xray executable"), pathRow, this));
+    coreGroup->addWidget(new ZaryaFormRow(tr("Local proxy port"), m_mixedPortSpin, this));
 
-    auto* coreGroup = new QGroupBox(tr("Cores"), this);
-    coreGroup->setLayout(coreForm);
-
-    auto* proxyForm = new QFormLayout;
-    proxyForm->addRow(tr("Backend"), m_proxyBackendLabel);
-    proxyForm->addRow(tr("Support level"), m_proxySupportLabel);
-    proxyForm->addRow(tr("Limitations"), m_proxyLimitationsLabel);
-    proxyForm->addRow(tr("System proxy endpoint"), m_proxyEndpointLabel);
+    auto* proxyGroup = new ZaryaFormSection(tr("Proxy Mode"), this);
+    proxyGroup->addWidget(new ZaryaFormRow(tr("Backend"), m_proxyBackendLabel, this));
+    proxyGroup->addWidget(new ZaryaFormRow(tr("Support level"), m_proxySupportLabel, this));
+    proxyGroup->addWidget(new ZaryaFormRow(tr("Limitations"), m_proxyLimitationsLabel, this));
+    proxyGroup->addWidget(
+        new ZaryaFormRow(tr("System proxy endpoint"), m_proxyEndpointLabel, this));
 #if defined(Q_OS_LINUX)
-    proxyForm->addRow(tr("Desktop"), m_linuxDesktopLabel);
+    proxyGroup->addWidget(new ZaryaFormRow(tr("Desktop"), m_linuxDesktopLabel, this));
 #endif
-    proxyForm->addRow(QString(), m_autoEnableSystemProxyCheck);
-    proxyForm->addRow(QString(), m_restoreProxyOnExitCheck);
+    proxyGroup->addWidget(m_autoEnableSystemProxyCheck);
+    proxyGroup->addWidget(m_restoreProxyOnExitCheck);
 #if defined(Q_OS_MACOS)
-    proxyForm->addRow(QString(), m_macApplyAllServicesCheck);
-    proxyForm->addRow(tr("Preferred network service"), m_macPreferredServiceEdit);
+    proxyGroup->addWidget(m_macApplyAllServicesCheck);
+    proxyGroup->addWidget(
+        new ZaryaFormRow(tr("Preferred network service"), m_macPreferredServiceEdit, this));
 #endif
 
-    auto* proxyGroup = new QGroupBox(tr("Proxy Mode"), this);
-    proxyGroup->setLayout(proxyForm);
-
-    auto* testingForm = new QFormLayout;
-    testingForm->addRow(tr("Test URL"), m_testUrlCombo);
-    testingForm->addRow(tr("TCP timeout"), m_tcpTimeoutSpin);
-    testingForm->addRow(tr("Real delay timeout"), m_realDelayTimeoutSpin);
-    testingForm->addRow(tr("Max concurrent tests"), m_maxConcurrentTestsSpin);
-    testingForm->addRow(QString(), m_skipTcpBeforeRealDelayCheck);
-
-    auto* testingGroup = new QGroupBox(tr("Testing"), this);
-    testingGroup->setLayout(testingForm);
+    auto* testingGroup = new ZaryaFormSection(tr("Testing"), this);
+    testingGroup->addWidget(new ZaryaFormRow(tr("Test URL"), m_testUrlEdit, testingGroup));
+    testingGroup->addWidget(new ZaryaFormRow(tr("Test URL preset"), testUrlPreset, this));
+    testingGroup->addWidget(new ZaryaFormRow(tr("TCP timeout (ms)"), m_tcpTimeoutSpin, this));
+    testingGroup->addWidget(
+        new ZaryaFormRow(tr("Real delay timeout (ms)"), m_realDelayTimeoutSpin, this));
+    testingGroup->addWidget(
+        new ZaryaFormRow(tr("Max concurrent tests"), m_maxConcurrentTestsSpin, this));
+    testingGroup->addWidget(m_skipTcpBeforeRealDelayCheck);
 
     auto* desktopGroup = new ZaryaFormSection(tr("Desktop behavior"), this);
     desktopGroup->addWidget(m_minimizeToTrayOnCloseCheck);
@@ -927,7 +924,7 @@ void SettingsDialog::onManageDnsProfiles()
 
 bool SettingsDialog::validateAndSave()
 {
-    const QUrl testUrl(m_testUrlCombo->currentText().trimmed());
+    const QUrl testUrl(m_testUrlEdit->text().trimmed());
     if (!testUrl.isValid()
         || (testUrl.scheme() != QStringLiteral("http") && testUrl.scheme() != QStringLiteral("https"))) {
         QMessageBox::warning(this, tr("Settings"),

@@ -114,6 +114,9 @@ public:
     void setSpecialValueText(const QString& text);
     void showError(bool show = true);
 
+Q_SIGNALS:
+    void valueChanged(int value);
+
 protected:
     void resizeEvent(QResizeEvent* event) override;
 

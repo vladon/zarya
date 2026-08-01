@@ -247,6 +247,9 @@ ZaryaNumberField::ZaryaNumberField(
     m_field = field;
     setFocusProxy(field);
     setMinimumHeight(field->sizeHint().height());
+    connect(field, &Ui::NumberInput::changed, this, [this] {
+        Q_EMIT valueChanged(value());
+    });
 }
 
 int ZaryaNumberField::value() const

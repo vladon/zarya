@@ -2378,11 +2378,15 @@ What should happen?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>TCP timeout</source>
+        <source>Test URL preset</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Real delay timeout</source>
+        <source>TCP timeout (ms)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Real delay timeout (ms)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
