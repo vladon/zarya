@@ -133,11 +133,11 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      Startup recovery progress and the ambiguous-profile selector also use toolkit content rather
      than native `QProgressDialog` or `QInputDialog` surfaces.
    - The final full-source allowlist contains only the centralized native `QMessageBox` fallback
-     used before Desktop App Toolkit initialization and the persisted splitter around the approved
-     profile-table/log-engine boundary. Model/view tables, log text engines, tray/native menus,
-     file dialogs, and infrastructure Qt remain approved boundaries. The two exact native-message
-     keyboard handlers are excluded from the inventory; all other application source directories
-     are scanned.
+     used before Desktop App Toolkit initialization. The persisted profile/log split uses a
+     keyboard-accessible toolkit handle while retaining the approved Qt table and log engines.
+     Model/view tables, log text engines, tray/native menus, file dialogs, and infrastructure Qt
+     remain approved boundaries. The two exact native-message keyboard handlers are excluded from
+     the inventory; all other application source directories are scanned.
 
 Each numbered stage may span multiple focused PRs. A PR migrates one coherent user workflow and
 must not mix unrelated backend changes.
