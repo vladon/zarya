@@ -26,6 +26,7 @@ class ZaryaBodyText;
 class ZaryaCheckBox;
 class ZaryaNumberField;
 class ZaryaSelector;
+class ZaryaTextField;
 
 class SettingsDialog : public QDialog {
     Q_OBJECT
@@ -68,23 +69,23 @@ private slots:
 private:
     bool validateAndSave();
 
-    QLineEdit* m_xrayPathEdit = nullptr;
-    QSpinBox* m_mixedPortSpin = nullptr;
-    QCheckBox* m_autoEnableSystemProxyCheck = nullptr;
-    QCheckBox* m_restoreProxyOnExitCheck = nullptr;
-    QLabel* m_proxyEndpointLabel = nullptr;
-    QLabel* m_proxyBackendLabel = nullptr;
-    QLabel* m_proxySupportLabel = nullptr;
-    QLabel* m_proxyLimitationsLabel = nullptr;
-    QLabel* m_linuxDesktopLabel = nullptr;
-    QCheckBox* m_macApplyAllServicesCheck = nullptr;
-    QLineEdit* m_macPreferredServiceEdit = nullptr;
+    ZaryaTextField* m_xrayPathEdit = nullptr;
+    ZaryaNumberField* m_mixedPortSpin = nullptr;
+    ZaryaCheckBox* m_autoEnableSystemProxyCheck = nullptr;
+    ZaryaCheckBox* m_restoreProxyOnExitCheck = nullptr;
+    ZaryaBodyText* m_proxyEndpointLabel = nullptr;
+    ZaryaBodyText* m_proxyBackendLabel = nullptr;
+    ZaryaBodyText* m_proxySupportLabel = nullptr;
+    ZaryaBodyText* m_proxyLimitationsLabel = nullptr;
+    ZaryaBodyText* m_linuxDesktopLabel = nullptr;
+    ZaryaCheckBox* m_macApplyAllServicesCheck = nullptr;
+    ZaryaTextField* m_macPreferredServiceEdit = nullptr;
 
-    QComboBox* m_testUrlCombo = nullptr;
-    QSpinBox* m_tcpTimeoutSpin = nullptr;
-    QSpinBox* m_realDelayTimeoutSpin = nullptr;
-    QSpinBox* m_maxConcurrentTestsSpin = nullptr;
-    QCheckBox* m_skipTcpBeforeRealDelayCheck = nullptr;
+    ZaryaTextField* m_testUrlEdit = nullptr;
+    ZaryaNumberField* m_tcpTimeoutSpin = nullptr;
+    ZaryaNumberField* m_realDelayTimeoutSpin = nullptr;
+    ZaryaNumberField* m_maxConcurrentTestsSpin = nullptr;
+    ZaryaCheckBox* m_skipTcpBeforeRealDelayCheck = nullptr;
 
     ZaryaCheckBox* m_minimizeToTrayOnCloseCheck = nullptr;
     ZaryaCheckBox* m_minimizeToTrayOnMinimizeCheck = nullptr;
