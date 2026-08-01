@@ -1,7 +1,7 @@
 #include "ui/ReadinessDialog.h"
 
-#include <QLabel>
-#include <QPushButton>
+#include "ui/desktopapp/ZaryaFormControls.h"
+
 #include <QVBoxLayout>
 
 namespace zarya {
@@ -12,7 +12,7 @@ ReadinessDialog::ReadinessDialog(QWidget* parent)
     setWindowTitle(tr("Zarya Setup"));
     resize(440, 260);
 
-    auto* text = new QLabel(
+    auto* text = new ZaryaBodyText(
         tr("Zarya is not fully configured yet.\n\n"
            "Recommended next steps:\n"
            "1. Confirm Xray (bundled in release builds, or install via Core Manager)\n"
@@ -20,28 +20,28 @@ ReadinessDialog::ReadinessDialog(QWidget* parent)
            "3. Choose routing profile\n"
            "4. Start profile"),
         this);
-    text->setWordWrap(true);
+    auto* coreButton = new ZaryaActionButton(tr("Open Core Manager"), this);
+    auto* importButton = new ZaryaActionButton(tr("Import Profile"), this);
+    auto* settingsButton = new ZaryaActionButton(tr("Open Settings"), this);
+    auto* closeButton = new ZaryaActionButton(tr("Close"), this);
 
-    auto* coreButton = new QPushButton(tr("Open Core Manager"), this);
-    auto* importButton = new QPushButton(tr("Import Profile"), this);
-    auto* settingsButton = new QPushButton(tr("Open Settings"), this);
-    auto* closeButton = new QPushButton(tr("Close"), this);
-
-    connect(coreButton, &QPushButton::clicked, this, [this]() {
+    connect(coreButton, &ZaryaActionButton::clicked, this, [this]() {
         emit openCoreManagerRequested();
         accept();
     });
-    connect(importButton, &QPushButton::clicked, this, [this]() {
+    connect(importButton, &ZaryaActionButton::clicked, this, [this]() {
         emit importProfileRequested();
         accept();
     });
-    connect(settingsButton, &QPushButton::clicked, this, [this]() {
+    connect(settingsButton, &ZaryaActionButton::clicked, this, [this]() {
         emit openSettingsRequested();
         accept();
     });
-    connect(closeButton, &QPushButton::clicked, this, &QDialog::accept);
+    connect(closeButton, &ZaryaActionButton::clicked, this, &QDialog::accept);
 
     auto* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(24, 24, 24, 24);
+    layout->setSpacing(12);
     layout->addWidget(text);
     layout->addWidget(coreButton);
     layout->addWidget(importButton);

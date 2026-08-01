@@ -107,6 +107,8 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
 6. **Experimental and update surfaces**
    - Migrate gated sing-box TUN, helper, kill-switch, and updater UI without changing
      `FeatureGate` behavior.
+   - Progress: readiness/recovery guidance and its navigation actions use the toolkit layer
+     without changing availability checks or recovery routing.
 7. **Convergence**
    - Remove application QSS for controls that no longer exist.
    - Delete obsolete Qt-only wrappers and verify that remaining Qt widgets match the boundary
