@@ -1,7 +1,7 @@
 #include "ui/RoutingJsonPreviewDialog.h"
 
-#include <QDialogButtonBox>
-#include <QPlainTextEdit>
+#include "ui/desktopapp/ZaryaFormControls.h"
+
 #include <QVBoxLayout>
 
 namespace zarya {
@@ -9,20 +9,21 @@ namespace zarya {
 RoutingJsonPreviewDialog::RoutingJsonPreviewDialog(const QString& jsonText, QWidget* parent)
     : QDialog(parent)
 {
-    setWindowTitle(QStringLiteral("Xray Routing JSON Preview"));
+    setWindowTitle(tr("Xray Routing JSON Preview"));
     resize(640, 480);
 
-    m_editor = new QPlainTextEdit(this);
+    m_editor = new ZaryaTextArea(QString(), this, 380);
     m_editor->setReadOnly(true);
-    m_editor->setPlainText(jsonText);
+    m_editor->setText(jsonText);
 
-    auto* closeBox =
-        new QDialogButtonBox(QDialogButtonBox::Close, Qt::Horizontal, this);
-    connect(closeBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
+    auto* closeButton = new ZaryaActionButton(tr("Close"), this);
+    connect(closeButton, &ZaryaActionButton::clicked, this, &QDialog::reject);
 
     auto* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(24, 24, 24, 24);
+    layout->setSpacing(12);
     layout->addWidget(m_editor);
-    layout->addWidget(closeBox);
+    layout->addWidget(closeButton);
 }
 
 } // namespace zarya

@@ -83,7 +83,10 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
    - Migrate Core, Routing, DNS, Geo Data, Rule Set, backup, and diagnostics workflows using the
      shared interaction layer.
    - Progress: Routing Manager actions, empty state, confirmations, and feedback use the shared
-     toolkit layer; its table remains a Qt model/view boundary.
+     toolkit layer; its table remains a Qt model/view boundary. Routing profile and rule editing
+     use toolkit fields, selectors, sections, actions, inline validation, and empty states; the
+     rules table remains a Qt model/view boundary. Routing JSON preview uses a read-only toolkit
+     text area and action.
 6. **Experimental and update surfaces**
    - Migrate gated sing-box TUN, helper, kill-switch, and updater UI without changing
      `FeatureGate` behavior.

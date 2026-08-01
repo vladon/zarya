@@ -1,22 +1,18 @@
 #include "ui/RoutingProfileDialog.h"
 
+#include "base/algorithm.h"
 #include "domain/RoutingMode.h"
 #include "routing/RoutingProfileValidator.h"
 #include "routing/XrayRoutingGenerator.h"
 #include "ui/RoutingJsonPreviewDialog.h"
 #include "ui/RoutingRuleEditorDialog.h"
+#include "ui/desktopapp/UiMessagePresenter.h"
+#include "ui/desktopapp/ZaryaControls.h"
+#include "ui/desktopapp/ZaryaFormControls.h"
+#include "ui/desktopapp/ZaryaSelector.h"
 
-#include <QCheckBox>
-#include <QComboBox>
-#include <QDialogButtonBox>
-#include <QFormLayout>
-#include <QGroupBox>
 #include <QHBoxLayout>
 #include <QHeaderView>
-#include <QLabel>
-#include <QLineEdit>
-#include <QMessageBox>
-#include <QPushButton>
 #include <QTableWidget>
 #include <QVBoxLayout>
 
@@ -31,6 +27,11 @@ QStringList domainStrategyOptions()
     return {QStringLiteral("AsIs"), QStringLiteral("IPIfNonMatch"), QStringLiteral("IPOnDemand")};
 }
 
+QString enumKey(int value)
+{
+    return QString::number(value);
+}
+
 } // namespace
 
 RoutingProfileDialog::RoutingProfileDialog(const RoutingProfile& profile, bool readOnly,
@@ -43,29 +44,34 @@ RoutingProfileDialog::RoutingProfileDialog(const RoutingProfile& profile, bool r
                             : tr("Edit Routing Profile"));
     resize(760, 520);
 
-    m_nameEdit = new QLineEdit(profile.name, this);
-    m_enabledCheck = new QCheckBox(tr("Enabled"), this);
-    m_enabledCheck->setChecked(profile.enabled);
+    m_nameEdit = new ZaryaTextField(tr("Name"), this);
+    m_nameEdit->setText(profile.name);
+    m_enabledCheck = new ZaryaCheckBox(tr("Enabled"), this, profile.enabled);
 
-    m_modeCombo = new QComboBox(this);
-    m_modeCombo->addItem(routingModeDisplayString(RoutingMode::ProxyAll),
-                         static_cast<int>(RoutingMode::ProxyAll));
-    m_modeCombo->addItem(routingModeDisplayString(RoutingMode::BypassLan),
-                         static_cast<int>(RoutingMode::BypassLan));
-    m_modeCombo->addItem(routingModeDisplayString(RoutingMode::BypassRu),
-                         static_cast<int>(RoutingMode::BypassRu));
-    m_modeCombo->addItem(routingModeDisplayString(RoutingMode::BypassLanAndRu),
-                         static_cast<int>(RoutingMode::BypassLanAndRu));
-    m_modeCombo->addItem(routingModeDisplayString(RoutingMode::Custom),
-                         static_cast<int>(RoutingMode::Custom));
-    m_modeCombo->setCurrentIndex(m_modeCombo->findData(static_cast<int>(profile.mode)));
+    m_modeCombo = new ZaryaSelector(this);
+    m_modeCombo->setItems({
+        {enumKey(static_cast<int>(RoutingMode::ProxyAll)),
+         routingModeDisplayString(RoutingMode::ProxyAll)},
+        {enumKey(static_cast<int>(RoutingMode::BypassLan)),
+         routingModeDisplayString(RoutingMode::BypassLan)},
+        {enumKey(static_cast<int>(RoutingMode::BypassRu)),
+         routingModeDisplayString(RoutingMode::BypassRu)},
+        {enumKey(static_cast<int>(RoutingMode::BypassLanAndRu)),
+         routingModeDisplayString(RoutingMode::BypassLanAndRu)},
+        {enumKey(static_cast<int>(RoutingMode::Custom)),
+         routingModeDisplayString(RoutingMode::Custom)},
+    }, enumKey(static_cast<int>(profile.mode)));
 
-    m_domainStrategyCombo = new QComboBox(this);
+    m_domainStrategyCombo = new ZaryaSelector(this);
+    QVector<ZaryaSelectorItem> strategyItems;
     for (const QString& strategy : domainStrategyOptions()) {
-        m_domainStrategyCombo->addItem(strategy);
+        strategyItems.push_back({strategy, strategy});
     }
-    const int strategyIndex = m_domainStrategyCombo->findText(profile.domainStrategy);
-    m_domainStrategyCombo->setCurrentIndex(strategyIndex >= 0 ? strategyIndex : 0);
+    m_domainStrategyCombo->setItems(
+        std::move(strategyItems),
+        domainStrategyOptions().contains(profile.domainStrategy)
+            ? profile.domainStrategy
+            : QStringLiteral("AsIs"));
 
     m_rulesTable = new QTableWidget(this);
     m_rulesTable->setColumnCount(5);
@@ -76,25 +82,25 @@ RoutingProfileDialog::RoutingProfileDialog(const RoutingProfile& profile, bool r
     m_rulesTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_rulesTable->setSelectionMode(QAbstractItemView::SingleSelection);
     m_rulesTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    refreshRulesTable();
 
-    auto* addRuleButton = new QPushButton(tr("Add Rule"), this);
-    auto* editRuleButton = new QPushButton(tr("Edit Rule"), this);
-    auto* deleteRuleButton = new QPushButton(tr("Delete Rule"), this);
-    auto* moveUpButton = new QPushButton(tr("Move Up"), this);
-    auto* moveDownButton = new QPushButton(tr("Move Down"), this);
-    auto* validateButton = new QPushButton(tr("Validate"), this);
-    auto* previewButton = new QPushButton(tr("Preview Xray Routing JSON"), this);
-    m_duplicateButton = new QPushButton(tr("Duplicate Profile"), this);
+    auto* addRuleButton = new ZaryaActionButton(tr("Add Rule"), this, ZaryaButtonRole::Primary);
+    auto* editRuleButton = new ZaryaActionButton(tr("Edit Rule"), this);
+    auto* deleteRuleButton = new ZaryaActionButton(
+        tr("Delete Rule"), this, ZaryaButtonRole::Destructive);
+    auto* moveUpButton = new ZaryaActionButton(tr("Move Up"), this);
+    auto* moveDownButton = new ZaryaActionButton(tr("Move Down"), this);
+    auto* validateButton = new ZaryaActionButton(tr("Validate"), this);
+    auto* previewButton = new ZaryaActionButton(tr("Preview Xray Routing JSON"), this);
+    m_duplicateButton = new ZaryaActionButton(tr("Duplicate Profile"), this);
 
-    connect(addRuleButton, &QPushButton::clicked, this, &RoutingProfileDialog::onAddRule);
-    connect(editRuleButton, &QPushButton::clicked, this, &RoutingProfileDialog::onEditRule);
-    connect(deleteRuleButton, &QPushButton::clicked, this, &RoutingProfileDialog::onDeleteRule);
-    connect(moveUpButton, &QPushButton::clicked, this, &RoutingProfileDialog::onMoveUp);
-    connect(moveDownButton, &QPushButton::clicked, this, &RoutingProfileDialog::onMoveDown);
-    connect(validateButton, &QPushButton::clicked, this, &RoutingProfileDialog::onValidate);
-    connect(previewButton, &QPushButton::clicked, this, &RoutingProfileDialog::onPreviewJson);
-    connect(m_duplicateButton, &QPushButton::clicked, this, &RoutingProfileDialog::onDuplicate);
+    connect(addRuleButton, &ZaryaActionButton::clicked, this, &RoutingProfileDialog::onAddRule);
+    connect(editRuleButton, &ZaryaActionButton::clicked, this, &RoutingProfileDialog::onEditRule);
+    connect(deleteRuleButton, &ZaryaActionButton::clicked, this, &RoutingProfileDialog::onDeleteRule);
+    connect(moveUpButton, &ZaryaActionButton::clicked, this, &RoutingProfileDialog::onMoveUp);
+    connect(moveDownButton, &ZaryaActionButton::clicked, this, &RoutingProfileDialog::onMoveDown);
+    connect(validateButton, &ZaryaActionButton::clicked, this, &RoutingProfileDialog::onValidate);
+    connect(previewButton, &ZaryaActionButton::clicked, this, &RoutingProfileDialog::onPreviewJson);
+    connect(m_duplicateButton, &ZaryaActionButton::clicked, this, &RoutingProfileDialog::onDuplicate);
 
     auto* ruleButtons = new QHBoxLayout;
     ruleButtons->addWidget(addRuleButton);
@@ -106,37 +112,26 @@ RoutingProfileDialog::RoutingProfileDialog(const RoutingProfile& profile, bool r
     ruleButtons->addWidget(validateButton);
     ruleButtons->addWidget(previewButton);
 
-    auto* rulesGroup = new QGroupBox(tr("Rules"), this);
-    auto* rulesLayout = new QVBoxLayout(rulesGroup);
-    rulesLayout->addWidget(m_rulesTable);
-    rulesLayout->addLayout(ruleButtons);
+    auto* ruleActions = new QWidget(this);
+    ruleActions->setLayout(ruleButtons);
+    m_emptyRules = new ZaryaBodyText(
+        tr("No routing rules yet. Add a rule to build a custom route."), this);
+    auto* rulesSection = new ZaryaFormSection(tr("Rules"), this);
+    rulesSection->addWidget(m_emptyRules);
+    rulesSection->addWidget(m_rulesTable);
+    rulesSection->addWidget(ruleActions);
 
-    auto* form = new QFormLayout;
-    form->addRow(tr("Name"), m_nameEdit);
-    form->addRow(tr("Mode"), m_modeCombo);
-    form->addRow(tr("Domain strategy"), m_domainStrategyCombo);
-    form->addRow(QString(), m_enabledCheck);
-
-    auto* buttons = new QDialogButtonBox(
-        readOnly ? QDialogButtonBox::Close : (QDialogButtonBox::Ok | QDialogButtonBox::Cancel),
-        Qt::Horizontal, this);
+    QWidget* actions = nullptr;
     if (readOnly) {
-        connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
+        auto* closeButton = new ZaryaActionButton(tr("Close"), this, ZaryaButtonRole::Primary);
+        connect(closeButton, &ZaryaActionButton::clicked, this, &QDialog::reject);
+        actions = closeButton;
         m_duplicateButton->setVisible(true);
     } else {
-        connect(buttons, &QDialogButtonBox::accepted, this, [this]() {
-            m_profile.name = m_nameEdit->text().trimmed();
-            if (m_profile.name.isEmpty()) {
-                QMessageBox::warning(this, tr("Profile"),
-                                     tr("Name is required."));
-                return;
-            }
-            m_profile.mode = static_cast<RoutingMode>(m_modeCombo->currentData().toInt());
-            m_profile.domainStrategy = m_domainStrategyCombo->currentText();
-            m_profile.enabled = m_enabledCheck->isChecked();
-            accept();
-        });
-        connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
+        auto* actionRow = new ZaryaDialogActionRow(tr("Save"), tr("Cancel"), this);
+        connect(actionRow, &ZaryaDialogActionRow::accepted, this, &RoutingProfileDialog::tryAccept);
+        connect(actionRow, &ZaryaDialogActionRow::rejected, this, &QDialog::reject);
+        actions = actionRow;
         m_duplicateButton->setVisible(false);
     }
 
@@ -152,13 +147,21 @@ RoutingProfileDialog::RoutingProfileDialog(const RoutingProfile& profile, bool r
         moveDownButton->setEnabled(false);
     }
 
+    m_validationMessage = new ZaryaValidationMessage(this);
     auto* layout = new QVBoxLayout(this);
-    layout->addLayout(form);
-    layout->addWidget(rulesGroup, 1);
+    layout->setContentsMargins(24, 24, 24, 24);
+    layout->setSpacing(12);
+    layout->addWidget(new ZaryaFormRow(tr("Name"), m_nameEdit, this));
+    layout->addWidget(new ZaryaFormRow(tr("Mode"), m_modeCombo, this));
+    layout->addWidget(new ZaryaFormRow(tr("Domain strategy"), m_domainStrategyCombo, this));
+    layout->addWidget(m_enabledCheck);
+    layout->addWidget(rulesSection, 1);
     if (readOnly) {
         layout->addWidget(m_duplicateButton);
     }
-    layout->addWidget(buttons);
+    layout->addWidget(m_validationMessage);
+    layout->addWidget(actions);
+    refreshRulesTable();
 }
 
 RoutingProfile RoutingProfileDialog::profile() const
@@ -169,6 +172,8 @@ RoutingProfile RoutingProfileDialog::profile() const
 void RoutingProfileDialog::refreshRulesTable()
 {
     m_rulesTable->setRowCount(m_profile.rules.size());
+    m_emptyRules->setVisible(m_profile.rules.isEmpty());
+    m_rulesTable->setVisible(!m_profile.rules.isEmpty());
     for (int row = 0; row < m_profile.rules.size(); ++row) {
         const RoutingRule& rule = m_profile.rules[row];
         m_rulesTable->setItem(row, 0,
@@ -213,8 +218,8 @@ void RoutingProfileDialog::onEditRule()
 {
     const int row = selectedRuleRow();
     if (row < 0) {
-        QMessageBox::information(this, tr("Rules"),
-                                 tr("Select a rule to edit."));
+        UiMessagePresenter::information(
+            this, tr("Rules"), tr("Select a rule to edit."));
         return;
     }
     RoutingRuleEditorDialog dialog(m_profile.rules[row], m_readOnly, this);
@@ -268,19 +273,20 @@ void RoutingProfileDialog::onValidate()
 {
     const QStringList warnings = RoutingProfileValidator::warnings(m_profile);
     if (warnings.isEmpty()) {
-        QMessageBox::information(this, tr("Validation"),
-                                 tr("No validation warnings."));
+        UiMessagePresenter::information(
+            this, tr("Validation"), tr("No validation warnings."));
         return;
     }
-    QMessageBox::warning(this, tr("Validation"), warnings.join(QStringLiteral("\n")));
+    UiMessagePresenter::warning(
+        this, tr("Validation"), warnings.join(QStringLiteral("\n")));
 }
 
 void RoutingProfileDialog::onPreviewJson()
 {
     RoutingProfile previewProfile = m_profile;
     previewProfile.name = m_nameEdit->text().trimmed();
-    previewProfile.mode = static_cast<RoutingMode>(m_modeCombo->currentData().toInt());
-    previewProfile.domainStrategy = m_domainStrategyCombo->currentText();
+    previewProfile.mode = static_cast<RoutingMode>(m_modeCombo->currentKey().toInt());
+    previewProfile.domainStrategy = m_domainStrategyCombo->currentKey();
     previewProfile.enabled = m_enabledCheck->isChecked();
 
     const XrayRoutingGenerator generator;
@@ -294,6 +300,22 @@ void RoutingProfileDialog::onPreviewJson()
 void RoutingProfileDialog::onDuplicate()
 {
     done(2);
+}
+
+void RoutingProfileDialog::tryAccept()
+{
+    m_profile.name = m_nameEdit->text().trimmed();
+    if (m_profile.name.isEmpty()) {
+        m_nameEdit->showError();
+        m_validationMessage->showMessage(tr("Name is required."));
+        return;
+    }
+    m_nameEdit->showError(false);
+    m_validationMessage->clear();
+    m_profile.mode = static_cast<RoutingMode>(m_modeCombo->currentKey().toInt());
+    m_profile.domainStrategy = m_domainStrategyCombo->currentKey();
+    m_profile.enabled = m_enabledCheck->isChecked();
+    accept();
 }
 
 } // namespace zarya

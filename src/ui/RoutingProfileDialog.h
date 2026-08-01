@@ -4,13 +4,16 @@
 
 #include <QDialog>
 
-class QCheckBox;
-class QComboBox;
-class QLineEdit;
-class QPushButton;
 class QTableWidget;
 
 namespace zarya {
+
+class ZaryaActionButton;
+class ZaryaBodyText;
+class ZaryaCheckBox;
+class ZaryaSelector;
+class ZaryaTextField;
+class ZaryaValidationMessage;
 
 class RoutingProfileDialog : public QDialog {
     Q_OBJECT
@@ -21,7 +24,7 @@ public:
 
     RoutingProfile profile() const;
 
-private slots:
+private Q_SLOTS:
     void onAddRule();
     void onEditRule();
     void onDeleteRule();
@@ -30,6 +33,7 @@ private slots:
     void onValidate();
     void onPreviewJson();
     void onDuplicate();
+    void tryAccept();
 
 private:
     void refreshRulesTable();
@@ -39,12 +43,14 @@ private:
     RoutingProfile m_profile;
     bool m_readOnly = false;
 
-    QLineEdit* m_nameEdit = nullptr;
-    QComboBox* m_modeCombo = nullptr;
-    QComboBox* m_domainStrategyCombo = nullptr;
-    QCheckBox* m_enabledCheck = nullptr;
+    ZaryaTextField* m_nameEdit = nullptr;
+    ZaryaSelector* m_modeCombo = nullptr;
+    ZaryaSelector* m_domainStrategyCombo = nullptr;
+    ZaryaCheckBox* m_enabledCheck = nullptr;
     QTableWidget* m_rulesTable = nullptr;
-    QPushButton* m_duplicateButton = nullptr;
+    ZaryaActionButton* m_duplicateButton = nullptr;
+    ZaryaBodyText* m_emptyRules = nullptr;
+    ZaryaValidationMessage* m_validationMessage = nullptr;
 };
 
 } // namespace zarya

@@ -37,6 +37,7 @@ public:
     [[nodiscard]] QString text() const;
     void setText(const QString& text);
     void setPlaceholder(const QString& placeholder);
+    void setReadOnly(bool readOnly);
     void showError(bool show = true);
 
 Q_SIGNALS:
@@ -61,6 +62,7 @@ public:
 
     [[nodiscard]] QString text() const;
     void setText(const QString& text);
+    void setReadOnly(bool readOnly);
     void clear();
 
 Q_SIGNALS:

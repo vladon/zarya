@@ -135,36 +135,6 @@
     "QLabel": 2,
     "QPushButton": 9
   },
-  "src/ui/RoutingJsonPreviewDialog.cpp": {
-    "QDialogButtonBox": 4
-  },
-  "src/ui/RoutingProfileDialog.cpp": {
-    "QCheckBox": 2,
-    "QComboBox": 3,
-    "QDialogButtonBox": 8,
-    "QGroupBox": 2,
-    "QLabel": 1,
-    "QLineEdit": 2,
-    "QMessageBox": 5,
-    "QPushButton": 17
-  },
-  "src/ui/RoutingProfileDialog.h": {
-    "QCheckBox": 2,
-    "QComboBox": 3,
-    "QLineEdit": 2,
-    "QPushButton": 2
-  },
-  "src/ui/RoutingRuleEditorDialog.cpp": {
-    "QComboBox": 3,
-    "QDialogButtonBox": 8,
-    "QLabel": 1,
-    "QLineEdit": 2,
-    "QMessageBox": 2
-  },
-  "src/ui/RoutingRuleEditorDialog.h": {
-    "QComboBox": 3,
-    "QLineEdit": 2
-  },
   "src/ui/RuleSetManagerDialog.cpp": {
     "QGroupBox": 3,
     "QLabel": 3,
