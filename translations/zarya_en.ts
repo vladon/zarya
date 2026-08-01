@@ -117,6 +117,7 @@ Install and restart now?</source><translation type="unfinished"></translation></
 %1</source>
         <translation type="unfinished"></translation>
     </message>
+    <message><source>Continue</source><translation type="unfinished"></translation></message>
 </context>
 <context>
     <name>BackupImportDialog</name>
@@ -235,6 +236,7 @@ Pre-import backup:
 %1</source>
         <translation type="unfinished"></translation>
     </message>
+    <message><source>Continue</source><translation type="unfinished"></translation></message>
 </context>
 <context>
     <name>BetaBannerWidget</name>
@@ -246,6 +248,9 @@ Pre-import backup:
         <source>Dismiss</source>
         <translation type="unfinished"></translation>
     </message>
+    <message><source>Experimental features are enabled. They are not part of the stable support scope. Use Diagnostics Bundle when reporting issues.</source><translation type="unfinished"></translation></message>
+    <message><source>Zarya release candidate — experimental features are disabled by default. Use Diagnostics Bundle when reporting issues.</source><translation type="unfinished"></translation></message>
+    <message><source>Zarya stable release — experimental features are disabled by default. Use Diagnostics Bundle when reporting issues.</source><translation type="unfinished"></translation></message>
 </context>
 <context>
     <name>CoreManagerDialog</name>
@@ -423,6 +428,13 @@ Pre-import backup:
 This bundle is redacted, but review it before sharing.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message><source>Close</source><translation type="unfinished"></translation></message>
+    <message><source>Diagnostics bundle created:
+%1</source><translation type="unfinished"></translation></message>
+    <message><source>Issue reporting instructions are not bundled with this build.</source><translation type="unfinished"></translation></message>
+    <message><source>Open Folder</source><translation type="unfinished"></translation></message>
+    <message><source>Open Issue Template</source><translation type="unfinished"></translation></message>
+    <message><source>This bundle is redacted, but review the diagnostics archive before sharing it publicly.</source><translation type="unfinished"></translation></message>
 </context>
 <context>
     <name>DiagnosticsPreviewDialog</name>
@@ -1736,6 +1748,63 @@ Step %2 of %3</source>
     <message><source>Testing: %1/%2 | Core: %3 | Runtime: %4 | Kill switch: %5 | System proxy: %6 | Routing: %7 | DNS: %8</source><translation type="unfinished"></translation></message>
     <message><source>Idle | Core: %1 | Runtime: %2 | Kill switch: %3 | System proxy: %4 | Routing: %5 | DNS: %6 | Tray: %7</source><translation type="unfinished"></translation></message>
     <message><source> | Proxy 127.0.0.1:%1</source><translation type="unfinished"></translation></message>
+    <message><source>&amp;Known Limitations</source><translation type="unfinished"></translation></message>
+    <message><source>&amp;Quick Start</source><translation type="unfinished"></translation></message>
+    <message><source>&amp;Report Issue…</source><translation type="unfinished"></translation></message>
+    <message><source>A proxy core is currently running. Import is disabled until the core is stopped.
+
+Open import dialog anyway?</source><translation type="unfinished"></translation></message>
+    <message><source>Check for App &amp;Updates…</source><translation type="unfinished"></translation></message>
+    <message><source>Copy &amp;Support Summary</source><translation type="unfinished"></translation></message>
+    <message><source>Could not copy support summary to the clipboard.</source><translation type="unfinished"></translation></message>
+    <message><source>Experimental TUN mode is disabled in stable builds by default.
+Effective runtime: Xray system proxy.
+
+Enable experimental features in Settings → Release channel if you intend to use TUN.</source><translation type="unfinished"></translation></message>
+    <message><source>Experimental runtime disabled</source><translation type="unfinished"></translation></message>
+    <message><source>Experimental runtime is disabled.
+Effective runtime: Xray system proxy.
+
+Enable experimental features in Settings → Release channel if you intend to use TUN.</source><translation type="unfinished"></translation></message>
+    <message><source>Have a portable Zarya folder with profiles or subscriptions?
+
+You can import data from a portable Zarya folder without modifying the original folder.
+
+Import now?</source><translation type="unfinished"></translation></message>
+    <message><source>Help</source><translation type="unfinished"></translation></message>
+    <message><source>Import from Portable Zarya &amp;Folder…</source><translation type="unfinished"></translation></message>
+    <message><source>Import from Portable Zarya Folder</source><translation type="unfinished"></translation></message>
+    <message><source>Issue reporting instructions are not bundled with this build.</source><translation type="unfinished"></translation></message>
+    <message><source>Known limitations doc is not bundled with this build.</source><translation type="unfinished"></translation></message>
+    <message><source>Portable Import</source><translation type="unfinished"></translation></message>
+    <message><source>Portable Zarya data</source><translation type="unfinished"></translation></message>
+    <message><source>Portable Zarya data found:
+
+Profiles: %1
+Subscriptions: %2
+Routing: %3
+DNS: %4
+Settings: %5
+
+A temporary backup archive will be created and opened in the import flow.
+The original portable folder will not be modified.
+
+Continue?</source><translation type="unfinished"></translation></message>
+    <message><source>Public Beta &amp;Guide</source><translation type="unfinished"></translation></message>
+    <message><source>Public beta guide is not bundled with this build.</source><translation type="unfinished"></translation></message>
+    <message><source>Quick start guide is not bundled with this build.</source><translation type="unfinished"></translation></message>
+    <message><source>Select Xray executable</source><translation type="unfinished"></translation></message>
+    <message><source>Select sing-box executable</source><translation type="unfinished"></translation></message>
+    <message><source>Support Summary</source><translation type="unfinished"></translation></message>
+    <message><source>Support summary copied to the clipboard.
+
+Review it before pasting into an issue. Do not include proxy links or passwords.</source><translation type="unfinished"></translation></message>
+    <message><source>The selected folder does not look like a portable Zarya install.
+
+Expected portable.flag or a data/ folder with profiles, subscriptions, or settings.</source><translation type="unfinished"></translation></message>
+    <message><source>Xray system proxy</source><translation type="unfinished"></translation></message>
+    <message><source>no</source><translation type="unfinished"></translation></message>
+    <message><source>yes</source><translation type="unfinished"></translation></message>
 </context>
 <context>
     <name>ProfileDialog</name>
@@ -2457,6 +2526,7 @@ What should happen?</source>
         <source>Exit Safely</source>
         <translation type="unfinished"></translation>
     </message>
+    <message><source>Cancel</source><translation type="unfinished"></translation></message>
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -3744,5 +3814,16 @@ Continue?</source><translation type="unfinished"></translation></message>
     <message><source>Zarya could not restore previous system proxy settings. Retry restore or exit anyway?</source><translation type="unfinished"></translation></message>
     <message><source>Retry</source><translation type="unfinished"></translation></message>
     <message><source>Exit Anyway</source><translation type="unfinished"></translation></message>
+</context>
+<context>
+    <name>QObject</name>
+    <message><source>A previous update attempt was not completed. The pending update plan for %1 is stale.</source><translation type="unfinished"></translation></message>
+    <message><source>App Update</source><translation type="unfinished"></translation></message>
+    <message><source>OK</source><translation type="unfinished"></translation></message>
+    <message><source>Open Update Folder</source><translation type="unfinished"></translation></message>
+    <message><source>Show Log</source><translation type="unfinished"></translation></message>
+    <message><source>The app update failed and was rolled back.</source><translation type="unfinished"></translation></message>
+    <message><source>Zarya was updated successfully.</source><translation type="unfinished"></translation></message>
+    <message><source>Zarya was updated to %1.</source><translation type="unfinished"></translation></message>
 </context>
 </TS>
