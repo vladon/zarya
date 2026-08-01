@@ -50,6 +50,7 @@
 #include "ui/AppUpdateDialog.h"
 #include "ui/desktopapp/ProfileActionStrip.h"
 #include "ui/desktopapp/ProfileEmptyStatePanel.h"
+#include "ui/desktopapp/UiMessagePresenter.h"
 #include "ui/desktopapp/ZaryaControls.h"
 #include "ui/desktopapp/ZaryaSelector.h"
 #include "updater/AppUpdateChecker.h"
@@ -85,7 +86,6 @@
 #include <QJsonDocument>
 #include <QMenu>
 #include <QMenuBar>
-#include <QMessageBox>
 #include <QProgressDialog>
 #include <QPushButton>
 #include <QPlainTextEdit>
@@ -367,26 +367,28 @@ void MainWindow::setupMenuBar()
     auto* helpMenu = menuBar()->addMenu(tr("&Help"));
     helpMenu->addAction(tr("Public Beta &Guide"), this, [this]() {
         if (!PublicBetaDocs::openBundledDoc(QStringLiteral("README.md"))) {
-            QMessageBox::warning(this, tr("Help"),
-                                 tr("Public beta guide is not bundled with this build."));
+            UiMessagePresenter::warning(
+                this, tr("Help"), tr("Public beta guide is not bundled with this build."));
         }
     });
     helpMenu->addAction(tr("&Quick Start"), this, [this]() {
         if (!PublicBetaDocs::openBundledDoc(QStringLiteral("quick-start.md"))) {
-            QMessageBox::warning(this, tr("Help"),
-                                 tr("Quick start guide is not bundled with this build."));
+            UiMessagePresenter::warning(
+                this, tr("Help"), tr("Quick start guide is not bundled with this build."));
         }
     });
     helpMenu->addAction(tr("&Known Limitations"), this, [this]() {
         if (!PublicBetaDocs::openBundledDoc(QStringLiteral("known-limitations.md"))) {
-            QMessageBox::warning(this, tr("Help"),
-                                 tr("Known limitations doc is not bundled with this build."));
+            UiMessagePresenter::warning(
+                this, tr("Help"), tr("Known limitations doc is not bundled with this build."));
         }
     });
     helpMenu->addAction(tr("&Report Issue…"), this, [this]() {
         if (!PublicBetaDocs::openIssueReporting()) {
-            QMessageBox::warning(this, tr("Help"),
-                                 tr("Issue reporting instructions are not bundled with this build."));
+            UiMessagePresenter::warning(
+                this,
+                tr("Help"),
+                tr("Issue reporting instructions are not bundled with this build."));
         }
     });
     helpMenu->addSeparator();
@@ -626,21 +628,32 @@ void MainWindow::checkKillSwitchRecoveryOnStartup()
     QString error;
     if (!helper->connectToHelper(&error)) {
         if (QFile::exists(AppPaths::killSwitchMarkerPath())) {
-            QMessageBox box(this);
-            box.setIcon(QMessageBox::Warning);
-            box.setWindowTitle(tr("Kill switch recovery"));
-            box.setText(tr(
-                "Zarya detected a previous kill switch state. Network access may be restricted.\n\n"
-                "Helper is not running. Start helper manually (elevated on Linux) and use "
-                "Disable Kill Switch, or follow recovery instructions."));
-            QPushButton* recoveryButton =
-                box.addButton(tr("Show Recovery Instructions"),
-                              QMessageBox::ActionRole);
-            box.addButton(tr("Ignore"), QMessageBox::RejectRole);
-            box.exec();
-            if (box.clickedButton() == recoveryButton) {
-                QMessageBox::information(this, tr("Kill switch recovery"),
-                                         HelperProcessManager::recoveryInstructionsText());
+            const QString result = UiMessagePresenter::choose(
+                this,
+                tr("Kill switch recovery"),
+                tr("Zarya detected a previous kill switch state. Network access may be restricted.\n\n"
+                   "Helper is not running. Start helper manually (elevated on Linux) and use "
+                   "Disable Kill Switch, or follow recovery instructions."),
+                UiMessageTone::Warning,
+                {
+                    {
+                        QStringLiteral("recovery"),
+                        tr("Show Recovery Instructions"),
+                        UiMessageActionRole::Secondary,
+                    },
+                    {
+                        QStringLiteral("ignore"),
+                        tr("Ignore"),
+                        UiMessageActionRole::Secondary,
+                        true,
+                        true,
+                    },
+                });
+            if (result == QStringLiteral("recovery")) {
+                UiMessagePresenter::information(
+                    this,
+                    tr("Kill switch recovery"),
+                    HelperProcessManager::recoveryInstructionsText());
             }
         }
         return;
@@ -652,29 +665,44 @@ void MainWindow::checkKillSwitchRecoveryOnStartup()
         return;
     }
 
-    QMessageBox box(this);
-    box.setIcon(QMessageBox::Warning);
-    box.setWindowTitle(tr("Kill switch recovery"));
-    box.setText(tr(
-        "Zarya detected a previous kill switch state. Network access may be restricted."));
-    QPushButton* disableButton =
-        box.addButton(tr("Disable Kill Switch"), QMessageBox::AcceptRole);
-    QPushButton* recoveryButton =
-        box.addButton(tr("Show Recovery Instructions"), QMessageBox::ActionRole);
-    box.addButton(tr("Ignore"), QMessageBox::RejectRole);
-    box.setDefaultButton(disableButton);
-    box.exec();
+    const QString result = UiMessagePresenter::choose(
+        this,
+        tr("Kill switch recovery"),
+        tr("Zarya detected a previous kill switch state. Network access may be restricted."),
+        UiMessageTone::Warning,
+        {
+            {
+                QStringLiteral("recovery"),
+                tr("Show Recovery Instructions"),
+                UiMessageActionRole::Secondary,
+            },
+            {
+                QStringLiteral("ignore"),
+                tr("Ignore"),
+                UiMessageActionRole::Secondary,
+                false,
+                true,
+            },
+            {
+                QStringLiteral("disable"),
+                tr("Disable Kill Switch"),
+                UiMessageActionRole::Primary,
+                true,
+            },
+        });
 
-    if (box.clickedButton() == disableButton) {
+    if (result == QStringLiteral("disable")) {
         QString disableError;
         if (!helper->killSwitchDisable(&disableError)) {
-            QMessageBox::warning(this, tr("Kill switch"), disableError);
+            UiMessagePresenter::warning(this, tr("Kill switch"), disableError);
         } else {
             appendLog(QStringLiteral("Kill switch disabled during startup recovery."));
         }
-    } else if (box.clickedButton() == recoveryButton) {
-        QMessageBox::information(this, tr("Kill switch recovery"),
-                                 HelperProcessManager::recoveryInstructionsText());
+    } else if (result == QStringLiteral("recovery")) {
+        UiMessagePresenter::information(
+            this,
+            tr("Kill switch recovery"),
+            HelperProcessManager::recoveryInstructionsText());
     }
 }
 
@@ -1288,10 +1316,11 @@ bool MainWindow::confirmSystemProxyChangeIfNeeded()
         return true;
     }
 
-    return QMessageBox::question(
-               this, tr("Change system proxy"),
-               tr("Zarya will change your operating system or desktop proxy settings. Continue?"))
-           == QMessageBox::Yes;
+    return UiMessagePresenter::confirm(
+        this,
+        tr("Change system proxy"),
+        tr("Zarya will change your operating system or desktop proxy settings. Continue?"),
+        tr("Continue"));
 }
 
 void MainWindow::logStartupContext(const StartupOptions& options)
@@ -1433,8 +1462,10 @@ void MainWindow::tryAutoEnableSystemProxy(bool fromAutostart)
     QString error;
     const auto logLine = [this](const QString& line) { appendLog(line); };
     if (!m_systemProxy.enableLocalHttpProxy(settings.mixedPort(), logLine, &error)) {
-        QMessageBox::warning(this, tr("System proxy"),
-                             tr("Failed to enable system proxy:\n%1").arg(error));
+        UiMessagePresenter::warning(
+            this,
+            tr("System proxy"),
+            tr("Failed to enable system proxy:\n%1").arg(error));
     }
     updateStatusBar();
 }
@@ -1449,9 +1480,10 @@ void MainWindow::tryRestoreSystemProxy(SystemProxyRestoreMode mode, bool showFai
     if (!restored && showFailureDialog && !error.isEmpty()) {
         if (mode == SystemProxyRestoreMode::Manual
             || (mode == SystemProxyRestoreMode::Automatic && wasEnabledByZarya)) {
-        QMessageBox::warning(this, tr("System proxy"),
-                             tr("Failed to restore system proxy:\n%1")
-                                 .arg(error));
+        UiMessagePresenter::warning(
+            this,
+            tr("System proxy"),
+            tr("Failed to restore system proxy:\n%1").arg(error));
         }
     }
 
@@ -1617,7 +1649,7 @@ void MainWindow::onUpdateSelectedSubscription()
 {
     QString subscriptionId = m_profileFilterKey;
     if (subscriptionId.isEmpty() || subscriptionId == QStringLiteral("__manual__")) {
-        QMessageBox::information(
+        UiMessagePresenter::information(
             this, tr("Update subscription"),
             tr("Select a subscription in the profile filter, or use Subscriptions → "
                "Manage to update a specific entry."));
@@ -1632,8 +1664,8 @@ void MainWindow::onUpdateSelectedSubscription()
         }
     }
     if (index < 0) {
-        QMessageBox::warning(this, tr("Update subscription"),
-                             tr("Subscription not found."));
+        UiMessagePresenter::warning(
+            this, tr("Update subscription"), tr("Subscription not found."));
         return;
     }
 
@@ -1641,13 +1673,13 @@ void MainWindow::onUpdateSelectedSubscription()
         m_subscriptionManager.updateSubscription(m_subscriptions[index], m_allProfiles);
     QString error;
     if (!saveAll(&error)) {
-        QMessageBox::warning(this, tr("Save failed"), error);
+        UiMessagePresenter::warning(this, tr("Save failed"), error);
     }
     refreshProfileFilterSelector();
     refreshProfileView();
 
     if (!result.success) {
-        QMessageBox::warning(this, tr("Update failed"), result.errorMessage);
+        UiMessagePresenter::warning(this, tr("Update failed"), result.errorMessage);
     }
 }
 
@@ -1665,7 +1697,7 @@ void MainWindow::onUpdateAllSubscriptions()
     }
     QString error;
     if (!saveAll(&error)) {
-        QMessageBox::warning(this, tr("Save failed"), error);
+        UiMessagePresenter::warning(this, tr("Save failed"), error);
     }
     refreshProfileFilterSelector();
     refreshProfileView();
@@ -1677,8 +1709,10 @@ void MainWindow::onUpdateAllSubscriptions()
         }
     }
     if (failed > 0) {
-        QMessageBox::warning(this, tr("Update all"),
-                             tr("%1 subscription(s) failed to update.").arg(failed));
+        UiMessagePresenter::warning(
+            this,
+            tr("Update all"),
+            tr("%1 subscription(s) failed to update.").arg(failed));
     }
 }
 
@@ -1697,8 +1731,8 @@ void MainWindow::onEditProfile()
 {
     const int row = selectedRow();
     if (row < 0) {
-        QMessageBox::information(this, tr("Edit profile"),
-                                 tr("Select a profile first."));
+        UiMessagePresenter::information(
+            this, tr("Edit profile"), tr("Select a profile first."));
         return;
     }
 
@@ -1714,8 +1748,8 @@ void MainWindow::onDeleteProfile()
 {
     const int row = selectedRow();
     if (row < 0) {
-        QMessageBox::information(this, tr("Delete profile"),
-                                 tr("Select a profile first."));
+        UiMessagePresenter::information(
+            this, tr("Delete profile"), tr("Select a profile first."));
         return;
     }
 
@@ -1725,9 +1759,12 @@ void MainWindow::onDeleteProfile()
         return;
     }
     const QString name = m_allProfiles.at(index).name;
-    if (QMessageBox::question(this, tr("Delete profile"),
-                              tr("Delete profile \"%1\"?").arg(name))
-        != QMessageBox::Yes) {
+    if (!UiMessagePresenter::confirm(
+            this,
+            tr("Delete profile"),
+            tr("Delete profile \"%1\"?").arg(name),
+            tr("Delete"),
+            true)) {
         return;
     }
 
@@ -1757,7 +1794,7 @@ void MainWindow::onSaveProfiles()
 {
     QString error;
     if (!saveAll(&error)) {
-        QMessageBox::warning(this, tr("Save failed"), error);
+        UiMessagePresenter::warning(this, tr("Save failed"), error);
         appendLog(QStringLiteral("Save failed: %1").arg(error));
         return;
     }
@@ -1770,7 +1807,7 @@ void MainWindow::onLoadProfiles()
     QString error;
     m_allProfiles = m_profileStore.load(&error);
     if (!error.isEmpty() && m_allProfiles.isEmpty()) {
-        QMessageBox::warning(this, tr("Load failed"), error);
+        UiMessagePresenter::warning(this, tr("Load failed"), error);
         appendLog(QStringLiteral("Load failed: %1").arg(error));
         return;
     }
@@ -1818,9 +1855,10 @@ void MainWindow::onExportBackup()
 {
     QString error;
     if (!saveAll(&error)) {
-        QMessageBox::warning(this, tr("Export Backup"),
-                             tr("Could not save current state before export:\n%1")
-                                 .arg(error));
+        UiMessagePresenter::warning(
+            this,
+            tr("Export Backup"),
+            tr("Could not save current state before export:\n%1").arg(error));
         return;
     }
 
@@ -1839,7 +1877,7 @@ void MainWindow::onImportFromPortableFolder()
 
     const PortableDataPreview preview = PortableMigration::preview(folder);
     if (!preview.valid) {
-        QMessageBox::warning(
+        UiMessagePresenter::warning(
             this, tr("Portable Import"),
             tr("The selected folder does not look like a portable Zarya install.\n\n"
                "Expected portable.flag or a data/ folder with profiles, subscriptions, or "
@@ -1847,23 +1885,24 @@ void MainWindow::onImportFromPortableFolder()
         return;
     }
 
-    const auto answer = QMessageBox::question(
-        this, tr("Portable Import"),
-        tr("Portable Zarya data found:\n\n"
-           "Profiles: %1\n"
-           "Subscriptions: %2\n"
-           "Routing: %3\n"
-           "DNS: %4\n"
-           "Settings: %5\n\n"
-           "A temporary backup archive will be created and opened in the import flow.\n"
-           "The original portable folder will not be modified.\n\n"
-           "Continue?")
-            .arg(preview.profileCount)
-            .arg(preview.subscriptionCount)
-            .arg(preview.hasRouting ? tr("yes") : tr("no"))
-            .arg(preview.hasDns ? tr("yes") : tr("no"))
-            .arg(preview.hasSettings ? tr("yes") : tr("no")));
-    if (answer != QMessageBox::Yes) {
+    if (!UiMessagePresenter::confirm(
+            this,
+            tr("Portable Import"),
+            tr("Portable Zarya data found:\n\n"
+               "Profiles: %1\n"
+               "Subscriptions: %2\n"
+               "Routing: %3\n"
+               "DNS: %4\n"
+               "Settings: %5\n\n"
+               "A temporary backup archive will be created and opened in the import flow.\n"
+               "The original portable folder will not be modified.\n\n"
+               "Continue?")
+                .arg(preview.profileCount)
+                .arg(preview.subscriptionCount)
+                .arg(preview.hasRouting ? tr("yes") : tr("no"))
+                .arg(preview.hasDns ? tr("yes") : tr("no"))
+                .arg(preview.hasSettings ? tr("yes") : tr("no")),
+            tr("Continue"))) {
         return;
     }
 
@@ -1874,7 +1913,7 @@ void MainWindow::onImportFromPortableFolder()
                               QStringLiteral("yyyyMMdd-HHmmss"))));
     QString error;
     if (!PortableMigration::createBackupArchive(folder, tempArchive, &error)) {
-        QMessageBox::critical(this, tr("Portable Import"), error);
+        UiMessagePresenter::error(this, tr("Portable Import"), error);
         return;
     }
 
@@ -1882,16 +1921,19 @@ void MainWindow::onImportFromPortableFolder()
     HelperProcessManager* helper = m_appController.helperProcessManager();
     const bool killSwitchActive = BackupManager::isKillSwitchActive(helper);
     if (killSwitchActive) {
-        QMessageBox::warning(this, tr("Portable Import"),
-                             BackupManager::runtimeBlockReason(coreRunning, killSwitchActive));
+        UiMessagePresenter::warning(
+            this,
+            tr("Portable Import"),
+            BackupManager::runtimeBlockReason(coreRunning, killSwitchActive));
         return;
     }
     if (coreRunning) {
-        const auto proceed = QMessageBox::question(
-            this, tr("Portable Import"),
-            tr("A proxy core is currently running. Import is disabled until the core is stopped.\n\n"
-               "Open import dialog anyway?"));
-        if (proceed != QMessageBox::Yes) {
+        if (!UiMessagePresenter::confirm(
+                this,
+                tr("Portable Import"),
+                tr("A proxy core is currently running. Import is disabled until the core is "
+                   "stopped.\n\nOpen import dialog anyway?"),
+                tr("Open"))) {
             return;
         }
     }
@@ -1917,19 +1959,20 @@ void MainWindow::onImportBackup()
     if (killSwitchActive || coreRunning) {
         const QString reason =
             BackupManager::runtimeBlockReason(coreRunning, killSwitchActive);
-        QMessageBox::warning(this, tr("Import Backup"), reason);
+        UiMessagePresenter::warning(this, tr("Import Backup"), reason);
         if (killSwitchActive) {
             return;
         }
     }
 
     if (coreRunning) {
-        const auto answer = QMessageBox::question(
-            this, tr("Import Backup"),
-            tr("A proxy core is currently running. You can preview a backup, but "
-               "import is disabled until the core is stopped.\n\nOpen import dialog "
-               "anyway?"));
-        if (answer != QMessageBox::Yes) {
+        if (!UiMessagePresenter::confirm(
+                this,
+                tr("Import Backup"),
+                tr("A proxy core is currently running. You can preview a backup, but "
+                   "import is disabled until the core is stopped.\n\nOpen import dialog "
+                   "anyway?"),
+                tr("Open"))) {
             return;
         }
     }
@@ -1981,11 +2024,13 @@ void MainWindow::onCreateDiagnosticsBundle()
 void MainWindow::onCopySupportSummary()
 {
     if (!SupportSummary::copyToClipboard(buildDiagnosticsContext())) {
-        QMessageBox::warning(this, tr("Support Summary"),
-                             tr("Could not copy support summary to the clipboard."));
+        UiMessagePresenter::warning(
+            this,
+            tr("Support Summary"),
+            tr("Could not copy support summary to the clipboard."));
         return;
     }
-    QMessageBox::information(
+    UiMessagePresenter::information(
         this, tr("Support Summary"),
         tr("Support summary copied to the clipboard.\n\n"
            "Review it before pasting into an issue. Do not include proxy links or passwords."));
@@ -2021,15 +2066,16 @@ void MainWindow::maybeShowInstalledPortableImportPrompt()
         return;
     }
 
-    const auto answer = QMessageBox::question(
-        this, tr("Portable Zarya data"),
+    const bool importNow = UiMessagePresenter::confirm(
+        this,
+        tr("Portable Zarya data"),
         tr("Have a portable Zarya folder with profiles or subscriptions?\n\n"
            "You can import data from a portable Zarya folder without modifying the original "
            "folder.\n\n"
            "Import now?"),
-        QMessageBox::Yes | QMessageBox::No);
+        tr("Import"));
     settings.setInstalledPortableImportPromptShown(true);
-    if (answer == QMessageBox::Yes) {
+    if (importNow) {
         onImportFromPortableFolder();
     }
 }
@@ -2066,7 +2112,7 @@ void MainWindow::warnIfExperimentalRuntimeDisabledOnStartup()
                  "Effective runtime: Xray system proxy.\n\n"
                  "Enable experimental features in Settings → Release channel if you intend to "
                  "use TUN.");
-    QMessageBox::warning(this, tr("Experimental runtime disabled"), dialogText);
+    UiMessagePresenter::warning(this, tr("Experimental runtime disabled"), dialogText);
 }
 
 void MainWindow::checkAppUpdatesOnStartup()
@@ -2121,15 +2167,15 @@ void MainWindow::onPreviewSingBoxTunConfig()
 {
     Profile* profile = selectedProfileInStorage();
     if (!profile) {
-        QMessageBox::information(this, tr("Preview sing-box config"),
-                                 tr("Select a profile first."));
+        UiMessagePresenter::information(
+            this, tr("Preview sing-box config"), tr("Select a profile first."));
         return;
     }
 
     const SingBoxConfigGenerationResult generation = m_appController.generateSingBoxTunConfig(*profile);
     if (!generation.success) {
-        QMessageBox::warning(this, tr("Preview sing-box config"),
-                             generation.errorMessage);
+        UiMessagePresenter::warning(
+            this, tr("Preview sing-box config"), generation.errorMessage);
         return;
     }
 
@@ -2223,14 +2269,14 @@ void MainWindow::onStopCore()
 void MainWindow::onEnableSystemProxy()
 {
     if (!m_coreManager.isRunning()) {
-        QMessageBox::information(
+        UiMessagePresenter::information(
             this, tr("System proxy"),
             tr("Core is not running. Start a profile before enabling system proxy."));
         return;
     }
 
     if (!m_systemProxy.isSupported()) {
-        QMessageBox::information(
+        UiMessagePresenter::information(
             this, tr("System proxy"),
             m_systemProxy.limitations().isEmpty()
                 ? tr("System proxy is not supported on this platform.")
@@ -2246,8 +2292,10 @@ void MainWindow::onEnableSystemProxy()
     QString error;
     const auto logLine = [this](const QString& line) { appendLog(line); };
     if (!m_systemProxy.enableLocalHttpProxy(settings.mixedPort(), logLine, &error)) {
-        QMessageBox::warning(this, tr("System proxy"),
-                             tr("Failed to enable system proxy:\n%1").arg(error));
+        UiMessagePresenter::warning(
+            this,
+            tr("System proxy"),
+            tr("Failed to enable system proxy:\n%1").arg(error));
     }
     updateStatusBar();
 }
@@ -2255,7 +2303,7 @@ void MainWindow::onEnableSystemProxy()
 void MainWindow::onRestoreSystemProxy()
 {
     if (!m_systemProxy.hasSavedState()) {
-        QMessageBox::information(
+        UiMessagePresenter::information(
             this, tr("System proxy"),
             tr("No saved previous proxy state. Nothing to restore."));
         return;
@@ -2288,7 +2336,7 @@ void MainWindow::onCoreLogLine(const QString& line)
 void MainWindow::onCoreError(const QString& message)
 {
     appendLog(QStringLiteral("Error: %1").arg(message));
-    QMessageBox::warning(this, tr("Core error"), message);
+    UiMessagePresenter::warning(this, tr("Core error"), message);
     updateStatusBar();
 }
 
@@ -2321,8 +2369,8 @@ QVector<QString> MainWindow::collectAllTestableProfileIds() const
 void MainWindow::startTestsForIds(const QVector<QString>& profileIds, TestMode mode)
 {
     if (profileIds.isEmpty()) {
-        QMessageBox::information(this, tr("Test"),
-                                 tr("Select at least one profile to test."));
+        UiMessagePresenter::information(
+            this, tr("Test"), tr("Select at least one profile to test."));
         return;
     }
 
@@ -2336,8 +2384,8 @@ void MainWindow::startTestsForIds(const QVector<QString>& profileIds, TestMode m
     }
 
     if (profiles.isEmpty()) {
-        QMessageBox::information(this, tr("Test"),
-                                 tr("No matching profiles found."));
+        UiMessagePresenter::information(
+            this, tr("Test"), tr("No matching profiles found."));
         return;
     }
 
@@ -2456,7 +2504,7 @@ void MainWindow::onAllTestsFinished()
 
 void MainWindow::onAbout()
 {
-    QMessageBox::about(this, tr("About Zarya"), BuildInfo::aboutText());
+    UiMessagePresenter::information(this, tr("About Zarya"), BuildInfo::aboutText());
 }
 
 bool MainWindow::chooseCoreBinary(CoreType coreType)

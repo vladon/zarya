@@ -38,15 +38,15 @@ unmigrated surface when it owns no visual styling or interaction.
      only for startup failures before toolkit initialization.
    - Progress: the shared button roles and synchronous message presenter are available, including
      long-message scrolling, keyboard handling, semantic text, and the pre-toolkit native
-     fallback. Share-link import is the first migrated workflow; multi-action recovery and update
-     prompts remain on the Qt presenter until their action models are migrated.
+     fallback. Share-link import, profile deletion, and kill-switch startup recovery use the
+     toolkit presenter and its multi-action model; update prompts remain on the Qt presenter.
 3. **Main application shell**
    - Migrate profile actions, filters, empty state, log controls, and operational feedback.
    - Keep `QTableView` and the log text engine behind toolkit-styled hosts until their replacement
      meets the boundary requirements.
    - Progress: profile actions, profile and log filter selectors, the profile-list empty state,
-     and the log toolbar label and actions use `lib_ui`; the log text engine remains a Qt
-     primitive under the documented boundary.
+     log toolbar actions, and single- and multi-action operational feedback use `lib_ui`; the log
+     text engine remains a Qt primitive under the documented boundary.
 4. **Primary workflows**
    - Migrate first-run setup, link import, profile editing, subscriptions, and Settings.
    - Put advanced settings behind explicit progressive disclosure.

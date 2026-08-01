@@ -1083,6 +1083,22 @@ sing-box: %3 (%4)</source>
         <translation>More…</translation>
     </message>
     <message>
+        <source>Continue</source>
+        <translation>Continue</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Delete</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Open</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>Import</translation>
+    </message>
+    <message>
         <source>Ready</source>
         <translation type="unfinished"></translation>
     </message>
