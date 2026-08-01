@@ -49,12 +49,6 @@
     "QRadioButton": 5,
     "QSpinBox": 1
   },
-  "src/ui/SingBoxConfigPreviewDialog.cpp": {
-    "QDialogButtonBox": 4,
-    "QLabel": 3,
-    "QMessageBox": 7,
-    "QPushButton": 7
-  },
   "src/ui/desktopapp/UiMessagePresenter.cpp": {
     "QMessageBox": 21,
     "QPushButton": 1
