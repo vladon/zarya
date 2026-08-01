@@ -93,6 +93,9 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      empty states, and feedback; the DNS server table remains a Qt model/view boundary.
    - Core Manager actions, status text, and warnings use the toolkit layer; the core inventory
      table and bounded log text engine remain Qt boundaries.
+   - Geo Data Manager source selection, options, actions, status text, and warnings use the
+     toolkit layer; the file inventory table, bounded log text engine, and native folder opening
+     remain Qt/platform boundaries.
 6. **Experimental and update surfaces**
    - Migrate gated sing-box TUN, helper, kill-switch, and updater UI without changing
      `FeatureGate` behavior.

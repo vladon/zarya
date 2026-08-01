@@ -70,20 +70,6 @@
     "QListWidget": 2,
     "QPushButton": 1
   },
-  "src/ui/GeoDataManagerDialog.cpp": {
-    "QCheckBox": 5,
-    "QComboBox": 3,
-    "QGroupBox": 2,
-    "QLabel": 5,
-    "QMessageBox": 2,
-    "QPushButton": 17
-  },
-  "src/ui/GeoDataManagerDialog.h": {
-    "QCheckBox": 3,
-    "QComboBox": 2,
-    "QLabel": 3,
-    "QPushButton": 5
-  },
   "src/ui/MainWindow.cpp": {
     "QPushButton": 2,
     "QScrollArea": 1
