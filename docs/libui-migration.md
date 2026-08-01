@@ -89,6 +89,8 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      text area and action.
    - DNS Manager actions, empty state, validation confirmations, and feedback use the toolkit
      layer; its profile table remains a Qt model/view boundary.
+   - DNS profile and server editors use toolkit tabs, forms, selectors, fields, checks, actions,
+     empty states, and feedback; the DNS server table remains a Qt model/view boundary.
 6. **Experimental and update surfaces**
    - Migrate gated sing-box TUN, helper, kill-switch, and updater UI without changing
      `FeatureGate` behavior.

@@ -635,6 +635,22 @@ Save anyway?</source>
         <source>DNS JSON Preview</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>No DNS servers yet. Add a server to this profile.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>DnsServerEditorDialog</name>
@@ -676,6 +692,22 @@ Save anyway?</source>
     </message>
     <message>
         <source>Note</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One domain per line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One expected IP per line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

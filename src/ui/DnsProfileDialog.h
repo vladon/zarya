@@ -4,14 +4,16 @@
 
 #include <QDialog>
 
-class QCheckBox;
-class QComboBox;
-class QLineEdit;
-class QPlainTextEdit;
 class QTableWidget;
-class QTabWidget;
+class QStackedLayout;
 
 namespace zarya {
+
+class ZaryaBodyText;
+class ZaryaCheckBox;
+class ZaryaSelector;
+class ZaryaTextArea;
+class ZaryaTextField;
 
 class DnsProfileDialog : public QDialog {
     Q_OBJECT
@@ -21,7 +23,7 @@ public:
 
     DnsProfile profile() const;
 
-private slots:
+private Q_SLOTS:
     void onAddServer();
     void onEditServer();
     void onDeleteServer();
@@ -38,15 +40,17 @@ private:
     DnsProfile m_profile;
     bool m_readOnly = false;
 
-    QLineEdit* m_nameEdit = nullptr;
-    QComboBox* m_modeCombo = nullptr;
-    QCheckBox* m_enabledCheck = nullptr;
-    QComboBox* m_queryStrategyCombo = nullptr;
+    ZaryaTextField* m_nameEdit = nullptr;
+    ZaryaSelector* m_modeCombo = nullptr;
+    ZaryaCheckBox* m_enabledCheck = nullptr;
+    ZaryaSelector* m_queryStrategyCombo = nullptr;
     QTableWidget* m_serversTable = nullptr;
-    QPlainTextEdit* m_hostsEdit = nullptr;
-    QCheckBox* m_disableCacheCheck = nullptr;
-    QCheckBox* m_disableFallbackCheck = nullptr;
-    QCheckBox* m_disableFallbackIfMatchCheck = nullptr;
+    ZaryaBodyText* m_emptyServers = nullptr;
+    ZaryaTextArea* m_hostsEdit = nullptr;
+    ZaryaCheckBox* m_disableCacheCheck = nullptr;
+    ZaryaCheckBox* m_disableFallbackCheck = nullptr;
+    ZaryaCheckBox* m_disableFallbackIfMatchCheck = nullptr;
+    QStackedLayout* m_pageStack = nullptr;
 };
 
 } // namespace zarya

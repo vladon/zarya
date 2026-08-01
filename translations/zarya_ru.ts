@@ -500,6 +500,18 @@ Save anyway?</source>
     <message>
         <source>DNS JSON Preview</source>
         <translation>Предпросмотр JSON DNS</translation></message>
+    <message>
+        <source>No DNS servers yet. Add a server to this profile.</source>
+        <translation>В этом профиле пока нет DNS-серверов. Добавьте сервер.</translation></message>
+    <message>
+        <source>Save</source>
+        <translation>Сохранить</translation></message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation></message>
+    <message>
+        <source>Close</source>
+        <translation>Закрыть</translation></message>
 </context>
 <context>
     <name>DnsServerEditorDialog</name>
@@ -533,6 +545,18 @@ Save anyway?</source>
     <message>
         <source>Note</source>
         <translation>Примечание</translation></message>
+    <message>
+        <source>One domain per line</source>
+        <translation>Один домен на строку</translation></message>
+    <message>
+        <source>One expected IP per line</source>
+        <translation>Один ожидаемый IP на строку</translation></message>
+    <message>
+        <source>OK</source>
+        <translation>ОК</translation></message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation></message>
 </context>
 <context>
     <name>FirstRunWizard</name>

@@ -1,51 +1,35 @@
 #include "ui/DnsProfileDialog.h"
 
+#include "base/algorithm.h"
+#include "base/basic_types.h"
+#include "base/object_ptr.h"
 #include "dns/DnsValidator.h"
 #include "dns/XrayDnsGenerator.h"
 #include "ui/DnsServerEditorDialog.h"
 #include "ui/RoutingJsonPreviewDialog.h"
+#include "ui/desktopapp/UiMessagePresenter.h"
+#include "ui/desktopapp/ZaryaFormControls.h"
+#include "ui/desktopapp/ZaryaSelector.h"
 
-#include <QCheckBox>
-#include <QComboBox>
-#include <QDialogButtonBox>
-#include <QFormLayout>
-#include <QGroupBox>
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QJsonDocument>
-#include <QLabel>
-#include <QLineEdit>
-#include <QMessageBox>
-#include <QPlainTextEdit>
-#include <QPushButton>
-#include <QTabWidget>
+#include <QStackedLayout>
 #include <QTableWidget>
 #include <QVBoxLayout>
+
+#include "ui/qt_object_factory.h"
+#include "ui/widgets/pill_tabs.h"
+
+#include <rpl/rpl.h>
 
 namespace zarya {
 
 namespace {
 
-QStringList queryStrategyOptions()
+QString enumKey(int value)
 {
-    return {dnsQueryStrategyDisplayString(DnsQueryStrategy::UseSystemDefault),
-            dnsQueryStrategyDisplayString(DnsQueryStrategy::UseIP),
-            dnsQueryStrategyDisplayString(DnsQueryStrategy::UseIPv4),
-            dnsQueryStrategyDisplayString(DnsQueryStrategy::UseIPv6)};
-}
-
-DnsQueryStrategy queryStrategyFromDisplay(const QString& display)
-{
-    if (display == dnsQueryStrategyDisplayString(DnsQueryStrategy::UseIP)) {
-        return DnsQueryStrategy::UseIP;
-    }
-    if (display == dnsQueryStrategyDisplayString(DnsQueryStrategy::UseIPv4)) {
-        return DnsQueryStrategy::UseIPv4;
-    }
-    if (display == dnsQueryStrategyDisplayString(DnsQueryStrategy::UseIPv6)) {
-        return DnsQueryStrategy::UseIPv6;
-    }
-    return DnsQueryStrategy::UseSystemDefault;
+    return QString::number(value);
 }
 
 } // namespace
@@ -55,45 +39,59 @@ DnsProfileDialog::DnsProfileDialog(const DnsProfile& profile, bool readOnly, QWi
     , m_profile(profile)
     , m_readOnly(readOnly)
 {
-    setWindowTitle(readOnly ? tr("View DNS Profile")
-                            : tr("Edit DNS Profile"));
+    const bool locked = readOnly || profile.isBuiltIn;
+    m_readOnly = locked;
+    setWindowTitle(locked ? tr("View DNS Profile")
+                          : tr("Edit DNS Profile"));
     resize(820, 560);
 
-    auto* tabs = new QTabWidget(this);
+    auto* tabs = Ui::CreateChild<Ui::PillTabs>(
+        this,
+        std::vector<QString>{tr("General"), tr("Servers"), tr("Hosts"), tr("Advanced")});
+    auto* pageHost = new QWidget(this);
+    m_pageStack = new QStackedLayout(pageHost);
+    m_pageStack->setContentsMargins(0, 0, 0, 0);
 
-    auto* generalTab = new QWidget(this);
-    m_nameEdit = new QLineEdit(profile.name, generalTab);
-    m_enabledCheck = new QCheckBox(tr("Enabled"), generalTab);
-    m_enabledCheck->setChecked(profile.enabled);
+    auto* generalTab = new QWidget(pageHost);
+    m_nameEdit = new ZaryaTextField(tr("Name"), generalTab);
+    m_nameEdit->setText(profile.name);
+    m_enabledCheck = new ZaryaCheckBox(tr("Enabled"), generalTab, profile.enabled);
 
-    m_modeCombo = new QComboBox(generalTab);
-    m_modeCombo->addItem(dnsProfileModeDisplayString(DnsProfileMode::System),
-                         static_cast<int>(DnsProfileMode::System));
-    m_modeCombo->addItem(dnsProfileModeDisplayString(DnsProfileMode::SecureRemote),
-                         static_cast<int>(DnsProfileMode::SecureRemote));
-    m_modeCombo->addItem(
-        dnsProfileModeDisplayString(DnsProfileMode::ChinaDirectGlobalRemote),
-        static_cast<int>(DnsProfileMode::ChinaDirectGlobalRemote));
-    m_modeCombo->addItem(dnsProfileModeDisplayString(DnsProfileMode::Custom),
-                         static_cast<int>(DnsProfileMode::Custom));
-    m_modeCombo->setCurrentIndex(m_modeCombo->findData(static_cast<int>(profile.mode)));
+    m_modeCombo = new ZaryaSelector(generalTab);
+    m_modeCombo->setItems({
+        {enumKey(static_cast<int>(DnsProfileMode::System)),
+         dnsProfileModeDisplayString(DnsProfileMode::System)},
+        {enumKey(static_cast<int>(DnsProfileMode::SecureRemote)),
+         dnsProfileModeDisplayString(DnsProfileMode::SecureRemote)},
+        {enumKey(static_cast<int>(DnsProfileMode::ChinaDirectGlobalRemote)),
+         dnsProfileModeDisplayString(DnsProfileMode::ChinaDirectGlobalRemote)},
+        {enumKey(static_cast<int>(DnsProfileMode::Custom)),
+         dnsProfileModeDisplayString(DnsProfileMode::Custom)},
+    }, enumKey(static_cast<int>(profile.mode)));
 
-    m_queryStrategyCombo = new QComboBox(generalTab);
-    for (const QString& option : queryStrategyOptions()) {
-        m_queryStrategyCombo->addItem(option);
-    }
-    const int strategyIndex =
-        m_queryStrategyCombo->findText(dnsQueryStrategyDisplayString(profile.queryStrategy));
-    m_queryStrategyCombo->setCurrentIndex(strategyIndex >= 0 ? strategyIndex : 0);
+    m_queryStrategyCombo = new ZaryaSelector(generalTab);
+    m_queryStrategyCombo->setItems({
+        {enumKey(static_cast<int>(DnsQueryStrategy::UseSystemDefault)),
+         dnsQueryStrategyDisplayString(DnsQueryStrategy::UseSystemDefault)},
+        {enumKey(static_cast<int>(DnsQueryStrategy::UseIP)),
+         dnsQueryStrategyDisplayString(DnsQueryStrategy::UseIP)},
+        {enumKey(static_cast<int>(DnsQueryStrategy::UseIPv4)),
+         dnsQueryStrategyDisplayString(DnsQueryStrategy::UseIPv4)},
+        {enumKey(static_cast<int>(DnsQueryStrategy::UseIPv6)),
+         dnsQueryStrategyDisplayString(DnsQueryStrategy::UseIPv6)},
+    }, enumKey(static_cast<int>(profile.queryStrategy)));
 
-    auto* generalForm = new QFormLayout(generalTab);
-    generalForm->addRow(tr("Name"), m_nameEdit);
-    generalForm->addRow(tr("Mode"), m_modeCombo);
-    generalForm->addRow(QString(), m_enabledCheck);
-    generalForm->addRow(tr("Query strategy"), m_queryStrategyCombo);
-    tabs->addTab(generalTab, tr("General"));
+    auto* generalLayout = new QVBoxLayout(generalTab);
+    generalLayout->setContentsMargins(8, 8, 8, 8);
+    generalLayout->setSpacing(10);
+    generalLayout->addWidget(new ZaryaFormRow(tr("Name"), m_nameEdit, generalTab));
+    generalLayout->addWidget(new ZaryaFormRow(tr("Mode"), m_modeCombo, generalTab));
+    generalLayout->addWidget(
+        new ZaryaFormRow(tr("Query strategy"), m_queryStrategyCombo, generalTab));
+    generalLayout->addWidget(m_enabledCheck);
+    generalLayout->addStretch();
 
-    auto* serversTab = new QWidget(this);
+    auto* serversTab = new QWidget(pageHost);
     m_serversTable = new QTableWidget(serversTab);
     m_serversTable->setColumnCount(6);
     m_serversTable->setHorizontalHeaderLabels(
@@ -103,18 +101,16 @@ DnsProfileDialog::DnsProfileDialog(const DnsProfile& profile, bool readOnly, QWi
     m_serversTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_serversTable->setSelectionMode(QAbstractItemView::SingleSelection);
     m_serversTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    refreshServersTable();
-
-    auto* addServerButton = new QPushButton(tr("Add Server"), serversTab);
-    auto* editServerButton = new QPushButton(tr("Edit Server"), serversTab);
-    auto* deleteServerButton = new QPushButton(tr("Delete Server"), serversTab);
-    auto* moveUpButton = new QPushButton(tr("Move Up"), serversTab);
-    auto* moveDownButton = new QPushButton(tr("Move Down"), serversTab);
-    connect(addServerButton, &QPushButton::clicked, this, &DnsProfileDialog::onAddServer);
-    connect(editServerButton, &QPushButton::clicked, this, &DnsProfileDialog::onEditServer);
-    connect(deleteServerButton, &QPushButton::clicked, this, &DnsProfileDialog::onDeleteServer);
-    connect(moveUpButton, &QPushButton::clicked, this, &DnsProfileDialog::onMoveUp);
-    connect(moveDownButton, &QPushButton::clicked, this, &DnsProfileDialog::onMoveDown);
+    auto* addServerButton = new ZaryaActionButton(tr("Add Server"), serversTab);
+    auto* editServerButton = new ZaryaActionButton(tr("Edit Server"), serversTab);
+    auto* deleteServerButton = new ZaryaActionButton(tr("Delete Server"), serversTab);
+    auto* moveUpButton = new ZaryaActionButton(tr("Move Up"), serversTab);
+    auto* moveDownButton = new ZaryaActionButton(tr("Move Down"), serversTab);
+    connect(addServerButton, &ZaryaActionButton::clicked, this, &DnsProfileDialog::onAddServer);
+    connect(editServerButton, &ZaryaActionButton::clicked, this, &DnsProfileDialog::onEditServer);
+    connect(deleteServerButton, &ZaryaActionButton::clicked, this, &DnsProfileDialog::onDeleteServer);
+    connect(moveUpButton, &ZaryaActionButton::clicked, this, &DnsProfileDialog::onMoveUp);
+    connect(moveDownButton, &ZaryaActionButton::clicked, this, &DnsProfileDialog::onMoveDown);
 
     auto* serverButtons = new QHBoxLayout;
     serverButtons->addWidget(addServerButton);
@@ -125,90 +121,102 @@ DnsProfileDialog::DnsProfileDialog(const DnsProfile& profile, bool readOnly, QWi
     serverButtons->addStretch();
 
     auto* serversLayout = new QVBoxLayout(serversTab);
+    serversLayout->setContentsMargins(8, 8, 8, 8);
+    serversLayout->setSpacing(10);
+    m_emptyServers = new ZaryaBodyText(
+        tr("No DNS servers yet. Add a server to this profile."), serversTab);
+    serversLayout->addWidget(m_emptyServers);
     serversLayout->addWidget(m_serversTable);
     serversLayout->addLayout(serverButtons);
-    tabs->addTab(serversTab, tr("Servers"));
 
-    auto* hostsTab = new QWidget(this);
-    m_hostsEdit = new QPlainTextEdit(hostsTab);
-    m_hostsEdit->setPlainText(hostsToText(profile.hosts));
+    auto* hostsTab = new QWidget(pageHost);
+    m_hostsEdit = new ZaryaTextArea(
+        tr("One mapping per line: domain=ip or domain:example.com=1.2.3.4"), hostsTab, 300);
+    m_hostsEdit->setText(hostsToText(profile.hosts));
     auto* hostsLayout = new QVBoxLayout(hostsTab);
-    hostsLayout->addWidget(new QLabel(tr("One mapping per line: domain=ip or "
-                                                      "domain:example.com=1.2.3.4"),
-                                        hostsTab));
+    hostsLayout->setContentsMargins(8, 8, 8, 8);
+    hostsLayout->addWidget(new ZaryaBodyText(
+        tr("One mapping per line: domain=ip or domain:example.com=1.2.3.4"), hostsTab));
     hostsLayout->addWidget(m_hostsEdit);
-    tabs->addTab(hostsTab, tr("Hosts"));
 
-    auto* advancedTab = new QWidget(this);
-    m_disableCacheCheck = new QCheckBox(tr("Disable DNS cache"), advancedTab);
-    m_disableCacheCheck->setChecked(profile.disableCache);
-    m_disableFallbackCheck = new QCheckBox(tr("Disable fallback"), advancedTab);
-    m_disableFallbackCheck->setChecked(profile.disableFallback);
-    m_disableFallbackIfMatchCheck =
-        new QCheckBox(tr("Disable fallback if match"), advancedTab);
-    m_disableFallbackIfMatchCheck->setChecked(profile.disableFallbackIfMatch);
+    auto* advancedTab = new QWidget(pageHost);
+    m_disableCacheCheck = new ZaryaCheckBox(
+        tr("Disable DNS cache"), advancedTab, profile.disableCache);
+    m_disableFallbackCheck = new ZaryaCheckBox(
+        tr("Disable fallback"), advancedTab, profile.disableFallback);
+    m_disableFallbackIfMatchCheck = new ZaryaCheckBox(
+        tr("Disable fallback if match"), advancedTab, profile.disableFallbackIfMatch);
     auto* advancedLayout = new QVBoxLayout(advancedTab);
+    advancedLayout->setContentsMargins(8, 8, 8, 8);
+    advancedLayout->setSpacing(10);
     advancedLayout->addWidget(m_disableCacheCheck);
     advancedLayout->addWidget(m_disableFallbackCheck);
     advancedLayout->addWidget(m_disableFallbackIfMatchCheck);
     advancedLayout->addStretch();
-    tabs->addTab(advancedTab, tr("Advanced"));
+    m_pageStack->addWidget(generalTab);
+    m_pageStack->addWidget(serversTab);
+    m_pageStack->addWidget(hostsTab);
+    m_pageStack->addWidget(advancedTab);
+    tabs->activeIndexChanges() | rpl::on_next(
+        [this](int index) { m_pageStack->setCurrentIndex(index); }, tabs->lifetime());
 
-    auto* validateButton = new QPushButton(tr("Validate"), this);
-    auto* previewButton = new QPushButton(tr("Preview DNS JSON"), this);
-    connect(validateButton, &QPushButton::clicked, this, &DnsProfileDialog::onValidate);
-    connect(previewButton, &QPushButton::clicked, this, &DnsProfileDialog::onPreviewDnsJson);
+    auto* validateButton = new ZaryaActionButton(tr("Validate"), this);
+    auto* previewButton = new ZaryaActionButton(tr("Preview DNS JSON"), this);
+    connect(validateButton, &ZaryaActionButton::clicked, this, &DnsProfileDialog::onValidate);
+    connect(previewButton, &ZaryaActionButton::clicked, this, &DnsProfileDialog::onPreviewDnsJson);
 
-    auto* buttons = new QDialogButtonBox(
-        readOnly ? QDialogButtonBox::Close
-                 : (QDialogButtonBox::Save | QDialogButtonBox::Cancel),
-        this);
-    if (!readOnly) {
-        connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
+    QWidget* actions = nullptr;
+    if (locked) {
+        auto* closeButton = new ZaryaActionButton(tr("Close"), this);
+        connect(closeButton, &ZaryaActionButton::clicked, this, &QDialog::reject);
+        actions = closeButton;
     } else {
-        connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
+        auto* actionRow = new ZaryaDialogActionRow(tr("Save"), tr("Cancel"), this);
+        connect(actionRow, &ZaryaDialogActionRow::accepted, this, &QDialog::accept);
+        connect(actionRow, &ZaryaDialogActionRow::rejected, this, &QDialog::reject);
+        actions = actionRow;
     }
-    connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
     auto* footer = new QHBoxLayout;
     footer->addWidget(validateButton);
     footer->addWidget(previewButton);
     footer->addStretch();
-    footer->addWidget(buttons);
+    footer->addWidget(actions);
 
     auto* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(24, 24, 24, 24);
+    layout->setSpacing(12);
     layout->addWidget(tabs);
+    layout->addWidget(pageHost, 1);
     layout->addLayout(footer);
 
-    if (readOnly || profile.isBuiltIn) {
-        m_nameEdit->setReadOnly(profile.isBuiltIn);
-        m_modeCombo->setEnabled(!profile.isBuiltIn);
-        m_enabledCheck->setEnabled(!profile.isBuiltIn);
-        m_queryStrategyCombo->setEnabled(!profile.isBuiltIn);
-        addServerButton->setEnabled(!profile.isBuiltIn);
-        editServerButton->setEnabled(!profile.isBuiltIn);
-        deleteServerButton->setEnabled(!profile.isBuiltIn);
-        moveUpButton->setEnabled(!profile.isBuiltIn);
-        moveDownButton->setEnabled(!profile.isBuiltIn);
-        m_hostsEdit->setReadOnly(profile.isBuiltIn);
-        m_disableCacheCheck->setEnabled(!profile.isBuiltIn);
-        m_disableFallbackCheck->setEnabled(!profile.isBuiltIn);
-        m_disableFallbackIfMatchCheck->setEnabled(!profile.isBuiltIn);
-        if (profile.isBuiltIn) {
-            buttons->button(QDialogButtonBox::Save)->setEnabled(false);
-        }
+    if (locked) {
+        m_nameEdit->setReadOnly(true);
+        m_modeCombo->setEnabled(false);
+        m_enabledCheck->setEnabled(false);
+        m_queryStrategyCombo->setEnabled(false);
+        addServerButton->setEnabled(false);
+        editServerButton->setEnabled(false);
+        deleteServerButton->setEnabled(false);
+        moveUpButton->setEnabled(false);
+        moveDownButton->setEnabled(false);
+        m_hostsEdit->setReadOnly(true);
+        m_disableCacheCheck->setEnabled(false);
+        m_disableFallbackCheck->setEnabled(false);
+        m_disableFallbackIfMatchCheck->setEnabled(false);
     }
+    refreshServersTable();
 }
 
 DnsProfile DnsProfileDialog::profile() const
 {
     DnsProfile result = m_profile;
     result.name = m_nameEdit->text().trimmed();
-    result.mode = static_cast<DnsProfileMode>(m_modeCombo->currentData().toInt());
+    result.mode = static_cast<DnsProfileMode>(m_modeCombo->currentKey().toInt());
     result.enabled = m_enabledCheck->isChecked();
-    result.queryStrategy =
-        queryStrategyFromDisplay(m_queryStrategyCombo->currentText());
-    result.hosts = parseHostsText(m_hostsEdit->toPlainText());
+    result.queryStrategy = static_cast<DnsQueryStrategy>(
+        m_queryStrategyCombo->currentKey().toInt());
+    result.hosts = parseHostsText(m_hostsEdit->text());
     result.disableCache = m_disableCacheCheck->isChecked();
     result.disableFallback = m_disableFallbackCheck->isChecked();
     result.disableFallbackIfMatch = m_disableFallbackIfMatchCheck->isChecked();
@@ -218,6 +226,8 @@ DnsProfile DnsProfileDialog::profile() const
 void DnsProfileDialog::refreshServersTable()
 {
     m_serversTable->setRowCount(m_profile.servers.size());
+    m_emptyServers->setVisible(m_profile.servers.isEmpty());
+    m_serversTable->setVisible(!m_profile.servers.isEmpty());
     for (int row = 0; row < m_profile.servers.size(); ++row) {
         const DnsServer& server = m_profile.servers.at(row);
         m_serversTable->setItem(row, 0, new QTableWidgetItem(server.enabled ? tr("Yes")
@@ -293,11 +303,12 @@ void DnsProfileDialog::onValidate()
     const DnsProfile current = profile();
     const QStringList warnings = DnsValidator::warnings(current);
     if (warnings.isEmpty()) {
-        QMessageBox::information(this, tr("DNS validation"),
-                                 tr("No validation warnings."));
+        UiMessagePresenter::information(
+            this, tr("DNS validation"), tr("No validation warnings."));
         return;
     }
-    QMessageBox::warning(this, tr("DNS validation"), warnings.join(QStringLiteral("\n")));
+    UiMessagePresenter::warning(
+        this, tr("DNS validation"), warnings.join(QStringLiteral("\n")));
 }
 
 void DnsProfileDialog::onPreviewDnsJson()
