@@ -79,10 +79,6 @@
     "QListWidget": 2,
     "QPushButton": 1
   },
-  "src/ui/DnsManagerDialog.cpp": {
-    "QMessageBox": 7,
-    "QPushButton": 15
-  },
   "src/ui/DnsProfileDialog.cpp": {
     "QCheckBox": 5,
     "QComboBox": 3,

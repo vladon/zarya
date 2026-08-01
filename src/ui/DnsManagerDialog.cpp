@@ -1,15 +1,17 @@
 #include "ui/DnsManagerDialog.h"
 
+#include "base/algorithm.h"
 #include "dns/DnsValidator.h"
 #include "dns/XrayDnsGenerator.h"
 #include "ui/DnsProfileDialog.h"
 #include "ui/RoutingJsonPreviewDialog.h"
+#include "ui/desktopapp/UiMessagePresenter.h"
+#include "ui/desktopapp/ZaryaControls.h"
+#include "ui/desktopapp/ZaryaFormControls.h"
 
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QJsonDocument>
-#include <QMessageBox>
-#include <QPushButton>
 #include <QTableWidget>
 #include <QVBoxLayout>
 
@@ -37,23 +39,22 @@ DnsManagerDialog::DnsManagerDialog(DnsManager& manager,
     m_table->setSelectionMode(QAbstractItemView::SingleSelection);
     m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_table->setAlternatingRowColors(true);
-    refreshTable();
+    auto* newButton = new ZaryaActionButton(tr("New"), this, ZaryaButtonRole::Primary);
+    auto* editButton = new ZaryaActionButton(tr("Edit"), this);
+    auto* duplicateButton = new ZaryaActionButton(tr("Duplicate"), this);
+    auto* deleteButton = new ZaryaActionButton(
+        tr("Delete"), this, ZaryaButtonRole::Destructive);
+    auto* setActiveButton = new ZaryaActionButton(tr("Set Active"), this);
+    auto* previewButton = new ZaryaActionButton(tr("Preview JSON"), this);
+    auto* closeButton = new ZaryaActionButton(tr("Close"), this);
 
-    auto* newButton = new QPushButton(tr("New"), this);
-    auto* editButton = new QPushButton(tr("Edit"), this);
-    auto* duplicateButton = new QPushButton(tr("Duplicate"), this);
-    auto* deleteButton = new QPushButton(tr("Delete"), this);
-    auto* setActiveButton = new QPushButton(tr("Set Active"), this);
-    auto* previewButton = new QPushButton(tr("Preview JSON"), this);
-    auto* closeButton = new QPushButton(tr("Close"), this);
-
-    connect(newButton, &QPushButton::clicked, this, &DnsManagerDialog::onNew);
-    connect(editButton, &QPushButton::clicked, this, &DnsManagerDialog::onEdit);
-    connect(duplicateButton, &QPushButton::clicked, this, &DnsManagerDialog::onDuplicate);
-    connect(deleteButton, &QPushButton::clicked, this, &DnsManagerDialog::onDelete);
-    connect(setActiveButton, &QPushButton::clicked, this, &DnsManagerDialog::onSetActive);
-    connect(previewButton, &QPushButton::clicked, this, &DnsManagerDialog::onPreview);
-    connect(closeButton, &QPushButton::clicked, this, &QDialog::accept);
+    connect(newButton, &ZaryaActionButton::clicked, this, &DnsManagerDialog::onNew);
+    connect(editButton, &ZaryaActionButton::clicked, this, &DnsManagerDialog::onEdit);
+    connect(duplicateButton, &ZaryaActionButton::clicked, this, &DnsManagerDialog::onDuplicate);
+    connect(deleteButton, &ZaryaActionButton::clicked, this, &DnsManagerDialog::onDelete);
+    connect(setActiveButton, &ZaryaActionButton::clicked, this, &DnsManagerDialog::onSetActive);
+    connect(previewButton, &ZaryaActionButton::clicked, this, &DnsManagerDialog::onPreview);
+    connect(closeButton, &ZaryaActionButton::clicked, this, &QDialog::accept);
 
     auto* buttons = new QHBoxLayout;
     buttons->addWidget(newButton);
@@ -66,15 +67,24 @@ DnsManagerDialog::DnsManagerDialog(DnsManager& manager,
     buttons->addStretch();
     buttons->addWidget(closeButton);
 
+    m_emptyState = new ZaryaBodyText(
+        tr("No DNS profiles are available. Create one to get started."), this);
+
     auto* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(24, 24, 24, 24);
+    layout->setSpacing(12);
+    layout->addWidget(m_emptyState);
     layout->addWidget(m_table);
     layout->addLayout(buttons);
+    refreshTable();
 }
 
 void DnsManagerDialog::refreshTable()
 {
     const QVector<DnsProfile> profiles = m_manager.profiles();
     m_table->setRowCount(profiles.size());
+    m_emptyState->setVisible(profiles.isEmpty());
+    m_table->setVisible(!profiles.isEmpty());
     const QString activeId = m_manager.activeProfileId();
 
     const XrayDnsGenerator generator;
@@ -147,10 +157,11 @@ void DnsManagerDialog::onNew()
     }
     const QStringList warnings = DnsValidator::warnings(dialog.profile());
     if (!warnings.isEmpty()) {
-        const auto answer = QMessageBox::question(
-            this, tr("DNS validation warnings"),
-            tr("%1\n\nSave anyway?").arg(warnings.join(QStringLiteral("\n"))));
-        if (answer != QMessageBox::Yes) {
+        if (!UiMessagePresenter::confirm(
+                this,
+                tr("DNS validation warnings"),
+                tr("%1\n\nSave anyway?").arg(warnings.join(QStringLiteral("\n"))),
+                tr("Save anyway"))) {
             return;
         }
     }
@@ -162,6 +173,8 @@ void DnsManagerDialog::onEdit()
 {
     const DnsProfile selected = selectedProfile();
     if (selected.id.isEmpty()) {
+        UiMessagePresenter::information(
+            this, tr("DNS Profiles"), tr("Select a DNS profile."));
         return;
     }
     DnsProfileDialog dialog(selected, selected.isBuiltIn, this);
@@ -170,10 +183,11 @@ void DnsManagerDialog::onEdit()
     }
     const QStringList warnings = DnsValidator::warnings(dialog.profile());
     if (!warnings.isEmpty()) {
-        const auto answer = QMessageBox::question(
-            this, tr("DNS validation warnings"),
-            tr("%1\n\nSave anyway?").arg(warnings.join(QStringLiteral("\n"))));
-        if (answer != QMessageBox::Yes) {
+        if (!UiMessagePresenter::confirm(
+                this,
+                tr("DNS validation warnings"),
+                tr("%1\n\nSave anyway?").arg(warnings.join(QStringLiteral("\n"))),
+                tr("Save anyway"))) {
             return;
         }
     }
@@ -190,7 +204,7 @@ void DnsManagerDialog::onDuplicate()
     QString error;
     const DnsProfile copy = m_manager.duplicateProfile(selected.id, &error);
     if (copy.id.isEmpty()) {
-        QMessageBox::warning(this, tr("Duplicate"), error);
+        UiMessagePresenter::warning(this, tr("Duplicate"), error);
         return;
     }
     refreshTable();
@@ -202,9 +216,17 @@ void DnsManagerDialog::onDelete()
     if (selected.id.isEmpty()) {
         return;
     }
+    if (!UiMessagePresenter::confirm(
+            this,
+            tr("Delete DNS profile"),
+            tr("Delete DNS profile \"%1\"?").arg(selected.name),
+            tr("Delete"),
+            true)) {
+        return;
+    }
     QString error;
     if (!m_manager.removeProfile(selected.id, &error)) {
-        QMessageBox::warning(this, tr("Delete"), error);
+        UiMessagePresenter::warning(this, tr("Delete"), error);
         return;
     }
     refreshTable();

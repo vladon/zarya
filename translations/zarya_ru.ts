@@ -378,6 +378,12 @@ Save anyway?</source>
 
 Всё равно сохранить?</translation></message>
     <message>
+        <source>Save anyway</source>
+        <translation>Всё равно сохранить</translation></message>
+    <message>
+        <source>No DNS profiles are available. Create one to get started.</source>
+        <translation>Нет доступных профилей DNS. Создайте профиль, чтобы начать.</translation></message>
+    <message>
         <source>DNS profile changed: %1</source>
         <translation>Профиль DNS изменён: %1</translation></message>
     <message>
@@ -386,6 +392,15 @@ Save anyway?</source>
     <message>
         <source>DNS JSON Preview</source>
         <translation>Предпросмотр JSON DNS</translation></message>
+    <message>
+        <source>Select a DNS profile.</source>
+        <translation>Выберите профиль DNS.</translation></message>
+    <message>
+        <source>Delete DNS profile</source>
+        <translation>Удаление профиля DNS</translation></message>
+    <message>
+        <source>Delete DNS profile &quot;%1&quot;?</source>
+        <translation>Удалить профиль DNS «%1»?</translation></message>
 </context>
 <context>
     <name>DnsProfileDialog</name>
