@@ -2988,6 +2988,65 @@ Core: %5</source>
     </message>
 </context>
 <context>
+    <name>SingBoxConfigPreviewDialog</name>
+    <message>
+        <source>sing-box TUN config preview</source>
+        <translation>sing-box TUN config preview</translation>
+    </message>
+    <message>
+        <source>Warnings</source>
+        <translation>Warnings</translation>
+    </message>
+    <message>
+        <source>(none)</source>
+        <translation>(none)</translation>
+    </message>
+    <message>
+        <source>Generated JSON</source>
+        <translation>Generated JSON</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Copy</translation>
+    </message>
+    <message>
+        <source>Save As…</source>
+        <translation>Save As…</translation>
+    </message>
+    <message>
+        <source>Run sing-box check</source>
+        <translation>Run sing-box check</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Close</translation>
+    </message>
+    <message>
+        <source>Save sing-box config</source>
+        <translation>Save sing-box config</translation>
+    </message>
+    <message>
+        <source>JSON (*.json);;All files (*.*)</source>
+        <translation>JSON (*.json);;All files (*.*)</translation>
+    </message>
+    <message>
+        <source>Save failed</source>
+        <translation>Save failed</translation>
+    </message>
+    <message>
+        <source>sing-box check</source>
+        <translation>sing-box check</translation>
+    </message>
+    <message>
+        <source>Core manager is not available.</source>
+        <translation>Core manager is not available.</translation>
+    </message>
+    <message>
+        <source>sing-box check OK.</source>
+        <translation>sing-box check OK.</translation>
+    </message>
+</context>
+<context>
     <name>SubscriptionDialog</name>
     <message>
         <source>Subscription</source>

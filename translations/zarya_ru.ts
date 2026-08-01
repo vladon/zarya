@@ -2357,6 +2357,65 @@ DNS: %3
         <translation>Запуск</translation></message>
 </context>
 <context>
+    <name>SingBoxConfigPreviewDialog</name>
+    <message>
+        <source>sing-box TUN config preview</source>
+        <translation>Предпросмотр конфигурации sing-box TUN</translation>
+    </message>
+    <message>
+        <source>Warnings</source>
+        <translation>Предупреждения</translation>
+    </message>
+    <message>
+        <source>(none)</source>
+        <translation>(нет)</translation>
+    </message>
+    <message>
+        <source>Generated JSON</source>
+        <translation>Сформированный JSON</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Копировать</translation>
+    </message>
+    <message>
+        <source>Save As…</source>
+        <translation>Сохранить как…</translation>
+    </message>
+    <message>
+        <source>Run sing-box check</source>
+        <translation>Проверить через sing-box</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
+    <message>
+        <source>Save sing-box config</source>
+        <translation>Сохранить конфигурацию sing-box</translation>
+    </message>
+    <message>
+        <source>JSON (*.json);;All files (*.*)</source>
+        <translation>JSON (*.json);;Все файлы (*.*)</translation>
+    </message>
+    <message>
+        <source>Save failed</source>
+        <translation>Ошибка сохранения</translation>
+    </message>
+    <message>
+        <source>sing-box check</source>
+        <translation>Проверка sing-box</translation>
+    </message>
+    <message>
+        <source>Core manager is not available.</source>
+        <translation>Менеджер ядер недоступен.</translation>
+    </message>
+    <message>
+        <source>sing-box check OK.</source>
+        <translation>Проверка sing-box пройдена.</translation>
+    </message>
+</context>
+<context>
     <name>SubscriptionDialog</name>
     <message>
         <source>Subscription</source>
