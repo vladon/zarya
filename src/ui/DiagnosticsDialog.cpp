@@ -3,19 +3,14 @@
 #include "diagnostics/DiagnosticsCategory.h"
 #include "packaging/PublicBetaDocs.h"
 #include "ui/DiagnosticsPreviewDialog.h"
+#include "ui/desktopapp/UiMessagePresenter.h"
+#include "ui/desktopapp/ZaryaFormControls.h"
 
-#include <QCheckBox>
 #include <QDateTime>
 #include <QDesktopServices>
 #include <QFileDialog>
 #include <QFileInfo>
-#include <QGroupBox>
 #include <QHBoxLayout>
-#include <QLabel>
-#include <QLineEdit>
-#include <QMessageBox>
-#include <QPushButton>
-#include <QRadioButton>
 #include <QUrl>
 #include <QVBoxLayout>
 
@@ -31,44 +26,49 @@ DiagnosticsDialog::DiagnosticsDialog(DiagnosticsManager& manager,
     setWindowTitle(tr("Create Diagnostics Bundle"));
     resize(560, 420);
 
-    m_strictRedactionRadio = new QRadioButton(tr("Strict — redact credentials, hosts, URLs, usernames in paths"), this);
-    m_basicRedactionRadio = new QRadioButton(tr("Basic — redact credentials but keep hosts and ports"), this);
-    m_strictRedactionRadio->setChecked(true);
+    m_redactionGroup = new ZaryaRadioGroup(0, this);
+    m_redactionGroup->addOption(
+        0, tr("Strict — redact credentials, hosts, URLs, usernames in paths"));
+    m_redactionGroup->addOption(
+        1, tr("Basic — redact credentials but keep hosts and ports"));
+    auto* redactionSection = new ZaryaFormSection(tr("Redaction"), this);
+    redactionSection->addWidget(m_redactionGroup);
 
-    auto* redactionGroup = new QGroupBox(tr("Redaction"), this);
-    auto* redactionLayout = new QVBoxLayout(redactionGroup);
-    redactionLayout->addWidget(m_strictRedactionRadio);
-    redactionLayout->addWidget(m_basicRedactionRadio);
+    m_runValidationCheck = new ZaryaCheckBox(
+        tr("Run config validation while creating diagnostics"), this, true);
+    m_extendedLogsCheck = new ZaryaCheckBox(tr("Extended logs (5000 lines)"), this);
+    m_machinePathsCheck = new ZaryaCheckBox(
+        tr("Include machine paths (still redacted usernames in strict mode)"), this);
 
-    m_runValidationCheck = new QCheckBox(tr("Run config validation while creating diagnostics"), this);
-    m_runValidationCheck->setChecked(true);
-    m_extendedLogsCheck = new QCheckBox(tr("Extended logs (5000 lines)"), this);
-    m_machinePathsCheck = new QCheckBox(tr("Include machine paths (still redacted usernames in strict mode)"), this);
-
-    auto* includeGroup = new QGroupBox(tr("Include"), this);
-    auto* includeLayout = new QVBoxLayout(includeGroup);
-    includeLayout->addWidget(new QLabel(tr("App/platform, cores, runtime, helper, proxy, kill switch, routing/DNS, geo, rule-sets, validation, config previews, logs"), this));
-    includeLayout->addWidget(m_runValidationCheck);
-    includeLayout->addWidget(m_extendedLogsCheck);
-    includeLayout->addWidget(m_machinePathsCheck);
+    auto* includeSection = new ZaryaFormSection(tr("Include"), this);
+    includeSection->addWidget(new ZaryaBodyText(
+        tr("App/platform, cores, runtime, helper, proxy, kill switch, routing/DNS, geo, rule-sets, validation, config previews, logs"),
+        this));
+    includeSection->addWidget(m_runValidationCheck);
+    includeSection->addWidget(m_extendedLogsCheck);
+    includeSection->addWidget(m_machinePathsCheck);
 
     const QString defaultName =
         QStringLiteral("zarya-diagnostics-%1.zarya-diagnostics.zip")
             .arg(QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd-HHmmss")));
-    m_outputEdit = new QLineEdit(defaultName, this);
-    auto* browseButton = new QPushButton(tr("Browse…"), this);
-    connect(browseButton, &QPushButton::clicked, this, &DiagnosticsDialog::onBrowse);
+    m_outputEdit = new ZaryaTextField(tr("Output"), this);
+    m_outputEdit->setText(defaultName);
+    auto* browseButton = new ZaryaActionButton(tr("Browse…"), this);
+    connect(browseButton, &ZaryaActionButton::clicked,
+            this, &DiagnosticsDialog::onBrowse);
 
     auto* outputRow = new QHBoxLayout;
     outputRow->addWidget(m_outputEdit, 1);
     outputRow->addWidget(browseButton);
 
-    auto* previewButton = new QPushButton(tr("Preview"), this);
-    m_createButton = new QPushButton(tr("Create Bundle"), this);
-    auto* cancelButton = new QPushButton(tr("Cancel"), this);
-    connect(previewButton, &QPushButton::clicked, this, &DiagnosticsDialog::onPreview);
-    connect(m_createButton, &QPushButton::clicked, this, &DiagnosticsDialog::onCreate);
-    connect(cancelButton, &QPushButton::clicked, this, &QDialog::reject);
+    auto* previewButton = new ZaryaActionButton(tr("Preview"), this);
+    m_createButton = new ZaryaActionButton(tr("Create Bundle"), this);
+    auto* cancelButton = new ZaryaActionButton(tr("Cancel"), this);
+    connect(previewButton, &ZaryaActionButton::clicked,
+            this, &DiagnosticsDialog::onPreview);
+    connect(m_createButton, &ZaryaActionButton::clicked,
+            this, &DiagnosticsDialog::onCreate);
+    connect(cancelButton, &ZaryaActionButton::clicked, this, &QDialog::reject);
 
     auto* buttons = new QHBoxLayout;
     buttons->addWidget(previewButton);
@@ -77,9 +77,11 @@ DiagnosticsDialog::DiagnosticsDialog(DiagnosticsManager& manager,
     buttons->addWidget(cancelButton);
 
     auto* layout = new QVBoxLayout(this);
-    layout->addWidget(redactionGroup);
-    layout->addWidget(includeGroup);
-    layout->addWidget(new QLabel(tr("Output"), this));
+    layout->setContentsMargins(24, 24, 24, 24);
+    layout->setSpacing(12);
+    layout->addWidget(redactionSection);
+    layout->addWidget(includeSection);
+    layout->addWidget(new ZaryaBodyText(tr("Output"), this));
     layout->addLayout(outputRow);
     layout->addLayout(buttons);
 }
@@ -87,8 +89,9 @@ DiagnosticsDialog::DiagnosticsDialog(DiagnosticsManager& manager,
 DiagnosticsOptions DiagnosticsDialog::buildOptions() const
 {
     DiagnosticsOptions options;
-    options.redactionMode = m_strictRedactionRadio->isChecked() ? DiagnosticsRedactionMode::Strict
-                                                                : DiagnosticsRedactionMode::Basic;
+    options.redactionMode = m_redactionGroup->value() == 0
+        ? DiagnosticsRedactionMode::Strict
+        : DiagnosticsRedactionMode::Basic;
     for (DiagnosticsCategory category : defaultDiagnosticsCategories()) {
         options.categories.insert(category);
     }
@@ -124,7 +127,7 @@ void DiagnosticsDialog::onCreate()
     m_createButton->setEnabled(false);
     if (!m_manager.createBundle(options, &outputPath, &error)) {
         m_createButton->setEnabled(true);
-        QMessageBox::critical(this, tr("Diagnostics Bundle"), error);
+        UiMessagePresenter::error(this, tr("Diagnostics Bundle"), error);
         return;
     }
     m_createButton->setEnabled(true);
@@ -133,26 +136,27 @@ void DiagnosticsDialog::onCreate()
         m_logCallback(tr("Diagnostics bundle created: %1").arg(outputPath));
     }
 
-    QMessageBox box(this);
-    box.setIcon(QMessageBox::Information);
-    box.setWindowTitle(tr("Diagnostics Bundle"));
-    box.setText(tr("Diagnostics bundle created:\n%1").arg(outputPath));
-    box.setInformativeText(
-        tr("This bundle is redacted, but review the diagnostics archive before sharing it "
-           "publicly."));
-    QPushButton* openFolderButton = box.addButton(tr("Open Folder"), QMessageBox::ActionRole);
-    QPushButton* issueTemplateButton =
-        box.addButton(tr("Open Issue Template"), QMessageBox::ActionRole);
-    box.addButton(QMessageBox::Close);
-    box.exec();
+    const QString action = UiMessagePresenter::choose(
+        this,
+        tr("Diagnostics Bundle"),
+        tr("Diagnostics bundle created:\n%1").arg(outputPath)
+            + QStringLiteral("\n\n")
+            + tr("This bundle is redacted, but review the diagnostics archive before sharing it "
+                 "publicly."),
+        UiMessageTone::Information,
+        {
+            {QStringLiteral("open-folder"), tr("Open Folder")},
+            {QStringLiteral("issue-template"), tr("Open Issue Template")},
+            {QStringLiteral("close"), tr("Close"), UiMessageActionRole::Primary, true, true},
+        });
 
-    if (box.clickedButton() == openFolderButton) {
+    if (action == QStringLiteral("open-folder")) {
         QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(outputPath).absolutePath()));
-    } else if (box.clickedButton() == issueTemplateButton) {
+    } else if (action == QStringLiteral("issue-template")) {
         if (!PublicBetaDocs::openIssueReporting()) {
-            QMessageBox::warning(this, tr("Diagnostics Bundle"),
-                                 tr("Issue reporting instructions are not bundled with this "
-                                    "build."));
+            UiMessagePresenter::warning(
+                this, tr("Diagnostics Bundle"),
+                tr("Issue reporting instructions are not bundled with this build."));
         }
     }
     accept();
