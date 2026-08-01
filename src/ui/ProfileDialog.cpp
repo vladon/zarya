@@ -87,6 +87,7 @@ ProfileDialog::ProfileDialog(QWidget* parent)
     m_wgPeerPublicKeyEdit = new ZaryaTextField(tr("Peer public key"), basicPage);
     m_localAddressEdit = new ZaryaTextField(QStringLiteral("10.0.0.2/32"), basicPage);
     m_mtuSpin = new ZaryaNumberField(tr("Default"), 0, 9000, basicPage);
+    m_mtuSpin->setSpecialValueText(tr("Default"));
     m_unsupportedReasonLabel = new ZaryaValidationMessage(basicPage);
 
     addRow(basicForm, tr("Name"), m_nameEdit);
