@@ -1,15 +1,17 @@
 #include "ui/RoutingManagerDialog.h"
 
+#include "base/algorithm.h"
 #include "domain/RoutingMode.h"
 #include "routing/XrayRoutingGenerator.h"
 #include "ui/RoutingJsonPreviewDialog.h"
 #include "ui/RoutingProfileDialog.h"
+#include "ui/desktopapp/UiMessagePresenter.h"
+#include "ui/desktopapp/ZaryaControls.h"
+#include "ui/desktopapp/ZaryaFormControls.h"
 
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QJsonDocument>
-#include <QMessageBox>
-#include <QPushButton>
 #include <QTableWidget>
 #include <QVBoxLayout>
 
@@ -37,23 +39,25 @@ RoutingManagerDialog::RoutingManagerDialog(RoutingManager& manager,
     m_table->setSelectionMode(QAbstractItemView::SingleSelection);
     m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_table->setAlternatingRowColors(true);
-    refreshTable();
+    auto* newButton = new ZaryaActionButton(tr("New"), this, ZaryaButtonRole::Primary);
+    auto* editButton = new ZaryaActionButton(tr("Edit"), this);
+    auto* duplicateButton = new ZaryaActionButton(tr("Duplicate"), this);
+    auto* deleteButton = new ZaryaActionButton(
+        tr("Delete"), this, ZaryaButtonRole::Destructive);
+    auto* setActiveButton = new ZaryaActionButton(tr("Set Active"), this);
+    auto* previewButton = new ZaryaActionButton(tr("Preview JSON"), this);
+    auto* closeButton = new ZaryaActionButton(tr("Close"), this);
 
-    auto* newButton = new QPushButton(tr("New"), this);
-    auto* editButton = new QPushButton(tr("Edit"), this);
-    auto* duplicateButton = new QPushButton(tr("Duplicate"), this);
-    auto* deleteButton = new QPushButton(tr("Delete"), this);
-    auto* setActiveButton = new QPushButton(tr("Set Active"), this);
-    auto* previewButton = new QPushButton(tr("Preview JSON"), this);
-    auto* closeButton = new QPushButton(tr("Close"), this);
-
-    connect(newButton, &QPushButton::clicked, this, &RoutingManagerDialog::onNew);
-    connect(editButton, &QPushButton::clicked, this, &RoutingManagerDialog::onEdit);
-    connect(duplicateButton, &QPushButton::clicked, this, &RoutingManagerDialog::onDuplicate);
-    connect(deleteButton, &QPushButton::clicked, this, &RoutingManagerDialog::onDelete);
-    connect(setActiveButton, &QPushButton::clicked, this, &RoutingManagerDialog::onSetActive);
-    connect(previewButton, &QPushButton::clicked, this, &RoutingManagerDialog::onPreview);
-    connect(closeButton, &QPushButton::clicked, this, &QDialog::accept);
+    connect(newButton, &ZaryaActionButton::clicked, this, &RoutingManagerDialog::onNew);
+    connect(editButton, &ZaryaActionButton::clicked, this, &RoutingManagerDialog::onEdit);
+    connect(duplicateButton, &ZaryaActionButton::clicked, this,
+            &RoutingManagerDialog::onDuplicate);
+    connect(deleteButton, &ZaryaActionButton::clicked, this, &RoutingManagerDialog::onDelete);
+    connect(setActiveButton, &ZaryaActionButton::clicked, this,
+            &RoutingManagerDialog::onSetActive);
+    connect(previewButton, &ZaryaActionButton::clicked, this,
+            &RoutingManagerDialog::onPreview);
+    connect(closeButton, &ZaryaActionButton::clicked, this, &QDialog::accept);
 
     auto* buttons = new QHBoxLayout;
     buttons->addWidget(newButton);
@@ -66,15 +70,24 @@ RoutingManagerDialog::RoutingManagerDialog(RoutingManager& manager,
     buttons->addStretch();
     buttons->addWidget(closeButton);
 
+    m_emptyState = new ZaryaBodyText(
+        tr("No routing profiles are available. Create one to get started."), this);
+
     auto* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(24, 24, 24, 24);
+    layout->setSpacing(12);
+    layout->addWidget(m_emptyState);
     layout->addWidget(m_table);
     layout->addLayout(buttons);
+    refreshTable();
 }
 
 void RoutingManagerDialog::refreshTable()
 {
     const QVector<RoutingProfile> profiles = m_manager.profiles();
     m_table->setRowCount(profiles.size());
+    m_emptyState->setVisible(profiles.isEmpty());
+    m_table->setVisible(!profiles.isEmpty());
     const QString activeId = m_manager.activeProfileId();
 
     for (int row = 0; row < profiles.size(); ++row) {
@@ -129,8 +142,8 @@ void RoutingManagerDialog::onNew()
         return;
     }
     if (!m_manager.upsertProfile(dialog.profile())) {
-        QMessageBox::warning(this, tr("Routing"),
-                             tr("Failed to save routing profile."));
+        UiMessagePresenter::warning(
+            this, tr("Routing"), tr("Failed to save routing profile."));
         return;
     }
     QString error;
@@ -142,8 +155,8 @@ void RoutingManagerDialog::onEdit()
 {
     const RoutingProfile profile = selectedProfile();
     if (profile.id.isEmpty()) {
-        QMessageBox::information(this, tr("Routing"),
-                                 tr("Select a routing profile."));
+        UiMessagePresenter::information(
+            this, tr("Routing"), tr("Select a routing profile."));
         return;
     }
 
@@ -158,8 +171,8 @@ void RoutingManagerDialog::onEdit()
     }
 
     if (!m_manager.upsertProfile(dialog.profile())) {
-        QMessageBox::warning(this, tr("Routing"),
-                             tr("Failed to update routing profile."));
+        UiMessagePresenter::warning(
+            this, tr("Routing"), tr("Failed to update routing profile."));
         return;
     }
     QString error;
@@ -176,7 +189,7 @@ void RoutingManagerDialog::onDuplicate()
     QString error;
     const RoutingProfile copy = m_manager.duplicateProfile(profile.id, &error);
     if (copy.id.isEmpty()) {
-        QMessageBox::warning(this, tr("Routing"), error);
+        UiMessagePresenter::warning(this, tr("Routing"), error);
         return;
     }
     m_manager.save(&error);
@@ -197,19 +210,21 @@ void RoutingManagerDialog::onDelete()
         return;
     }
     if (profile.isBuiltIn) {
-        QMessageBox::information(this, tr("Routing"),
-                                 tr("Built-in routing profiles cannot be deleted."));
+        UiMessagePresenter::information(
+            this, tr("Routing"), tr("Built-in routing profiles cannot be deleted."));
         return;
     }
-    const auto answer = QMessageBox::question(
-        this, tr("Delete routing profile"),
-        tr("Delete routing profile \"%1\"?").arg(profile.name));
-    if (answer != QMessageBox::Yes) {
+    if (!UiMessagePresenter::confirm(
+            this,
+            tr("Delete routing profile"),
+            tr("Delete routing profile \"%1\"?").arg(profile.name),
+            tr("Delete"),
+            true)) {
         return;
     }
     QString error;
     if (!m_manager.removeProfile(profile.id, &error)) {
-        QMessageBox::warning(this, tr("Routing"), error);
+        UiMessagePresenter::warning(this, tr("Routing"), error);
         return;
     }
     m_manager.save(&error);

@@ -138,10 +138,6 @@
   "src/ui/RoutingJsonPreviewDialog.cpp": {
     "QDialogButtonBox": 4
   },
-  "src/ui/RoutingManagerDialog.cpp": {
-    "QMessageBox": 9,
-    "QPushButton": 15
-  },
   "src/ui/RoutingProfileDialog.cpp": {
     "QCheckBox": 2,
     "QComboBox": 3,
