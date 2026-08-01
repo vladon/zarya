@@ -1796,6 +1796,12 @@ domain:example.com</translation></message>
         <source>All rule sets</source>
         <translation>Все наборы правил</translation></message>
     <message>
+        <source>No rule sets are required by the active TUN configuration.</source>
+        <translation>Активной конфигурации TUN не требуются наборы правил.</translation></message>
+    <message>
+        <source>No rule sets are available.</source>
+        <translation>Нет доступных наборов правил.</translation></message>
+    <message>
         <source>present</source>
         <translation>присутствует</translation></message>
     <message>

@@ -96,6 +96,8 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
    - Geo Data Manager source selection, options, actions, status text, and warnings use the
      toolkit layer; the file inventory table, bounded log text engine, and native folder opening
      remain Qt/platform boundaries.
+   - Rule Set Manager status text, sections, empty states, actions, and feedback use the toolkit
+     layer; rule-set tables, bounded log text, and native file/folder pickers remain boundaries.
 6. **Experimental and update surfaces**
    - Migrate gated sing-box TUN, helper, kill-switch, and updater UI without changing
      `FeatureGate` behavior.
