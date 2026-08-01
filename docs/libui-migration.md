@@ -101,6 +101,9 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
    - Backup export/import types, category options, mode selectors, paths, summary text, warnings,
      confirmations, and actions use the toolkit layer; the import preview table and native file
      pickers remain Qt/platform boundaries.
+   - Diagnostics redaction and include options, output path, preview context, multi-action result
+     feedback, and actions use the toolkit layer; the preview file list and native save/folder
+     integration remain Qt/platform boundaries.
 6. **Experimental and update surfaces**
    - Migrate gated sing-box TUN, helper, kill-switch, and updater UI without changing
      `FeatureGate` behavior.

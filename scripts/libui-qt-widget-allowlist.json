@@ -16,30 +16,11 @@
     "QLabel": 2,
     "QPushButton": 1
   },
-  "src/ui/DiagnosticsDialog.cpp": {
-    "QCheckBox": 4,
-    "QGroupBox": 3,
-    "QLabel": 3,
-    "QLineEdit": 2,
-    "QMessageBox": 8,
-    "QPushButton": 11,
-    "QRadioButton": 3
-  },
-  "src/ui/DiagnosticsDialog.h": {
-    "QCheckBox": 4,
-    "QLineEdit": 2,
-    "QPushButton": 2,
-    "QRadioButton": 3
-  },
   "src/ui/DiagnosticsPreviewDialog.cpp": {
-    "QLabel": 4,
-    "QListWidget": 2,
-    "QPushButton": 3
+    "QListWidget": 2
   },
   "src/ui/DiagnosticsPreviewDialog.h": {
-    "QLabel": 3,
-    "QListWidget": 2,
-    "QPushButton": 1
+    "QListWidget": 2
   },
   "src/ui/MainWindow.cpp": {
     "QPushButton": 2,
