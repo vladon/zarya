@@ -110,29 +110,9 @@ void ZaryaSelector::applyCurrentItem()
 
 void ZaryaSelector::toggleMenu()
 {
-    auto* menu = static_cast<Ui::DropdownMenu*>(m_menu);
-    if (!menu->isHidden()) {
-        menu->hideAnimated();
-        return;
-    }
-
-    menu->resizeToContent();
-    QWidget* menuParent = menu->parentWidget();
-    const QPoint below = static_cast<Ui::RoundButton*>(m_button)->mapTo(
-        menuParent,
-        QPoint(0, m_button->height()));
-    const int maximumX = std::max(menuParent->width() - menu->width(), 0);
-    const int x = std::clamp(below.x(), 0, maximumX);
-    const bool fitsBelow = below.y() + menu->height() <= menuParent->height();
-    const int y = fitsBelow
-        ? below.y()
-        : std::max(below.y() - m_button->height() - menu->height(), 0);
-    menu->move(x, y);
-    menu->raise();
-    menu->showAnimated(
-        fitsBelow
-            ? Ui::PanelAnimation::Origin::TopLeft
-            : Ui::PanelAnimation::Origin::BottomLeft);
+    toggleZaryaDropdownMenu(
+        static_cast<Ui::DropdownMenu*>(m_menu),
+        static_cast<Ui::RoundButton*>(m_button));
 }
 
 } // namespace zarya

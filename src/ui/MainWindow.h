@@ -32,13 +32,13 @@ class QEvent;
 class QPlainTextEdit;
 class QSplitter;
 class QTableView;
-class QToolBar;
 
 namespace zarya {
 
 class TrayController;
 class BetaBannerWidget;
 class ProfileEmptyStatePanel;
+class ProfileActionStrip;
 class StatusDashboardWidget;
 class ZaryaSelector;
 struct FirstRunState;
@@ -125,7 +125,7 @@ private slots:
 private:
     void setupUi();
     void setupMenuBar();
-    void setupToolBar();
+    void setupActionStrip();
     void setupConnections();
     void setupAppController();
     void setupTray();
@@ -213,7 +213,7 @@ private:
     QPlainTextEdit* m_logView = nullptr;
     ZaryaSelector* m_logFilterSelector = nullptr;
     QString m_logFilterKey;
-    QToolBar* m_toolBar = nullptr;
+    ProfileActionStrip* m_actionStrip = nullptr;
     ZaryaSelector* m_profileFilterSelector = nullptr;
 
     QAction* m_showAction = nullptr;

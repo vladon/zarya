@@ -1079,6 +1079,10 @@ sing-box: %3 (%4)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>More actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Ready</source>
         <translation type="unfinished"></translation>
     </message>

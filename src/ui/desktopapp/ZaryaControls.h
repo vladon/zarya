@@ -7,6 +7,7 @@
 class QWidget;
 
 namespace Ui {
+class DropdownMenu;
 class RoundButton;
 } // namespace Ui
 
@@ -22,5 +23,7 @@ enum class ZaryaButtonRole {
     QWidget* parent,
     const QString& text,
     ZaryaButtonRole role);
+
+void toggleZaryaDropdownMenu(Ui::DropdownMenu* menu, QWidget* anchor);
 
 } // namespace zarya

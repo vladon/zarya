@@ -48,6 +48,7 @@
 #include "ui/RoutingManagerDialog.h"
 #include "ui/SettingsDialog.h"
 #include "ui/AppUpdateDialog.h"
+#include "ui/desktopapp/ProfileActionStrip.h"
 #include "ui/desktopapp/ProfileEmptyStatePanel.h"
 #include "ui/desktopapp/ZaryaControls.h"
 #include "ui/desktopapp/ZaryaSelector.h"
@@ -91,9 +92,9 @@
 #include <QSplitter>
 #include <QStatusBar>
 #include <QTableView>
-#include <QToolBar>
 #include <QDateTime>
 #include <QEventLoop>
+#include <utility>
 
 namespace zarya {
 
@@ -106,7 +107,7 @@ MainWindow::MainWindow(QWidget* parent)
     LogBuffer::instance().setAppStartedAt(QDateTime::currentDateTimeUtc());
     setupUi();
     setupMenuBar();
-    setupToolBar();
+    setupActionStrip();
     setupAppController();
     setupConnections();
     setupTray();
@@ -399,36 +400,42 @@ void MainWindow::setupMenuBar()
     helpMenu->addAction(tr("&About"), this, &MainWindow::onAbout);
 }
 
-void MainWindow::setupToolBar()
+void MainWindow::setupActionStrip()
 {
-    m_toolBar = addToolBar(tr("Main"));
-    m_toolBar->setMovable(false);
-    m_toolBar->addAction(m_addAction);
-    m_toolBar->addAction(m_editAction);
-    m_toolBar->addAction(m_deleteAction);
-    m_toolBar->addAction(m_importAction);
-    m_toolBar->addSeparator();
-    m_toolBar->addAction(m_subscriptionsAction);
-    m_toolBar->addAction(m_updateSubscriptionAction);
-    m_toolBar->addAction(m_updateAllSubscriptionsAction);
-    m_profileFilterSelector = new ZaryaSelector(this);
-    m_profileFilterSelector->setMinimumWidth(180);
-    m_toolBar->addWidget(m_profileFilterSelector);
-    m_toolBar->addSeparator();
-    m_toolBar->addAction(m_testSelectedAction);
-    m_toolBar->addAction(m_testAllAction);
-    m_toolBar->addAction(m_testTcpSelectedAction);
-    m_toolBar->addAction(m_testDelaySelectedAction);
-    m_toolBar->addAction(m_cancelTestsAction);
-    m_toolBar->addSeparator();
-    m_toolBar->addAction(m_startAction);
-    m_toolBar->addAction(m_stopAction);
-    m_toolBar->addSeparator();
-    m_toolBar->addAction(m_enableSystemProxyAction);
-    m_toolBar->addAction(m_restoreSystemProxyAction);
-    m_toolBar->addSeparator();
-    m_toolBar->addAction(m_saveAction);
-    m_toolBar->addAction(m_loadAction);
+    ProfileActionStripActions actions;
+    actions.add = m_addAction;
+    actions.importProfiles = m_importAction;
+    actions.subscriptions = m_subscriptionsAction;
+    actions.testSelected = m_testSelectedAction;
+    actions.start = m_startAction;
+    actions.stop = m_stopAction;
+    actions.overflow = {
+        m_editAction,
+        m_deleteAction,
+        nullptr,
+        m_updateSubscriptionAction,
+        m_updateAllSubscriptionsAction,
+        nullptr,
+        m_testAllAction,
+        m_testTcpSelectedAction,
+        m_testDelaySelectedAction,
+        m_cancelTestsAction,
+        nullptr,
+        m_enableSystemProxyAction,
+        m_restoreSystemProxyAction,
+        nullptr,
+        m_saveAction,
+        m_loadAction,
+    };
+    m_actionStrip = new ProfileActionStrip(
+        std::move(actions),
+        tr("More actions"),
+        centralWidget());
+    m_profileFilterSelector = m_actionStrip->profileSelector();
+
+    auto* layout = qobject_cast<QVBoxLayout*>(centralWidget()->layout());
+    const int afterStatusIndex = m_betaBanner ? 2 : 1;
+    layout->insertWidget(afterStatusIndex, m_actionStrip);
 }
 
 void MainWindow::setupConnections()
