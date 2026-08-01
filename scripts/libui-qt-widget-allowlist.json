@@ -10,27 +10,8 @@
     "QScrollArea": 1
   },
   "src/ui/SettingsDialog.cpp": {
-    "QCheckBox": 18,
-    "QComboBox": 2,
     "QFrame": 2,
-    "QGroupBox": 3,
-    "QLabel": 14,
-    "QLineEdit": 2,
-    "QMessageBox": 47,
-    "QPushButton": 35,
-    "QRadioButton": 6,
-    "QScrollArea": 2,
-    "QSpinBox": 1
-  },
-  "src/ui/SettingsDialog.h": {
-    "QCheckBox": 13,
-    "QComboBox": 2,
-    "QGroupBox": 3,
-    "QLabel": 9,
-    "QLineEdit": 2,
-    "QPushButton": 15,
-    "QRadioButton": 5,
-    "QSpinBox": 1
+    "QScrollArea": 2
   },
   "src/ui/desktopapp/UiMessagePresenter.cpp": {
     "QMessageBox": 21,

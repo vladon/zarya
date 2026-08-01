@@ -28,6 +28,7 @@
 #include "ui/DnsManagerDialog.h"
 #include "ui/RoutingManagerDialog.h"
 #include "ui/theme/ThemeManager.h"
+#include "ui/desktopapp/UiMessagePresenter.h"
 #include "ui/desktopapp/ZaryaFormControls.h"
 #include "ui/desktopapp/ZaryaSelector.h"
 #include "ui/theme/ThemeMode.h"
@@ -36,26 +37,15 @@
 #include "platform/linux/LinuxSystemProxyManager.h"
 #endif
 
-#include <QCheckBox>
-#include <QComboBox>
 #include <QFileDialog>
-#include <QFormLayout>
 #include <QFrame>
-#include <QGroupBox>
 #include <QGuiApplication>
 #include <QHBoxLayout>
-#include <QLabel>
-#include <QLineEdit>
-#include <QMessageBox>
-#include <QPushButton>
-#include <QRadioButton>
 #include <QScreen>
 #include <QScrollArea>
 #include <QSizePolicy>
-#include <QSpinBox>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QMessageBox>
 #include <QProcess>
 #include <QUrl>
 #include <QVBoxLayout>
@@ -311,89 +301,92 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
             new ZaryaFormRow(tr("Autostart notes"), autostartLimits, startupGroup));
     }
 
-    m_enableExperimentalTunCheck =
-        new QCheckBox(tr("Enable experimental TUN mode"), this);
-    m_enableExperimentalTunCheck->setChecked(settings.enableExperimentalTun());
+    m_experimentalGroup = new ZaryaFormSection(
+        tr("Experimental (TUN · helper · kill switch)"), this);
+    m_enableExperimentalTunCheck = new ZaryaCheckBox(
+        tr("Enable experimental TUN mode"), this, settings.enableExperimentalTun());
 
-    m_systemProxyRuntimeRadio =
-        new QRadioButton(tr("System proxy via Xray"), this);
-    m_tunRuntimeRadio =
-        new QRadioButton(tr("TUN via sing-box (experimental)"), this);
-    if (settings.runtimeMode() == RuntimeMode::TunSingBoxExperimental) {
-        m_tunRuntimeRadio->setChecked(true);
-    } else {
-        m_systemProxyRuntimeRadio->setChecked(true);
-    }
+    m_runtimeModeGroup = new ZaryaRadioGroup(
+        static_cast<int>(settings.runtimeMode()), this);
+    m_runtimeModeGroup->addOption(
+        static_cast<int>(RuntimeMode::SystemProxyXray), tr("System proxy via Xray"));
+    m_runtimeModeGroup->addOption(
+        static_cast<int>(RuntimeMode::TunSingBoxExperimental),
+        tr("TUN via sing-box (experimental)"));
 
-    m_singBoxPathEdit = new QLineEdit(settings.singBoxExecutablePath(), this);
-    auto* browseSingBoxButton = new QPushButton(tr("Browse…"), this);
-    connect(browseSingBoxButton, &QPushButton::clicked, this, &SettingsDialog::onBrowseSingBox);
-    auto* singBoxRow = new QHBoxLayout;
-    singBoxRow->addWidget(m_singBoxPathEdit);
-    singBoxRow->addWidget(browseSingBoxButton);
+    m_singBoxPathEdit = new ZaryaTextField(tr("sing-box executable"), this);
+    m_singBoxPathEdit->setText(settings.singBoxExecutablePath());
+    auto* browseSingBoxButton = new ZaryaActionButton(tr("Browse…"), this);
+    connect(browseSingBoxButton, &ZaryaActionButton::clicked,
+            this, &SettingsDialog::onBrowseSingBox);
+    auto* singBoxRow = new QWidget(this);
+    auto* singBoxLayout = new QHBoxLayout(singBoxRow);
+    singBoxLayout->setContentsMargins(0, 0, 0, 0);
+    singBoxLayout->addWidget(m_singBoxPathEdit, 1);
+    singBoxLayout->addWidget(browseSingBoxButton);
 
-    m_tunUseActiveRoutingCheck =
-        new QCheckBox(tr("Use active RoutingProfile for TUN"), this);
-    m_tunUseActiveRoutingCheck->setChecked(settings.tunUseActiveRoutingProfile());
+    m_tunUseActiveRoutingCheck = new ZaryaCheckBox(
+        tr("Use active RoutingProfile for TUN"), this,
+        settings.tunUseActiveRoutingProfile());
+    m_tunUseActiveDnsCheck = new ZaryaCheckBox(
+        tr("Use active DnsProfile for TUN"), this,
+        settings.tunUseActiveDnsProfile());
+    m_tunEnableDnsHijackCheck = new ZaryaCheckBox(
+        tr("Enable DNS hijack in TUN mode"), this, settings.tunEnableDnsHijack());
 
-    m_tunUseActiveDnsCheck =
-        new QCheckBox(tr("Use active DnsProfile for TUN"), this);
-    m_tunUseActiveDnsCheck->setChecked(settings.tunUseActiveDnsProfile());
+    const auto enumKey = [](int value) { return QString::number(value); };
+    m_tunDnsHijackModeCombo = new ZaryaSelector(this);
+    m_tunDnsHijackModeCombo->setItems({
+        {enumKey(static_cast<int>(TunDnsHijackMode::HijackToSingBoxDns)),
+         tr("Hijack to sing-box DNS")},
+        {enumKey(static_cast<int>(TunDnsHijackMode::Disabled)), tr("Disabled")},
+    }, enumKey(static_cast<int>(settings.tunDnsHijackMode())));
 
-    m_tunEnableDnsHijackCheck =
-        new QCheckBox(tr("Enable DNS hijack in TUN mode"), this);
-    m_tunEnableDnsHijackCheck->setChecked(settings.tunEnableDnsHijack());
+    m_tunPrivilegeModeGroup = new ZaryaRadioGroup(
+        static_cast<int>(settings.tunPrivilegeMode()), this);
+    m_tunPrivilegeModeGroup->addOption(
+        static_cast<int>(TunPrivilegeMode::DirectFromGui),
+        tr("Run sing-box directly from GUI"));
+    m_tunPrivilegeModeGroup->addOption(
+        static_cast<int>(TunPrivilegeMode::HelperExperimental),
+        tr("Use zarya-helper experimental"));
 
-    m_tunDnsHijackModeCombo = new QComboBox(this);
-    m_tunDnsHijackModeCombo->addItem(tr("Hijack to sing-box DNS"),
-                                     static_cast<int>(TunDnsHijackMode::HijackToSingBoxDns));
-    m_tunDnsHijackModeCombo->addItem(tr("Disabled"),
-                                     static_cast<int>(TunDnsHijackMode::Disabled));
-    const int hijackIndex = m_tunDnsHijackModeCombo->findData(
-        static_cast<int>(settings.tunDnsHijackMode()));
-    if (hijackIndex >= 0) {
-        m_tunDnsHijackModeCombo->setCurrentIndex(hijackIndex);
-    }
+    m_helperBackendLabel = new ZaryaBodyText({}, this);
+    m_helperServiceStatusLabel = new ZaryaBodyText({}, this);
+    m_helperStatusLabel = new ZaryaBodyText(
+        m_helperManager ? m_helperManager->statusText() : tr("Helper unavailable"), this);
+    m_installServiceButton = new ZaryaActionButton(tr("Install"), this);
+    m_uninstallServiceButton = new ZaryaActionButton(tr("Uninstall"), this);
+    m_startServiceButton = new ZaryaActionButton(tr("Start Service"), this);
+    m_stopServiceButton = new ZaryaActionButton(tr("Stop Service"), this);
+    m_restartServiceButton = new ZaryaActionButton(tr("Restart Service"), this);
+    m_startHelperButton = new ZaryaActionButton(tr("Start Manual Helper"), this);
+    m_connectHelperButton = new ZaryaActionButton(tr("Connect"), this);
+    m_checkHelperStatusButton = new ZaryaActionButton(tr("Check Status"), this);
+    m_serviceSelfTestButton = new ZaryaActionButton(tr("Run Self-Test"), this);
+    m_serviceRecoveryButton = new ZaryaActionButton(tr("Show Recovery Instructions"), this);
+    m_recoverKillSwitchOnUninstallCheck = new ZaryaCheckBox(
+        tr("Also recover/remove Zarya kill switch rules on uninstall"), this);
 
-    m_tunDirectGuiRadio =
-        new QRadioButton(tr("Run sing-box directly from GUI"), this);
-    m_tunHelperRadio =
-        new QRadioButton(tr("Use zarya-helper experimental"), this);
-    if (settings.tunPrivilegeMode() == TunPrivilegeMode::HelperExperimental) {
-        m_tunHelperRadio->setChecked(true);
-    } else {
-        m_tunDirectGuiRadio->setChecked(true);
-    }
-
-    m_helperBackendLabel = new QLabel(this);
-    m_helperServiceStatusLabel = new QLabel(this);
-    m_helperStatusLabel = new QLabel(m_helperManager ? m_helperManager->statusText()
-                                                     : tr("Helper unavailable"),
-                                     this);
-    m_installServiceButton = new QPushButton(tr("Install"), this);
-    m_uninstallServiceButton = new QPushButton(tr("Uninstall"), this);
-    m_startServiceButton = new QPushButton(tr("Start Service"), this);
-    m_stopServiceButton = new QPushButton(tr("Stop Service"), this);
-    m_restartServiceButton = new QPushButton(tr("Restart Service"), this);
-    m_startHelperButton = new QPushButton(tr("Start Manual Helper"), this);
-    m_connectHelperButton = new QPushButton(tr("Connect"), this);
-    m_checkHelperStatusButton = new QPushButton(tr("Check Status"), this);
-    m_serviceSelfTestButton = new QPushButton(tr("Run Self-Test"), this);
-    m_serviceRecoveryButton = new QPushButton(tr("Show Recovery Instructions"), this);
-    m_recoverKillSwitchOnUninstallCheck =
-        new QCheckBox(tr("Also recover/remove Zarya kill switch rules on uninstall"), this);
-
-    connect(m_installServiceButton, &QPushButton::clicked, this, &SettingsDialog::onInstallService);
-    connect(m_uninstallServiceButton, &QPushButton::clicked, this, &SettingsDialog::onUninstallService);
-    connect(m_startServiceButton, &QPushButton::clicked, this, &SettingsDialog::onStartService);
-    connect(m_stopServiceButton, &QPushButton::clicked, this, &SettingsDialog::onStopService);
-    connect(m_restartServiceButton, &QPushButton::clicked, this, &SettingsDialog::onRestartService);
-    connect(m_startHelperButton, &QPushButton::clicked, this, &SettingsDialog::onStartHelper);
-    connect(m_connectHelperButton, &QPushButton::clicked, this, &SettingsDialog::onConnectHelper);
-    connect(m_checkHelperStatusButton, &QPushButton::clicked, this,
+    connect(m_installServiceButton, &ZaryaActionButton::clicked,
+            this, &SettingsDialog::onInstallService);
+    connect(m_uninstallServiceButton, &ZaryaActionButton::clicked,
+            this, &SettingsDialog::onUninstallService);
+    connect(m_startServiceButton, &ZaryaActionButton::clicked,
+            this, &SettingsDialog::onStartService);
+    connect(m_stopServiceButton, &ZaryaActionButton::clicked,
+            this, &SettingsDialog::onStopService);
+    connect(m_restartServiceButton, &ZaryaActionButton::clicked,
+            this, &SettingsDialog::onRestartService);
+    connect(m_startHelperButton, &ZaryaActionButton::clicked,
+            this, &SettingsDialog::onStartHelper);
+    connect(m_connectHelperButton, &ZaryaActionButton::clicked,
+            this, &SettingsDialog::onConnectHelper);
+    connect(m_checkHelperStatusButton, &ZaryaActionButton::clicked, this,
             &SettingsDialog::onCheckHelperStatus);
-    connect(m_serviceSelfTestButton, &QPushButton::clicked, this, &SettingsDialog::onServiceSelfTest);
-    connect(m_serviceRecoveryButton, &QPushButton::clicked, this,
+    connect(m_serviceSelfTestButton, &ZaryaActionButton::clicked,
+            this, &SettingsDialog::onServiceSelfTest);
+    connect(m_serviceRecoveryButton, &ZaryaActionButton::clicked, this,
             &SettingsDialog::onShowServiceRecovery);
     if (m_helperManager) {
         connect(m_helperManager, &HelperProcessManager::connectionStateChanged, this,
@@ -407,14 +400,18 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
                 &SettingsDialog::refreshHelperServiceUi);
     }
 
-    auto* serviceButtonsRow = new QHBoxLayout;
+    auto* serviceButtons = new QWidget(this);
+    auto* serviceButtonsRow = new QHBoxLayout(serviceButtons);
+    serviceButtonsRow->setContentsMargins(0, 0, 0, 0);
     serviceButtonsRow->addWidget(m_installServiceButton);
     serviceButtonsRow->addWidget(m_uninstallServiceButton);
     serviceButtonsRow->addWidget(m_startServiceButton);
     serviceButtonsRow->addWidget(m_stopServiceButton);
     serviceButtonsRow->addWidget(m_restartServiceButton);
 
-    auto* helperButtonsRow = new QHBoxLayout;
+    auto* helperButtons = new QWidget(this);
+    auto* helperButtonsRow = new QHBoxLayout(helperButtons);
+    helperButtonsRow->setContentsMargins(0, 0, 0, 0);
     helperButtonsRow->addWidget(m_startHelperButton);
     helperButtonsRow->addWidget(m_connectHelperButton);
     helperButtonsRow->addWidget(m_checkHelperStatusButton);
@@ -431,55 +428,51 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
             + tr("This build is unsigned. Installing privileged helper from unsigned builds is "
                  "not recommended for production use.");
     }
-    m_helperServiceWarningLabel = new QLabel(helperWarningText, this);
-    m_helperServiceWarningLabel->setWordWrap(true);
+    m_helperServiceWarningLabel = new ZaryaBodyText(helperWarningText, this);
 
-    auto* tunWarnings = new QLabel(
+    auto* tunWarnings = new ZaryaBodyText(
         tr("TUN mode requires sing-box and may require zarya-helper. System-proxy mode does not "
            "require the helper service."),
         this);
-    tunWarnings->setWordWrap(true);
 
-    auto* experimentalForm = new QFormLayout;
-    experimentalForm->addRow(QString(), m_enableExperimentalTunCheck);
-    experimentalForm->addRow(QString(), m_systemProxyRuntimeRadio);
-    experimentalForm->addRow(QString(), m_tunRuntimeRadio);
-    experimentalForm->addRow(tr("sing-box executable"), singBoxRow);
-    experimentalForm->addRow(QString(), m_tunUseActiveRoutingCheck);
-    experimentalForm->addRow(QString(), m_tunUseActiveDnsCheck);
-    experimentalForm->addRow(QString(), m_tunEnableDnsHijackCheck);
-    experimentalForm->addRow(tr("TUN DNS hijack mode"), m_tunDnsHijackModeCombo);
-    experimentalForm->addRow(tr("TUN privilege mode"), m_tunDirectGuiRadio);
-    experimentalForm->addRow(QString(), m_tunHelperRadio);
-    experimentalForm->addRow(tr("Privileged helper backend"), m_helperBackendLabel);
-    experimentalForm->addRow(tr("Service status"), m_helperServiceStatusLabel);
-    experimentalForm->addRow(tr("IPC connection"), m_helperStatusLabel);
-    experimentalForm->addRow(QString(), serviceButtonsRow);
-    experimentalForm->addRow(QString(), m_recoverKillSwitchOnUninstallCheck);
-    experimentalForm->addRow(QString(), helperButtonsRow);
-    experimentalForm->addRow(QString(), m_helperServiceWarningLabel);
+    m_tunRequireLocalRuleSetsCheck = new ZaryaCheckBox(
+        tr("Require local .srs rule sets before starting TUN"), this,
+        settings.tunRequireLocalRuleSets());
 
-    m_tunRequireLocalRuleSetsCheck =
-        new QCheckBox(tr("Require local .srs rule sets before starting TUN"), this);
-    m_tunRequireLocalRuleSetsCheck->setChecked(settings.tunRequireLocalRuleSets());
+    m_ruleSetDirLabel = new ZaryaBodyText(AppPaths::singBoxRuleSetDir(), this);
 
-    m_ruleSetDirLabel = new QLabel(AppPaths::singBoxRuleSetDir(), this);
-    m_ruleSetDirLabel->setWordWrap(true);
-    m_ruleSetDirLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
-
-    auto* ruleSetNote = new QLabel(
+    auto* ruleSetNote = new ZaryaBodyText(
         tr("Manage rule sets from Tools → sing-box Rule Sets. Xray geoip.dat/geosite.dat "
            "are separate from sing-box .srs files."),
         this);
-    ruleSetNote->setWordWrap(true);
 
-    experimentalForm->addRow(tr("Rule sets"), m_tunRequireLocalRuleSetsCheck);
-    experimentalForm->addRow(tr("Rule-set directory"), m_ruleSetDirLabel);
-    experimentalForm->addRow(QString(), ruleSetNote);
-    experimentalForm->addRow(QString(), tunWarnings);
-
-    m_experimentalGroup = new QGroupBox(tr("Experimental (TUN · helper · kill switch)"), this);
-    m_experimentalGroup->setLayout(experimentalForm);
+    m_experimentalGroup->addWidget(m_enableExperimentalTunCheck);
+    m_experimentalGroup->addWidget(
+        new ZaryaFormRow(tr("Runtime mode"), m_runtimeModeGroup, m_experimentalGroup));
+    m_experimentalGroup->addWidget(
+        new ZaryaFormRow(tr("sing-box executable"), singBoxRow, m_experimentalGroup));
+    m_experimentalGroup->addWidget(m_tunUseActiveRoutingCheck);
+    m_experimentalGroup->addWidget(m_tunUseActiveDnsCheck);
+    m_experimentalGroup->addWidget(m_tunEnableDnsHijackCheck);
+    m_experimentalGroup->addWidget(new ZaryaFormRow(
+        tr("TUN DNS hijack mode"), m_tunDnsHijackModeCombo, m_experimentalGroup));
+    m_experimentalGroup->addWidget(new ZaryaFormRow(
+        tr("TUN privilege mode"), m_tunPrivilegeModeGroup, m_experimentalGroup));
+    m_experimentalGroup->addWidget(new ZaryaFormRow(
+        tr("Privileged helper backend"), m_helperBackendLabel, m_experimentalGroup));
+    m_experimentalGroup->addWidget(new ZaryaFormRow(
+        tr("Service status"), m_helperServiceStatusLabel, m_experimentalGroup));
+    m_experimentalGroup->addWidget(new ZaryaFormRow(
+        tr("IPC connection"), m_helperStatusLabel, m_experimentalGroup));
+    m_experimentalGroup->addWidget(serviceButtons);
+    m_experimentalGroup->addWidget(m_recoverKillSwitchOnUninstallCheck);
+    m_experimentalGroup->addWidget(helperButtons);
+    m_experimentalGroup->addWidget(m_helperServiceWarningLabel);
+    m_experimentalGroup->addWidget(m_tunRequireLocalRuleSetsCheck);
+    m_experimentalGroup->addWidget(new ZaryaFormRow(
+        tr("Rule-set directory"), m_ruleSetDirLabel, m_experimentalGroup));
+    m_experimentalGroup->addWidget(ruleSetNote);
+    m_experimentalGroup->addWidget(tunWarnings);
 
     m_releaseChannelCombo = new ZaryaSelector(this);
     m_releaseChannelCombo->setItems(
@@ -593,42 +586,40 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
         tr("GitHub API timeout (seconds)"), m_githubApiTimeoutSpin, coreUpdatesGroup));
     coreUpdatesGroup->addWidget(m_checkCoreUpdatesOnStartupCheck);
 
-    m_enableKillSwitchCheck =
-        new QCheckBox(tr("Enable experimental kill switch"), this);
-    m_enableKillSwitchCheck->setChecked(settings.enableExperimentalKillSwitch());
+    m_killSwitchGroup = new ZaryaFormSection(
+        tr("Kill Switch — Experimental · Requires helper · Linux/Windows PoC"), this);
+    m_enableKillSwitchCheck = new ZaryaCheckBox(
+        tr("Enable experimental kill switch"), this,
+        settings.enableExperimentalKillSwitch());
 
     m_killSwitchModeLabel =
-        new QLabel(tr("Mode: TUN only experimental"), this);
+        new ZaryaBodyText(tr("Mode: TUN only experimental"), this);
 
-    m_killSwitchAllowLanCheck =
-        new QCheckBox(tr("Allow LAN/private networks"), this);
-    m_killSwitchAllowLanCheck->setChecked(settings.killSwitchAllowLan());
+    m_killSwitchAllowLanCheck = new ZaryaCheckBox(
+        tr("Allow LAN/private networks"), this, settings.killSwitchAllowLan());
 
-    m_killSwitchAllowLoopbackCheck =
-        new QCheckBox(tr("Allow loopback"), this);
-    m_killSwitchAllowLoopbackCheck->setChecked(settings.killSwitchAllowLoopback());
+    m_killSwitchAllowLoopbackCheck = new ZaryaCheckBox(
+        tr("Allow loopback"), this, settings.killSwitchAllowLoopback());
 
-    m_killSwitchAllowProxyCheck =
-        new QCheckBox(tr("Allow traffic to selected proxy server"), this);
-    m_killSwitchAllowProxyCheck->setChecked(true);
+    m_killSwitchAllowProxyCheck = new ZaryaCheckBox(
+        tr("Allow traffic to selected proxy server"), this, true);
     m_killSwitchAllowProxyCheck->setEnabled(false);
 
-    m_killSwitchAutoDisableOnStopCheck =
-        new QCheckBox(tr("Disable kill switch on clean Stop"), this);
-    m_killSwitchAutoDisableOnStopCheck->setChecked(settings.killSwitchAutoDisableOnCleanStop());
+    m_killSwitchAutoDisableOnStopCheck = new ZaryaCheckBox(
+        tr("Disable kill switch on clean Stop"), this,
+        settings.killSwitchAutoDisableOnCleanStop());
 
-    m_killSwitchKeepActiveAfterStopCheck =
-        new QCheckBox(tr("Keep kill switch active after Stop"), this);
-    m_killSwitchKeepActiveAfterStopCheck->setChecked(
+    m_killSwitchKeepActiveAfterStopCheck = new ZaryaCheckBox(
+        tr("Keep kill switch active after Stop"), this,
         !settings.killSwitchAutoDisableOnCleanStop());
 
-    connect(m_killSwitchAutoDisableOnStopCheck, &QCheckBox::toggled, this,
+    connect(m_killSwitchAutoDisableOnStopCheck, &ZaryaCheckBox::toggled, this,
             [this](bool checked) {
                 if (checked) {
                     m_killSwitchKeepActiveAfterStopCheck->setChecked(false);
                 }
             });
-    connect(m_killSwitchKeepActiveAfterStopCheck, &QCheckBox::toggled, this,
+    connect(m_killSwitchKeepActiveAfterStopCheck, &ZaryaCheckBox::toggled, this,
             [this](bool checked) {
                 if (checked) {
                     m_killSwitchAutoDisableOnStopCheck->setChecked(false);
@@ -636,77 +627,69 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
             });
 
 #if defined(Q_OS_LINUX)
-    m_killSwitchBackendLabel = new QLabel(
+    m_killSwitchBackendLabel = new ZaryaBodyText(
         tr("Kill switch backend: nftables PoC (table inet zarya)"), this);
 #elif defined(Q_OS_WIN)
-    m_killSwitchBackendLabel = new QLabel(
+    m_killSwitchBackendLabel = new ZaryaBodyText(
         tr("Kill switch backend: Windows WFP PoC (requires Administrator helper)"),
         this);
 #elif defined(Q_OS_MACOS)
-    m_killSwitchBackendLabel = new QLabel(
+    m_killSwitchBackendLabel = new ZaryaBodyText(
         tr("Kill switch backend: unsupported in 0.16 — PF is not a stable public API for "
            "third-party apps."),
         this);
 #else
-    m_killSwitchBackendLabel = new QLabel(tr("Kill switch backend: unsupported"),
-                                          this);
+    m_killSwitchBackendLabel = new ZaryaBodyText(
+        tr("Kill switch backend: unsupported"), this);
 #endif
-    m_killSwitchBackendLabel->setWordWrap(true);
 
-    m_killSwitchWarningLabel = new QLabel(
+    m_killSwitchWarningLabel = new ZaryaBodyText(
         tr("Experimental kill switch changes firewall/routing rules. A bug may block network "
            "access until rules are removed manually. Requires zarya-helper mode. Use only if you "
            "understand the recovery procedure."),
         this);
-    m_killSwitchWarningLabel->setWordWrap(true);
-
-    m_testKillSwitchButton = new QPushButton(tr("Test Support"), this);
-    m_enableKillSwitchButton = new QPushButton(tr("How it works"), this);
-    m_disableKillSwitchButton = new QPushButton(tr("Disable Now"), this);
+    m_testKillSwitchButton = new ZaryaActionButton(tr("Test Support"), this);
+    m_enableKillSwitchButton = new ZaryaActionButton(tr("How it works"), this);
+    m_disableKillSwitchButton = new ZaryaActionButton(tr("Disable Now"), this);
     m_killSwitchRecoveryButton =
-        new QPushButton(tr("Show Recovery Instructions"), this);
-    connect(m_testKillSwitchButton, &QPushButton::clicked, this,
+        new ZaryaActionButton(tr("Show Recovery Instructions"), this);
+    connect(m_testKillSwitchButton, &ZaryaActionButton::clicked, this,
             &SettingsDialog::onTestKillSwitchSupport);
-    connect(m_enableKillSwitchButton, &QPushButton::clicked, this,
+    connect(m_enableKillSwitchButton, &ZaryaActionButton::clicked, this,
             &SettingsDialog::onEnableKillSwitchNow);
-    connect(m_disableKillSwitchButton, &QPushButton::clicked, this,
+    connect(m_disableKillSwitchButton, &ZaryaActionButton::clicked, this,
             &SettingsDialog::onDisableKillSwitchNow);
-    connect(m_killSwitchRecoveryButton, &QPushButton::clicked, this,
+    connect(m_killSwitchRecoveryButton, &ZaryaActionButton::clicked, this,
             &SettingsDialog::onShowKillSwitchRecovery);
 
-    auto* killSwitchButtonsRow = new QHBoxLayout;
+    auto* killSwitchButtons = new QWidget(this);
+    auto* killSwitchButtonsRow = new QHBoxLayout(killSwitchButtons);
+    killSwitchButtonsRow->setContentsMargins(0, 0, 0, 0);
     killSwitchButtonsRow->addWidget(m_testKillSwitchButton);
     killSwitchButtonsRow->addWidget(m_enableKillSwitchButton);
     killSwitchButtonsRow->addWidget(m_disableKillSwitchButton);
     killSwitchButtonsRow->addWidget(m_killSwitchRecoveryButton);
 
-    auto* killSwitchForm = new QFormLayout;
-    killSwitchForm->addRow(QString(), m_enableKillSwitchCheck);
-    killSwitchForm->addRow(QString(), m_killSwitchModeLabel);
-    killSwitchForm->addRow(QString(), m_killSwitchAllowLanCheck);
-    killSwitchForm->addRow(QString(), m_killSwitchAllowLoopbackCheck);
-    killSwitchForm->addRow(QString(), m_killSwitchAllowProxyCheck);
-    killSwitchForm->addRow(QString(), m_killSwitchAutoDisableOnStopCheck);
-    killSwitchForm->addRow(QString(), m_killSwitchKeepActiveAfterStopCheck);
-    killSwitchForm->addRow(QString(), m_killSwitchBackendLabel);
-    killSwitchForm->addRow(QString(), m_killSwitchWarningLabel);
-    killSwitchForm->addRow(QString(), killSwitchButtonsRow);
-
-    m_killSwitchGroup = new QGroupBox(
-        tr("Kill Switch — Experimental · Requires helper · Linux/Windows PoC"), this);
-    m_killSwitchGroup->setLayout(killSwitchForm);
+    m_killSwitchGroup->addWidget(m_enableKillSwitchCheck);
+    m_killSwitchGroup->addWidget(m_killSwitchModeLabel);
+    m_killSwitchGroup->addWidget(m_killSwitchAllowLanCheck);
+    m_killSwitchGroup->addWidget(m_killSwitchAllowLoopbackCheck);
+    m_killSwitchGroup->addWidget(m_killSwitchAllowProxyCheck);
+    m_killSwitchGroup->addWidget(m_killSwitchAutoDisableOnStopCheck);
+    m_killSwitchGroup->addWidget(m_killSwitchKeepActiveAfterStopCheck);
+    m_killSwitchGroup->addWidget(m_killSwitchBackendLabel);
+    m_killSwitchGroup->addWidget(m_killSwitchWarningLabel);
+    m_killSwitchGroup->addWidget(killSwitchButtons);
 
     const auto updateRuntimeControls = [this]() {
         const bool enabled = m_enableExperimentalTunCheck->isChecked();
-        m_systemProxyRuntimeRadio->setEnabled(enabled);
-        m_tunRuntimeRadio->setEnabled(enabled);
+        m_runtimeModeGroup->setEnabled(enabled);
         m_singBoxPathEdit->setEnabled(enabled);
         m_tunUseActiveRoutingCheck->setEnabled(enabled);
         m_tunUseActiveDnsCheck->setEnabled(enabled);
         m_tunEnableDnsHijackCheck->setEnabled(enabled);
         m_tunDnsHijackModeCombo->setEnabled(enabled && m_tunEnableDnsHijackCheck->isChecked());
-        m_tunDirectGuiRadio->setEnabled(enabled);
-        m_tunHelperRadio->setEnabled(enabled);
+        m_tunPrivilegeModeGroup->setEnabled(enabled);
         m_tunRequireLocalRuleSetsCheck->setEnabled(enabled);
         const bool helperUi = enabled && m_helperManager != nullptr;
         const bool serviceUi = enabled && m_serviceManager != nullptr;
@@ -723,13 +706,16 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
         m_recoverKillSwitchOnUninstallCheck->setEnabled(serviceUi);
         updateKillSwitchControls();
     };
-    connect(m_tunEnableDnsHijackCheck, &QCheckBox::toggled, this, updateRuntimeControls);
+    connect(m_tunEnableDnsHijackCheck, &ZaryaCheckBox::toggled,
+            this, updateRuntimeControls);
     updateRuntimeControls();
     refreshHelperServiceUi();
-    connect(m_enableExperimentalTunCheck, &QCheckBox::toggled, this, updateRuntimeControls);
-    connect(m_enableKillSwitchCheck, &QCheckBox::toggled, this,
+    connect(m_enableExperimentalTunCheck, &ZaryaCheckBox::toggled,
+            this, updateRuntimeControls);
+    connect(m_enableKillSwitchCheck, &ZaryaCheckBox::toggled, this,
             &SettingsDialog::updateKillSwitchControls);
-    connect(m_tunHelperRadio, &QRadioButton::toggled, this, &SettingsDialog::updateKillSwitchControls);
+    connect(m_tunPrivilegeModeGroup, &ZaryaRadioGroup::valueChanged,
+            this, &SettingsDialog::updateKillSwitchControls);
     updateKillSwitchControls();
 
     auto* buttons = new ZaryaDialogActionRow(tr("Save"), tr("Cancel"), this);
@@ -798,25 +784,28 @@ bool SettingsDialog::confirmTunWarningIfNeeded()
         return true;
     }
 
-    QMessageBox box(this);
-    box.setIcon(QMessageBox::Warning);
-    box.setWindowTitle(tr("Experimental TUN mode"));
-    box.setText(tr("TUN mode is experimental and is not the recommended beta path."));
-    box.setInformativeText(
-        tr("Recommended for beta:\nXray system-proxy mode.\n\n"
-           "Continue with experimental TUN?"));
-    QPushButton* continueButton = box.addButton(tr("Continue"), QMessageBox::AcceptRole);
-    QPushButton* switchButton =
-        box.addButton(tr("Switch to Xray system proxy"), QMessageBox::ActionRole);
-    box.addButton(QMessageBox::Cancel);
-    box.exec();
+    const QString action = UiMessagePresenter::choose(
+        this,
+        tr("Experimental TUN mode"),
+        tr("TUN mode is experimental and is not the recommended beta path.")
+            + QStringLiteral("\n\n")
+            + tr("Recommended for beta:\nXray system-proxy mode.\n\n"
+                 "Continue with experimental TUN?"),
+        UiMessageTone::Warning,
+        {
+            {QStringLiteral("continue"), tr("Continue"),
+             UiMessageActionRole::Primary, true, false},
+            {QStringLiteral("switch"), tr("Switch to Xray system proxy")},
+            {QStringLiteral("cancel"), tr("Cancel"),
+             UiMessageActionRole::Secondary, false, true},
+        });
 
-    if (box.clickedButton() == switchButton) {
+    if (action == QStringLiteral("switch")) {
         m_enableExperimentalTunCheck->setChecked(false);
-        m_systemProxyRuntimeRadio->setChecked(true);
+        m_runtimeModeGroup->setValue(static_cast<int>(RuntimeMode::SystemProxyXray));
         return false;
     }
-    if (box.clickedButton() != continueButton) {
+    if (action != QStringLiteral("continue")) {
         return false;
     }
     settings.setExperimentalTunWarningAccepted(true);
@@ -826,23 +815,26 @@ bool SettingsDialog::confirmTunWarningIfNeeded()
 
 bool SettingsDialog::confirmKillSwitchWarningIfNeeded()
 {
-    QMessageBox box(this);
-    box.setIcon(QMessageBox::Warning);
-    box.setWindowTitle(tr("Experimental kill switch"));
-    box.setText(tr("Kill switch is experimental and may block networking if it fails."));
-    box.setInformativeText(
-        tr("Make sure you know the recovery procedure before enabling it."));
-    QPushButton* recoveryButton =
-        box.addButton(tr("Show Recovery Instructions"), QMessageBox::ActionRole);
-    QPushButton* enableButton = box.addButton(tr("Enable"), QMessageBox::AcceptRole);
-    box.addButton(QMessageBox::Cancel);
-    box.exec();
+    const QString action = UiMessagePresenter::choose(
+        this,
+        tr("Experimental kill switch"),
+        tr("Kill switch is experimental and may block networking if it fails.")
+            + QStringLiteral("\n\n")
+            + tr("Make sure you know the recovery procedure before enabling it."),
+        UiMessageTone::Warning,
+        {
+            {QStringLiteral("recovery"), tr("Show Recovery Instructions")},
+            {QStringLiteral("enable"), tr("Enable"),
+             UiMessageActionRole::Primary, true, false},
+            {QStringLiteral("cancel"), tr("Cancel"),
+             UiMessageActionRole::Secondary, false, true},
+        });
 
-    if (box.clickedButton() == recoveryButton) {
+    if (action == QStringLiteral("recovery")) {
         onShowKillSwitchRecovery();
         return false;
     }
-    if (box.clickedButton() != enableButton) {
+    if (action != QStringLiteral("enable")) {
         return false;
     }
     return true;
@@ -911,8 +903,8 @@ bool SettingsDialog::validateAndSave()
     const QUrl testUrl(m_testUrlEdit->text().trimmed());
     if (!testUrl.isValid()
         || (testUrl.scheme() != QStringLiteral("http") && testUrl.scheme() != QStringLiteral("https"))) {
-        QMessageBox::warning(this, tr("Settings"),
-                             tr("Test URL must be a valid http or https URL."));
+        UiMessagePresenter::warning(
+            this, tr("Settings"), tr("Test URL must be a valid http or https URL."));
         return false;
     }
 
@@ -921,7 +913,7 @@ bool SettingsDialog::validateAndSave()
     if (selectedLanguage != LanguageManager::instance().currentLanguageCode()) {
         QString langError;
         if (!LanguageManager::instance().setLanguage(selectedLanguage, &langError)) {
-            QMessageBox::warning(this, tr("Settings"), langError);
+            UiMessagePresenter::warning(this, tr("Settings"), langError);
             return false;
         }
         languageChanged = true;
@@ -962,12 +954,12 @@ bool SettingsDialog::validateAndSave()
         QString autostartError;
         if (wantAutostart) {
             if (!m_autostartManager->enable({QStringLiteral("--minimized")}, &autostartError)) {
-                QMessageBox::warning(this, tr("Autostart"), autostartError);
+                UiMessagePresenter::warning(this, tr("Autostart"), autostartError);
                 return false;
             }
         } else if (m_autostartManager->isEnabled()
                    && !m_autostartManager->disable(&autostartError)) {
-            QMessageBox::warning(this, tr("Autostart"), autostartError);
+            UiMessagePresenter::warning(this, tr("Autostart"), autostartError);
             return false;
         }
         settings.setStartAtLogin(wantAutostart);
@@ -986,9 +978,8 @@ bool SettingsDialog::validateAndSave()
     }
 
     const bool wantExperimentalTun = m_enableExperimentalTunCheck->isChecked();
-    const RuntimeMode selectedMode = m_tunRuntimeRadio->isChecked()
-                                         ? RuntimeMode::TunSingBoxExperimental
-                                         : RuntimeMode::SystemProxyXray;
+    const RuntimeMode selectedMode =
+        static_cast<RuntimeMode>(m_runtimeModeGroup->value());
     if (wantExperimentalTun || selectedMode == RuntimeMode::TunSingBoxExperimental) {
         if (!confirmTunWarningIfNeeded()) {
             return false;
@@ -1002,10 +993,9 @@ bool SettingsDialog::validateAndSave()
     settings.setTunUseActiveDnsProfile(m_tunUseActiveDnsCheck->isChecked());
     settings.setTunEnableDnsHijack(m_tunEnableDnsHijackCheck->isChecked());
     settings.setTunDnsHijackMode(static_cast<TunDnsHijackMode>(
-        m_tunDnsHijackModeCombo->currentData().toInt()));
-    settings.setTunPrivilegeMode(m_tunHelperRadio->isChecked()
-                                     ? TunPrivilegeMode::HelperExperimental
-                                     : TunPrivilegeMode::DirectFromGui);
+        m_tunDnsHijackModeCombo->currentKey().toInt()));
+    settings.setTunPrivilegeMode(
+        static_cast<TunPrivilegeMode>(m_tunPrivilegeModeGroup->value()));
     settings.setTunRequireLocalRuleSets(m_tunRequireLocalRuleSetsCheck->isChecked());
 
     const bool killSwitchEnabled = m_enableKillSwitchCheck->isChecked();
@@ -1042,7 +1032,7 @@ bool SettingsDialog::validateAndSave()
     settings.setCheckCoreUpdatesOnStartup(m_checkCoreUpdatesOnStartupCheck->isChecked());
 
     if (languageChanged) {
-        QMessageBox::information(
+        UiMessagePresenter::information(
             this, tr("Settings"),
             tr("Language will be fully applied after restart."));
     }
@@ -1052,14 +1042,14 @@ bool SettingsDialog::validateAndSave()
         || (previousEffective == RuntimeMode::TunSingBoxExperimental
             && newEffective == RuntimeMode::SystemProxyXray
             && settings.configuredRuntimeMode() == RuntimeMode::TunSingBoxExperimental)) {
-        QMessageBox::warning(
+        UiMessagePresenter::warning(
             this, tr("Experimental features disabled"),
             tr("Experimental features are disabled. Runtime will use Xray system-proxy mode."));
     } else if (previousReleaseChannel != settings.releaseChannelKey()
                && FeaturePolicy::isStableLikeChannel(
                    FeaturePolicy::releaseChannelFromString(settings.releaseChannelKey()))
                && !settings.showExperimentalFeatures()) {
-        QMessageBox::information(
+        UiMessagePresenter::information(
             this, tr("Stable scope"),
             tr("Experimental TUN, helper, and kill switch controls are hidden. Recovery actions "
                "remain available when needed."));
@@ -1071,7 +1061,8 @@ bool SettingsDialog::validateAndSave()
 void SettingsDialog::updateKillSwitchControls()
 {
     const bool enabled = m_enableKillSwitchCheck->isChecked();
-    const bool helperMode = m_tunHelperRadio->isChecked();
+    const bool helperMode = m_tunPrivilegeModeGroup->value()
+        == static_cast<int>(TunPrivilegeMode::HelperExperimental);
     m_killSwitchModeLabel->setEnabled(enabled);
     m_killSwitchAllowLanCheck->setEnabled(enabled);
     m_killSwitchAllowLoopbackCheck->setEnabled(enabled);
@@ -1091,15 +1082,15 @@ void SettingsDialog::onTestKillSwitchSupport()
     }
     QString error;
     if (!m_helperManager->connectToHelper(&error)) {
-        QMessageBox::warning(this, tr("Kill switch"), error);
+        UiMessagePresenter::warning(this, tr("Kill switch"), error);
         return;
     }
     QJsonObject payload;
     if (!m_helperManager->killSwitchCheckSupport(&payload, &error)) {
-        QMessageBox::warning(this, tr("Kill switch"), error);
+        UiMessagePresenter::warning(this, tr("Kill switch"), error);
         return;
     }
-    QMessageBox::information(
+    UiMessagePresenter::information(
         this, tr("Kill switch support"),
         tr("Backend: %1\nPrivileged: %2\nSupported: %3\n\n%4")
             .arg(payload.value(QStringLiteral("backend")).toString(),
@@ -1111,7 +1102,7 @@ void SettingsDialog::onTestKillSwitchSupport()
 void SettingsDialog::onEnableKillSwitchNow()
 {
 #if defined(Q_OS_WIN)
-    QMessageBox::warning(
+    UiMessagePresenter::warning(
         this, tr("Kill switch"),
         tr("The Windows WFP kill switch is experimental.\n\n"
            "It will install temporary Zarya-owned WFP filters to block outbound connections "
@@ -1120,7 +1111,7 @@ void SettingsDialog::onEnableKillSwitchNow()
            "Kill switch is enabled automatically when you start TUN mode with kill switch "
            "enabled."));
 #else
-    QMessageBox::information(
+    UiMessagePresenter::information(
         this, tr("Kill switch"),
         tr("Kill switch is enabled automatically when you start TUN mode with kill switch "
            "enabled.\n\nSelect a profile and press Start, or use a running TUN session."));
@@ -1134,24 +1125,22 @@ void SettingsDialog::onDisableKillSwitchNow()
     }
     QString error;
     if (!m_helperManager->connectToHelper(&error)) {
-        QMessageBox::warning(this, tr("Kill switch"), error);
+        UiMessagePresenter::warning(this, tr("Kill switch"), error);
         return;
     }
     if (!m_helperManager->killSwitchDisable(&error)) {
-        QMessageBox::warning(this, tr("Kill switch"), error);
+        UiMessagePresenter::warning(this, tr("Kill switch"), error);
         return;
     }
-    QMessageBox::information(this, tr("Kill switch"),
-                             tr("Kill switch disabled."));
+    UiMessagePresenter::information(
+        this, tr("Kill switch"), tr("Kill switch disabled."));
 }
 
 void SettingsDialog::onShowKillSwitchRecovery()
 {
-    QMessageBox box(this);
-    box.setWindowTitle(tr("Kill switch recovery"));
-    box.setText(HelperProcessManager::recoveryInstructionsText());
-    box.setStandardButtons(QMessageBox::Close);
-    box.exec();
+    UiMessagePresenter::information(
+        this, tr("Kill switch recovery"),
+        HelperProcessManager::recoveryInstructionsText());
 }
 
 void SettingsDialog::onStartHelper()
@@ -1161,7 +1150,7 @@ void SettingsDialog::onStartHelper()
     }
     QString error;
     if (!m_helperManager->startHelperDevMode(&error)) {
-        QMessageBox::warning(this, tr("Helper"), error);
+        UiMessagePresenter::warning(this, tr("Helper"), error);
     }
     m_helperStatusLabel->setText(m_helperManager->statusText());
 }
@@ -1173,7 +1162,7 @@ void SettingsDialog::onConnectHelper()
     }
     QString error;
     if (!m_helperManager->connectToHelper(&error)) {
-        QMessageBox::warning(this, tr("Helper"), error);
+        UiMessagePresenter::warning(this, tr("Helper"), error);
     }
     m_helperStatusLabel->setText(m_helperManager->statusText());
 }
@@ -1186,7 +1175,7 @@ void SettingsDialog::onCheckHelperStatus()
     QJsonObject payload;
     QString error;
     if (!m_helperManager->status(&payload, &error)) {
-        QMessageBox::warning(this, tr("Helper"), error);
+        UiMessagePresenter::warning(this, tr("Helper"), error);
         return;
     }
     m_helperStatusLabel->setText(
@@ -1242,12 +1231,11 @@ void SettingsDialog::onInstallService()
         HelperServiceInstallOptions::defaultsForCurrentApp(m_helperManager->helperExecutablePath());
     QString error;
     if (!m_serviceManager->install(options, &error)) {
-        QMessageBox msg(this);
-        msg.setWindowTitle(tr("Install helper service"));
-        msg.setText(tr("Installing Zarya Helper service requires Administrator privileges."));
-        msg.setInformativeText(error);
-        msg.setStandardButtons(QMessageBox::Close);
-        msg.exec();
+        UiMessagePresenter::warning(
+            this,
+            tr("Install helper service"),
+            tr("Installing Zarya Helper service requires Administrator privileges.")
+                + QStringLiteral("\n\n") + error);
         refreshHelperServiceUi();
         return;
     }
@@ -1265,7 +1253,7 @@ void SettingsDialog::onUninstallService()
     }
     QString error;
     if (!m_serviceManager->uninstall(m_recoverKillSwitchOnUninstallCheck->isChecked(), &error)) {
-        QMessageBox::warning(this, tr("Uninstall helper service"), error);
+        UiMessagePresenter::warning(this, tr("Uninstall helper service"), error);
     }
     refreshHelperServiceUi();
 }
@@ -1277,7 +1265,7 @@ void SettingsDialog::onStartService()
     }
     QString error;
     if (!m_serviceManager->start(&error)) {
-        QMessageBox::warning(this, tr("Start helper service"), error);
+        UiMessagePresenter::warning(this, tr("Start helper service"), error);
     }
     refreshHelperServiceUi();
 }
@@ -1289,7 +1277,7 @@ void SettingsDialog::onStopService()
     }
     QString error;
     if (!m_serviceManager->stop(&error)) {
-        QMessageBox::warning(this, tr("Stop helper service"), error);
+        UiMessagePresenter::warning(this, tr("Stop helper service"), error);
     }
     refreshHelperServiceUi();
 }
@@ -1301,7 +1289,7 @@ void SettingsDialog::onRestartService()
     }
     QString error;
     if (!m_serviceManager->restart(&error)) {
-        QMessageBox::warning(this, tr("Restart helper service"), error);
+        UiMessagePresenter::warning(this, tr("Restart helper service"), error);
     }
     refreshHelperServiceUi();
 }
@@ -1319,25 +1307,21 @@ void SettingsDialog::onServiceSelfTest()
                    QStringLiteral("--allowed-core-dir"),
                    AppPaths::singBoxCoreDir()});
     process.waitForFinished(15000);
-    QMessageBox box(this);
-    box.setWindowTitle(tr("Helper self-test"));
-    box.setText(QString::fromUtf8(process.readAllStandardOutput()));
+    QString message = QString::fromUtf8(process.readAllStandardOutput());
     if (process.exitCode() != 0) {
-        box.setInformativeText(QString::fromUtf8(process.readAllStandardError()));
+        message += QStringLiteral("\n\n")
+            + QString::fromUtf8(process.readAllStandardError());
+        UiMessagePresenter::warning(this, tr("Helper self-test"), message);
+    } else {
+        UiMessagePresenter::information(this, tr("Helper self-test"), message);
     }
-    box.setStandardButtons(QMessageBox::Close);
-    box.exec();
 }
 
 void SettingsDialog::onShowServiceRecovery()
 {
     const QString text = m_serviceManager ? m_serviceManager->recoveryInstructions()
                                           : HelperProcessManager::recoveryInstructionsText();
-    QMessageBox box(this);
-    box.setWindowTitle(tr("Helper service recovery"));
-    box.setText(text);
-    box.setStandardButtons(QMessageBox::Close);
-    box.exec();
+    UiMessagePresenter::information(this, tr("Helper service recovery"), text);
 }
 
 void SettingsDialog::updateExperimentalVisibility()
@@ -1353,16 +1337,14 @@ void SettingsDialog::updateExperimentalVisibility()
 
 void SettingsDialog::onShowExperimentalFeatures()
 {
-    QMessageBox box(this);
-    box.setIcon(QMessageBox::Warning);
-    box.setWindowTitle(tr("Experimental features"));
-    box.setText(tr("Experimental features may break networking and are not part of stable "
-                   "support."));
-    box.setInformativeText(
-        tr("TUN, zarya-helper, and kill switch are experimental. Use Xray system-proxy mode for "
-           "the recommended stable path."));
-    box.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-    if (box.exec() != QMessageBox::Ok) {
+    if (!UiMessagePresenter::confirm(
+            this,
+            tr("Experimental features"),
+            tr("Experimental features may break networking and are not part of stable support.")
+                + QStringLiteral("\n\n")
+                + tr("TUN, zarya-helper, and kill switch are experimental. Use Xray "
+                     "system-proxy mode for the recommended stable path."),
+            tr("Continue"))) {
         return;
     }
     m_showExperimentalFeaturesCheck->setChecked(true);
