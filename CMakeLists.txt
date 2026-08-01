@@ -853,6 +853,9 @@ zarya_link_qt_core(zarya_version_test)
 
 add_test(NAME smoke COMMAND zarya_smoke_test)
 add_test(NAME version COMMAND zarya_version_test)
+if(APPLE)
+    add_test(NAME macos_headless_version COMMAND $<TARGET_FILE:zarya> --version)
+endif()
 
 add_executable(zarya_stable_hardening_test
     tests/stable/stable_hardening_test.cpp
