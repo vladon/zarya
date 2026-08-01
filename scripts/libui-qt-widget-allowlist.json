@@ -1,10 +1,4 @@
 {
-  "src/ui/MainWindow.cpp": {
-    "QSplitter": 2
-  },
-  "src/ui/MainWindow.h": {
-    "QSplitter": 2
-  },
   "src/ui/desktopapp/UiMessagePresenter.cpp": {
     "QMessageBox": 21,
     "QPushButton": 1

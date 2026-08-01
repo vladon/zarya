@@ -2,6 +2,11 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="en_US">
 <context>
+    <name>ZaryaSplitView</name>
+    <message><source>Resize profiles and logs</source><translation type="unfinished"></translation></message>
+    <message><source>Use Up and Down arrow keys to resize</source><translation type="unfinished"></translation></message>
+</context>
+<context>
     <name>AppUpdateDialog</name>
     <message><source>Zarya App Updates</source><translation type="unfinished"></translation></message>
     <message><source>No update checked yet.</source><translation type="unfinished"></translation></message>

@@ -334,6 +334,7 @@ set(ZARYA_DESKTOP_APP_UI_SOURCES
     src/ui/desktopapp/ZaryaControls.cpp
     src/ui/desktopapp/ZaryaFormControls.cpp
     src/ui/desktopapp/ZaryaSelector.cpp
+    src/ui/desktopapp/ZaryaSplitView.cpp
     src/ui/desktopapp/ProfileActionStrip.cpp
     src/ui/desktopapp/UiMessagePresenter.cpp
     src/ui/desktopapp/ProfileEmptyStatePanel.cpp

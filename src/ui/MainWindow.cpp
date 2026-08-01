@@ -54,6 +54,7 @@
 #include "ui/desktopapp/ZaryaControls.h"
 #include "ui/desktopapp/ZaryaFormControls.h"
 #include "ui/desktopapp/ZaryaSelector.h"
+#include "ui/desktopapp/ZaryaSplitView.h"
 #include "updater/AppUpdateChecker.h"
 #include "updater/AppUpdateStateManager.h"
 #include "features/FeatureGate.h"
@@ -86,7 +87,6 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QPlainTextEdit>
-#include <QSplitter>
 #include <QTableView>
 #include <QDateTime>
 #include <QEventLoop>
@@ -313,11 +313,8 @@ void MainWindow::setupUi()
     logPanelLayout->addWidget(logToolbar);
     logPanelLayout->addWidget(m_logView);
 
-    m_splitter = new QSplitter(Qt::Vertical, this);
-    m_splitter->addWidget(m_tableView);
-    m_splitter->addWidget(logPanel);
-    m_splitter->setStretchFactor(0, 3);
-    m_splitter->setStretchFactor(1, 1);
+    m_splitView = new ZaryaSplitView(m_tableView, logPanel, this);
+    m_splitView->setSizes({3, 1});
 
     m_statusDashboard = new StatusDashboardWidget(this);
     connect(m_statusDashboard, &StatusDashboardWidget::openCoreManagerRequested, this,
@@ -341,7 +338,7 @@ void MainWindow::setupUi()
     connect(m_statusDashboard, &StatusDashboardWidget::updateSubscriptionsRequested, this,
             &MainWindow::onUpdateAllSubscriptions);
     connect(m_statusDashboard, &StatusDashboardWidget::openLogsRequested, this, [this]() {
-        m_splitter->setSizes({height() / 3, height() * 2 / 3});
+        m_splitView->setSizes({height() / 3, height() * 2 / 3});
         m_logView->setFocus();
     });
     connect(m_statusDashboard, &StatusDashboardWidget::createDiagnosticsRequested, this,
@@ -356,7 +353,7 @@ void MainWindow::setupUi()
     }
     centralLayout->addWidget(m_statusDashboard);
     centralLayout->addWidget(m_emptyStatePanel);
-    centralLayout->addWidget(m_splitter, 1);
+    centralLayout->addWidget(m_splitView, 1);
     m_statusText = new ZaryaBodyText(tr("Ready"), central);
     centralLayout->addWidget(m_statusText);
     setCentralWidget(central);
@@ -1288,8 +1285,8 @@ void MainWindow::saveWindowState()
     QSettings& settings = AppSettings::settings();
     settings.setValue(QStringLiteral("window/geometry"), saveGeometry());
     settings.setValue(QStringLiteral("window/state"), saveState());
-    if (m_splitter) {
-        settings.setValue(QStringLiteral("window/splitter"), m_splitter->saveState());
+    if (m_splitView) {
+        settings.setValue(QStringLiteral("window/splitter"), m_splitView->saveState());
     }
     const int row = selectedRow();
     if (row >= 0) {
@@ -1307,8 +1304,8 @@ void MainWindow::restoreWindowState()
     if (settings.contains(QStringLiteral("window/state"))) {
         restoreState(settings.value(QStringLiteral("window/state")).toByteArray());
     }
-    if (m_splitter && settings.contains(QStringLiteral("window/splitter"))) {
-        m_splitter->restoreState(settings.value(QStringLiteral("window/splitter")).toByteArray());
+    if (m_splitView && settings.contains(QStringLiteral("window/splitter"))) {
+        m_splitView->restoreState(settings.value(QStringLiteral("window/splitter")).toByteArray());
     }
     const QString lastProfileId = settings.value(QStringLiteral("window/lastProfileId")).toString();
     if (!lastProfileId.isEmpty()) {

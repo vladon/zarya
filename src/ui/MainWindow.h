@@ -30,7 +30,6 @@ class QAction;
 class QCloseEvent;
 class QEvent;
 class QPlainTextEdit;
-class QSplitter;
 class QTableView;
 
 namespace zarya {
@@ -42,6 +41,7 @@ class ProfileActionStrip;
 class StatusDashboardWidget;
 class ZaryaBodyText;
 class ZaryaSelector;
+class ZaryaSplitView;
 struct FirstRunState;
 struct Profile;
 struct Subscription;
@@ -210,7 +210,7 @@ private:
     StatusDashboardWidget* m_statusDashboard = nullptr;
     ProfileEmptyStatePanel* m_emptyStatePanel = nullptr;
     ZaryaBodyText* m_statusText = nullptr;
-    QSplitter* m_splitter = nullptr;
+    ZaryaSplitView* m_splitView = nullptr;
     QTableView* m_tableView = nullptr;
     QPlainTextEdit* m_logView = nullptr;
     ZaryaSelector* m_logFilterSelector = nullptr;

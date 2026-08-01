@@ -1,6 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <TS version="2.1" language="ru_RU">
 <context>
+    <name>ZaryaSplitView</name>
+    <message><source>Resize profiles and logs</source><translation>Изменить размер областей профилей и журнала</translation></message>
+    <message><source>Use Up and Down arrow keys to resize</source><translation>Используйте стрелки вверх и вниз для изменения размера</translation></message>
+</context>
+<context>
     <name>AppUpdateDialog</name>
     <message><source>Zarya App Updates</source><translation>Обновления Zarya</translation></message>
     <message><source>No update checked yet.</source><translation>Проверка обновлений ещё не выполнялась.</translation></message>
