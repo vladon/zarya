@@ -45,15 +45,6 @@
     "QLabel": 2,
     "QPushButton": 1
   },
-  "src/ui/CoreManagerDialog.cpp": {
-    "QLabel": 3,
-    "QMessageBox": 3,
-    "QPushButton": 15
-  },
-  "src/ui/CoreManagerDialog.h": {
-    "QLabel": 2,
-    "QPushButton": 8
-  },
   "src/ui/DiagnosticsDialog.cpp": {
     "QCheckBox": 4,
     "QGroupBox": 3,
