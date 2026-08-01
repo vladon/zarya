@@ -2,6 +2,7 @@
 
 #include "core/CoreManager.h"
 #include "helperclient/HelperProcessManager.h"
+#include "i18n/ZaryaTr.h"
 #include "killswitch/KillSwitchMode.h"
 #include "killswitch/KillSwitchPayloadBuilder.h"
 #include "runtime/ConfigWarning.h"
@@ -9,12 +10,11 @@
 #include "runtime/singbox/SingBoxTunSupportChecker.h"
 #include "storage/AppPaths.h"
 #include "storage/AppSettings.h"
+#include "ui/desktopapp/UiMessagePresenter.h"
 
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonDocument>
-#include <QMessageBox>
-#include <QPushButton>
 #include <QWidget>
 
 namespace zarya {
@@ -29,6 +29,26 @@ SingBoxConfigOptions configOptionsFromSettings()
         settings.tunEnableDnsHijack()
         && settings.tunDnsHijackMode() != TunDnsHijackMode::Disabled;
     return options;
+}
+
+bool confirmWarning(
+    QWidget* parent,
+    const QString& title,
+    const QString& text,
+    const QString& acceptText)
+{
+    return UiMessagePresenter::choose(
+               parent,
+               title,
+               text,
+               UiMessageTone::Warning,
+               {
+                   {QStringLiteral("continue"), acceptText, UiMessageActionRole::Primary,
+                    false, false},
+                   {QStringLiteral("cancel"), ZaryaTr::tr("Cancel"),
+                    UiMessageActionRole::Secondary, true, true},
+               })
+        == QStringLiteral("continue");
 }
 
 } // namespace
@@ -46,9 +66,9 @@ SingBoxTunRuntimeBackend::SingBoxTunRuntimeBackend(CoreManager* coreManager, QOb
                     "TUN exited unexpectedly while kill switch is active. Network may remain "
                     "blocked until you disable kill switch."));
                 if (m_dialogParent) {
-                    QMessageBox::warning(
-                        m_dialogParent, QStringLiteral("Kill switch"),
-                        QStringLiteral(
+                    UiMessagePresenter::warning(
+                        m_dialogParent, ZaryaTr::tr("Kill switch"),
+                        ZaryaTr::tr(
                             "sing-box exited unexpectedly while kill switch is active.\n\n"
                             "Direct traffic may remain blocked. Use Settings → Kill Switch → "
                             "Disable Now or recovery instructions."));
@@ -300,17 +320,12 @@ bool SingBoxTunRuntimeBackend::enableKillSwitchViaHelper(const Profile& profile,
             }
             return false;
         }
-        QMessageBox box(m_dialogParent);
-        box.setIcon(QMessageBox::Warning);
-        box.setWindowTitle(QStringLiteral("Kill switch"));
-        box.setText(QStringLiteral("%1\n\nEnable kill switch without resolved proxy IPs?")
-                        .arg(built.resolveWarning));
-        QPushButton* continueButton =
-            box.addButton(QStringLiteral("Continue anyway"), QMessageBox::AcceptRole);
-        box.addButton(QMessageBox::Cancel);
-        box.setDefaultButton(QMessageBox::Cancel);
-        box.exec();
-        if (box.clickedButton() != continueButton) {
+        if (!confirmWarning(
+                m_dialogParent,
+                ZaryaTr::tr("Kill switch"),
+                ZaryaTr::tr("%1\n\nEnable kill switch without resolved proxy IPs?")
+                    .arg(built.resolveWarning),
+                ZaryaTr::tr("Continue anyway"))) {
             if (errorMessage) {
                 *errorMessage = QStringLiteral("Kill switch enable canceled.");
             }
@@ -340,9 +355,9 @@ bool SingBoxTunRuntimeBackend::disableKillSwitchViaHelper(QString* errorMessage)
     QString error;
     if (m_helperManager->connectionState() != HelperConnectionState::Connected) {
         if (m_dialogParent) {
-            QMessageBox::warning(
-                m_dialogParent, QStringLiteral("Kill switch"),
-                QStringLiteral(
+            UiMessagePresenter::warning(
+                m_dialogParent, ZaryaTr::tr("Kill switch"),
+                ZaryaTr::tr(
                     "Zarya could not contact helper to disable kill switch. Networking may "
                     "remain blocked.\n\n%1")
                     .arg(errorMessage ? *errorMessage : QString()));
@@ -438,9 +453,9 @@ bool SingBoxTunRuntimeBackend::stopViaHelper()
         emit logLine(QStringLiteral("Sending stopTun"));
         if (!m_helperManager->stopTun(autoDisableKillSwitch, &error)) {
             if (m_dialogParent) {
-                QMessageBox::warning(
-                    m_dialogParent, QStringLiteral("Helper stop"),
-                    QStringLiteral(
+                UiMessagePresenter::warning(
+                    m_dialogParent, ZaryaTr::tr("Helper stop"),
+                    ZaryaTr::tr(
                         "Zarya could not contact helper to stop TUN.\n\n%1\n\nNetworking "
                         "may remain affected.")
                         .arg(error));
@@ -449,9 +464,9 @@ bool SingBoxTunRuntimeBackend::stopViaHelper()
             return false;
         }
     } else if (m_dialogParent) {
-        QMessageBox::warning(
-            m_dialogParent, QStringLiteral("Helper unavailable"),
-            QStringLiteral(
+        UiMessagePresenter::warning(
+            m_dialogParent, ZaryaTr::tr("Helper unavailable"),
+            ZaryaTr::tr(
                 "Zarya could not contact helper to stop TUN. Networking may remain affected."));
         return false;
     }
@@ -460,9 +475,9 @@ bool SingBoxTunRuntimeBackend::stopViaHelper()
     if (autoDisableKillSwitch) {
         m_killSwitchSessionActive = false;
     } else if (m_killSwitchSessionActive && m_dialogParent) {
-        QMessageBox::warning(
-            m_dialogParent, QStringLiteral("Kill switch"),
-            QStringLiteral(
+        UiMessagePresenter::warning(
+            m_dialogParent, ZaryaTr::tr("Kill switch"),
+            ZaryaTr::tr(
                 "Kill switch remains active after Stop. Network may stay restricted until you "
                 "disable it in Settings."));
     }
@@ -502,15 +517,13 @@ bool SingBoxTunRuntimeBackend::confirmPrivilegeWarnings(const RuntimeStartOption
         return true;
     }
 
-    QMessageBox box(m_dialogParent);
-    box.setIcon(QMessageBox::Warning);
-    box.setWindowTitle(QStringLiteral("TUN privileges"));
-    box.setText(QStringLiteral(
-        "Experimental TUN mode may require elevated privileges.\n\n%1\n\nContinue anyway?")
-                    .arg(support.warnings.join(QStringLiteral("\n"))));
-    box.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-    box.setDefaultButton(QMessageBox::No);
-    return box.exec() == QMessageBox::Yes;
+    return confirmWarning(
+        m_dialogParent,
+        ZaryaTr::tr("TUN privileges"),
+        ZaryaTr::tr(
+            "Experimental TUN mode may require elevated privileges.\n\n%1\n\nContinue anyway?")
+            .arg(support.warnings.join(QStringLiteral("\n"))),
+        ZaryaTr::tr("Continue anyway"));
 }
 
 } // namespace zarya
