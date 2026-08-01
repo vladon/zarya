@@ -29,14 +29,14 @@
 #include "runtime/xray/XraySystemProxyRuntimeBackend.h"
 #include "recovery/StartupRecovery.h"
 #include "ui/SafeExitDialog.h"
+#include "ui/SingBoxConfigPreviewDialog.h"
+#include "ui/desktopapp/UiMessagePresenter.h"
 #include "testing/TestManager.h"
 
 #include <QDialog>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonDocument>
-#include <QMessageBox>
-#include <QPushButton>
 #include <QWidget>
 
 namespace zarya {
@@ -49,6 +49,28 @@ bool vmessFailureMayBeClockSkew(const QString& text)
     return lower.contains(QStringLiteral("auth")) || lower.contains(QStringLiteral("rejected"))
            || lower.contains(QStringLiteral("invalid user"))
            || lower.contains(QStringLiteral("not found"));
+}
+
+bool confirmWarning(
+    QWidget* parent,
+    const QString& title,
+    const QString& text,
+    const QString& acceptText,
+    const QString& cancelText,
+    bool acceptByDefault = false)
+{
+    return UiMessagePresenter::choose(
+               parent,
+               title,
+               text,
+               UiMessageTone::Warning,
+               {
+                   {QStringLiteral("accept"), acceptText, UiMessageActionRole::Primary,
+                    acceptByDefault, false},
+                   {QStringLiteral("cancel"), cancelText, UiMessageActionRole::Secondary,
+                    !acceptByDefault, true},
+               })
+        == QStringLiteral("accept");
 }
 
 } // namespace
@@ -194,30 +216,29 @@ bool AppController::confirmDnsGeoDataIfNeeded(const DnsProfile& dnsProfile)
 
     const QString missingFiles = m_geoDataManager->missingFileNamesForTags(references).join(
         QStringLiteral(", "));
-    QMessageBox box(m_dialogParent);
-    box.setIcon(QMessageBox::Warning);
-    box.setWindowTitle(QStringLiteral("Geo data missing"));
-    box.setText(QStringLiteral(
-        "DNS profile uses geo rules but geo data files are missing (%1).\n\nXray validation may "
-        "fail.")
-                    .arg(missingFiles));
-    QPushButton* openManagerButton =
-        box.addButton(QStringLiteral("Open Geo Data Manager"), QMessageBox::ActionRole);
-    QPushButton* continueButton = box.addButton(QStringLiteral("Continue"), QMessageBox::AcceptRole);
-    QPushButton* cancelButton = box.addButton(QStringLiteral("Cancel Start"), QMessageBox::RejectRole);
-    box.setDefaultButton(cancelButton);
-    box.exec();
+    const QString selected = UiMessagePresenter::choose(
+        m_dialogParent,
+        tr("Geo data missing"),
+        tr("DNS profile uses geo rules but geo data files are missing (%1).\n\nXray validation may "
+           "fail.")
+            .arg(missingFiles),
+        UiMessageTone::Warning,
+        {
+            {QStringLiteral("open-manager"), tr("Open Geo Data Manager"),
+             UiMessageActionRole::Secondary, false, false},
+            {QStringLiteral("continue"), tr("Continue"), UiMessageActionRole::Primary,
+             false, false},
+            {QStringLiteral("cancel"), tr("Cancel Start"), UiMessageActionRole::Secondary,
+             true, true},
+        });
 
-    if (box.clickedButton() == openManagerButton) {
+    if (selected == QStringLiteral("open-manager")) {
         if (m_openGeoDataManager) {
             m_openGeoDataManager();
         }
         return false;
     }
-    if (box.clickedButton() == continueButton) {
-        return true;
-    }
-    return false;
+    return selected == QStringLiteral("continue");
 }
 
 bool AppController::confirmDnsWarningsIfNeeded(const DnsProfile& dnsProfile,
@@ -239,28 +260,28 @@ bool AppController::confirmDnsWarningsIfNeeded(const DnsProfile& dnsProfile,
         return true;
     }
 
-    QMessageBox box(m_dialogParent);
-    box.setIcon(QMessageBox::Warning);
-    box.setWindowTitle(QStringLiteral("DNS warnings"));
-    box.setText(QStringLiteral("DNS profile has validation warnings:\n\n%1")
-                    .arg(warnings.join(QStringLiteral("\n"))));
-    QPushButton* openDnsButton =
-        box.addButton(QStringLiteral("Open DNS Profiles"), QMessageBox::ActionRole);
-    QPushButton* continueButton = box.addButton(QStringLiteral("Continue"), QMessageBox::AcceptRole);
-    QPushButton* cancelButton = box.addButton(QStringLiteral("Cancel Start"), QMessageBox::RejectRole);
-    box.setDefaultButton(cancelButton);
-    box.exec();
+    const QString selected = UiMessagePresenter::choose(
+        m_dialogParent,
+        tr("DNS warnings"),
+        tr("DNS profile has validation warnings:\n\n%1")
+            .arg(warnings.join(QStringLiteral("\n"))),
+        UiMessageTone::Warning,
+        {
+            {QStringLiteral("open-dns"), tr("Open DNS Profiles"),
+             UiMessageActionRole::Secondary, false, false},
+            {QStringLiteral("continue"), tr("Continue"), UiMessageActionRole::Primary,
+             false, false},
+            {QStringLiteral("cancel"), tr("Cancel Start"), UiMessageActionRole::Secondary,
+             true, true},
+        });
 
-    if (box.clickedButton() == openDnsButton) {
+    if (selected == QStringLiteral("open-dns")) {
         if (m_openDnsProfiles) {
             m_openDnsProfiles();
         }
         return false;
     }
-    if (box.clickedButton() == continueButton) {
-        return true;
-    }
-    return false;
+    return selected == QStringLiteral("continue");
 }
 
 void AppController::logGeoDataContext()
@@ -312,30 +333,29 @@ bool AppController::confirmGeoDataIfNeeded(const RoutingProfile& routingProfile)
     }
 
     const QString missingFiles = m_geoDataManager->missingFileNamesForTags(tags).join(QStringLiteral(", "));
-    QMessageBox box(m_dialogParent);
-    box.setIcon(QMessageBox::Warning);
-    box.setWindowTitle(QStringLiteral("Geo data missing"));
-    box.setText(QStringLiteral(
-        "The active routing profile uses geoip/geosite rules, but geo data files are missing "
-        "(%1).\n\nXray validation may fail.")
-                    .arg(missingFiles));
-    QPushButton* openManagerButton =
-        box.addButton(QStringLiteral("Open Geo Data Manager"), QMessageBox::ActionRole);
-    QPushButton* continueButton = box.addButton(QStringLiteral("Continue"), QMessageBox::AcceptRole);
-    QPushButton* cancelButton = box.addButton(QStringLiteral("Cancel Start"), QMessageBox::RejectRole);
-    box.setDefaultButton(cancelButton);
-    box.exec();
+    const QString selected = UiMessagePresenter::choose(
+        m_dialogParent,
+        tr("Geo data missing"),
+        tr("The active routing profile uses geoip/geosite rules, but geo data files are missing "
+           "(%1).\n\nXray validation may fail.")
+            .arg(missingFiles),
+        UiMessageTone::Warning,
+        {
+            {QStringLiteral("open-manager"), tr("Open Geo Data Manager"),
+             UiMessageActionRole::Secondary, false, false},
+            {QStringLiteral("continue"), tr("Continue"), UiMessageActionRole::Primary,
+             false, false},
+            {QStringLiteral("cancel"), tr("Cancel Start"), UiMessageActionRole::Secondary,
+             true, true},
+        });
 
-    if (box.clickedButton() == openManagerButton) {
+    if (selected == QStringLiteral("open-manager")) {
         if (m_openGeoDataManager) {
             m_openGeoDataManager();
         }
         return false;
     }
-    if (box.clickedButton() == continueButton) {
-        return true;
-    }
-    return false;
+    return selected == QStringLiteral("continue");
 }
 
 bool AppController::isCoreRunning() const
@@ -375,10 +395,13 @@ bool AppController::confirmSystemProxyChangeIfNeeded() const
     if (!m_dialogParent) {
         return true;
     }
-    return QMessageBox::question(
-               m_dialogParent, QStringLiteral("Change system proxy"),
-               QStringLiteral("Zarya will change Windows system proxy settings. Continue?"))
-           == QMessageBox::Yes;
+    return confirmWarning(
+        m_dialogParent,
+        tr("Change system proxy"),
+        tr("Zarya will change Windows system proxy settings. Continue?"),
+        tr("Continue"),
+        tr("Cancel"),
+        true);
 }
 
 bool AppController::writeConfigFile(const QString& path, const QJsonObject& config,
@@ -432,11 +455,12 @@ bool AppController::startProfile(const Profile& profile, bool fromAutostart)
 
     if (isCoreRunning()) {
         if (m_dialogParent) {
-            const auto answer = QMessageBox::question(
-                m_dialogParent, QStringLiteral("Profile running"),
-                QStringLiteral("A profile is already running. Stop and start the selected profile?"),
-                QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
-            if (answer != QMessageBox::Yes) {
+            if (!confirmWarning(
+                    m_dialogParent,
+                    tr("Profile running"),
+                    tr("A profile is already running. Stop and start the selected profile?"),
+                    tr("Stop and Start"),
+                    tr("Cancel"))) {
                 return false;
             }
             if (!stopCurrentProfile()) {
@@ -539,9 +563,9 @@ bool AppController::confirmRuleSetsIfNeeded(const RoutingProfile& routingProfile
 
     if (settings.tunRequireLocalRuleSets()) {
         if (m_dialogParent) {
-            QMessageBox::critical(
-                m_dialogParent, QStringLiteral("Missing sing-box rule sets"),
-                QStringLiteral(
+            UiMessagePresenter::error(
+                m_dialogParent, tr("Missing sing-box rule sets"),
+                tr(
                     "The active TUN routing/DNS profiles require sing-box rule sets that are "
                     "missing:\n\n%1")
                     .arg(lines.join(QStringLiteral("\n"))));
@@ -553,26 +577,28 @@ bool AppController::confirmRuleSetsIfNeeded(const RoutingProfile& routingProfile
         return true;
     }
 
-    QMessageBox box(m_dialogParent);
-    box.setIcon(QMessageBox::Warning);
-    box.setWindowTitle(QStringLiteral("sing-box rule sets"));
-    box.setText(QStringLiteral(
-        "The active TUN routing/DNS profiles reference sing-box rule sets that are missing:\n\n%1\n\n"
-        "Continue anyway? sing-box check is the final authority.")
-                    .arg(lines.join(QStringLiteral("\n"))));
-    auto* managerButton = box.addButton(QStringLiteral("Open Rule Set Manager"),
-                                        QMessageBox::ActionRole);
-    box.addButton(QMessageBox::Cancel);
-    auto* continueButton = box.addButton(QStringLiteral("Continue"), QMessageBox::AcceptRole);
-    box.setDefaultButton(QMessageBox::Cancel);
-    box.exec();
-    if (box.clickedButton() == managerButton) {
+    const QString selected = UiMessagePresenter::choose(
+        m_dialogParent,
+        tr("sing-box rule sets"),
+        tr("The active TUN routing/DNS profiles reference sing-box rule sets that are missing:\n\n"
+           "%1\n\nContinue anyway? sing-box check is the final authority.")
+            .arg(lines.join(QStringLiteral("\n"))),
+        UiMessageTone::Warning,
+        {
+            {QStringLiteral("open-manager"), tr("Open Rule Set Manager"),
+             UiMessageActionRole::Secondary, false, false},
+            {QStringLiteral("continue"), tr("Continue"), UiMessageActionRole::Primary,
+             false, false},
+            {QStringLiteral("cancel"), tr("Cancel"), UiMessageActionRole::Secondary,
+             true, true},
+        });
+    if (selected == QStringLiteral("open-manager")) {
         if (m_openRuleSetManager) {
             m_openRuleSetManager();
         }
         return false;
     }
-    return box.clickedButton() == continueButton;
+    return selected == QStringLiteral("continue");
 }
 
 bool AppController::confirmSingBoxConfigWarningsIfNeeded(
@@ -583,9 +609,9 @@ bool AppController::confirmSingBoxConfigWarningsIfNeeded(
             warningMessages(result.classifiedWarnings, ConfigWarningSeverity::Blocking);
         emit logLine(QStringLiteral("sing-box config has blocking issues."));
         if (m_dialogParent) {
-            QMessageBox::critical(
-                m_dialogParent, QStringLiteral("Cannot start TUN"),
-                QStringLiteral("Generated sing-box config has blocking issues:\n\n%1")
+            UiMessagePresenter::error(
+                m_dialogParent, tr("Cannot start TUN"),
+                tr("Generated sing-box config has blocking issues:\n\n%1")
                     .arg(blocking.join(QStringLiteral("\n"))));
         }
         return false;
@@ -601,33 +627,29 @@ bool AppController::confirmSingBoxConfigWarningsIfNeeded(
         return true;
     }
 
-    QMessageBox box(m_dialogParent);
-    box.setIcon(QMessageBox::Warning);
-    box.setWindowTitle(QStringLiteral("sing-box config warnings"));
-    box.setText(QStringLiteral("Generated sing-box config has warnings:\n\n%1\n\nContinue?")
-                    .arg(warnings.join(QStringLiteral("\n"))));
-    auto* previewButton =
-        box.addButton(QStringLiteral("Preview Config"), QMessageBox::ActionRole);
-    box.addButton(QMessageBox::Cancel);
-    box.addButton(QMessageBox::Yes);
-    box.setDefaultButton(QMessageBox::Yes);
-
     while (true) {
-        box.exec();
-        if (box.clickedButton() == previewButton) {
+        const QString selected = UiMessagePresenter::choose(
+            m_dialogParent,
+            tr("sing-box config warnings"),
+            tr("Generated sing-box config has warnings:\n\n%1\n\nContinue?")
+                .arg(warnings.join(QStringLiteral("\n"))),
+            UiMessageTone::Warning,
+            {
+                {QStringLiteral("preview"), tr("Preview Config"),
+                 UiMessageActionRole::Secondary, false, false},
+                {QStringLiteral("continue"), tr("Continue"), UiMessageActionRole::Primary,
+                 true, false},
+                {QStringLiteral("cancel"), tr("Cancel"), UiMessageActionRole::Secondary,
+                 false, true},
+            });
+        if (selected == QStringLiteral("preview")) {
             const QString json =
                 QString::fromUtf8(QJsonDocument(result.config).toJson(QJsonDocument::Indented));
-            QMessageBox preview(m_dialogParent);
-            preview.setWindowTitle(QStringLiteral("sing-box config preview"));
-            preview.setText(json);
-            preview.setStandardButtons(QMessageBox::Close);
+            SingBoxConfigPreviewDialog preview(json, warnings, m_coreManager, m_dialogParent);
             preview.exec();
             continue;
         }
-        if (box.clickedButton() == box.button(QMessageBox::Cancel)) {
-            return false;
-        }
-        return true;
+        return selected == QStringLiteral("continue");
     }
 }
 
@@ -647,8 +669,8 @@ bool AppController::startProfileTunSingBox(const Profile& profile, bool fromAuto
     if (!generator.supportsProfile(profile, &unsupportedReason)) {
         emit logLine(QStringLiteral("Unsupported profile: %1").arg(unsupportedReason));
         if (m_dialogParent) {
-            QMessageBox::warning(m_dialogParent, QStringLiteral("Unsupported profile"),
-                                 unsupportedReason);
+            UiMessagePresenter::warning(m_dialogParent, tr("Unsupported profile"),
+                                        unsupportedReason);
         }
         return false;
     }
@@ -690,8 +712,8 @@ bool AppController::startProfileTunSingBox(const Profile& profile, bool fromAuto
     if (!generation.success) {
         emit logLine(QStringLiteral("Config generation failed: %1").arg(generation.errorMessage));
         if (m_dialogParent) {
-            QMessageBox::warning(m_dialogParent, QStringLiteral("Config generation"),
-                                 generation.errorMessage);
+            UiMessagePresenter::warning(m_dialogParent, tr("Config generation"),
+                                        generation.errorMessage);
         }
         return false;
     }
@@ -727,8 +749,8 @@ bool AppController::startProfileSystemProxyXray(const Profile& profile, bool fro
     if (!m_xrayAdapter->supportsProfile(profile, &unsupportedReason)) {
         emit logLine(QStringLiteral("Unsupported profile: %1").arg(unsupportedReason));
         if (m_dialogParent) {
-            QMessageBox::warning(m_dialogParent, QStringLiteral("Unsupported profile"),
-                                 unsupportedReason);
+            UiMessagePresenter::warning(m_dialogParent, tr("Unsupported profile"),
+                                        unsupportedReason);
         }
         return false;
     }
@@ -758,13 +780,13 @@ bool AppController::startProfileSystemProxyXray(const Profile& profile, bool fro
             emit logLine(QStringLiteral("Routing validation warning: %1").arg(warning));
         }
         if (!warnings.isEmpty() && m_dialogParent) {
-            const auto answer = QMessageBox::question(
-                m_dialogParent, QStringLiteral("Routing warnings"),
-                QStringLiteral(
-                    "Routing profile has validation warnings:\n\n%1\n\nContinue?")
-                    .arg(warnings.join(QStringLiteral("\n"))),
-                QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
-            if (answer != QMessageBox::Yes) {
+            if (!confirmWarning(
+                    m_dialogParent,
+                    tr("Routing warnings"),
+                    tr("Routing profile has validation warnings:\n\n%1\n\nContinue?")
+                        .arg(warnings.join(QStringLiteral("\n"))),
+                    tr("Continue"),
+                    tr("Cancel"))) {
                 return false;
             }
         }
@@ -805,8 +827,8 @@ bool AppController::startProfileSystemProxyXray(const Profile& profile, bool fro
     if (!generation.success) {
         emit logLine(QStringLiteral("Config generation failed: %1").arg(generation.errorMessage));
         if (m_dialogParent) {
-            QMessageBox::warning(m_dialogParent, QStringLiteral("Config generation"),
-                                 generation.errorMessage);
+            UiMessagePresenter::warning(m_dialogParent, tr("Config generation"),
+                                        generation.errorMessage);
         }
         return false;
     }
@@ -816,7 +838,7 @@ bool AppController::startProfileSystemProxyXray(const Profile& profile, bool fro
     if (!writeConfigFile(configPath, generation.config, &writeError)) {
         emit logLine(QStringLiteral("Failed to write config: %1").arg(writeError));
         if (m_dialogParent) {
-            QMessageBox::warning(m_dialogParent, QStringLiteral("Config write"), writeError);
+            UiMessagePresenter::warning(m_dialogParent, tr("Config write"), writeError);
         }
         return false;
     }
@@ -831,7 +853,7 @@ bool AppController::startProfileSystemProxyXray(const Profile& profile, bool fro
                 .arg(executablePath);
         emit logLine(message);
         if (m_dialogParent) {
-            QMessageBox::warning(m_dialogParent, QStringLiteral("Xray not found"), message);
+            UiMessagePresenter::warning(m_dialogParent, tr("Xray not found"), message);
         }
         return false;
     }
@@ -852,8 +874,8 @@ bool AppController::startProfileSystemProxyXray(const Profile& profile, bool fro
         }
         emit logLine(QStringLiteral("Validation failed."));
         if (m_dialogParent) {
-            QMessageBox::warning(m_dialogParent, QStringLiteral("Config validation failed"),
-                                 validation.errorMessage);
+            UiMessagePresenter::warning(m_dialogParent, tr("Config validation failed"),
+                                        validation.errorMessage);
         }
         return false;
     }
@@ -941,7 +963,7 @@ bool AppController::restoreSystemProxyManual()
         m_systemProxy->restorePreviousProxy(SystemProxyRestoreMode::Manual, writeLog, &error);
     emit proxyStateChanged();
     if (!restored && m_dialogParent && !error.isEmpty()) {
-        QMessageBox::warning(m_dialogParent, QStringLiteral("System proxy"), error);
+        UiMessagePresenter::warning(m_dialogParent, tr("System proxy"), error);
     }
     return restored;
 }
@@ -965,7 +987,7 @@ bool AppController::enableSystemProxyManual()
                                                         writeLog, &error);
     emit proxyStateChanged();
     if (!ok && m_dialogParent) {
-        QMessageBox::warning(m_dialogParent, QStringLiteral("System proxy"), error);
+        UiMessagePresenter::warning(m_dialogParent, tr("System proxy"), error);
     }
     return ok;
 }
@@ -1084,24 +1106,27 @@ void AppController::requestQuit()
     }
 
     while (true) {
-        QMessageBox box(m_dialogParent);
-        box.setIcon(QMessageBox::Warning);
-        box.setWindowTitle(QStringLiteral("System proxy"));
-        box.setText(QStringLiteral(
-            "Zarya could not restore previous system proxy settings. Retry restore or exit "
-            "anyway?"));
-        QPushButton* retryButton = box.addButton(QStringLiteral("Retry"), QMessageBox::AcceptRole);
-        QPushButton* exitButton =
-            box.addButton(QStringLiteral("Exit Anyway"), QMessageBox::DestructiveRole);
-        QPushButton* cancelButton = box.addButton(QMessageBox::Cancel);
-        box.exec();
+        const QString selected = UiMessagePresenter::choose(
+            m_dialogParent,
+            tr("System proxy"),
+            tr("Zarya could not restore previous system proxy settings. Retry restore or exit "
+               "anyway?"),
+            UiMessageTone::Warning,
+            {
+                {QStringLiteral("retry"), tr("Retry"), UiMessageActionRole::Primary,
+                 true, false},
+                {QStringLiteral("exit"), tr("Exit Anyway"),
+                 UiMessageActionRole::Destructive, false, false},
+                {QStringLiteral("cancel"), tr("Cancel"), UiMessageActionRole::Secondary,
+                 false, true},
+            });
 
-        if (box.clickedButton() == cancelButton) {
+        if (selected == QStringLiteral("cancel") || selected.isEmpty()) {
             emit logLine(QStringLiteral("Safe shutdown canceled"));
             emit quitBlocked(QStringLiteral("Exit canceled after proxy restore failure."));
             return;
         }
-        if (box.clickedButton() == retryButton) {
+        if (selected == QStringLiteral("retry")) {
             QString error;
             if (attemptProxyRestoreOnShutdown(&error)) {
                 if (safeShutdownWithOptions(true, true, true, true)) {
@@ -1109,11 +1134,11 @@ void AppController::requestQuit()
                     return;
                 }
             } else if (m_dialogParent) {
-                QMessageBox::warning(m_dialogParent, QStringLiteral("System proxy"), error);
+                UiMessagePresenter::warning(m_dialogParent, tr("System proxy"), error);
             }
             continue;
         }
-        if (box.clickedButton() == exitButton) {
+        if (selected == QStringLiteral("exit")) {
             emit logLine(QStringLiteral("Exit anyway after proxy restore failure"));
             if (safeShutdownWithOptions(true, true, false, true)) {
                 emit quitApproved();

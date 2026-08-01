@@ -2920,4 +2920,87 @@ Continue anyway?</source>
 
 Всё равно продолжить?</translation></message>
 </context>
+<context>
+    <name>AppController</name>
+    <message><source>Geo data missing</source><translation>Геоданные отсутствуют</translation></message>
+    <message><source>DNS profile uses geo rules but geo data files are missing (%1).
+
+Xray validation may fail.</source><translation>Профиль DNS использует геоправила, но файлы геоданных отсутствуют (%1).
+
+Проверка Xray может завершиться ошибкой.</translation></message>
+    <message><source>Open Geo Data Manager</source><translation>Открыть менеджер геоданных</translation></message>
+    <message><source>Continue</source><translation>Продолжить</translation></message>
+    <message><source>Cancel Start</source><translation>Отменить запуск</translation></message>
+    <message><source>DNS warnings</source><translation>Предупреждения DNS</translation></message>
+    <message><source>DNS profile has validation warnings:
+
+%1</source><translation>Профиль DNS содержит предупреждения проверки:
+
+%1</translation></message>
+    <message><source>Open DNS Profiles</source><translation>Открыть профили DNS</translation></message>
+    <message><source>The active routing profile uses geoip/geosite rules, but geo data files are missing (%1).
+
+Xray validation may fail.</source><translation>Активный профиль маршрутизации использует правила geoip/geosite, но файлы геоданных отсутствуют (%1).
+
+Проверка Xray может завершиться ошибкой.</translation></message>
+    <message><source>Change system proxy</source><translation>Изменение системного прокси</translation></message>
+    <message><source>Zarya will change Windows system proxy settings. Continue?</source><translation>Zarya изменит настройки системного прокси Windows. Продолжить?</translation></message>
+    <message><source>Cancel</source><translation>Отмена</translation></message>
+    <message><source>Profile running</source><translation>Профиль запущен</translation></message>
+    <message><source>A profile is already running. Stop and start the selected profile?</source><translation>Профиль уже запущен. Остановить его и запустить выбранный профиль?</translation></message>
+    <message><source>Stop and Start</source><translation>Остановить и запустить</translation></message>
+    <message><source>Missing sing-box rule sets</source><translation>Отсутствуют наборы правил sing-box</translation></message>
+    <message><source>The active TUN routing/DNS profiles require sing-box rule sets that are missing:
+
+%1</source><translation>Активным профилям маршрутизации и DNS для TUN требуются отсутствующие наборы правил sing-box:
+
+%1</translation></message>
+    <message><source>sing-box rule sets</source><translation>Наборы правил sing-box</translation></message>
+    <message><source>The active TUN routing/DNS profiles reference sing-box rule sets that are missing:
+
+%1
+
+Continue anyway? sing-box check is the final authority.</source><translation>Активные профили маршрутизации и DNS для TUN ссылаются на отсутствующие наборы правил sing-box:
+
+%1
+
+Всё равно продолжить? Окончательный результат определяется проверкой sing-box.</translation></message>
+    <message><source>Open Rule Set Manager</source><translation>Открыть менеджер наборов правил</translation></message>
+    <message><source>Cannot start TUN</source><translation>Не удалось запустить TUN</translation></message>
+    <message><source>Generated sing-box config has blocking issues:
+
+%1</source><translation>В созданной конфигурации sing-box есть блокирующие проблемы:
+
+%1</translation></message>
+    <message><source>sing-box config warnings</source><translation>Предупреждения конфигурации sing-box</translation></message>
+    <message><source>Generated sing-box config has warnings:
+
+%1
+
+Continue?</source><translation>В созданной конфигурации sing-box есть предупреждения:
+
+%1
+
+Продолжить?</translation></message>
+    <message><source>Preview Config</source><translation>Предпросмотр конфигурации</translation></message>
+    <message><source>Unsupported profile</source><translation>Неподдерживаемый профиль</translation></message>
+    <message><source>Config generation</source><translation>Создание конфигурации</translation></message>
+    <message><source>Routing warnings</source><translation>Предупреждения маршрутизации</translation></message>
+    <message><source>Routing profile has validation warnings:
+
+%1
+
+Continue?</source><translation>Профиль маршрутизации содержит предупреждения проверки:
+
+%1
+
+Продолжить?</translation></message>
+    <message><source>Config write</source><translation>Запись конфигурации</translation></message>
+    <message><source>Xray not found</source><translation>Xray не найден</translation></message>
+    <message><source>Config validation failed</source><translation>Ошибка проверки конфигурации</translation></message>
+    <message><source>System proxy</source><translation>Системный прокси</translation></message>
+    <message><source>Zarya could not restore previous system proxy settings. Retry restore or exit anyway?</source><translation>Zarya не удалось восстановить предыдущие настройки системного прокси. Повторить восстановление или всё равно выйти?</translation></message>
+    <message><source>Retry</source><translation>Повторить</translation></message>
+    <message><source>Exit Anyway</source><translation>Всё равно выйти</translation></message>
+</context>
 </TS>
