@@ -3653,4 +3653,65 @@ Continue anyway?</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
+<context>
+    <name>AppController</name>
+    <message><source>Geo data missing</source><translation type="unfinished"></translation></message>
+    <message><source>DNS profile uses geo rules but geo data files are missing (%1).
+
+Xray validation may fail.</source><translation type="unfinished"></translation></message>
+    <message><source>Open Geo Data Manager</source><translation type="unfinished"></translation></message>
+    <message><source>Continue</source><translation type="unfinished"></translation></message>
+    <message><source>Cancel Start</source><translation type="unfinished"></translation></message>
+    <message><source>DNS warnings</source><translation type="unfinished"></translation></message>
+    <message><source>DNS profile has validation warnings:
+
+%1</source><translation type="unfinished"></translation></message>
+    <message><source>Open DNS Profiles</source><translation type="unfinished"></translation></message>
+    <message><source>The active routing profile uses geoip/geosite rules, but geo data files are missing (%1).
+
+Xray validation may fail.</source><translation type="unfinished"></translation></message>
+    <message><source>Change system proxy</source><translation type="unfinished"></translation></message>
+    <message><source>Zarya will change Windows system proxy settings. Continue?</source><translation type="unfinished"></translation></message>
+    <message><source>Cancel</source><translation type="unfinished"></translation></message>
+    <message><source>Profile running</source><translation type="unfinished"></translation></message>
+    <message><source>A profile is already running. Stop and start the selected profile?</source><translation type="unfinished"></translation></message>
+    <message><source>Stop and Start</source><translation type="unfinished"></translation></message>
+    <message><source>Missing sing-box rule sets</source><translation type="unfinished"></translation></message>
+    <message><source>The active TUN routing/DNS profiles require sing-box rule sets that are missing:
+
+%1</source><translation type="unfinished"></translation></message>
+    <message><source>sing-box rule sets</source><translation type="unfinished"></translation></message>
+    <message><source>The active TUN routing/DNS profiles reference sing-box rule sets that are missing:
+
+%1
+
+Continue anyway? sing-box check is the final authority.</source><translation type="unfinished"></translation></message>
+    <message><source>Open Rule Set Manager</source><translation type="unfinished"></translation></message>
+    <message><source>Cannot start TUN</source><translation type="unfinished"></translation></message>
+    <message><source>Generated sing-box config has blocking issues:
+
+%1</source><translation type="unfinished"></translation></message>
+    <message><source>sing-box config warnings</source><translation type="unfinished"></translation></message>
+    <message><source>Generated sing-box config has warnings:
+
+%1
+
+Continue?</source><translation type="unfinished"></translation></message>
+    <message><source>Preview Config</source><translation type="unfinished"></translation></message>
+    <message><source>Unsupported profile</source><translation type="unfinished"></translation></message>
+    <message><source>Config generation</source><translation type="unfinished"></translation></message>
+    <message><source>Routing warnings</source><translation type="unfinished"></translation></message>
+    <message><source>Routing profile has validation warnings:
+
+%1
+
+Continue?</source><translation type="unfinished"></translation></message>
+    <message><source>Config write</source><translation type="unfinished"></translation></message>
+    <message><source>Xray not found</source><translation type="unfinished"></translation></message>
+    <message><source>Config validation failed</source><translation type="unfinished"></translation></message>
+    <message><source>System proxy</source><translation type="unfinished"></translation></message>
+    <message><source>Zarya could not restore previous system proxy settings. Retry restore or exit anyway?</source><translation type="unfinished"></translation></message>
+    <message><source>Retry</source><translation type="unfinished"></translation></message>
+    <message><source>Exit Anyway</source><translation type="unfinished"></translation></message>
+</context>
 </TS>
