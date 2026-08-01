@@ -69,7 +69,9 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      `QWizard` only as its temporary host; its content, selectors, fields, checks, actions, and
      validation feedback use the shared toolkit layer. Subscription editing and management use
      the shared toolkit fields, checkbox, multiline input, action buttons, empty/update states,
-     and message presenter; the subscription table remains a Qt model/view boundary.
+     and message presenter; the subscription table remains a Qt model/view boundary. General,
+     desktop-behavior, and startup settings use toolkit sections, selectors, checks, text, and
+     number fields while retaining the existing settings persistence and autostart backend.
 5. **Management surfaces**
    - Migrate Core, Routing, DNS, Geo Data, Rule Set, backup, and diagnostics workflows using the
      shared interaction layer.

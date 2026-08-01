@@ -188,28 +188,27 @@
     "QCheckBox": 4
   },
   "src/ui/SettingsDialog.cpp": {
-    "QCheckBox": 37,
-    "QComboBox": 12,
-    "QDialogButtonBox": 6,
+    "QCheckBox": 29,
+    "QComboBox": 9,
     "QFrame": 2,
-    "QGroupBox": 14,
-    "QLabel": 23,
+    "QGroupBox": 11,
+    "QLabel": 21,
     "QLineEdit": 5,
     "QMessageBox": 47,
     "QPushButton": 43,
     "QRadioButton": 6,
     "QScrollArea": 2,
-    "QSpinBox": 9
+    "QSpinBox": 8
   },
   "src/ui/SettingsDialog.h": {
-    "QCheckBox": 31,
-    "QComboBox": 9,
+    "QCheckBox": 23,
+    "QComboBox": 7,
     "QGroupBox": 3,
-    "QLabel": 15,
+    "QLabel": 14,
     "QLineEdit": 5,
     "QPushButton": 16,
     "QRadioButton": 5,
-    "QSpinBox": 8
+    "QSpinBox": 7
   },
   "src/ui/SingBoxConfigPreviewDialog.cpp": {
     "QDialogButtonBox": 4,
