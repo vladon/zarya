@@ -9,6 +9,8 @@
 #include <QAction>
 #include <QHBoxLayout>
 #include <QMetaObject>
+#include <QResizeEvent>
+#include <array>
 #include <utility>
 
 namespace zarya {
@@ -32,34 +34,34 @@ ProfileActionStrip::ProfileActionStrip(
     : QWidget(parent)
     , m_actions(std::move(actions))
 {
-    auto* layout = new QHBoxLayout(this);
-    layout->setContentsMargins(4, 4, 4, 4);
-    layout->setSpacing(8);
+    m_layout = new QHBoxLayout(this);
+    m_layout->setContentsMargins(4, 4, 4, 4);
+    m_layout->setSpacing(8);
 
-    const auto addActionButton = [this, layout](QAction* action, ZaryaButtonRole role) {
+    const auto addActionButton = [this](QAction* action, ZaryaButtonRole role) {
         auto button = makeZaryaButton(this, displayText(action->text()), role);
         QWidget* result = button.data();
-        layout->addWidget(button.release());
+        m_layout->addWidget(button.release());
         bindButton(result, action);
         return result;
     };
 
     addActionButton(m_actions.add, ZaryaButtonRole::Secondary);
-    addActionButton(m_actions.importProfiles, ZaryaButtonRole::Secondary);
-    addActionButton(m_actions.subscriptions, ZaryaButtonRole::Secondary);
+    m_importButton = addActionButton(m_actions.importProfiles, ZaryaButtonRole::Secondary);
+    m_subscriptionsButton = addActionButton(m_actions.subscriptions, ZaryaButtonRole::Secondary);
 
     m_profileSelector = new ZaryaSelector(this);
     m_profileSelector->setMinimumWidth(180);
-    layout->addWidget(m_profileSelector);
+    m_layout->addWidget(m_profileSelector);
 
-    addActionButton(m_actions.testSelected, ZaryaButtonRole::Secondary);
-    m_startButton = addActionButton(m_actions.start, ZaryaButtonRole::Primary);
-    m_stopButton = addActionButton(m_actions.stop, ZaryaButtonRole::Primary);
+    m_testButton = addActionButton(m_actions.testSelected, ZaryaButtonRole::Secondary);
+    m_layout->addStretch();
+    addActionButton(m_actions.start, ZaryaButtonRole::Primary);
+    addActionButton(m_actions.stop, ZaryaButtonRole::Destructive);
 
     auto moreButton = makeZaryaButton(this, moreText, ZaryaButtonRole::Secondary);
     m_moreButton = moreButton.data();
-    layout->addWidget(moreButton.release());
-    layout->addStretch();
+    m_layout->addWidget(moreButton.release());
 
     auto* menu = new Ui::DropdownMenu(window());
     menu->setAutoHiding(false);
@@ -80,6 +82,12 @@ ProfileActionStrip::~ProfileActionStrip()
 ZaryaSelector* ProfileActionStrip::profileSelector() const
 {
     return m_profileSelector;
+}
+
+void ProfileActionStrip::resizeEvent(QResizeEvent* event)
+{
+    QWidget::resizeEvent(event);
+    updateResponsiveVisibility();
 }
 
 void ProfileActionStrip::bindButton(QWidget* buttonWidget, QAction* action)
@@ -122,6 +130,26 @@ void ProfileActionStrip::rebuildOverflowMenu()
         hasAction = true;
     }
     menu->resizeToContent();
+}
+
+void ProfileActionStrip::updateResponsiveVisibility()
+{
+    const std::array optionalButtons = {
+        m_testButton,
+        m_subscriptionsButton,
+        m_importButton,
+    };
+    for (QWidget* button : optionalButtons) {
+        button->show();
+    }
+    m_layout->activate();
+    for (QWidget* button : optionalButtons) {
+        if (m_layout->sizeHint().width() <= width()) {
+            break;
+        }
+        button->hide();
+        m_layout->activate();
+    }
 }
 
 } // namespace zarya

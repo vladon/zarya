@@ -5,6 +5,8 @@
 #include <QWidget>
 
 class QAction;
+class QHBoxLayout;
+class QResizeEvent;
 
 namespace zarya {
 
@@ -32,14 +34,20 @@ public:
 
     [[nodiscard]] ZaryaSelector* profileSelector() const;
 
+protected:
+    void resizeEvent(QResizeEvent* event) override;
+
 private:
     void bindButton(QWidget* button, QAction* action);
     void rebuildOverflowMenu();
+    void updateResponsiveVisibility();
 
     ProfileActionStripActions m_actions;
+    QHBoxLayout* m_layout = nullptr;
     ZaryaSelector* m_profileSelector = nullptr;
-    QWidget* m_startButton = nullptr; // Ui::RoundButton*
-    QWidget* m_stopButton = nullptr; // Ui::RoundButton*
+    QWidget* m_importButton = nullptr; // Ui::RoundButton*
+    QWidget* m_subscriptionsButton = nullptr; // Ui::RoundButton*
+    QWidget* m_testButton = nullptr; // Ui::RoundButton*
     QWidget* m_moreButton = nullptr; // Ui::RoundButton*
     QWidget* m_menu = nullptr; // Ui::DropdownMenu*
 };
