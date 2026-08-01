@@ -2443,6 +2443,76 @@ Select a profile and press Start, or use a running TUN session.</source>
     <message>
         <source>running=%1, pid=%2</source>
         <translation>running=%1, pid=%2</translation></message>
+    <message><source> · Connected</source><translation> · Подключено</translation></message>
+    <message><source>Allow unsigned app update download (no checksum)</source><translation>Разрешить загрузку обновления приложения без подписи (без контрольной суммы)</translation></message>
+    <message><source>Also recover/remove Zarya kill switch rules on uninstall</source><translation>Также восстановить или удалить правила kill switch Zarya при удалении</translation></message>
+    <message><source>App updates</source><translation>Обновления приложения</translation></message>
+    <message><source>App updates update Zarya itself. Core updates (below) update Xray and sing-box.</source><translation>Обновления приложения обновляют саму Zarya. Обновления ядер (ниже) обновляют Xray и sing-box.</translation></message>
+    <message><source>Beta</source><translation>Бета</translation></message>
+    <message><source>Channel</source><translation>Канал</translation></message>
+    <message><source>Check app updates on startup</source><translation>Проверять обновления приложения при запуске</translation></message>
+    <message><source>Continue</source><translation>Продолжить</translation></message>
+    <message><source>Dev</source><translation>Разработка</translation></message>
+    <message><source>Enable</source><translation>Включить</translation></message>
+    <message><source>Experimental TUN, helper, and kill switch controls are hidden. Recovery actions remain available when needed.</source><translation>Элементы управления экспериментальными TUN, helper и kill switch скрыты. Действия восстановления остаются доступными при необходимости.</translation></message>
+    <message><source>Experimental features</source><translation>Экспериментальные функции</translation></message>
+    <message><source>Experimental features are disabled. Runtime will use Xray system-proxy mode.</source><translation>Экспериментальные функции отключены. Будет использоваться системный прокси Xray.</translation></message>
+    <message><source>Experimental features are hidden in release-candidate and stable builds.
+Xray system-proxy mode is the recommended stable path.</source><translation>Экспериментальные функции скрыты в релиз-кандидатах и стабильных сборках.
+Системный прокси Xray — рекомендуемый режим.</translation></message>
+    <message><source>Experimental features disabled</source><translation>Экспериментальные функции отключены</translation></message>
+    <message><source>Experimental features may break networking and are not part of stable support.</source><translation>Экспериментальные функции могут нарушить работу сети и не входят в стабильный объём поддержки.</translation></message>
+    <message><source>Experimental kill switch</source><translation>Экспериментальный kill switch</translation></message>
+    <message><source>Helper self-test</source><translation>Самопроверка helper</translation></message>
+    <message><source>Helper service is not installed. Optional — only needed for experimental TUN/kill switch.</source><translation>Служба helper не установлена. Она нужна только для экспериментальных TUN и kill switch.</translation></message>
+    <message><source>Helper service recovery</source><translation>Восстановление службы helper</translation></message>
+    <message><source>Helper service: %1</source><translation>Служба helper: %1</translation></message>
+    <message><source>How it works</source><translation>Как это работает</translation></message>
+    <message><source>IPC connection</source><translation>IPC-подключение</translation></message>
+    <message><source>Install</source><translation>Установить</translation></message>
+    <message><source>Install helper service</source><translation>Установить службу helper</translation></message>
+    <message><source>Installing Zarya Helper service requires Administrator privileges.</source><translation>Для установки службы Zarya Helper требуются права администратора.</translation></message>
+    <message><source>Installing the helper requires administrator/root privileges.
+The helper can start TUN mode and manage kill switch rules.
+Only install it from a trusted Zarya build.</source><translation>Для установки helper требуются права администратора/root.
+Helper может запускать режим TUN и управлять правилами kill switch.
+Устанавливайте его только из доверенной сборки Zarya.</translation></message>
+    <message><source>Kill switch is experimental and may block networking if it fails.</source><translation>Kill switch является экспериментальным и при сбое может заблокировать сеть.</translation></message>
+    <message><source>Leave empty to use Help → Check for App Updates with a local manifest</source><translation>Оставьте поле пустым, чтобы использовать «Справка → Проверить обновления приложения» с локальным манифестом</translation></message>
+    <message><source>Make sure you know the recovery procedure before enabling it.</source><translation>Перед включением убедитесь, что знаете процедуру восстановления.</translation></message>
+    <message><source>Manifest URL</source><translation>URL манифеста</translation></message>
+    <message><source>Manual helper</source><translation>Ручной helper</translation></message>
+    <message><source>Privileged helper backend</source><translation>Привилегированный backend helper</translation></message>
+    <message><source>Recommended for beta:
+Xray system-proxy mode.
+
+Continue with experimental TUN?</source><translation>Рекомендуется для бета-версии:
+системный прокси Xray.
+
+Продолжить с экспериментальным TUN?</translation></message>
+    <message><source>Release Candidate</source><translation>Релиз-кандидат</translation></message>
+    <message><source>Release channel</source><translation>Канал выпуска</translation></message>
+    <message><source>Restart Service</source><translation>Перезапустить службу</translation></message>
+    <message><source>Restart helper service</source><translation>Перезапустить службу helper</translation></message>
+    <message><source>Run Self-Test</source><translation>Запустить самопроверку</translation></message>
+    <message><source>Runtime mode</source><translation>Режим работы</translation></message>
+    <message><source>Service status</source><translation>Состояние службы</translation></message>
+    <message><source>Show Experimental Features…</source><translation>Показать экспериментальные функции…</translation></message>
+    <message><source>Show experimental features (TUN, helper, kill switch)</source><translation>Показывать экспериментальные функции (TUN, helper, kill switch)</translation></message>
+    <message><source>Stable</source><translation>Стабильный</translation></message>
+    <message><source>Stable scope</source><translation>Стабильный объём</translation></message>
+    <message><source>Start Manual Helper</source><translation>Запустить helper вручную</translation></message>
+    <message><source>Start Service</source><translation>Запустить службу</translation></message>
+    <message><source>Start helper service</source><translation>Запустить службу helper</translation></message>
+    <message><source>Stop Service</source><translation>Остановить службу</translation></message>
+    <message><source>Stop helper service</source><translation>Остановить службу helper</translation></message>
+    <message><source>Switch to Xray system proxy</source><translation>Переключиться на системный прокси Xray</translation></message>
+    <message><source>TUN mode is experimental and is not the recommended beta path.</source><translation>Режим TUN является экспериментальным и не рекомендуется для бета-версии.</translation></message>
+    <message><source>TUN mode requires sing-box and may require zarya-helper. System-proxy mode does not require the helper service.</source><translation>Для режима TUN требуется sing-box и может потребоваться zarya-helper. Для режима системного прокси служба helper не нужна.</translation></message>
+    <message><source>TUN, zarya-helper, and kill switch are experimental. Use Xray system-proxy mode for the recommended stable path.</source><translation>TUN, zarya-helper и kill switch являются экспериментальными. Для рекомендуемого стабильного режима используйте системный прокси Xray.</translation></message>
+    <message><source>This build is unsigned. Installing privileged helper from unsigned builds is not recommended for production use.</source><translation>Эта сборка не подписана. Установка привилегированного helper из неподписанной сборки не рекомендуется для рабочего использования.</translation></message>
+    <message><source>Uninstall</source><translation>Удалить</translation></message>
+    <message><source>Uninstall helper service</source><translation>Удалить службу helper</translation></message>
     <message>
         <source>Save</source>
         <translation>Сохранить</translation></message>

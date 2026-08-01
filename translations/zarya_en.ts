@@ -3018,6 +3018,70 @@ Select a profile and press Start, or use a running TUN session.</source>
         <source>running=%1, pid=%2</source>
         <translation type="unfinished"></translation>
     </message>
+    <message><source> · Connected</source><translation type="unfinished"></translation></message>
+    <message><source>Allow unsigned app update download (no checksum)</source><translation type="unfinished"></translation></message>
+    <message><source>Also recover/remove Zarya kill switch rules on uninstall</source><translation type="unfinished"></translation></message>
+    <message><source>App updates</source><translation type="unfinished"></translation></message>
+    <message><source>App updates update Zarya itself. Core updates (below) update Xray and sing-box.</source><translation type="unfinished"></translation></message>
+    <message><source>Beta</source><translation type="unfinished"></translation></message>
+    <message><source>Channel</source><translation type="unfinished"></translation></message>
+    <message><source>Check app updates on startup</source><translation type="unfinished"></translation></message>
+    <message><source>Continue</source><translation type="unfinished"></translation></message>
+    <message><source>Dev</source><translation type="unfinished"></translation></message>
+    <message><source>Enable</source><translation type="unfinished"></translation></message>
+    <message><source>Experimental TUN, helper, and kill switch controls are hidden. Recovery actions remain available when needed.</source><translation type="unfinished"></translation></message>
+    <message><source>Experimental features</source><translation type="unfinished"></translation></message>
+    <message><source>Experimental features are disabled. Runtime will use Xray system-proxy mode.</source><translation type="unfinished"></translation></message>
+    <message><source>Experimental features are hidden in release-candidate and stable builds.
+Xray system-proxy mode is the recommended stable path.</source><translation type="unfinished"></translation></message>
+    <message><source>Experimental features disabled</source><translation type="unfinished"></translation></message>
+    <message><source>Experimental features may break networking and are not part of stable support.</source><translation type="unfinished"></translation></message>
+    <message><source>Experimental kill switch</source><translation type="unfinished"></translation></message>
+    <message><source>Helper self-test</source><translation type="unfinished"></translation></message>
+    <message><source>Helper service is not installed. Optional — only needed for experimental TUN/kill switch.</source><translation type="unfinished"></translation></message>
+    <message><source>Helper service recovery</source><translation type="unfinished"></translation></message>
+    <message><source>Helper service: %1</source><translation type="unfinished"></translation></message>
+    <message><source>How it works</source><translation type="unfinished"></translation></message>
+    <message><source>IPC connection</source><translation type="unfinished"></translation></message>
+    <message><source>Install</source><translation type="unfinished"></translation></message>
+    <message><source>Install helper service</source><translation type="unfinished"></translation></message>
+    <message><source>Installing Zarya Helper service requires Administrator privileges.</source><translation type="unfinished"></translation></message>
+    <message><source>Installing the helper requires administrator/root privileges.
+The helper can start TUN mode and manage kill switch rules.
+Only install it from a trusted Zarya build.</source><translation type="unfinished"></translation></message>
+    <message><source>Kill switch is experimental and may block networking if it fails.</source><translation type="unfinished"></translation></message>
+    <message><source>Leave empty to use Help → Check for App Updates with a local manifest</source><translation type="unfinished"></translation></message>
+    <message><source>Make sure you know the recovery procedure before enabling it.</source><translation type="unfinished"></translation></message>
+    <message><source>Manifest URL</source><translation type="unfinished"></translation></message>
+    <message><source>Manual helper</source><translation type="unfinished"></translation></message>
+    <message><source>Privileged helper backend</source><translation type="unfinished"></translation></message>
+    <message><source>Recommended for beta:
+Xray system-proxy mode.
+
+Continue with experimental TUN?</source><translation type="unfinished"></translation></message>
+    <message><source>Release Candidate</source><translation type="unfinished"></translation></message>
+    <message><source>Release channel</source><translation type="unfinished"></translation></message>
+    <message><source>Restart Service</source><translation type="unfinished"></translation></message>
+    <message><source>Restart helper service</source><translation type="unfinished"></translation></message>
+    <message><source>Run Self-Test</source><translation type="unfinished"></translation></message>
+    <message><source>Runtime mode</source><translation type="unfinished"></translation></message>
+    <message><source>Service status</source><translation type="unfinished"></translation></message>
+    <message><source>Show Experimental Features…</source><translation type="unfinished"></translation></message>
+    <message><source>Show experimental features (TUN, helper, kill switch)</source><translation type="unfinished"></translation></message>
+    <message><source>Stable</source><translation type="unfinished"></translation></message>
+    <message><source>Stable scope</source><translation type="unfinished"></translation></message>
+    <message><source>Start Manual Helper</source><translation type="unfinished"></translation></message>
+    <message><source>Start Service</source><translation type="unfinished"></translation></message>
+    <message><source>Start helper service</source><translation type="unfinished"></translation></message>
+    <message><source>Stop Service</source><translation type="unfinished"></translation></message>
+    <message><source>Stop helper service</source><translation type="unfinished"></translation></message>
+    <message><source>Switch to Xray system proxy</source><translation type="unfinished"></translation></message>
+    <message><source>TUN mode is experimental and is not the recommended beta path.</source><translation type="unfinished"></translation></message>
+    <message><source>TUN mode requires sing-box and may require zarya-helper. System-proxy mode does not require the helper service.</source><translation type="unfinished"></translation></message>
+    <message><source>TUN, zarya-helper, and kill switch are experimental. Use Xray system-proxy mode for the recommended stable path.</source><translation type="unfinished"></translation></message>
+    <message><source>This build is unsigned. Installing privileged helper from unsigned builds is not recommended for production use.</source><translation type="unfinished"></translation></message>
+    <message><source>Uninstall</source><translation type="unfinished"></translation></message>
+    <message><source>Uninstall helper service</source><translation type="unfinished"></translation></message>
     <message>
         <source>Save</source>
         <translation type="unfinished"></translation>
