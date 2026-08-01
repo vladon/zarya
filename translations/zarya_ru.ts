@@ -2259,6 +2259,12 @@ DNS: %3
     <message>
         <source>Remarks</source>
         <translation>Заметки</translation></message>
+    <message>
+        <source>OK</source>
+        <translation>ОК</translation></message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation></message>
 </context>
 <context>
     <name>SubscriptionManagerDialog</name>
@@ -2301,14 +2307,10 @@ DNS: %3
     <message>
         <source>Delete subscription "%1"?
 
-Yes = delete subscription and imported profiles
-No = delete subscription only (keep profiles as manual)
-Cancel = abort</source>
+Choose whether to delete its imported profiles or keep them as manual profiles.</source>
         <translation>Удалить подписку «%1»?
 
-Да = удалить подписку и импортированные профили
-Нет = удалить только подписку (оставить профили как ручные)
-Отмена = прервать</translation></message>
+Выберите, удалить импортированные из неё профили или сохранить их как ручные.</translation></message>
     <message>
         <source>Save failed</source>
         <translation>Ошибка сохранения</translation></message>
@@ -2321,6 +2323,24 @@ Cancel = abort</source>
     <message>
         <source>Update all</source>
         <translation>Обновить все</translation></message>
+    <message>
+        <source>No subscriptions yet. Add one to import and update profiles.</source>
+        <translation>Подписок пока нет. Добавьте подписку, чтобы импортировать и обновлять профили.</translation></message>
+    <message>
+        <source>Delete with profiles</source>
+        <translation>Удалить с профилями</translation></message>
+    <message>
+        <source>Keep profiles</source>
+        <translation>Сохранить профили</translation></message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation></message>
+    <message>
+        <source>Updating subscription…</source>
+        <translation>Обновление подписки…</translation></message>
+    <message>
+        <source>Updating all subscriptions…</source>
+        <translation>Обновление всех подписок…</translation></message>
 </context>
 <context>
     <name>SubscriptionTableModel</name>

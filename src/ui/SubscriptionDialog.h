@@ -4,11 +4,11 @@
 
 #include <QDialog>
 
-class QCheckBox;
-class QLineEdit;
-class QPlainTextEdit;
-
 namespace zarya {
+
+class ZaryaCheckBox;
+class ZaryaTextArea;
+class ZaryaTextField;
 
 class SubscriptionDialog : public QDialog {
     Q_OBJECT
@@ -20,11 +20,11 @@ private:
     explicit SubscriptionDialog(QWidget* parent, Subscription& subscription);
 
     Subscription& m_subscription;
-    QLineEdit* m_nameEdit = nullptr;
-    QLineEdit* m_urlEdit = nullptr;
-    QCheckBox* m_enabledCheck = nullptr;
-    QLineEdit* m_userAgentEdit = nullptr;
-    QPlainTextEdit* m_remarksEdit = nullptr;
+    ZaryaTextField* m_nameEdit = nullptr;
+    ZaryaTextField* m_urlEdit = nullptr;
+    ZaryaCheckBox* m_enabledCheck = nullptr;
+    ZaryaTextField* m_userAgentEdit = nullptr;
+    ZaryaTextArea* m_remarksEdit = nullptr;
 };
 
 } // namespace zarya

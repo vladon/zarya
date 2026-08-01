@@ -67,7 +67,9 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      the existing four-section profile model. Share-link import and the first-run parse/checklist
      surfaces use shared toolkit multiline and body-text controls. The first-run wizard keeps
      `QWizard` only as its temporary host; its content, selectors, fields, checks, actions, and
-     validation feedback use the shared toolkit layer.
+     validation feedback use the shared toolkit layer. Subscription editing and management use
+     the shared toolkit fields, checkbox, multiline input, action buttons, empty/update states,
+     and message presenter; the subscription table remains a Qt model/view boundary.
 5. **Management surfaces**
    - Migrate Core, Routing, DNS, Geo Data, Rule Set, backup, and diagnostics workflows using the
      shared interaction layer.
