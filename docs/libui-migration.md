@@ -113,6 +113,9 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      system-proxy, or kill-switch cleanup behavior.
    - sing-box config preview content, warnings, actions, validation results, and save failures use
      the toolkit layer; the native save picker remains a platform boundary.
+   - App updater metadata, progress/status text, plan details, actions, verification/staging
+     errors, install confirmation, and result feedback use the toolkit layer; update planning,
+     verification, platform installers, and native file/folder integration remain unchanged.
 7. **Convergence**
    - Remove application QSS for controls that no longer exist.
    - Delete obsolete Qt-only wrappers and verify that remaining Qt widgets match the boundary
