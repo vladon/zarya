@@ -2791,21 +2791,4 @@ Choose whether to delete its imported profiles or keep them as manual profiles.<
         <source>Uses KDE kioslaverc proxy settings. Affects KDE/KIO and applications that respect desktop proxy settings; CLI tools may need http_proxy environment variables.</source>
         <translation>Использует настройки прокси KDE в kioslaverc. Влияет на KDE/KIO и приложения, учитывающие настройки прокси рабочего стола; для CLI-инструментов могут потребоваться переменные окружения http_proxy.</translation></message>
 </context>
-<context>
-    <name>SingBoxConfigPreviewDialog</name>
-    <message><source>sing-box TUN config preview</source><translation>Предпросмотр конфигурации TUN sing-box</translation></message>
-    <message><source>Warnings</source><translation>Предупреждения</translation></message>
-    <message><source>(none)</source><translation>(нет)</translation></message>
-    <message><source>Generated JSON</source><translation>Сгенерированный JSON</translation></message>
-    <message><source>Copy</source><translation>Копировать</translation></message>
-    <message><source>Save As…</source><translation>Сохранить как…</translation></message>
-    <message><source>Run sing-box check</source><translation>Запустить проверку sing-box</translation></message>
-    <message><source>Close</source><translation>Закрыть</translation></message>
-    <message><source>Save sing-box config</source><translation>Сохранить конфигурацию sing-box</translation></message>
-    <message><source>JSON (*.json);;All files (*.*)</source><translation>JSON (*.json);;Все файлы (*.*)</translation></message>
-    <message><source>Save failed</source><translation>Ошибка сохранения</translation></message>
-    <message><source>sing-box check</source><translation>Проверка sing-box</translation></message>
-    <message><source>Core manager is not available.</source><translation>Менеджер ядер недоступен.</translation></message>
-    <message><source>sing-box check OK.</source><translation>Проверка sing-box пройдена.</translation></message>
-</context>
 </TS>

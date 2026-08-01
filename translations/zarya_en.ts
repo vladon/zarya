@@ -3530,21 +3530,4 @@ Choose whether to delete its imported profiles or keep them as manual profiles.<
         <translation type="unfinished"></translation>
     </message>
 </context>
-<context>
-    <name>SingBoxConfigPreviewDialog</name>
-    <message><source>sing-box TUN config preview</source><translation type="unfinished"></translation></message>
-    <message><source>Warnings</source><translation type="unfinished"></translation></message>
-    <message><source>(none)</source><translation type="unfinished"></translation></message>
-    <message><source>Generated JSON</source><translation type="unfinished"></translation></message>
-    <message><source>Copy</source><translation type="unfinished"></translation></message>
-    <message><source>Save As…</source><translation type="unfinished"></translation></message>
-    <message><source>Run sing-box check</source><translation type="unfinished"></translation></message>
-    <message><source>Close</source><translation type="unfinished"></translation></message>
-    <message><source>Save sing-box config</source><translation type="unfinished"></translation></message>
-    <message><source>JSON (*.json);;All files (*.*)</source><translation type="unfinished"></translation></message>
-    <message><source>Save failed</source><translation type="unfinished"></translation></message>
-    <message><source>sing-box check</source><translation type="unfinished"></translation></message>
-    <message><source>Core manager is not available.</source><translation type="unfinished"></translation></message>
-    <message><source>sing-box check OK.</source><translation type="unfinished"></translation></message>
-</context>
 </TS>
