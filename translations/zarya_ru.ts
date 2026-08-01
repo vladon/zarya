@@ -2849,5 +2849,75 @@ Choose whether to delete its imported profiles or keep them as manual profiles.<
     <message>
         <source>Uses KDE kioslaverc proxy settings. Affects KDE/KIO and applications that respect desktop proxy settings; CLI tools may need http_proxy environment variables.</source>
         <translation>Использует настройки прокси KDE в kioslaverc. Влияет на KDE/KIO и приложения, учитывающие настройки прокси рабочего стола; для CLI-инструментов могут потребоваться переменные окружения http_proxy.</translation></message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation></message>
+    <message>
+        <source>OK</source>
+        <translation>ОК</translation></message>
+    <message>
+        <source>Kill switch</source>
+        <translation>Kill switch</translation></message>
+    <message>
+        <source>sing-box exited unexpectedly while kill switch is active.
+
+Direct traffic may remain blocked. Use Settings → Kill Switch → Disable Now or recovery instructions.</source>
+        <translation>sing-box неожиданно завершил работу при активном kill switch.
+
+Прямой трафик может оставаться заблокированным. Откройте «Настройки → Kill Switch → Отключить сейчас» или воспользуйтесь инструкциями по восстановлению.</translation></message>
+    <message>
+        <source>%1
+
+Enable kill switch without resolved proxy IPs?</source>
+        <translation>%1
+
+Включить kill switch без разрешённых IP-адресов прокси?</translation></message>
+    <message>
+        <source>Continue anyway</source>
+        <translation>Всё равно продолжить</translation></message>
+    <message>
+        <source>Zarya could not contact helper to disable kill switch. Networking may remain blocked.
+
+%1</source>
+        <translation>Zarya не удалось связаться с helper, чтобы отключить kill switch. Сеть может оставаться заблокированной.
+
+%1</translation></message>
+    <message>
+        <source>Helper stop</source>
+        <translation>Остановка через helper</translation></message>
+    <message>
+        <source>Zarya could not contact helper to stop TUN.
+
+%1
+
+Networking may remain affected.</source>
+        <translation>Zarya не удалось связаться с helper, чтобы остановить TUN.
+
+%1
+
+Возможно влияние на работу сети.</translation></message>
+    <message>
+        <source>Helper unavailable</source>
+        <translation>Helper недоступен</translation></message>
+    <message>
+        <source>Zarya could not contact helper to stop TUN. Networking may remain affected.</source>
+        <translation>Zarya не удалось связаться с helper, чтобы остановить TUN. Возможно влияние на работу сети.</translation></message>
+    <message>
+        <source>Kill switch remains active after Stop. Network may stay restricted until you disable it in Settings.</source>
+        <translation>Kill switch остаётся активным после остановки. Сеть может быть ограничена, пока вы не отключите его в настройках.</translation></message>
+    <message>
+        <source>TUN privileges</source>
+        <translation>Права TUN</translation></message>
+    <message>
+        <source>Experimental TUN mode may require elevated privileges.
+
+%1
+
+Continue anyway?</source>
+        <translation>Экспериментальному режиму TUN могут потребоваться повышенные привилегии.
+
+%1
+
+Всё равно продолжить?</translation></message>
 </context>
 </TS>

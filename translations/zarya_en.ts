@@ -3582,5 +3582,75 @@ Choose whether to delete its imported profiles or keep them as manual profiles.<
         <source>Uses KDE kioslaverc proxy settings. Affects KDE/KIO and applications that respect desktop proxy settings; CLI tools may need http_proxy environment variables.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Kill switch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>sing-box exited unexpectedly while kill switch is active.
+
+Direct traffic may remain blocked. Use Settings → Kill Switch → Disable Now or recovery instructions.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1
+
+Enable kill switch without resolved proxy IPs?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Continue anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zarya could not contact helper to disable kill switch. Networking may remain blocked.
+
+%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Helper stop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zarya could not contact helper to stop TUN.
+
+%1
+
+Networking may remain affected.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Helper unavailable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zarya could not contact helper to stop TUN. Networking may remain affected.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Kill switch remains active after Stop. Network may stay restricted until you disable it in Settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>TUN privileges</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Experimental TUN mode may require elevated privileges.
+
+%1
+
+Continue anyway?</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>
