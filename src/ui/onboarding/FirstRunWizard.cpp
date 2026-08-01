@@ -11,7 +11,8 @@
 #include "ui/import/ProfileImportWidget.h"
 #include "ui/onboarding/FirstRunChecklistWidget.h"
 
-#include <QAbstractButton>
+#include <QHBoxLayout>
+#include <QStackedLayout>
 #include <QUuid>
 #include <QVBoxLayout>
 
@@ -26,12 +27,30 @@ constexpr int kPageRuntime = 4;
 constexpr int kPageFinish = 5;
 
 ZaryaActionButton* addWizardButton(
-    QVBoxLayout* layout,
+    ZaryaFormSection* section,
     const QString& text)
 {
-    auto* button = new ZaryaActionButton(text, layout->parentWidget());
-    layout->addWidget(button);
+    auto* button = new ZaryaActionButton(text, section);
+    section->addWidget(button);
     return button;
+}
+
+struct WizardPage {
+    QWidget* widget = nullptr;
+    ZaryaFormSection* section = nullptr;
+};
+
+WizardPage addWizardPage(QStackedLayout* pages, const QString& title, QWidget* parent)
+{
+    auto* widget = new QWidget(parent);
+    widget->setAccessibleName(title);
+    auto* section = new ZaryaFormSection(title, widget);
+    auto* layout = new QVBoxLayout(widget);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(section);
+    layout->addStretch();
+    pages->addWidget(widget);
+    return {widget, section};
 }
 
 } // namespace
@@ -41,14 +60,13 @@ FirstRunWizard::FirstRunWizard(
     RoutingManager* routingManager,
     DnsManager* dnsManager,
     QWidget* parent)
-    : QWizard(parent)
+    : QDialog(parent)
     , m_coreManager(coreManager)
     , m_routingManager(routingManager)
     , m_dnsManager(dnsManager)
 {
     FirstRunState::applyDefaults(&m_state);
     setWindowTitle(tr("Zarya Setup"));
-    setWizardStyle(QWizard::ModernStyle);
     resize(660, 520);
     setupPages();
 }
@@ -65,105 +83,94 @@ bool FirstRunWizard::wasSkipped() const
 
 void FirstRunWizard::setupPages()
 {
-    auto* welcome = new QWizardPage(this);
-    welcome->setTitle(tr("Welcome to Zarya"));
-    auto* welcomeLayout = new QVBoxLayout(welcome);
-    welcomeLayout->addWidget(new ZaryaBodyText(
+    auto* pageHost = new QWidget(this);
+    m_pages = new QStackedLayout(pageHost);
+    m_pages->setContentsMargins(0, 0, 0, 0);
+
+    const auto welcome = addWizardPage(m_pages, tr("Welcome to Zarya"), pageHost);
+    welcome.section->addWidget(new ZaryaBodyText(
         tr("Zarya is a cross-platform proxy client.\n\n"
            "Recommended setup:\n"
            "1. Confirm Xray core (bundled in release builds, or install via Core Manager)\n"
            "2. Add a profile or subscription\n"
            "3. Choose routing/DNS behavior\n"
            "4. Start a profile"),
-        welcome));
-    welcomeLayout->addStretch();
-    setPage(kPageWelcome, welcome);
+        welcome.widget));
 
-    auto* corePage = new QWizardPage(this);
-    corePage->setTitle(tr("Core setup"));
-    auto* coreLayout = new QVBoxLayout(corePage);
-    m_coreStatus = new ZaryaBodyText({}, corePage);
-    coreLayout->addWidget(m_coreStatus);
-    coreLayout->addWidget(new ZaryaBodyText(
+    const auto corePage = addWizardPage(m_pages, tr("Core setup"), pageHost);
+    m_coreStatus = new ZaryaBodyText({}, corePage.widget);
+    corePage.section->addWidget(m_coreStatus);
+    corePage.section->addWidget(new ZaryaBodyText(
         tr("Xray is required for the default system-proxy mode.\n"
            "sing-box is only needed for experimental TUN mode."),
-        corePage));
-    m_installXray = addWizardButton(coreLayout, tr("Install Xray"));
-    auto* chooseXray = addWizardButton(coreLayout, tr("Choose existing Xray binary"));
-    auto* openCore = addWizardButton(coreLayout, tr("Open Core Manager"));
-    auto* installSingBox = addWizardButton(coreLayout, tr("Install sing-box (experimental TUN)"));
-    auto* chooseSingBox = addWizardButton(coreLayout, tr("Choose existing sing-box binary"));
+        corePage.widget));
+    m_installXray = addWizardButton(corePage.section, tr("Install Xray"));
+    auto* chooseXray = addWizardButton(corePage.section, tr("Choose existing Xray binary"));
+    auto* openCore = addWizardButton(corePage.section, tr("Open Core Manager"));
+    auto* installSingBox = addWizardButton(corePage.section, tr("Install sing-box (experimental TUN)"));
+    auto* chooseSingBox = addWizardButton(corePage.section, tr("Choose existing sing-box binary"));
     connect(m_installXray, &ZaryaActionButton::clicked, this, &FirstRunWizard::installXrayRequested);
     connect(chooseXray, &ZaryaActionButton::clicked, this, &FirstRunWizard::chooseXrayBinaryRequested);
     connect(openCore, &ZaryaActionButton::clicked, this, &FirstRunWizard::openCoreManagerRequested);
     connect(installSingBox, &ZaryaActionButton::clicked, this, &FirstRunWizard::installSingBoxRequested);
     connect(chooseSingBox, &ZaryaActionButton::clicked, this, &FirstRunWizard::chooseSingBoxBinaryRequested);
-    coreLayout->addStretch();
-    setPage(kPageCore, corePage);
 
-    auto* importPage = new QWizardPage(this);
-    importPage->setTitle(tr("Import profiles"));
-    auto* importLayout = new QVBoxLayout(importPage);
-    m_importWidget = new ProfileImportWidget(importPage);
-    m_subscriptionUrl = new ZaryaTextField(tr("Subscription URL"), importPage);
-    m_subscriptionName = new ZaryaTextField(tr("Subscription name"), importPage);
-    importLayout->addWidget(m_importWidget);
-    importLayout->addWidget(new ZaryaFormRow(tr("Subscription URL"), m_subscriptionUrl, importPage));
-    importLayout->addWidget(new ZaryaFormRow(tr("Name"), m_subscriptionName, importPage));
-    auto* importBackup = addWizardButton(importLayout, tr("Import backup…"));
-    auto* addManual = addWizardButton(importLayout, tr("Add profile manually…"));
+    const auto importPage = addWizardPage(m_pages, tr("Import profiles"), pageHost);
+    m_importWidget = new ProfileImportWidget(importPage.widget);
+    m_subscriptionUrl = new ZaryaTextField(tr("Subscription URL"), importPage.widget);
+    m_subscriptionName = new ZaryaTextField(tr("Subscription name"), importPage.widget);
+    importPage.section->addWidget(m_importWidget);
+    importPage.section->addWidget(
+        new ZaryaFormRow(tr("Subscription URL"), m_subscriptionUrl, importPage.widget));
+    importPage.section->addWidget(new ZaryaFormRow(tr("Name"), m_subscriptionName, importPage.widget));
+    auto* importBackup = addWizardButton(importPage.section, tr("Import backup…"));
+    auto* addManual = addWizardButton(importPage.section, tr("Add profile manually…"));
     connect(importBackup, &ZaryaActionButton::clicked, this, &FirstRunWizard::importBackupRequested);
     connect(addManual, &ZaryaActionButton::clicked, this, &FirstRunWizard::addProfileManuallyRequested);
-    setPage(kPageImport, importPage);
 
-    auto* routingPage = new QWizardPage(this);
-    routingPage->setTitle(tr("Routing and DNS"));
-    auto* routingLayout = new QVBoxLayout(routingPage);
-    routingLayout->addWidget(new ZaryaBodyText(
+    const auto routingPage = addWizardPage(m_pages, tr("Routing and DNS"), pageHost);
+    routingPage.section->addWidget(new ZaryaBodyText(
         tr("Bypass LAN keeps local/private network traffic direct.\n"
            "System DNS keeps default behavior."),
-        routingPage));
-    m_routing = new ZaryaSelector(routingPage);
+        routingPage.widget));
+    m_routing = new ZaryaSelector(routingPage.widget);
     m_routing->setItems({
         {QStringLiteral("bypass"), tr("Bypass LAN (recommended)")},
         {QStringLiteral("proxy"), tr("Proxy All")},
         {QStringLiteral("ru"), tr("Bypass LAN + RU")},
         {QStringLiteral("custom"), tr("Custom…")},
     });
-    m_dns = new ZaryaSelector(routingPage);
+    m_dns = new ZaryaSelector(routingPage.widget);
     m_dns->setItems({
         {QStringLiteral("system"), tr("System DNS (recommended)")},
         {QStringLiteral("secure"), tr("Secure Remote DNS")},
         {QStringLiteral("custom"), tr("Custom…")},
     });
-    routingLayout->addWidget(new ZaryaFormRow(tr("Routing"), m_routing, routingPage));
-    routingLayout->addWidget(new ZaryaFormRow(tr("DNS"), m_dns, routingPage));
-    auto* openRouting = addWizardButton(routingLayout, tr("Open Routing Profiles"));
-    auto* openDns = addWizardButton(routingLayout, tr("Open DNS Profiles"));
+    routingPage.section->addWidget(new ZaryaFormRow(tr("Routing"), m_routing, routingPage.widget));
+    routingPage.section->addWidget(new ZaryaFormRow(tr("DNS"), m_dns, routingPage.widget));
+    auto* openRouting = addWizardButton(routingPage.section, tr("Open Routing Profiles"));
+    auto* openDns = addWizardButton(routingPage.section, tr("Open DNS Profiles"));
     connect(openRouting, &ZaryaActionButton::clicked, this, &FirstRunWizard::openRoutingProfilesRequested);
     connect(openDns, &ZaryaActionButton::clicked, this, &FirstRunWizard::openDnsProfilesRequested);
-    routingLayout->addStretch();
-    setPage(kPageRoutingDns, routingPage);
 
-    auto* runtimePage = new QWizardPage(this);
-    runtimePage->setTitle(tr("Runtime mode"));
-    auto* runtimeLayout = new QVBoxLayout(runtimePage);
-    m_runtime = new ZaryaSelector(runtimePage);
+    const auto runtimePage = addWizardPage(m_pages, tr("Runtime mode"), pageHost);
+    m_runtime = new ZaryaSelector(runtimePage.widget);
     m_runtime->setItems({
         {QStringLiteral("system"), tr("System proxy via Xray — recommended")},
         {QStringLiteral("tun"), tr("Experimental TUN via sing-box")},
     });
-    runtimeLayout->addWidget(new ZaryaFormRow(tr("Runtime mode"), m_runtime, runtimePage));
-    runtimeLayout->addWidget(new ZaryaBodyText(
+    runtimePage.section->addWidget(
+        new ZaryaFormRow(tr("Runtime mode"), m_runtime, runtimePage.widget));
+    runtimePage.section->addWidget(new ZaryaBodyText(
         tr("TUN mode is experimental. It may require elevated helper permissions and can "
            "change routes/firewall behavior."),
-        runtimePage));
-    auto* configureHelper = addWizardButton(runtimeLayout, tr("Configure Helper"));
-    auto* withoutHelper = addWizardButton(runtimeLayout, tr("Continue without helper"));
+        runtimePage.widget));
+    auto* configureHelper = addWizardButton(runtimePage.section, tr("Configure Helper"));
+    auto* withoutHelper = addWizardButton(runtimePage.section, tr("Continue without helper"));
     m_tunAccepted = new ZaryaCheckBox(
-        tr("I understand TUN mode is experimental"), runtimePage);
+        tr("I understand TUN mode is experimental"), runtimePage.widget);
     m_tunAccepted->setEnabled(false);
-    runtimeLayout->addWidget(m_tunAccepted);
+    runtimePage.section->addWidget(m_tunAccepted);
     connect(configureHelper, &ZaryaActionButton::clicked, this, &FirstRunWizard::configureHelperRequested);
     connect(withoutHelper, &ZaryaActionButton::clicked, this, [this] {
         m_runtime->setCurrentKey(QStringLiteral("system"));
@@ -172,22 +179,44 @@ void FirstRunWizard::setupPages()
     connect(m_runtime, &ZaryaSelector::currentKeyChanged, this, [this](const QString& key) {
         m_tunAccepted->setEnabled(key == QStringLiteral("tun"));
     });
-    runtimeLayout->addStretch();
-    setPage(kPageRuntime, runtimePage);
 
-    auto* finishPage = new QWizardPage(this);
-    finishPage->setTitle(tr("Finish"));
-    auto* finishLayout = new QVBoxLayout(finishPage);
-    m_checklist = new FirstRunChecklistWidget(finishPage);
-    m_startNow = new ZaryaCheckBox(tr("Start selected profile now"), finishPage);
-    finishLayout->addWidget(m_checklist);
-    finishLayout->addWidget(m_startNow);
-    finishLayout->addStretch();
-    setPage(kPageFinish, finishPage);
+    const auto finishPage = addWizardPage(m_pages, tr("Finish"), pageHost);
+    m_checklist = new FirstRunChecklistWidget(finishPage.widget);
+    m_startNow = new ZaryaCheckBox(tr("Start selected profile now"), finishPage.widget);
+    finishPage.section->addWidget(m_checklist);
+    finishPage.section->addWidget(m_startNow);
 
-    setStartId(kPageWelcome);
-    setOption(QWizard::NoBackButtonOnStartPage, false);
-    button(QWizard::CancelButton)->setText(tr("Skip setup"));
+    m_back = new ZaryaActionButton(tr("Back"), this);
+    m_next = new ZaryaActionButton(tr("Next"), this);
+    auto* skip = new ZaryaActionButton(tr("Skip setup"), this);
+    connect(m_back, &ZaryaActionButton::clicked, this, [this] {
+        showPage(m_pages->currentIndex() - 1);
+    });
+    connect(m_next, &ZaryaActionButton::clicked, this, [this] {
+        if (!validatePage()) {
+            return;
+        }
+        if (m_pages->currentIndex() == kPageFinish) {
+            accept();
+        } else {
+            showPage(m_pages->currentIndex() + 1);
+        }
+    });
+    connect(skip, &ZaryaActionButton::clicked, this, &FirstRunWizard::reject);
+
+    auto* navigation = new QHBoxLayout;
+    navigation->addWidget(m_back);
+    navigation->addStretch();
+    navigation->addWidget(skip);
+    navigation->addWidget(m_next);
+
+    auto* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(24, 24, 24, 24);
+    layout->setSpacing(16);
+    layout->addWidget(pageHost, 1);
+    layout->addLayout(navigation);
+
+    showPage(kPageWelcome);
     refreshCorePage();
 }
 
@@ -209,9 +238,9 @@ void FirstRunWizard::refreshCorePage()
     m_installXray->setText(xray.exists ? tr("Update Xray…") : tr("Install Xray"));
 }
 
-bool FirstRunWizard::validateCurrentPage()
+bool FirstRunWizard::validatePage()
 {
-    if (currentId() == kPageRuntime
+    if (m_pages->currentIndex() == kPageRuntime
         && m_runtime->currentKey() == QStringLiteral("tun")
         && !m_tunAccepted->isChecked()) {
         UiMessagePresenter::warning(
@@ -220,7 +249,7 @@ bool FirstRunWizard::validateCurrentPage()
             tr("Confirm that you understand TUN mode is experimental."));
         return false;
     }
-    if (currentId() == kPageFinish) {
+    if (m_pages->currentIndex() == kPageFinish) {
         m_importWidget->parseLinks();
         m_state.importedProfiles = m_importWidget->importedProfiles();
         refreshCorePage();
@@ -247,7 +276,16 @@ bool FirstRunWizard::validateCurrentPage()
             return false;
         }
     }
-    return QWizard::validateCurrentPage();
+    return true;
+}
+
+void FirstRunWizard::showPage(int index)
+{
+    const int bounded = qBound(kPageWelcome, index, kPageFinish);
+    m_pages->setCurrentIndex(bounded);
+    m_back->setEnabled(bounded > kPageWelcome);
+    m_next->setText(bounded == kPageFinish ? tr("Finish") : tr("Next"));
+    m_next->setFocus(Qt::OtherFocusReason);
 }
 
 void FirstRunWizard::accept()
@@ -290,13 +328,13 @@ void FirstRunWizard::accept()
 
     m_skipped = false;
     Q_EMIT wizardFinishedState(m_state);
-    QWizard::accept();
+    QDialog::accept();
 }
 
 void FirstRunWizard::reject()
 {
     m_skipped = true;
-    QWizard::reject();
+    QDialog::reject();
 }
 
 } // namespace zarya

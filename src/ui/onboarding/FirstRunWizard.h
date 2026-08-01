@@ -2,7 +2,9 @@
 
 #include "ui/onboarding/FirstRunState.h"
 
-#include <QWizard>
+#include <QDialog>
+
+class QStackedLayout;
 
 namespace zarya {
 
@@ -17,7 +19,7 @@ class ZaryaCheckBox;
 class ZaryaSelector;
 class ZaryaTextField;
 
-class FirstRunWizard : public QWizard {
+class FirstRunWizard : public QDialog {
     Q_OBJECT
 
 public:
@@ -47,12 +49,16 @@ protected:
 private:
     void setupPages();
     void refreshCorePage();
-    bool validateCurrentPage() override;
+    bool validatePage();
+    void showPage(int index);
 
     CoreBinaryManager* m_coreManager = nullptr;
     RoutingManager* m_routingManager = nullptr;
     DnsManager* m_dnsManager = nullptr;
     ZaryaBodyText* m_coreStatus = nullptr;
+    QStackedLayout* m_pages = nullptr;
+    ZaryaActionButton* m_back = nullptr;
+    ZaryaActionButton* m_next = nullptr;
     ZaryaActionButton* m_installXray = nullptr;
     ProfileImportWidget* m_importWidget = nullptr;
     ZaryaTextField* m_subscriptionUrl = nullptr;
