@@ -473,6 +473,14 @@ Save anyway?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Save anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No DNS profiles are available. Create one to get started.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>DNS profile changed: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -482,6 +490,18 @@ Save anyway?</source>
     </message>
     <message>
         <source>DNS JSON Preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a DNS profile.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete DNS profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete DNS profile &quot;%1&quot;?</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

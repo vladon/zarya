@@ -9,6 +9,8 @@ class QTableWidget;
 
 namespace zarya {
 
+class ZaryaBodyText;
+
 class DnsManagerDialog : public QDialog {
     Q_OBJECT
 
@@ -17,10 +19,10 @@ public:
                               const std::function<void(const QString&)>& logCallback,
                               QWidget* parent = nullptr);
 
-signals:
+Q_SIGNALS:
     void activeProfileChanged(const QString& profileName);
 
-private slots:
+private Q_SLOTS:
     void onNew();
     void onEdit();
     void onDuplicate();
@@ -37,6 +39,7 @@ private:
     DnsManager& m_manager;
     std::function<void(const QString&)> m_logCallback;
     QTableWidget* m_table = nullptr;
+    ZaryaBodyText* m_emptyState = nullptr;
 };
 
 } // namespace zarya

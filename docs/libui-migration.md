@@ -87,6 +87,8 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      use toolkit fields, selectors, sections, actions, inline validation, and empty states; the
      rules table remains a Qt model/view boundary. Routing JSON preview uses a read-only toolkit
      text area and action.
+   - DNS Manager actions, empty state, validation confirmations, and feedback use the toolkit
+     layer; its profile table remains a Qt model/view boundary.
 6. **Experimental and update surfaces**
    - Migrate gated sing-box TUN, helper, kill-switch, and updater UI without changing
      `FeatureGate` behavior.
