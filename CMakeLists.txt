@@ -365,7 +365,6 @@ set(ZARYA_SOURCES
     src/packaging/PortableMigration.cpp
     src/ui/MainWindow.cpp
     src/ui/TrayController.cpp
-    src/ui/ProfileDialog.cpp
     src/ui/SettingsDialog.cpp
     src/ui/ImportVlessDialog.cpp
     src/ui/SubscriptionDialog.cpp

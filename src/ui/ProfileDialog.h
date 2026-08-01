@@ -4,15 +4,20 @@
 
 #include <QDialog>
 
-class QCheckBox;
-class QComboBox;
-class QLabel;
-class QLineEdit;
-class QSpinBox;
-class QTabWidget;
+class QKeyEvent;
+class QStackedLayout;
+class QVBoxLayout;
 class QWidget;
 
 namespace zarya {
+
+class ZaryaCheckBox;
+class ZaryaDialogActionRow;
+class ZaryaFormRow;
+class ZaryaNumberField;
+class ZaryaSelector;
+class ZaryaTextField;
+class ZaryaValidationMessage;
 
 class ProfileDialog : public QDialog {
     Q_OBJECT
@@ -25,65 +30,69 @@ public:
 
     static bool editProfile(QWidget* parent, Profile& profile);
 
-private slots:
-    void onSecurityChanged(int index);
-    void onProtocolChanged(int index);
+protected:
+    void keyPressEvent(QKeyEvent* event) override;
 
 private:
+    QWidget* createPage(QVBoxLayout** layout);
+    ZaryaFormRow* addRow(QVBoxLayout* layout, const QString& label, QWidget* field);
     bool validateInput(QString* errorMessage) const;
+    void tryAccept();
     void populateFromProfile(const Profile& profile);
     Profile profileFromFields() const;
     void updateRealityTabVisibility();
     void updateProtocolFieldsVisibility();
 
-    QTabWidget* m_tabs = nullptr;
+    QWidget* m_tabs = nullptr; // Ui::PillTabs*
+    QStackedLayout* m_pageStack = nullptr;
 
-    QLineEdit* m_nameEdit = nullptr;
-    QComboBox* m_protocolCombo = nullptr;
-    QComboBox* m_coreCombo = nullptr;
-    QLineEdit* m_addressEdit = nullptr;
-    QSpinBox* m_portSpin = nullptr;
-    QLineEdit* m_uuidEdit = nullptr;
-    QLabel* m_passwordLabel = nullptr;
-    QLineEdit* m_passwordEdit = nullptr;
-    QLineEdit* m_encryptionEdit = nullptr;
-    QLineEdit* m_methodEdit = nullptr;
-    QLineEdit* m_securityCipherEdit = nullptr;
-    QSpinBox* m_alterIdSpin = nullptr;
-    QCheckBox* m_enabledCheck = nullptr;
-    QLineEdit* m_wgPeerPublicKeyEdit = nullptr;
-    QLineEdit* m_localAddressEdit = nullptr;
-    QSpinBox* m_mtuSpin = nullptr;
+    ZaryaTextField* m_nameEdit = nullptr;
+    ZaryaSelector* m_protocolCombo = nullptr;
+    ZaryaSelector* m_coreCombo = nullptr;
+    ZaryaTextField* m_addressEdit = nullptr;
+    ZaryaNumberField* m_portSpin = nullptr;
+    ZaryaTextField* m_uuidEdit = nullptr;
+    ZaryaTextField* m_passwordEdit = nullptr;
+    ZaryaTextField* m_encryptionEdit = nullptr;
+    ZaryaTextField* m_methodEdit = nullptr;
+    ZaryaTextField* m_securityCipherEdit = nullptr;
+    ZaryaNumberField* m_alterIdSpin = nullptr;
+    ZaryaCheckBox* m_enabledCheck = nullptr;
+    ZaryaTextField* m_wgPeerPublicKeyEdit = nullptr;
+    ZaryaTextField* m_localAddressEdit = nullptr;
+    ZaryaNumberField* m_mtuSpin = nullptr;
 
-    QComboBox* m_networkCombo = nullptr;
-    QLineEdit* m_pathEdit = nullptr;
-    QLineEdit* m_hostEdit = nullptr;
-    QLineEdit* m_headerTypeEdit = nullptr;
-    QLineEdit* m_serviceNameEdit = nullptr;
+    ZaryaSelector* m_networkCombo = nullptr;
+    ZaryaTextField* m_pathEdit = nullptr;
+    ZaryaTextField* m_hostEdit = nullptr;
+    ZaryaTextField* m_headerTypeEdit = nullptr;
+    ZaryaTextField* m_serviceNameEdit = nullptr;
 
-    QComboBox* m_securityCombo = nullptr;
-    QLineEdit* m_serverNameEdit = nullptr;
-    QLineEdit* m_publicKeyEdit = nullptr;
-    QLineEdit* m_shortIdEdit = nullptr;
-    QLineEdit* m_fingerprintEdit = nullptr;
-    QLineEdit* m_spiderXEdit = nullptr;
+    ZaryaSelector* m_securityCombo = nullptr;
+    ZaryaTextField* m_serverNameEdit = nullptr;
+    ZaryaTextField* m_publicKeyEdit = nullptr;
+    ZaryaTextField* m_shortIdEdit = nullptr;
+    ZaryaTextField* m_fingerprintEdit = nullptr;
+    ZaryaTextField* m_spiderXEdit = nullptr;
 
-    QLineEdit* m_flowEdit = nullptr;
-    QLineEdit* m_sniEdit = nullptr;
-    QLineEdit* m_remarkEdit = nullptr;
-    QCheckBox* m_allowInsecureCheck = nullptr;
-    QLabel* m_unsupportedReasonLabel = nullptr;
+    ZaryaTextField* m_flowEdit = nullptr;
+    ZaryaTextField* m_sniEdit = nullptr;
+    ZaryaTextField* m_remarkEdit = nullptr;
+    ZaryaCheckBox* m_allowInsecureCheck = nullptr;
+    ZaryaValidationMessage* m_unsupportedReasonLabel = nullptr;
+    ZaryaValidationMessage* m_validationMessage = nullptr;
+    ZaryaDialogActionRow* m_actions = nullptr;
 
-    QWidget* m_realityTab = nullptr;
-    QWidget* m_uuidRowWidget = nullptr;
-    QWidget* m_passwordRowWidget = nullptr;
-    QWidget* m_wgPeerPublicKeyRowWidget = nullptr;
-    QWidget* m_localAddressRowWidget = nullptr;
-    QWidget* m_mtuRowWidget = nullptr;
-    QWidget* m_methodRowWidget = nullptr;
-    QWidget* m_alterIdRowWidget = nullptr;
-    QWidget* m_securityCipherRowWidget = nullptr;
-    QWidget* m_encryptionRowWidget = nullptr;
+    ZaryaFormRow* m_uuidRowWidget = nullptr;
+    ZaryaFormRow* m_passwordRowWidget = nullptr;
+    ZaryaFormRow* m_wgPeerPublicKeyRowWidget = nullptr;
+    ZaryaFormRow* m_localAddressRowWidget = nullptr;
+    ZaryaFormRow* m_mtuRowWidget = nullptr;
+    ZaryaFormRow* m_methodRowWidget = nullptr;
+    ZaryaFormRow* m_alterIdRowWidget = nullptr;
+    ZaryaFormRow* m_securityCipherRowWidget = nullptr;
+    ZaryaFormRow* m_encryptionRowWidget = nullptr;
+    ZaryaFormRow* m_unsupportedReasonRow = nullptr;
     QString m_profileId;
 };
 

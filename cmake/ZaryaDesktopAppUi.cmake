@@ -326,11 +326,13 @@ foreach(_zarya_da_target lib_ui lib_base lib_crl lib_rpl codegen_common codegen_
 endforeach()
 
 set(ZARYA_DESKTOP_APP_UI_SOURCES
+    src/ui/ProfileDialog.cpp
     src/ui/desktopapp/ZaryaBaseIntegration.cpp
     src/ui/desktopapp/ZaryaUiIntegration.cpp
     src/ui/desktopapp/ZaryaCrlIntegration.cpp
     src/ui/desktopapp/ZaryaPalette.cpp
     src/ui/desktopapp/ZaryaControls.cpp
+    src/ui/desktopapp/ZaryaFormControls.cpp
     src/ui/desktopapp/ZaryaSelector.cpp
     src/ui/desktopapp/ProfileActionStrip.cpp
     src/ui/desktopapp/UiMessagePresenter.cpp

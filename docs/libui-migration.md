@@ -62,6 +62,9 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
 4. **Primary workflows**
    - Migrate first-run setup, link import, profile editing, subscriptions, and Settings.
    - Put advanced settings behind explicit progressive disclosure.
+   - Progress: profile editing uses shared toolkit text/number fields, selectors, checkbox,
+     labeled rows, inline validation, dialog actions, pill tabs, and scrolling while preserving
+     the existing four-section profile model.
 5. **Management surfaces**
    - Migrate Core, Routing, DNS, Geo Data, Rule Set, backup, and diagnostics workflows using the
      shared interaction layer.

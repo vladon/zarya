@@ -3,206 +3,242 @@
 #include "domain/CoreType.h"
 #include "domain/ProfileValidation.h"
 #include "domain/ProtocolType.h"
+#include "ui/desktopapp/ZaryaControls.h"
+#include "ui/desktopapp/ZaryaFormControls.h"
+#include "ui/desktopapp/ZaryaSelector.h"
 
-#include <QCheckBox>
-#include <QComboBox>
-#include <QDialogButtonBox>
-#include <QFormLayout>
-#include <QLabel>
-#include <QLineEdit>
-#include <QMessageBox>
-#include <QSpinBox>
-#include <QTabWidget>
+#include "base/object_ptr.h"
+#include "styles/style_layers.h"
+#include "ui/qt_object_factory.h"
+#include "ui/rp_widget.h"
+#include "ui/widgets/pill_tabs.h"
+#include "ui/widgets/scroll_area.h"
+
+#include <QKeyEvent>
+#include <QStackedLayout>
 #include <QUuid>
 #include <QVBoxLayout>
+#include <rpl/rpl.h>
 
 namespace zarya {
+namespace {
+
+QString enumKey(int value)
+{
+    return QString::number(value);
+}
+
+int enumValue(const ZaryaSelector* selector)
+{
+    return selector->currentKey().toInt();
+}
+
+} // namespace
 
 ProfileDialog::ProfileDialog(QWidget* parent)
     : QDialog(parent)
 {
     setWindowTitle(tr("Profile"));
-    m_tabs = new QTabWidget(this);
+    setAccessibleName(tr("Profile"));
+    setModal(true);
 
-    auto* basicPage = new QWidget(this);
-    auto* basicForm = new QFormLayout(basicPage);
-    m_nameEdit = new QLineEdit(basicPage);
-    m_protocolCombo = new QComboBox(basicPage);
-    m_protocolCombo->addItem(QStringLiteral("VLESS"), static_cast<int>(ProtocolType::Vless));
-    m_protocolCombo->addItem(QStringLiteral("VMess"), static_cast<int>(ProtocolType::Vmess));
-    m_protocolCombo->addItem(QStringLiteral("Trojan"), static_cast<int>(ProtocolType::Trojan));
-    m_protocolCombo->addItem(QStringLiteral("Shadowsocks"),
-                             static_cast<int>(ProtocolType::Shadowsocks));
-    m_protocolCombo->addItem(QStringLiteral("SOCKS"), static_cast<int>(ProtocolType::Socks));
-    m_protocolCombo->addItem(QStringLiteral("Hysteria2"),
-                             static_cast<int>(ProtocolType::Hysteria2));
-    m_protocolCombo->addItem(QStringLiteral("WireGuard"),
-                             static_cast<int>(ProtocolType::WireGuard));
+    auto* tabs = Ui::CreateChild<Ui::PillTabs>(
+        this,
+        std::vector<QString>{
+            tr("Basic"),
+            tr("Transport"),
+            tr("TLS / REALITY"),
+            tr("Advanced"),
+        });
+    m_tabs = tabs;
 
-    m_coreCombo = new QComboBox(basicPage);
-    m_coreCombo->addItem(QStringLiteral("Xray"), static_cast<int>(CoreType::Xray));
-    m_coreCombo->addItem(QStringLiteral("SingBox"), static_cast<int>(CoreType::SingBox));
+    auto* pageHost = new QWidget(this);
+    m_pageStack = new QStackedLayout(pageHost);
+    m_pageStack->setContentsMargins(0, 0, 0, 0);
 
-    m_addressEdit = new QLineEdit(basicPage);
-    m_portSpin = new QSpinBox(basicPage);
-    m_portSpin->setRange(1, 65535);
-    m_portSpin->setValue(443);
-    m_uuidEdit = new QLineEdit(basicPage);
-    m_passwordEdit = new QLineEdit(basicPage);
-    m_passwordEdit->setEchoMode(QLineEdit::Password);
-    m_encryptionEdit = new QLineEdit(basicPage);
-    m_encryptionEdit->setPlaceholderText(QStringLiteral("none"));
-    m_methodEdit = new QLineEdit(basicPage);
-    m_methodEdit->setPlaceholderText(QStringLiteral("2022-blake3-aes-128-gcm"));
-    m_securityCipherEdit = new QLineEdit(basicPage);
-    m_securityCipherEdit->setPlaceholderText(QStringLiteral("auto"));
-    m_alterIdSpin = new QSpinBox(basicPage);
-    m_alterIdSpin->setRange(0, 65535);
-    m_enabledCheck = new QCheckBox(tr("Enabled"), basicPage);
-    m_enabledCheck->setChecked(true);
-    m_unsupportedReasonLabel = new QLabel(basicPage);
-    m_unsupportedReasonLabel->setWordWrap(true);
-    m_unsupportedReasonLabel->setStyleSheet(QStringLiteral("color: #a63;"));
-
-    connect(m_protocolCombo, qOverload<int>(&QComboBox::currentIndexChanged), this,
-            &ProfileDialog::onProtocolChanged);
-
-    basicForm->addRow(tr("Name"), m_nameEdit);
-    basicForm->addRow(tr("Protocol"), m_protocolCombo);
-    basicForm->addRow(tr("Core"), m_coreCombo);
-    basicForm->addRow(tr("Address"), m_addressEdit);
-    basicForm->addRow(tr("Port"), m_portSpin);
-    m_uuidRowWidget = new QWidget(basicPage);
-    auto* uuidRowLayout = new QFormLayout(m_uuidRowWidget);
-    uuidRowLayout->setContentsMargins(0, 0, 0, 0);
-    uuidRowLayout->addRow(QStringLiteral("UUID"), m_uuidEdit);
-    basicForm->addRow(m_uuidRowWidget);
-    m_passwordRowWidget = new QWidget(basicPage);
-    auto* passwordRowLayout = new QFormLayout(m_passwordRowWidget);
-    passwordRowLayout->setContentsMargins(0, 0, 0, 0);
-    m_passwordLabel = new QLabel(tr("Password"), m_passwordRowWidget);
-    passwordRowLayout->addRow(m_passwordLabel, m_passwordEdit);
-    basicForm->addRow(m_passwordRowWidget);
-
-    m_wgPeerPublicKeyEdit = new QLineEdit(basicPage);
-    m_localAddressEdit = new QLineEdit(basicPage);
-    m_localAddressEdit->setPlaceholderText(QStringLiteral("10.0.0.2/32"));
-    m_mtuSpin = new QSpinBox(basicPage);
-    m_mtuSpin->setRange(0, 9000);
-    m_mtuSpin->setSpecialValueText(tr("Default"));
-    m_mtuSpin->setValue(0);
-    m_wgPeerPublicKeyRowWidget = new QWidget(basicPage);
-    auto* wgPubRowLayout = new QFormLayout(m_wgPeerPublicKeyRowWidget);
-    wgPubRowLayout->setContentsMargins(0, 0, 0, 0);
-    wgPubRowLayout->addRow(tr("Peer public key"), m_wgPeerPublicKeyEdit);
-    basicForm->addRow(m_wgPeerPublicKeyRowWidget);
-    m_localAddressRowWidget = new QWidget(basicPage);
-    auto* localAddrRowLayout = new QFormLayout(m_localAddressRowWidget);
-    localAddrRowLayout->setContentsMargins(0, 0, 0, 0);
-    localAddrRowLayout->addRow(tr("Local address"), m_localAddressEdit);
-    basicForm->addRow(m_localAddressRowWidget);
-    m_mtuRowWidget = new QWidget(basicPage);
-    auto* mtuRowLayout = new QFormLayout(m_mtuRowWidget);
-    mtuRowLayout->setContentsMargins(0, 0, 0, 0);
-    mtuRowLayout->addRow(tr("MTU"), m_mtuSpin);
-    basicForm->addRow(m_mtuRowWidget);
-
-    m_encryptionRowWidget = new QWidget(basicPage);
-    auto* encryptionRowLayout = new QFormLayout(m_encryptionRowWidget);
-    encryptionRowLayout->setContentsMargins(0, 0, 0, 0);
-    encryptionRowLayout->addRow(tr("VLESS encryption"), m_encryptionEdit);
-    basicForm->addRow(m_encryptionRowWidget);
-    m_methodRowWidget = new QWidget(basicPage);
-    auto* methodRowLayout = new QFormLayout(m_methodRowWidget);
-    methodRowLayout->setContentsMargins(0, 0, 0, 0);
-    methodRowLayout->addRow(tr("Method"), m_methodEdit);
-    basicForm->addRow(m_methodRowWidget);
-    m_alterIdRowWidget = new QWidget(basicPage);
-    auto* alterRowLayout = new QFormLayout(m_alterIdRowWidget);
-    alterRowLayout->setContentsMargins(0, 0, 0, 0);
-    alterRowLayout->addRow(tr("Alter ID"), m_alterIdSpin);
-    basicForm->addRow(m_alterIdRowWidget);
-    m_securityCipherRowWidget = new QWidget(basicPage);
-    auto* cipherRowLayout = new QFormLayout(m_securityCipherRowWidget);
-    cipherRowLayout->setContentsMargins(0, 0, 0, 0);
-    cipherRowLayout->addRow(tr("VMess security"), m_securityCipherEdit);
-    basicForm->addRow(m_securityCipherRowWidget);
-    basicForm->addRow(tr("Import note"), m_unsupportedReasonLabel);
-    basicForm->addRow(QString(), m_enabledCheck);
-
-    auto* transportPage = new QWidget(this);
-    auto* transportForm = new QFormLayout(transportPage);
-    m_networkCombo = new QComboBox(transportPage);
-    m_networkCombo->addItem(QStringLiteral("tcp"), QStringLiteral("tcp"));
-    m_networkCombo->addItem(QStringLiteral("ws"), QStringLiteral("ws"));
-    m_networkCombo->addItem(QStringLiteral("grpc"), QStringLiteral("grpc"));
-    m_pathEdit = new QLineEdit(transportPage);
-    m_hostEdit = new QLineEdit(transportPage);
-    m_headerTypeEdit = new QLineEdit(transportPage);
-    transportForm->addRow(tr("Network"), m_networkCombo);
-    transportForm->addRow(tr("Path"), m_pathEdit);
-    transportForm->addRow(tr("Host"), m_hostEdit);
-    transportForm->addRow(tr("Header type"), m_headerTypeEdit);
-    m_serviceNameEdit = new QLineEdit(transportPage);
-    transportForm->addRow(tr("gRPC service"), m_serviceNameEdit);
-
-    m_realityTab = new QWidget(this);
-    auto* realityForm = new QFormLayout(m_realityTab);
-    m_securityCombo = new QComboBox(m_realityTab);
-    m_securityCombo->addItem(QStringLiteral("none"), QStringLiteral("none"));
-    m_securityCombo->addItem(QStringLiteral("tls"), QStringLiteral("tls"));
-    m_securityCombo->addItem(QStringLiteral("reality"), QStringLiteral("reality"));
-    connect(m_securityCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
-            &ProfileDialog::onSecurityChanged);
-
-    m_serverNameEdit = new QLineEdit(m_realityTab);
-    m_publicKeyEdit = new QLineEdit(m_realityTab);
-    m_shortIdEdit = new QLineEdit(m_realityTab);
-    m_fingerprintEdit = new QLineEdit(m_realityTab);
-    m_fingerprintEdit->setPlaceholderText(QStringLiteral("chrome"));
-    m_spiderXEdit = new QLineEdit(m_realityTab);
-    m_spiderXEdit->setPlaceholderText(QStringLiteral("/"));
-
-    realityForm->addRow(tr("Security"), m_securityCombo);
-    realityForm->addRow(tr("Server name (SNI)"), m_serverNameEdit);
-    realityForm->addRow(tr("Public key"), m_publicKeyEdit);
-    realityForm->addRow(tr("Short ID"), m_shortIdEdit);
-    realityForm->addRow(tr("Fingerprint"), m_fingerprintEdit);
-    realityForm->addRow(QStringLiteral("SpiderX"), m_spiderXEdit);
-
-    auto* advancedPage = new QWidget(this);
-    auto* advancedForm = new QFormLayout(advancedPage);
-    m_flowEdit = new QLineEdit(advancedPage);
-    m_flowEdit->setPlaceholderText(QStringLiteral("xtls-rprx-vision"));
-    m_sniEdit = new QLineEdit(advancedPage);
-    m_remarkEdit = new QLineEdit(advancedPage);
-    m_allowInsecureCheck = new QCheckBox(tr("Allow insecure TLS"), advancedPage);
-    advancedForm->addRow(tr("Flow"), m_flowEdit);
-    advancedForm->addRow(tr("Legacy SNI field"), m_sniEdit);
-    advancedForm->addRow(tr("Remark"), m_remarkEdit);
-    advancedForm->addRow(QString(), m_allowInsecureCheck);
-
-    m_tabs->addTab(basicPage, tr("Basic"));
-    m_tabs->addTab(transportPage, tr("Transport"));
-    m_tabs->addTab(m_realityTab, tr("TLS / REALITY"));
-    m_tabs->addTab(advancedPage, tr("Advanced"));
-
-    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
-    connect(buttons, &QDialogButtonBox::accepted, this, [this]() {
-        QString error;
-        if (!validateInput(&error)) {
-            QMessageBox::warning(this, tr("Validation"), error);
-            return;
-        }
-        accept();
+    QVBoxLayout* basicForm = nullptr;
+    auto* basicPage = createPage(&basicForm);
+    m_nameEdit = new ZaryaTextField(tr("Name"), basicPage);
+    m_protocolCombo = new ZaryaSelector(basicPage);
+    m_protocolCombo->setItems({
+        {enumKey(static_cast<int>(ProtocolType::Vless)), QStringLiteral("VLESS")},
+        {enumKey(static_cast<int>(ProtocolType::Vmess)), QStringLiteral("VMess")},
+        {enumKey(static_cast<int>(ProtocolType::Trojan)), QStringLiteral("Trojan")},
+        {enumKey(static_cast<int>(ProtocolType::Shadowsocks)), QStringLiteral("Shadowsocks")},
+        {enumKey(static_cast<int>(ProtocolType::Socks)), QStringLiteral("SOCKS")},
+        {enumKey(static_cast<int>(ProtocolType::Hysteria2)), QStringLiteral("Hysteria2")},
+        {enumKey(static_cast<int>(ProtocolType::WireGuard)), QStringLiteral("WireGuard")},
     });
-    connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
+    m_coreCombo = new ZaryaSelector(basicPage);
+    m_coreCombo->setItems({
+        {enumKey(static_cast<int>(CoreType::Xray)), QStringLiteral("Xray")},
+        {enumKey(static_cast<int>(CoreType::SingBox)), QStringLiteral("SingBox")},
+    });
+    m_addressEdit = new ZaryaTextField(tr("Address"), basicPage);
+    m_portSpin = new ZaryaNumberField(tr("Port"), 1, 65535, basicPage);
+    m_portSpin->setValue(443);
+    m_uuidEdit = new ZaryaTextField(QStringLiteral("UUID"), basicPage);
+    m_passwordEdit = new ZaryaTextField(tr("Password"), basicPage, true);
+    m_encryptionEdit = new ZaryaTextField(QStringLiteral("none"), basicPage);
+    m_methodEdit = new ZaryaTextField(QStringLiteral("2022-blake3-aes-128-gcm"), basicPage);
+    m_securityCipherEdit = new ZaryaTextField(QStringLiteral("auto"), basicPage);
+    m_alterIdSpin = new ZaryaNumberField(tr("Alter ID"), 0, 65535, basicPage);
+    m_enabledCheck = new ZaryaCheckBox(tr("Enabled"), basicPage, true);
+    m_wgPeerPublicKeyEdit = new ZaryaTextField(tr("Peer public key"), basicPage);
+    m_localAddressEdit = new ZaryaTextField(QStringLiteral("10.0.0.2/32"), basicPage);
+    m_mtuSpin = new ZaryaNumberField(tr("Default"), 0, 9000, basicPage);
+    m_unsupportedReasonLabel = new ZaryaValidationMessage(basicPage);
+
+    addRow(basicForm, tr("Name"), m_nameEdit);
+    addRow(basicForm, tr("Protocol"), m_protocolCombo);
+    addRow(basicForm, tr("Core"), m_coreCombo);
+    addRow(basicForm, tr("Address"), m_addressEdit);
+    addRow(basicForm, tr("Port"), m_portSpin);
+    m_uuidRowWidget = addRow(basicForm, QStringLiteral("UUID"), m_uuidEdit);
+    m_passwordRowWidget = addRow(basicForm, tr("Password"), m_passwordEdit);
+    m_wgPeerPublicKeyRowWidget = addRow(
+        basicForm,
+        tr("Peer public key"),
+        m_wgPeerPublicKeyEdit);
+    m_localAddressRowWidget = addRow(basicForm, tr("Local address"), m_localAddressEdit);
+    m_mtuRowWidget = addRow(basicForm, tr("MTU"), m_mtuSpin);
+    m_encryptionRowWidget = addRow(basicForm, tr("VLESS encryption"), m_encryptionEdit);
+    m_methodRowWidget = addRow(basicForm, tr("Method"), m_methodEdit);
+    m_alterIdRowWidget = addRow(basicForm, tr("Alter ID"), m_alterIdSpin);
+    m_securityCipherRowWidget = addRow(
+        basicForm,
+        tr("VMess security"),
+        m_securityCipherEdit);
+    m_unsupportedReasonRow = addRow(
+        basicForm,
+        tr("Import note"),
+        m_unsupportedReasonLabel);
+    basicForm->addWidget(m_enabledCheck);
+    basicForm->addStretch();
+
+    QVBoxLayout* transportForm = nullptr;
+    auto* transportPage = createPage(&transportForm);
+    m_networkCombo = new ZaryaSelector(transportPage);
+    m_networkCombo->setItems({
+        {QStringLiteral("tcp"), QStringLiteral("tcp")},
+        {QStringLiteral("ws"), QStringLiteral("ws")},
+        {QStringLiteral("grpc"), QStringLiteral("grpc")},
+    });
+    m_pathEdit = new ZaryaTextField(tr("Path"), transportPage);
+    m_hostEdit = new ZaryaTextField(tr("Host"), transportPage);
+    m_headerTypeEdit = new ZaryaTextField(tr("Header type"), transportPage);
+    m_serviceNameEdit = new ZaryaTextField(tr("gRPC service"), transportPage);
+    addRow(transportForm, tr("Network"), m_networkCombo);
+    addRow(transportForm, tr("Path"), m_pathEdit);
+    addRow(transportForm, tr("Host"), m_hostEdit);
+    addRow(transportForm, tr("Header type"), m_headerTypeEdit);
+    addRow(transportForm, tr("gRPC service"), m_serviceNameEdit);
+    transportForm->addStretch();
+
+    QVBoxLayout* realityForm = nullptr;
+    auto* realityPage = createPage(&realityForm);
+    m_securityCombo = new ZaryaSelector(realityPage);
+    m_securityCombo->setItems({
+        {QStringLiteral("none"), QStringLiteral("none")},
+        {QStringLiteral("tls"), QStringLiteral("tls")},
+        {QStringLiteral("reality"), QStringLiteral("reality")},
+    });
+    m_serverNameEdit = new ZaryaTextField(tr("Server name (SNI)"), realityPage);
+    m_publicKeyEdit = new ZaryaTextField(tr("Public key"), realityPage);
+    m_shortIdEdit = new ZaryaTextField(tr("Short ID"), realityPage);
+    m_fingerprintEdit = new ZaryaTextField(QStringLiteral("chrome"), realityPage);
+    m_spiderXEdit = new ZaryaTextField(QStringLiteral("/"), realityPage);
+    addRow(realityForm, tr("Security"), m_securityCombo);
+    addRow(realityForm, tr("Server name (SNI)"), m_serverNameEdit);
+    addRow(realityForm, tr("Public key"), m_publicKeyEdit);
+    addRow(realityForm, tr("Short ID"), m_shortIdEdit);
+    addRow(realityForm, tr("Fingerprint"), m_fingerprintEdit);
+    addRow(realityForm, QStringLiteral("SpiderX"), m_spiderXEdit);
+    realityForm->addStretch();
+
+    QVBoxLayout* advancedForm = nullptr;
+    auto* advancedPage = createPage(&advancedForm);
+    m_flowEdit = new ZaryaTextField(QStringLiteral("xtls-rprx-vision"), advancedPage);
+    m_sniEdit = new ZaryaTextField(tr("Legacy SNI field"), advancedPage);
+    m_remarkEdit = new ZaryaTextField(tr("Remark"), advancedPage);
+    m_allowInsecureCheck = new ZaryaCheckBox(tr("Allow insecure TLS"), advancedPage);
+    addRow(advancedForm, tr("Flow"), m_flowEdit);
+    addRow(advancedForm, tr("Legacy SNI field"), m_sniEdit);
+    addRow(advancedForm, tr("Remark"), m_remarkEdit);
+    advancedForm->addWidget(m_allowInsecureCheck);
+    advancedForm->addStretch();
+
+    m_pageStack->addWidget(basicPage);
+    m_pageStack->addWidget(transportPage);
+    m_pageStack->addWidget(realityPage);
+    m_pageStack->addWidget(advancedPage);
+
+    tabs->activeIndexChanges() | rpl::on_next(
+        [this](int index) { m_pageStack->setCurrentIndex(index); },
+        tabs->lifetime());
+    connect(
+        m_protocolCombo,
+        &ZaryaSelector::currentKeyChanged,
+        this,
+        [this] { updateProtocolFieldsVisibility(); });
+    connect(
+        m_securityCombo,
+        &ZaryaSelector::currentKeyChanged,
+        this,
+        [this](const QString& security) {
+            updateRealityTabVisibility();
+            if (security == QStringLiteral("reality")) {
+                m_networkCombo->setCurrentKey(QStringLiteral("tcp"));
+                if (m_fingerprintEdit->text().trimmed().isEmpty()) {
+                    m_fingerprintEdit->setText(QStringLiteral("chrome"));
+                }
+            }
+        });
+
+    m_validationMessage = new ZaryaValidationMessage(this);
+    m_actions = new ZaryaDialogActionRow(
+        tr("Save"),
+        tr("Cancel"),
+        this,
+        ZaryaButtonRole::Primary);
+    connect(m_actions, &ZaryaDialogActionRow::accepted, this, &ProfileDialog::tryAccept);
+    connect(m_actions, &ZaryaDialogActionRow::rejected, this, &QDialog::reject);
 
     auto* layout = new QVBoxLayout(this);
-    layout->addWidget(m_tabs);
-    layout->addWidget(buttons);
-    resize(560, 480);
+    layout->setContentsMargins(20, 20, 20, 20);
+    layout->setSpacing(12);
+    layout->addWidget(tabs);
+    layout->addWidget(pageHost, 1);
+    layout->addWidget(m_validationMessage);
+    layout->addWidget(m_actions);
+
+    resize(680, 620);
     updateProtocolFieldsVisibility();
+    m_actions->focusAccept();
+}
+
+QWidget* ProfileDialog::createPage(QVBoxLayout** layout)
+{
+    auto* scroll = Ui::CreateChild<Ui::ScrollArea>(this, st::boxScroll);
+    scroll->setWidgetResizable(true);
+    auto content = object_ptr<Ui::RpWidget>(scroll);
+    auto* raw = content.data();
+    auto* pageLayout = new QVBoxLayout(raw);
+    pageLayout->setContentsMargins(8, 8, 8, 8);
+    pageLayout->setSpacing(8);
+    scroll->setOwnedWidget(std::move(content));
+    *layout = pageLayout;
+    return scroll;
+}
+
+ZaryaFormRow* ProfileDialog::addRow(
+    QVBoxLayout* layout,
+    const QString& label,
+    QWidget* field)
+{
+    auto* row = new ZaryaFormRow(label, field, layout->parentWidget());
+    layout->addWidget(row);
+    return row;
 }
 
 void ProfileDialog::setProfile(const Profile& profile)
@@ -226,57 +262,62 @@ bool ProfileDialog::editProfile(QWidget* parent, Profile& profile)
     return true;
 }
 
+void ProfileDialog::keyPressEvent(QKeyEvent* event)
+{
+    if (event->key() == Qt::Key_Escape) {
+        reject();
+        return;
+    }
+    if ((event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter)
+        && !(event->modifiers() & (Qt::ShiftModifier | Qt::ControlModifier | Qt::AltModifier))) {
+        tryAccept();
+        return;
+    }
+    QDialog::keyPressEvent(event);
+}
+
 bool ProfileDialog::validateInput(QString* errorMessage) const
 {
-    const Profile profile = profileFromFields();
-    const ProfileValidationResult result = validateProfileForDialog(profile);
+    const ProfileValidationResult result = validateProfileForDialog(profileFromFields());
     if (!result.ok && errorMessage) {
         *errorMessage = result.message;
     }
     return result.ok;
 }
 
-void ProfileDialog::onSecurityChanged(int index)
+void ProfileDialog::tryAccept()
 {
-    Q_UNUSED(index);
-    updateRealityTabVisibility();
-    if (m_securityCombo->currentData().toString() == QStringLiteral("reality")) {
-        if (m_networkCombo->currentText() != QStringLiteral("tcp")) {
-            m_networkCombo->setCurrentText(QStringLiteral("tcp"));
-        }
-        if (m_fingerprintEdit->text().trimmed().isEmpty()) {
-            m_fingerprintEdit->setText(QStringLiteral("chrome"));
-        }
+    QString error;
+    if (!validateInput(&error)) {
+        m_validationMessage->showMessage(error);
+        m_nameEdit->showError(m_nameEdit->text().trimmed().isEmpty());
+        m_addressEdit->showError(m_addressEdit->text().trimmed().isEmpty());
+        return;
     }
+    m_validationMessage->clear();
+    m_nameEdit->showError(false);
+    m_addressEdit->showError(false);
+    accept();
 }
 
 void ProfileDialog::updateRealityTabVisibility()
 {
-    m_tabs->setTabEnabled(m_tabs->indexOf(m_realityTab), true);
-}
-
-void ProfileDialog::onProtocolChanged(int index)
-{
-    Q_UNUSED(index);
-    updateProtocolFieldsVisibility();
+    // TLS and REALITY fields remain available for every protocol, matching the old dialog.
 }
 
 void ProfileDialog::updateProtocolFieldsVisibility()
 {
-    const auto protocol =
-        static_cast<ProtocolType>(m_protocolCombo->currentData().toInt());
-
-    m_uuidRowWidget->setVisible(protocol == ProtocolType::Vless
-                                || protocol == ProtocolType::Vmess);
-    m_passwordRowWidget->setVisible(protocol == ProtocolType::Trojan
-                                    || protocol == ProtocolType::Shadowsocks
-                                    || protocol == ProtocolType::Socks
-                                    || protocol == ProtocolType::Hysteria2
-                                    || protocol == ProtocolType::WireGuard);
-    if (m_passwordLabel) {
-        m_passwordLabel->setText(protocol == ProtocolType::WireGuard ? tr("Private key")
-                                                                     : tr("Password"));
-    }
+    const auto protocol = static_cast<ProtocolType>(enumValue(m_protocolCombo));
+    m_uuidRowWidget->setVisible(
+        protocol == ProtocolType::Vless || protocol == ProtocolType::Vmess);
+    m_passwordRowWidget->setVisible(
+        protocol == ProtocolType::Trojan
+        || protocol == ProtocolType::Shadowsocks
+        || protocol == ProtocolType::Socks
+        || protocol == ProtocolType::Hysteria2
+        || protocol == ProtocolType::WireGuard);
+    m_passwordRowWidget->setLabel(
+        protocol == ProtocolType::WireGuard ? tr("Private key") : tr("Password"));
     const bool wireGuard = protocol == ProtocolType::WireGuard;
     m_wgPeerPublicKeyRowWidget->setVisible(wireGuard);
     m_localAddressRowWidget->setVisible(wireGuard);
@@ -291,37 +332,31 @@ void ProfileDialog::populateFromProfile(const Profile& profile)
 {
     m_profileId = profile.id;
     m_nameEdit->setText(profile.name);
-
-    const int protocolIndex = m_protocolCombo->findData(static_cast<int>(profile.protocol));
-    if (protocolIndex >= 0) {
-        m_protocolCombo->setCurrentIndex(protocolIndex);
-    }
-    const int coreIndex = m_coreCombo->findData(static_cast<int>(profile.coreType));
-    if (coreIndex >= 0) {
-        m_coreCombo->setCurrentIndex(coreIndex);
-    }
-
+    m_protocolCombo->setCurrentKey(enumKey(static_cast<int>(profile.protocol)));
+    m_coreCombo->setCurrentKey(enumKey(static_cast<int>(profile.coreType)));
     m_addressEdit->setText(profile.address);
     m_portSpin->setValue(profile.port);
     m_uuidEdit->setText(profile.effectiveUuid());
-    m_passwordEdit->setText(profile.password.isEmpty() ? profile.uuidPassword : profile.password);
+    m_passwordEdit->setText(
+        profile.password.isEmpty() ? profile.uuidPassword : profile.password);
     m_encryptionEdit->setText(profile.encryption);
     m_methodEdit->setText(profile.effectiveMethod());
-    m_securityCipherEdit->setText(profile.securityCipher.isEmpty() ? profile.effectiveVmessSecurity()
-                                                                     : profile.securityCipher);
+    m_securityCipherEdit->setText(
+        profile.securityCipher.isEmpty()
+            ? profile.effectiveVmessSecurity()
+            : profile.securityCipher);
     m_alterIdSpin->setValue(profile.alterId);
     m_enabledCheck->setChecked(profile.enabled);
     if (profile.unsupportedReason.isEmpty()) {
-        m_unsupportedReasonLabel->setText(QStringLiteral("—"));
+        m_unsupportedReasonLabel->clear();
+        m_unsupportedReasonRow->hide();
     } else {
-        m_unsupportedReasonLabel->setText(profile.unsupportedReason);
+        m_unsupportedReasonLabel->showMessage(profile.unsupportedReason);
+        m_unsupportedReasonRow->show();
     }
 
-    const int networkIndex = m_networkCombo->findData(profile.network);
-    if (networkIndex >= 0) {
-        m_networkCombo->setCurrentIndex(networkIndex);
-    } else {
-        m_networkCombo->setCurrentText(profile.network);
+    if (!m_networkCombo->setCurrentKey(profile.network)) {
+        m_networkCombo->setCurrentKey(QStringLiteral("tcp"));
     }
     m_pathEdit->setText(profile.path);
     m_hostEdit->setText(profile.host);
@@ -332,12 +367,9 @@ void ProfileDialog::populateFromProfile(const Profile& profile)
     if (security.isEmpty()) {
         security = QStringLiteral("none");
     }
-    const int securityIndex = m_securityCombo->findData(security);
-    if (securityIndex >= 0) {
-        m_securityCombo->setCurrentIndex(securityIndex);
-    }
-
-    m_serverNameEdit->setText(profile.serverName.isEmpty() ? profile.sni : profile.serverName);
+    m_securityCombo->setCurrentKey(security);
+    m_serverNameEdit->setText(
+        profile.serverName.isEmpty() ? profile.sni : profile.serverName);
     m_publicKeyEdit->setText(profile.publicKey);
     m_wgPeerPublicKeyEdit->setText(profile.publicKey);
     m_localAddressEdit->setText(profile.localAddress);
@@ -357,34 +389,28 @@ Profile ProfileDialog::profileFromFields() const
 {
     Profile profile;
     profile.id = m_profileId.isEmpty()
-                     ? QUuid::createUuid().toString(QUuid::WithoutBraces)
-                     : m_profileId;
+        ? QUuid::createUuid().toString(QUuid::WithoutBraces)
+        : m_profileId;
     profile.name = m_nameEdit->text().trimmed();
-    profile.protocol =
-        static_cast<ProtocolType>(m_protocolCombo->currentData().toInt());
-    profile.coreType = static_cast<CoreType>(m_coreCombo->currentData().toInt());
+    profile.protocol = static_cast<ProtocolType>(enumValue(m_protocolCombo));
+    profile.coreType = static_cast<CoreType>(enumValue(m_coreCombo));
     profile.address = m_addressEdit->text().trimmed();
     profile.port = m_portSpin->value();
     profile.uuidPassword = m_uuidEdit->text().trimmed();
     profile.password = m_passwordEdit->text().trimmed();
     profile.encryption = m_encryptionEdit->text().trimmed().isEmpty()
-                             ? QStringLiteral("none")
-                             : m_encryptionEdit->text().trimmed();
+        ? QStringLiteral("none")
+        : m_encryptionEdit->text().trimmed();
     profile.method = m_methodEdit->text().trimmed();
     profile.securityCipher = m_securityCipherEdit->text().trimmed();
     profile.alterId = m_alterIdSpin->value();
     profile.enabled = m_enabledCheck->isChecked();
-
-    profile.network = m_networkCombo->currentData().toString();
-    if (profile.network.isEmpty()) {
-        profile.network = m_networkCombo->currentText().trimmed();
-    }
+    profile.network = m_networkCombo->currentKey();
     profile.path = m_pathEdit->text().trimmed();
     profile.host = m_hostEdit->text().trimmed();
     profile.headerType = m_headerTypeEdit->text().trimmed();
     profile.serviceName = m_serviceNameEdit->text().trimmed();
-
-    profile.security = m_securityCombo->currentData().toString();
+    profile.security = m_securityCombo->currentKey();
     profile.serverName = m_serverNameEdit->text().trimmed();
     profile.sni = m_sniEdit->text().trimmed();
     if (profile.protocol == ProtocolType::WireGuard) {
