@@ -481,46 +481,42 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     m_experimentalGroup = new QGroupBox(tr("Experimental (TUN · helper · kill switch)"), this);
     m_experimentalGroup->setLayout(experimentalForm);
 
-    m_releaseChannelCombo = new QComboBox(this);
-    m_releaseChannelCombo->addItem(tr("Dev"), QStringLiteral("dev"));
-    m_releaseChannelCombo->addItem(tr("Beta"), QStringLiteral("beta"));
-    m_releaseChannelCombo->addItem(tr("Release Candidate"), QStringLiteral("rc"));
-    m_releaseChannelCombo->addItem(tr("Stable"), QStringLiteral("stable"));
-    const int releaseChannelIndex =
-        m_releaseChannelCombo->findData(settings.releaseChannelKey());
-    if (releaseChannelIndex >= 0) {
-        m_releaseChannelCombo->setCurrentIndex(releaseChannelIndex);
-    }
+    m_releaseChannelCombo = new ZaryaSelector(this);
+    m_releaseChannelCombo->setItems(
+        {
+            {QStringLiteral("dev"), tr("Dev"), true},
+            {QStringLiteral("beta"), tr("Beta"), true},
+            {QStringLiteral("rc"), tr("Release Candidate"), true},
+            {QStringLiteral("stable"), tr("Stable"), true},
+        },
+        settings.releaseChannelKey());
 
-    m_showExperimentalFeaturesCheck =
-        new QCheckBox(tr("Show experimental features (TUN, helper, kill switch)"), this);
-    m_showExperimentalFeaturesCheck->setChecked(settings.showExperimentalFeatures());
+    m_showExperimentalFeaturesCheck = new ZaryaCheckBox(
+        tr("Show experimental features (TUN, helper, kill switch)"),
+        this,
+        settings.showExperimentalFeatures());
 
     m_experimentalGatePanel = new QWidget(this);
-    auto* gateLabel = new QLabel(
+    auto* gateLabel = new ZaryaBodyText(
         tr("Experimental features are hidden in release-candidate and stable builds.\n"
            "Xray system-proxy mode is the recommended stable path."),
         m_experimentalGatePanel);
-    gateLabel->setWordWrap(true);
     m_showExperimentalFeaturesButton =
-        new QPushButton(tr("Show Experimental Features…"), m_experimentalGatePanel);
-    connect(m_showExperimentalFeaturesButton, &QPushButton::clicked, this,
+        new ZaryaActionButton(tr("Show Experimental Features…"), m_experimentalGatePanel);
+    connect(m_showExperimentalFeaturesButton, &ZaryaActionButton::clicked, this,
             &SettingsDialog::onShowExperimentalFeatures);
     auto* gateLayout = new QVBoxLayout(m_experimentalGatePanel);
     gateLayout->setContentsMargins(0, 0, 0, 0);
     gateLayout->addWidget(gateLabel);
     gateLayout->addWidget(m_showExperimentalFeaturesButton);
 
-    auto* releaseForm = new QFormLayout;
-    releaseForm->addRow(tr("Release channel"), m_releaseChannelCombo);
-    releaseForm->addRow(QString(), m_showExperimentalFeaturesCheck);
-    releaseForm->addRow(QString(), m_experimentalGatePanel);
-    auto* releaseGroup = new QGroupBox(tr("Release channel"), this);
-    releaseGroup->setLayout(releaseForm);
+    auto* releaseGroup = new ZaryaFormSection(tr("Release channel"), this);
+    releaseGroup->addWidget(
+        new ZaryaFormRow(tr("Release channel"), m_releaseChannelCombo, releaseGroup));
+    releaseGroup->addWidget(m_showExperimentalFeaturesCheck);
+    releaseGroup->addWidget(m_experimentalGatePanel);
 
-    connect(m_releaseChannelCombo, &QComboBox::currentIndexChanged, this, [this](int index) {
-        Q_UNUSED(index);
-        const QString channel = m_releaseChannelCombo->currentData().toString();
+    connect(m_releaseChannelCombo, &ZaryaSelector::currentKeyChanged, this, [this](const QString& channel) {
         const ReleaseChannel releaseChannel =
             FeaturePolicy::releaseChannelFromString(channel);
         if (FeaturePolicy::isStableLikeChannel(releaseChannel)) {
@@ -531,78 +527,71 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
         }
         updateExperimentalVisibility();
     });
-    connect(m_showExperimentalFeaturesCheck, &QCheckBox::toggled, this,
+    connect(m_showExperimentalFeaturesCheck, &ZaryaCheckBox::toggled, this,
             &SettingsDialog::updateExperimentalVisibility);
 
-    m_appUpdateChannelCombo = new QComboBox(this);
-    m_appUpdateChannelCombo->addItem(tr("Dev"), QStringLiteral("dev"));
-    m_appUpdateChannelCombo->addItem(tr("Beta"), QStringLiteral("beta"));
-    m_appUpdateChannelCombo->addItem(tr("Release Candidate"), QStringLiteral("rc"));
-    m_appUpdateChannelCombo->addItem(tr("Stable"), QStringLiteral("stable"));
-    const QString channelKey = settings.appUpdateChannelKey();
-    const int channelIndex = m_appUpdateChannelCombo->findData(channelKey);
-    if (channelIndex >= 0) {
-        m_appUpdateChannelCombo->setCurrentIndex(channelIndex);
-    }
+    m_appUpdateChannelCombo = new ZaryaSelector(this);
+    m_appUpdateChannelCombo->setItems(
+        {
+            {QStringLiteral("dev"), tr("Dev"), true},
+            {QStringLiteral("beta"), tr("Beta"), true},
+            {QStringLiteral("rc"), tr("Release Candidate"), true},
+            {QStringLiteral("stable"), tr("Stable"), true},
+        },
+        settings.appUpdateChannelKey());
 
-    m_checkAppUpdatesOnStartupCheck =
-        new QCheckBox(tr("Check app updates on startup"), this);
-    m_checkAppUpdatesOnStartupCheck->setChecked(settings.checkAppUpdatesOnStartup());
+    m_checkAppUpdatesOnStartupCheck = new ZaryaCheckBox(
+        tr("Check app updates on startup"), this, settings.checkAppUpdatesOnStartup());
 
-    m_appUpdateManifestUrlEdit = new QLineEdit(settings.appUpdateManifestUrl(), this);
-    m_appUpdateManifestUrlEdit->setPlaceholderText(
-        tr("Leave empty to use Help → Check for App Updates with a local manifest"));
+    m_appUpdateManifestUrlEdit = new ZaryaTextField(
+        tr("Leave empty to use Help → Check for App Updates with a local manifest"), this);
+    m_appUpdateManifestUrlEdit->setText(settings.appUpdateManifestUrl());
 
-    m_allowUnsignedAppUpdatesCheck =
-        new QCheckBox(tr("Allow unsigned app update download (no checksum)"), this);
-    m_allowUnsignedAppUpdatesCheck->setChecked(settings.allowUnsignedAppUpdates());
+    m_allowUnsignedAppUpdatesCheck = new ZaryaCheckBox(
+        tr("Allow unsigned app update download (no checksum)"),
+        this,
+        settings.allowUnsignedAppUpdates());
 
-    auto* appUpdatesNote = new QLabel(
+    auto* appUpdatesNote = new ZaryaBodyText(
         tr("App updates update Zarya itself. Core updates (below) update Xray and sing-box."),
         this);
-    appUpdatesNote->setWordWrap(true);
 
-    auto* appUpdatesForm = new QFormLayout;
-    appUpdatesForm->addRow(tr("Channel"), m_appUpdateChannelCombo);
-    appUpdatesForm->addRow(QString(), m_checkAppUpdatesOnStartupCheck);
-    appUpdatesForm->addRow(tr("Manifest URL"), m_appUpdateManifestUrlEdit);
-    appUpdatesForm->addRow(QString(), m_allowUnsignedAppUpdatesCheck);
-    appUpdatesForm->addRow(QString(), appUpdatesNote);
+    auto* appUpdatesGroup = new ZaryaFormSection(tr("App updates"), this);
+    appUpdatesGroup->addWidget(
+        new ZaryaFormRow(tr("Channel"), m_appUpdateChannelCombo, appUpdatesGroup));
+    appUpdatesGroup->addWidget(m_checkAppUpdatesOnStartupCheck);
+    appUpdatesGroup->addWidget(
+        new ZaryaFormRow(tr("Manifest URL"), m_appUpdateManifestUrlEdit, appUpdatesGroup));
+    appUpdatesGroup->addWidget(m_allowUnsignedAppUpdatesCheck);
+    appUpdatesGroup->addWidget(appUpdatesNote);
 
-    auto* appUpdatesGroup = new QGroupBox(tr("App updates"), this);
-    appUpdatesGroup->setLayout(appUpdatesForm);
+    m_allowCoreUpdateWithoutChecksumCheck = new ZaryaCheckBox(
+        tr("Allow installing core archives without checksum verification"),
+        this,
+        settings.allowCoreUpdateWithoutChecksum());
 
-    m_allowCoreUpdateWithoutChecksumCheck =
-        new QCheckBox(tr("Allow installing core archives without checksum verification"),
-                      this);
-    m_allowCoreUpdateWithoutChecksumCheck->setChecked(settings.allowCoreUpdateWithoutChecksum());
+    m_allowManageExternalCorePathsCheck = new ZaryaCheckBox(
+        tr("Allow managing cores outside Zarya-managed directory"),
+        this,
+        settings.allowManageExternalCorePaths());
 
-    m_allowManageExternalCorePathsCheck =
-        new QCheckBox(tr("Allow managing cores outside Zarya-managed directory"), this);
-    m_allowManageExternalCorePathsCheck->setChecked(settings.allowManageExternalCorePaths());
-
-    m_coreBackupRetentionSpin = new QSpinBox(this);
-    m_coreBackupRetentionSpin->setRange(1, 10);
+    m_coreBackupRetentionSpin = new ZaryaNumberField(QStringLiteral("1–10"), 1, 10, this);
     m_coreBackupRetentionSpin->setValue(settings.coreBackupRetentionCount());
 
-    m_githubApiTimeoutSpin = new QSpinBox(this);
-    m_githubApiTimeoutSpin->setRange(5, 120);
-    m_githubApiTimeoutSpin->setSuffix(QStringLiteral(" s"));
+    m_githubApiTimeoutSpin = new ZaryaNumberField(QStringLiteral("5–120"), 5, 120, this);
     m_githubApiTimeoutSpin->setValue(settings.githubApiTimeoutSeconds());
 
-    m_checkCoreUpdatesOnStartupCheck =
-        new QCheckBox(tr("Check core updates on startup"), this);
-    m_checkCoreUpdatesOnStartupCheck->setChecked(settings.checkCoreUpdatesOnStartup());
+    m_checkCoreUpdatesOnStartupCheck = new ZaryaCheckBox(
+        tr("Check core updates on startup"), this, settings.checkCoreUpdatesOnStartup());
 
-    auto* coreUpdatesForm = new QFormLayout;
-    coreUpdatesForm->addRow(QString(), m_allowCoreUpdateWithoutChecksumCheck);
-    coreUpdatesForm->addRow(QString(), m_allowManageExternalCorePathsCheck);
-    coreUpdatesForm->addRow(tr("Backup retention"), m_coreBackupRetentionSpin);
-    coreUpdatesForm->addRow(tr("GitHub API timeout"), m_githubApiTimeoutSpin);
-    coreUpdatesForm->addRow(QString(), m_checkCoreUpdatesOnStartupCheck);
-
-    auto* coreUpdatesGroup = new QGroupBox(tr("Core updates"), this);
-    coreUpdatesGroup->setLayout(coreUpdatesForm);
+    auto* coreUpdatesGroup = new ZaryaFormSection(tr("Core updates"), this);
+    coreUpdatesGroup->addWidget(m_allowCoreUpdateWithoutChecksumCheck);
+    coreUpdatesGroup->addWidget(m_allowManageExternalCorePathsCheck);
+    coreUpdatesGroup->addWidget(
+        new ZaryaFormRow(tr("Backup retention"), m_coreBackupRetentionSpin, coreUpdatesGroup));
+    coreUpdatesGroup->addWidget(new ZaryaFormRow(
+        tr("GitHub API timeout (seconds)"), m_githubApiTimeoutSpin, coreUpdatesGroup));
+    coreUpdatesGroup->addWidget(m_checkCoreUpdatesOnStartupCheck);
 
     m_enableKillSwitchCheck =
         new QCheckBox(tr("Enable experimental kill switch"), this);
@@ -1038,10 +1027,10 @@ bool SettingsDialog::validateAndSave()
     const bool previousShowExperimental = settings.showExperimentalFeatures();
     const RuntimeMode previousEffective = settings.effectiveRuntimeMode();
 
-    settings.setReleaseChannelKey(m_releaseChannelCombo->currentData().toString());
+    settings.setReleaseChannelKey(m_releaseChannelCombo->currentKey());
     settings.setShowExperimentalFeatures(m_showExperimentalFeaturesCheck->isChecked());
 
-    settings.setAppUpdateChannelKey(m_appUpdateChannelCombo->currentData().toString());
+    settings.setAppUpdateChannelKey(m_appUpdateChannelCombo->currentKey());
     settings.setCheckAppUpdatesOnStartup(m_checkAppUpdatesOnStartupCheck->isChecked());
     settings.setAppUpdateManifestUrl(m_appUpdateManifestUrlEdit->text());
     settings.setAllowUnsignedAppUpdates(m_allowUnsignedAppUpdatesCheck->isChecked());
@@ -1354,7 +1343,7 @@ void SettingsDialog::onShowServiceRecovery()
 void SettingsDialog::updateExperimentalVisibility()
 {
     const ReleaseChannel channel = FeaturePolicy::releaseChannelFromString(
-        m_releaseChannelCombo->currentData().toString());
+        m_releaseChannelCombo->currentKey());
     const bool visible = m_showExperimentalFeaturesCheck->isChecked();
     m_experimentalGroup->setVisible(visible);
     m_killSwitchGroup->setVisible(visible);
