@@ -14,6 +14,7 @@ ImportVlessDialog::ImportVlessDialog(QWidget* parent)
     : QDialog(parent)
 {
     setWindowTitle(tr("Import share links"));
+    setAccessibleName(tr("Import share links"));
 
     m_linksEdit = new ZaryaTextArea(
         tr("Paste one vless://, vmess://, trojan://, ss://, hysteria2://, or wireguard:// "
@@ -29,9 +30,12 @@ ImportVlessDialog::ImportVlessDialog(QWidget* parent)
     connect(m_actions, &ZaryaDialogActionRow::rejected, this, &QDialog::reject);
 
     auto* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(20, 20, 20, 20);
+    layout->setSpacing(12);
     layout->addWidget(m_linksEdit);
     layout->addWidget(m_actions);
-    resize(560, 280);
+    resize(620, 340);
+    m_actions->focusAccept();
 }
 
 QVector<Profile> ImportVlessDialog::importedProfiles() const
