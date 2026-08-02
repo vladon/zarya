@@ -127,6 +127,13 @@ bool Application::eventFilter(QObject* watched, QEvent* event)
 {
     const QEvent::Type type = event->type();
 
+    if (type == QEvent::ThemeChange
+        || type == QEvent::StyleChange
+        || type == QEvent::ApplicationPaletteChange
+        || type == QEvent::ApplicationStateChange) {
+        syncDesktopAppUiAnimationPreference();
+    }
+
     if (type == QEvent::Show) {
         if (auto* box = qobject_cast<QMessageBox*>(watched)) {
             // Defer until the native sheet/window is up so focus sticks on macOS.

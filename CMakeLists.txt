@@ -819,6 +819,12 @@ target_include_directories(zarya_core_checksum_test PRIVATE ${CMAKE_CURRENT_SOUR
 zarya_link_qt_core(zarya_core_checksum_test)
 add_test(NAME core_checksum COMMAND zarya_core_checksum_test)
 
+add_executable(zarya_ui_animation_policy_test
+    tests/ui_animation_policy_test.cpp
+)
+target_include_directories(zarya_ui_animation_policy_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME ui_animation_policy COMMAND zarya_ui_animation_policy_test)
+
 add_executable(zarya_smoke_test
     tests/smoke/smoke_test.cpp
     src/app/StartupOptions.cpp
@@ -878,6 +884,7 @@ set(ZARYA_TEST_TARGETS
     zarya_testing_test
     zarya_geodata_verifier_test
     zarya_core_checksum_test
+    zarya_ui_animation_policy_test
     zarya_smoke_test
     zarya_version_test
     zarya_stable_hardening_test
