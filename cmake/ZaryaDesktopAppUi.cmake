@@ -57,7 +57,7 @@ function(zarya_write_lib_ui_qt69_window_mac_patch out_path)
     file(WRITE "${out_path}" "${_src}")
 endfunction()
 
-# QAccessible::Attribute::Orientation is not in Qt 6.8–6.9; gate it for Qt 6.10+.
+# QAccessible::Attribute::Orientation is not in Qt 6.8–6.10; gate it for Qt 6.11+.
 # Write a patched TU into the build tree so vendored lib_ui stays unmodified.
 function(zarya_write_lib_ui_qt68_accessible_patch out_path)
     set(_orig "${desktop_app_loc}/lib_ui/ui/accessible/ui_accessible_widget.cpp")
@@ -65,24 +65,28 @@ function(zarya_write_lib_ui_qt68_accessible_patch out_path)
         message(FATAL_ERROR "Missing ${_orig}")
     endif()
     file(READ "${_orig}" _src)
-    # Normalize any existing 6.9 gate up to 6.10 (Orientation is not in 6.9.x).
+    # Normalize older gates up to 6.11 (Orientation is not in Qt 6.10.x).
     string(REPLACE
         "QT_VERSION_CHECK(6, 9, 0)"
-        "QT_VERSION_CHECK(6, 10, 0)"
+        "QT_VERSION_CHECK(6, 11, 0)"
         _src "${_src}")
-    if(NOT _src MATCHES "QT_VERSION_CHECK\\(6, 10, 0\\)")
+    string(REPLACE
+        "QT_VERSION_CHECK(6, 10, 0)"
+        "QT_VERSION_CHECK(6, 11, 0)"
+        _src "${_src}")
+    if(NOT _src MATCHES "QT_VERSION_CHECK\\(6, 11, 0\\)")
         string(REPLACE
             "QList<QAccessible::Attribute> Widget::attributeKeys() const {\n\tauto result = QList<QAccessible::Attribute>();\n\tif (rp()->accessibilityOrientation().has_value()) {\n\t\tresult.append(QAccessible::Attribute::Orientation);\n\t}\n\treturn result;\n}"
-            "QList<QAccessible::Attribute> Widget::attributeKeys() const {\n\tauto result = QList<QAccessible::Attribute>();\n#if QT_VERSION >= QT_VERSION_CHECK(6, 10, 0)\n\tif (rp()->accessibilityOrientation().has_value()) {\n\t\tresult.append(QAccessible::Attribute::Orientation);\n\t}\n#else\n\tQ_UNUSED(result);\n#endif\n\treturn result;\n}"
+            "QList<QAccessible::Attribute> Widget::attributeKeys() const {\n\tauto result = QList<QAccessible::Attribute>();\n#if QT_VERSION >= QT_VERSION_CHECK(6, 11, 0)\n\tif (rp()->accessibilityOrientation().has_value()) {\n\t\tresult.append(QAccessible::Attribute::Orientation);\n\t}\n#else\n\tQ_UNUSED(result);\n#endif\n\treturn result;\n}"
             _src "${_src}")
         string(REPLACE
             "QVariant Widget::attributeValue(QAccessible::Attribute key) const {\n\tif (key == QAccessible::Attribute::Orientation) {\n\t\tif (const auto orientation = rp()->accessibilityOrientation()) {\n\t\t\t// Plain int by design: the UIA bridge reads this back with\n\t\t\t// QVariant::toInt(), and Qt::Orientation isn't a registered\n\t\t\t// metatype here - QVariant::fromValue() of it wouldn't round-trip.\n\t\t\treturn int(*orientation);\n\t\t}\n\t}\n\treturn QVariant();\n}"
-            "QVariant Widget::attributeValue(QAccessible::Attribute key) const {\n#if QT_VERSION >= QT_VERSION_CHECK(6, 10, 0)\n\tif (key == QAccessible::Attribute::Orientation) {\n\t\tif (const auto orientation = rp()->accessibilityOrientation()) {\n\t\t\t// Plain int by design: the UIA bridge reads this back with\n\t\t\t// QVariant::toInt(), and Qt::Orientation isn't a registered\n\t\t\t// metatype here - QVariant::fromValue() of it wouldn't round-trip.\n\t\t\treturn int(*orientation);\n\t\t}\n\t}\n#else\n\tQ_UNUSED(key);\n#endif\n\treturn QVariant();\n}"
+            "QVariant Widget::attributeValue(QAccessible::Attribute key) const {\n#if QT_VERSION >= QT_VERSION_CHECK(6, 11, 0)\n\tif (key == QAccessible::Attribute::Orientation) {\n\t\tif (const auto orientation = rp()->accessibilityOrientation()) {\n\t\t\t// Plain int by design: the UIA bridge reads this back with\n\t\t\t// QVariant::toInt(), and Qt::Orientation isn't a registered\n\t\t\t// metatype here - QVariant::fromValue() of it wouldn't round-trip.\n\t\t\treturn int(*orientation);\n\t\t}\n\t}\n#else\n\tQ_UNUSED(key);\n#endif\n\treturn QVariant();\n}"
             _src "${_src}")
     endif()
-    if(NOT _src MATCHES "QT_VERSION_CHECK\\(6, 10, 0\\)")
+    if(NOT _src MATCHES "QT_VERSION_CHECK\\(6, 11, 0\\)")
         message(FATAL_ERROR
-            "Failed to patch ui_accessible_widget.cpp for Qt < 6.10 "
+            "Failed to patch ui_accessible_widget.cpp for Qt < 6.11 "
             "(QAccessible::Attribute::Orientation). Upstream lib_ui may have changed.")
     endif()
     file(WRITE "${out_path}" "${_src}")
@@ -288,12 +292,12 @@ if(TARGET lib_ui)
         message(STATUS "lib_ui: using Qt < 6.9-safe ui_window_mac.mm from build tree")
     endif()
 
-    if(QT_VERSION VERSION_LESS 6.10.0)
+    if(QT_VERSION VERSION_LESS 6.11.0)
         set(_zarya_a11y_patched
             "${_zarya_patched_dir}/ui_accessible_widget.cpp")
         zarya_write_lib_ui_qt68_accessible_patch("${_zarya_a11y_patched}")
         set(_zarya_lib_ui_need_rescan TRUE)
-        message(STATUS "lib_ui: using Qt < 6.10-safe ui_accessible_widget.cpp from build tree")
+        message(STATUS "lib_ui: using Qt < 6.11-safe ui_accessible_widget.cpp from build tree")
     endif()
 
     if(_zarya_lib_ui_need_rescan)

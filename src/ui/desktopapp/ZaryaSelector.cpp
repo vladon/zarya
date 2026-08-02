@@ -18,7 +18,10 @@ ZaryaSelector::ZaryaSelector(QWidget* parent)
 {
     auto button = makeZaryaButton(this, QString(), ZaryaButtonRole::Secondary);
     m_button = button.data();
-    static_cast<Ui::RoundButton*>(m_button)->setClickedCallback([this] { toggleMenu(); });
+    auto* selectorButton = static_cast<Ui::RoundButton*>(m_button);
+    selectorButton->setIsMenuButton(true);
+    selectorButton->setClickedCallback([this] { toggleMenu(); });
+    setFocusProxy(m_button);
 
     auto* layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -90,6 +93,12 @@ QString ZaryaSelector::currentKey() const
     return m_currentKey;
 }
 
+void ZaryaSelector::setAccessibleLabel(const QString& label)
+{
+    m_accessibleLabel = label;
+    applyCurrentItem();
+}
+
 void ZaryaSelector::resizeEvent(QResizeEvent* event)
 {
     QWidget::resizeEvent(event);
@@ -105,7 +114,9 @@ void ZaryaSelector::applyCurrentItem()
     const QString text = (found != m_items.cend()) ? found->text : QString();
     auto* button = static_cast<Ui::RoundButton*>(m_button);
     button->setText(rpl::single(text));
-    button->setAccessibleName(text);
+    button->setAccessibleName(m_accessibleLabel.isEmpty()
+            ? text
+            : QStringLiteral("%1: %2").arg(m_accessibleLabel, text));
 }
 
 void ZaryaSelector::toggleMenu()

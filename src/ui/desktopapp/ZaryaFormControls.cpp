@@ -47,6 +47,7 @@ ZaryaActionButton::ZaryaActionButton(
 {
     auto button = makeZaryaButton(this, text, role);
     m_button = button.data();
+    setFocusProxy(m_button);
     static_cast<Ui::RoundButton*>(m_button)->setClickedCallback([this] {
         QMetaObject::invokeMethod(this, [this] { Q_EMIT clicked(); }, Qt::QueuedConnection);
     });
@@ -147,6 +148,11 @@ void ZaryaTextField::showError(bool show)
     }
 }
 
+void ZaryaTextField::setAccessibleLabel(const QString& label)
+{
+    m_field->setAccessibleName(label);
+}
+
 void ZaryaTextField::resizeEvent(QResizeEvent* event)
 {
     QWidget::resizeEvent(event);
@@ -192,6 +198,11 @@ void ZaryaTextArea::setReadOnly(bool readOnly)
 void ZaryaTextArea::clear()
 {
     setText(QString());
+}
+
+void ZaryaTextArea::setAccessibleLabel(const QString& label)
+{
+    m_field->setAccessibleName(label);
 }
 
 void ZaryaTextArea::resizeEvent(QResizeEvent* event)
@@ -302,6 +313,11 @@ void ZaryaNumberField::showError(bool show)
     }
 }
 
+void ZaryaNumberField::setAccessibleLabel(const QString& label)
+{
+    m_field->setAccessibleName(label);
+}
+
 void ZaryaNumberField::resizeEvent(QResizeEvent* event)
 {
     QWidget::resizeEvent(event);
@@ -353,7 +369,11 @@ ZaryaRadioGroup::ZaryaRadioGroup(int value, QWidget* parent)
 void ZaryaRadioGroup::addOption(int value, const QString& text)
 {
     auto* button = Ui::CreateChild<Ui::Radiobutton>(this, m_group, value, text);
-    button->setAccessibleName(text);
+    if (m_options.isEmpty()) {
+        setFocusProxy(button);
+    }
+    m_options.push_back({button, text});
+    updateAccessibleNames();
     m_layout->addWidget(button);
 }
 
@@ -365,6 +385,21 @@ int ZaryaRadioGroup::value() const
 void ZaryaRadioGroup::setValue(int value)
 {
     m_group->setValue(value);
+}
+
+void ZaryaRadioGroup::setAccessibleLabel(const QString& label)
+{
+    m_accessibleLabel = label;
+    updateAccessibleNames();
+}
+
+void ZaryaRadioGroup::updateAccessibleNames()
+{
+    for (const Option& option : m_options) {
+        option.button->setAccessibleName(m_accessibleLabel.isEmpty()
+                ? option.text
+                : QStringLiteral("%1: %2").arg(m_accessibleLabel, option.text));
+    }
 }
 
 ZaryaFormRow::ZaryaFormRow(const QString& label, QWidget* field, QWidget* parent)
@@ -379,7 +414,13 @@ ZaryaFormRow::ZaryaFormRow(const QString& label, QWidget* field, QWidget* parent
     layout->setSpacing(12);
     layout->addWidget(text, 0, Qt::AlignVCenter);
     layout->addWidget(field, 1);
-    setFocusProxy(field);
+    m_accessibleControl = dynamic_cast<ZaryaAccessibleFormControl*>(field);
+    if (m_accessibleControl) {
+        m_accessibleControl->setAccessibleLabel(label);
+    }
+    if (field->focusProxy() || field->focusPolicy() != Qt::NoFocus) {
+        setFocusProxy(field);
+    }
 }
 
 void ZaryaFormRow::setLabel(const QString& label)
@@ -387,6 +428,9 @@ void ZaryaFormRow::setLabel(const QString& label)
     auto* text = static_cast<Ui::FlatLabel*>(m_label);
     text->setText(label);
     text->setAccessibleName(label);
+    if (m_accessibleControl) {
+        m_accessibleControl->setAccessibleLabel(label);
+    }
 }
 
 ZaryaValidationMessage::ZaryaValidationMessage(QWidget* parent)

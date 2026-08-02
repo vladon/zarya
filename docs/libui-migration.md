@@ -151,7 +151,8 @@ and remains required before a release, rather than blocking every migration PR.
 - Behavior, persistence, feature gating, and recovery actions remain unchanged.
 - English and Russian strings are complete and fit at common display scaling.
 - Tab order, keyboard activation, focus visibility, accessible names, and screen-reader roles
-  are verified.
+  are verified. Shared form controls have an automated headless accessibility contract covering
+  roles, labelled fields and selectors, focus proxies, and assistive activation.
 - Light, dark, and system themes update both Qt hosts and `lib_ui` content without restart unless
   the existing setting explicitly requires one.
 - Semantic state always includes text; color is supplementary.
