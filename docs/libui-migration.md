@@ -155,6 +155,8 @@ and remains required before a release, rather than blocking every migration PR.
 - Light, dark, and system themes update both Qt hosts and `lib_ui` content without restart unless
   the existing setting explicitly requires one.
 - Semantic state always includes text; color is supplementary.
-- Animations are state-driven, short, and safe when reduced motion is requested.
+- Animations are state-driven and short. The global toolkit animation state follows Qt desktop
+  effects and zero-duration style hints, including theme, style, and application-state changes at
+  runtime, so reduced motion requests take effect across migrated surfaces.
 - The local macOS build and relevant smoke or unit tests pass for each migration PR.
 - Linux and static-Qt Windows builds pass in the cross-platform hardening pass before release.

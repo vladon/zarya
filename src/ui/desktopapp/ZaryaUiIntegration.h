@@ -61,6 +61,7 @@ private:
 };
 
 void initDesktopAppUiIntegrations(int argc, char** argv);
+void syncDesktopAppUiAnimationPreference();
 [[nodiscard]] bool desktopAppUiIntegrationsReady();
 
 } // namespace zarya

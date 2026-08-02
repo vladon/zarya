@@ -2,15 +2,19 @@
 
 #include "storage/AppPaths.h"
 #include "ui/desktopapp/ZaryaBaseIntegration.h"
+#include "ui/desktopapp/UiAnimationPolicy.h"
 
+#include "ui/effects/animation_value.h"
 #include "ui/effects/animations.h"
 #include "ui/main_queue_processor.h"
 #include "ui/style/style_core.h"
 #include "ui/style/style_core_font.h"
 
+#include <QApplication>
 #include <QCoreApplication>
 #include <QDir>
 #include <QMetaObject>
+#include <QStyle>
 #include <memory>
 
 namespace zarya {
@@ -215,10 +219,26 @@ void initDesktopAppUiIntegrations(int argc, char** argv)
     if (!g_animationsManager) {
         g_animationsManager = std::make_unique<Ui::Animations::Manager>();
     }
+    syncDesktopAppUiAnimationPreference();
     if (!g_styleStarted) {
         style::internal::StartFonts();
         style::StartManager(style::Scale());
         g_styleStarted = true;
+    }
+}
+
+void syncDesktopAppUiAnimationPreference()
+{
+    const auto* app = qobject_cast<QApplication*>(QCoreApplication::instance());
+    if (!app || !app->style()) {
+        return;
+    }
+
+    const bool disabled = shouldDisableUiAnimations(
+        QApplication::isEffectEnabled(Qt::UI_General),
+        app->style()->styleHint(QStyle::SH_Widget_Animation_Duration));
+    if (anim::Disabled() != disabled) {
+        anim::SetDisabled(disabled);
     }
 }
 
