@@ -37,14 +37,6 @@
       }
     },
     {
-      "name": "windows-msvc2026",
-      "displayName": "Windows MSVC 2026 (Qt shared)",
-      "inherits": "windows-base",
-      "cacheVariables": {
-        "ZARYA_STATIC_QT": "OFF"
-      }
-    },
-    {
       "name": "windows-msvc2026-static",
       "displayName": "Windows MSVC 2026 (Qt static)",
       "inherits": "windows-base",
@@ -61,24 +53,19 @@
       "targets": ["zarya"]
     },
     {
-      "name": "windows-msvc2026-release",
-      "configurePreset": "windows-msvc2026",
-      "configuration": "Release"
-    },
-    {
       "name": "windows-msvc2026-static-release",
       "configurePreset": "windows-msvc2026-static",
       "configuration": "Release",
       "targets": ["zarya"]
     },
     {
-      "name": "windows-msvc2026-debug",
-      "configurePreset": "windows-msvc2026",
+      "name": "windows-msvc2026-static-debug",
+      "configurePreset": "windows-msvc2026-static",
       "configuration": "Debug"
     },
     {
       "name": "zarya-xray-config-test",
-      "configurePreset": "windows-msvc2026",
+      "configurePreset": "windows-msvc2026-static",
       "configuration": "Release",
       "targets": ["zarya_xray_config_test"]
     }
