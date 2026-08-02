@@ -17,6 +17,10 @@
 #include <QStyle>
 #include <memory>
 
+namespace Ui::Accessible {
+void Init();
+}
+
 namespace zarya {
 namespace {
 
@@ -25,6 +29,7 @@ ZaryaUiIntegration* g_uiIntegration = nullptr;
 std::unique_ptr<Ui::MainQueueProcessor> g_mainQueueProcessor;
 std::unique_ptr<Ui::Animations::Manager> g_animationsManager;
 bool g_styleStarted = false;
+bool g_accessibilityStarted = false;
 
 } // namespace
 
@@ -218,6 +223,10 @@ void initDesktopAppUiIntegrations(int argc, char** argv)
     }
     if (!g_animationsManager) {
         g_animationsManager = std::make_unique<Ui::Animations::Manager>();
+    }
+    if (!g_accessibilityStarted) {
+        Ui::Accessible::Init();
+        g_accessibilityStarted = true;
     }
     syncDesktopAppUiAnimationPreference();
     if (!g_styleStarted) {

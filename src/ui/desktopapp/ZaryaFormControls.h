@@ -1,6 +1,9 @@
 #pragma once
 
+#include "ui/desktopapp/ZaryaAccessibleFormControl.h"
+
 #include <QString>
+#include <QVector>
 #include <QWidget>
 #include <memory>
 
@@ -30,7 +33,7 @@ private:
     QWidget* m_button = nullptr; // Ui::RoundButton*
 };
 
-class ZaryaTextField final : public QWidget {
+class ZaryaTextField final : public QWidget, public ZaryaAccessibleFormControl {
     Q_OBJECT
 
 public:
@@ -44,6 +47,7 @@ public:
     void setPlaceholder(const QString& placeholder);
     void setReadOnly(bool readOnly);
     void showError(bool show = true);
+    void setAccessibleLabel(const QString& label) override;
 
 Q_SIGNALS:
     void textChanged(const QString& text);
@@ -56,7 +60,7 @@ private:
     QWidget* m_field = nullptr; // Ui::InputField*
 };
 
-class ZaryaTextArea final : public QWidget {
+class ZaryaTextArea final : public QWidget, public ZaryaAccessibleFormControl {
     Q_OBJECT
 
 public:
@@ -69,6 +73,7 @@ public:
     void setText(const QString& text);
     void setReadOnly(bool readOnly);
     void clear();
+    void setAccessibleLabel(const QString& label) override;
 
 Q_SIGNALS:
     void textChanged(const QString& text);
@@ -106,7 +111,7 @@ private:
     QVBoxLayout* m_layout = nullptr;
 };
 
-class ZaryaNumberField final : public QWidget {
+class ZaryaNumberField final : public QWidget, public ZaryaAccessibleFormControl {
     Q_OBJECT
 
 public:
@@ -120,6 +125,7 @@ public:
     void setValue(int value);
     void setSpecialValueText(const QString& text);
     void showError(bool show = true);
+    void setAccessibleLabel(const QString& label) override;
 
 Q_SIGNALS:
     void valueChanged(int value);
@@ -154,7 +160,7 @@ private:
     QWidget* m_checkbox = nullptr; // Ui::Checkbox*
 };
 
-class ZaryaRadioGroup final : public QWidget {
+class ZaryaRadioGroup final : public QWidget, public ZaryaAccessibleFormControl {
     Q_OBJECT
 
 public:
@@ -163,12 +169,22 @@ public:
     void addOption(int value, const QString& text);
     [[nodiscard]] int value() const;
     void setValue(int value);
+    void setAccessibleLabel(const QString& label) override;
 
 Q_SIGNALS:
     void valueChanged(int value);
 
 private:
+    struct Option {
+        QWidget* button = nullptr; // Ui::Radiobutton*
+        QString text;
+    };
+
+    void updateAccessibleNames();
+
     std::shared_ptr<Ui::RadiobuttonGroup> m_group;
+    QVector<Option> m_options;
+    QString m_accessibleLabel;
     QVBoxLayout* m_layout = nullptr;
 };
 
@@ -185,6 +201,7 @@ public:
 
 private:
     QWidget* m_label = nullptr; // Ui::FlatLabel*
+    ZaryaAccessibleFormControl* m_accessibleControl = nullptr;
 };
 
 class ZaryaValidationMessage final : public QWidget {

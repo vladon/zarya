@@ -825,6 +825,40 @@ add_executable(zarya_ui_animation_policy_test
 target_include_directories(zarya_ui_animation_policy_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME ui_animation_policy COMMAND zarya_ui_animation_policy_test)
 
+add_executable(zarya_ui_accessibility_test
+    tests/ui_accessibility_test.cpp
+    src/ui/desktopapp/ZaryaBaseIntegration.cpp
+    src/ui/desktopapp/ZaryaUiIntegration.cpp
+    src/ui/desktopapp/ZaryaCrlIntegration.cpp
+    src/ui/desktopapp/ZaryaPalette.cpp
+    src/ui/desktopapp/ZaryaControls.cpp
+    src/ui/desktopapp/ZaryaFormControls.cpp
+    src/ui/desktopapp/ZaryaSelector.cpp
+    src/ui/theme/ThemeTokens.cpp
+    src/ui/theme/ThemeManager.cpp
+    src/logging/LogBuffer.cpp
+    src/storage/AppSettings.cpp
+    src/storage/AppPaths.cpp
+    src/app/BuildInfo.cpp
+    src/app/StartupOptions.cpp
+    src/packaging/PackagingInfo.cpp
+    src/platform/Platform.cpp
+    ${ZARYA_SETTINGS_SUPPORT_SOURCES}
+)
+target_include_directories(zarya_ui_accessibility_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${ZARYA_GENERATED_DIR}
+)
+target_compile_definitions(zarya_ui_accessibility_test PRIVATE ZARYA_DESKTOP_APP_UI=1)
+target_link_libraries(zarya_ui_accessibility_test PRIVATE ${ZARYA_DESKTOP_APP_UI_LIBS})
+zarya_link_qt_widgets_app(zarya_ui_accessibility_test)
+add_test(NAME ui_accessibility COMMAND zarya_ui_accessibility_test)
+if(APPLE)
+    # The official macOS Qt package has no CI-safe headless QPA backend.
+    # Keep compiling the contract target there; execute it on Windows/Linux.
+    set_tests_properties(ui_accessibility PROPERTIES DISABLED TRUE)
+endif()
+
 add_executable(zarya_smoke_test
     tests/smoke/smoke_test.cpp
     src/app/StartupOptions.cpp
@@ -885,6 +919,7 @@ set(ZARYA_TEST_TARGETS
     zarya_geodata_verifier_test
     zarya_core_checksum_test
     zarya_ui_animation_policy_test
+    zarya_ui_accessibility_test
     zarya_smoke_test
     zarya_version_test
     zarya_stable_hardening_test
