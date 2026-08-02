@@ -29,6 +29,7 @@ QString displayText(QString text)
 
 ProfileActionStrip::ProfileActionStrip(
     ProfileActionStripActions actions,
+    const QString& profileSelectorLabel,
     const QString& moreText,
     QWidget* parent)
     : QWidget(parent)
@@ -52,6 +53,7 @@ ProfileActionStrip::ProfileActionStrip(
 
     m_profileSelector = new ZaryaSelector(this);
     m_profileSelector->setMinimumWidth(180);
+    m_profileSelector->setAccessibleLabel(profileSelectorLabel);
     m_layout->addWidget(m_profileSelector);
 
     m_testButton = addActionButton(m_actions.testSelected, ZaryaButtonRole::Secondary);
@@ -61,6 +63,7 @@ ProfileActionStrip::ProfileActionStrip(
 
     auto moreButton = makeZaryaButton(this, moreText, ZaryaButtonRole::Secondary);
     m_moreButton = moreButton.data();
+    static_cast<Ui::RoundButton*>(m_moreButton)->setIsMenuButton(true);
     m_layout->addWidget(moreButton.release());
 
     auto* menu = new Ui::DropdownMenu(window());

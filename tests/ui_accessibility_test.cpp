@@ -1,14 +1,17 @@
+#include "ui/desktopapp/ProfileActionStrip.h"
 #include "ui/desktopapp/ZaryaFormControls.h"
 #include "ui/desktopapp/ZaryaSelector.h"
 #include "ui/desktopapp/ZaryaUiIntegration.h"
 
 #include <QAccessible>
 #include <QAccessibleActionInterface>
+#include <QAction>
 #include <QApplication>
 #include <QCoreApplication>
 #include <QStandardPaths>
 #include <QWidget>
 #include <iostream>
+#include <utility>
 
 namespace {
 
@@ -49,6 +52,22 @@ QVector<QWidget*> accessibleRadioButtons(QWidget* group)
         }
     }
     return result;
+}
+
+QWidget* findAccessibleWidget(
+    QWidget* root,
+    QAccessible::Role role,
+    const QString& name)
+{
+    const auto widgets = root->findChildren<QWidget*>();
+    for (QWidget* widget : widgets) {
+        QAccessibleInterface* interface = accessibleInterface(widget);
+        if (interface && interface->role() == role
+            && interface->text(QAccessible::Name) == name) {
+            return widget;
+        }
+    }
+    return nullptr;
 }
 
 } // namespace
@@ -92,6 +111,64 @@ int main(int argc, char** argv)
         QCoreApplication::processEvents();
         ok &= expect(activated, "accessibility press should activate the action button");
     }
+
+    QAction addAction(QStringLiteral("&Add"), &host);
+    QAction importAction(QStringLiteral("&Import"), &host);
+    QAction subscriptionsAction(QStringLiteral("&Subscriptions"), &host);
+    QAction testAction(QStringLiteral("&Test"), &host);
+    QAction startAction(QStringLiteral("&Start"), &host);
+    QAction stopAction(QStringLiteral("S&top"), &host);
+    zarya::ProfileActionStripActions stripActions;
+    stripActions.add = &addAction;
+    stripActions.importProfiles = &importAction;
+    stripActions.subscriptions = &subscriptionsAction;
+    stripActions.testSelected = &testAction;
+    stripActions.start = &startAction;
+    stripActions.stop = &stopAction;
+    stripActions.overflow = {&addAction, &importAction, &subscriptionsAction};
+    auto* actionStrip = new zarya::ProfileActionStrip(
+        std::move(stripActions),
+        QStringLiteral("Profile filter"),
+        QStringLiteral("More…"),
+        &host);
+    actionStrip->profileSelector()->setItems(
+        {{QStringLiteral("all"), QStringLiteral("All profiles")},
+         {QStringLiteral("manual"), QStringLiteral("Manual")}},
+        QStringLiteral("all"));
+    ok &= expectAccessible(
+        actionStrip->profileSelector()->focusProxy(),
+        QAccessible::ButtonMenu,
+        QStringLiteral("Profile filter: All profiles"),
+        "profile action strip should expose a labelled profile selector");
+
+    QWidget* moreButton = findAccessibleWidget(
+        actionStrip, QAccessible::ButtonMenu, QStringLiteral("More…"));
+    ok &= expect(moreButton, "profile action strip overflow should expose menu-button semantics");
+
+    QWidget* addButton = findAccessibleWidget(
+        actionStrip, QAccessible::Button, QStringLiteral("Add"));
+    ok &= expect(addButton, "profile action strip should expose action button names");
+    bool addTriggered = false;
+    QObject::connect(&addAction, &QAction::triggered, [&addTriggered] {
+        addTriggered = true;
+    });
+    QAccessibleInterface* addInterface = accessibleInterface(addButton);
+    QAccessibleActionInterface* addActions = addInterface
+        ? addInterface->actionInterface()
+        : nullptr;
+    ok &= expect(addActions, "profile action should expose an accessibility action");
+    if (addActions) {
+        addActions->doAction(QAccessibleActionInterface::pressAction());
+        QCoreApplication::processEvents();
+        QCoreApplication::processEvents();
+        ok &= expect(addTriggered, "assistive press should trigger the profile action");
+    }
+    addAction.setText(QStringLiteral("&Create…"));
+    ok &= expectAccessible(
+        addButton,
+        QAccessible::Button,
+        QStringLiteral("Create…"),
+        "profile action accessible name should follow QAction text changes");
 
     auto* selector = new zarya::ZaryaSelector(&host);
     selector->setItems(

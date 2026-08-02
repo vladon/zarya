@@ -29,6 +29,7 @@ class ProfileActionStrip final : public QWidget {
 public:
     ProfileActionStrip(
         ProfileActionStripActions actions,
+        const QString& profileSelectorLabel,
         const QString& moreText,
         QWidget* parent = nullptr);
     ~ProfileActionStrip() override;

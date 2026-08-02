@@ -1316,6 +1316,10 @@ DNS: selected
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Profile filter</source>
+        <translation>Profile filter</translation>
+    </message>
+    <message>
         <source>More…</source>
         <translation>More…</translation>
     </message>

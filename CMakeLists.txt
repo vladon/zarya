@@ -833,6 +833,7 @@ add_executable(zarya_ui_accessibility_test
     src/ui/desktopapp/ZaryaPalette.cpp
     src/ui/desktopapp/ZaryaControls.cpp
     src/ui/desktopapp/ZaryaFormControls.cpp
+    src/ui/desktopapp/ProfileActionStrip.cpp
     src/ui/desktopapp/ZaryaSelector.cpp
     src/ui/theme/ThemeTokens.cpp
     src/ui/theme/ThemeManager.cpp

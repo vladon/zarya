@@ -502,6 +502,7 @@ void MainWindow::setupActionStrip()
     };
     m_actionStrip = new ProfileActionStrip(
         std::move(actions),
+        tr("Profile filter"),
         tr("More…"),
         centralWidget());
     m_profileFilterSelector = m_actionStrip->profileSelector();
