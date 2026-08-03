@@ -115,7 +115,8 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      pickers remain Qt/platform boundaries.
    - Diagnostics redaction and include options, output path, preview context, multi-action result
      feedback, and actions use the toolkit layer; the preview file list and native save/folder
-     integration remain Qt/platform boundaries.
+     integration remain Qt/platform boundaries. The read-only preview file list has a
+     purpose-specific accessible name, receives initial focus, and precedes Close in focus order.
 6. **Experimental and update surfaces**
    - Migrate gated sing-box TUN, helper, kill-switch, and updater UI without changing
      `FeatureGate` behavior.
@@ -130,7 +131,9 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
    - App updater metadata, progress/status text, plan details, actions, verification/staging
      errors, install confirmation, and result feedback use the toolkit layer; update planning,
      verification, platform installers, and native file/folder integration remain unchanged.
-     Its complete user-facing string set is synchronized in EN/RU catalogs.
+     Its read-only plan details have a purpose-specific accessible name; initial focus starts on
+     Check Now and the action row follows a deterministic keyboard order. Its complete
+     user-facing string set is synchronized in EN/RU catalogs.
    - Stable/beta/experimental banner text and dismissal use the toolkit layer, with a
      theme-aware painted warning surface and unchanged release-channel policy.
    - Settings, including gated TUN, helper, kill-switch, update, routing, DNS, startup, and

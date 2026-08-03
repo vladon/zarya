@@ -10,6 +10,7 @@
     <name>AppUpdateDialog</name>
     <message><source>Zarya App Updates</source><translation type="unfinished"></translation></message>
     <message><source>No update checked yet.</source><translation type="unfinished"></translation></message>
+    <message><source>Update details</source><translation>Update details</translation></message>
     <message><source>Check Now</source><translation type="unfinished"></translation></message>
     <message><source>Choose Local Manifest…</source><translation type="unfinished"></translation></message>
     <message><source>Download and Verify</source><translation type="unfinished"></translation></message>
@@ -476,6 +477,10 @@ Secrets included: %2</source>
     <message>
         <source>Included files:</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Included files</source>
+        <translation>Included files</translation>
     </message>
 </context>
 <context>

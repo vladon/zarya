@@ -9,6 +9,7 @@
     <name>AppUpdateDialog</name>
     <message><source>Zarya App Updates</source><translation>Обновления Zarya</translation></message>
     <message><source>No update checked yet.</source><translation>Проверка обновлений ещё не выполнялась.</translation></message>
+    <message><source>Update details</source><translation>Сведения об обновлении</translation></message>
     <message><source>Check Now</source><translation>Проверить сейчас</translation></message>
     <message><source>Choose Local Manifest…</source><translation>Выбрать локальный манифест…</translation></message>
     <message><source>Download and Verify</source><translation>Скачать и проверить</translation></message>
@@ -402,6 +403,9 @@ Secrets included: %2</source>
     <message>
         <source>Included files:</source>
         <translation>Включённые файлы:</translation></message>
+    <message>
+        <source>Included files</source>
+        <translation>Включённые файлы</translation></message>
 </context>
 <context>
     <name>DnsManagerDialog</name>

@@ -856,6 +856,7 @@ add_test(NAME ui_animation_policy COMMAND zarya_ui_animation_policy_test)
 
 add_executable(zarya_ui_accessibility_test
     tests/ui_accessibility_test.cpp
+    src/ui/DiagnosticsPreviewDialog.cpp
     src/ui/ImportVlessDialog.cpp
     src/ui/RoutingJsonPreviewDialog.cpp
     src/ui/import/ProfileImportWidget.cpp
