@@ -364,6 +364,7 @@ set(ZARYA_SOURCES
     src/packaging/WindowsInstallInfo.cpp
     src/packaging/PortableMigration.cpp
     src/ui/MainWindow.cpp
+    src/ui/MainWindowAccessibility.cpp
     src/ui/TrayController.cpp
     src/ui/SettingsDialog.cpp
     src/ui/ImportVlessDialog.cpp
@@ -442,6 +443,7 @@ set(ZARYA_HEADERS
     src/app/Application.h
     src/app/AppController.h
     src/ui/MainWindow.h
+    src/ui/MainWindowAccessibility.h
     src/ui/TrayController.h
     src/ui/ProfileDialog.h
     src/ui/SettingsDialog.h
@@ -827,6 +829,7 @@ add_test(NAME ui_animation_policy COMMAND zarya_ui_animation_policy_test)
 
 add_executable(zarya_ui_accessibility_test
     tests/ui_accessibility_test.cpp
+    src/ui/MainWindowAccessibility.cpp
     src/ui/desktopapp/ZaryaBaseIntegration.cpp
     src/ui/desktopapp/ZaryaUiIntegration.cpp
     src/ui/desktopapp/ZaryaCrlIntegration.cpp

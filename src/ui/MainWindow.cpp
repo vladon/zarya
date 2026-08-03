@@ -1,4 +1,5 @@
 #include "ui/MainWindow.h"
+#include "ui/MainWindowAccessibility.h"
 
 #include "base/algorithm.h"
 #include "base/basic_types.h"
@@ -277,6 +278,12 @@ void MainWindow::setupUi()
         logToolbar,
         tr("Create diagnostics"),
         ZaryaButtonRole::Primary);
+    const QVector<QWidget*> logActions = {
+        copySelectedBtn.data(),
+        copyAllBtn.data(),
+        clearViewBtn.data(),
+        diagBtn.data(),
+    };
     copySelectedBtn->setClickedCallback([this] {
         QMetaObject::invokeMethod(this, [this] {
             QApplication::clipboard()->setText(m_logView->textCursor().selectedText());
@@ -315,6 +322,14 @@ void MainWindow::setupUi()
 
     m_splitView = new ZaryaSplitView(m_tableView, logPanel, this);
     m_splitView->setSizes({3, 1});
+    configureMainWindowDataAccessibility(
+        m_tableView,
+        tr("Profiles"),
+        m_logFilterSelector,
+        tr("Log filter"),
+        logActions,
+        m_logView,
+        tr("Application log"));
 
     m_statusDashboard = new StatusDashboardWidget(this);
     connect(m_statusDashboard, &StatusDashboardWidget::openCoreManagerRequested, this,

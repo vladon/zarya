@@ -60,8 +60,10 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
    - Progress: profile actions, profile and log filter selectors, the profile-list empty state,
      log toolbar actions, localized runtime status feedback, and single- and multi-action
      operational feedback use `lib_ui`; the primary action strip exposes its profile selector as
-     a labelled menu button and its overflow action with menu semantics. The log text engine
-     remains a Qt primitive under the documented boundary.
+     a labelled menu button and its overflow action with menu semantics. The profile table,
+     log filter, log actions, and read-only application log expose a deliberate accessible
+     name and focus sequence. The log text engine remains a Qt primitive under the documented
+     boundary.
 4. **Primary workflows**
    - Migrate first-run setup, link import, profile editing, subscriptions, and Settings.
    - Put advanced settings behind explicit progressive disclosure.

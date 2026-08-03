@@ -1,3 +1,4 @@
+#include "ui/MainWindowAccessibility.h"
 #include "ui/desktopapp/ProfileActionStrip.h"
 #include "ui/desktopapp/ZaryaFormControls.h"
 #include "ui/desktopapp/ZaryaSelector.h"
@@ -8,7 +9,9 @@
 #include <QAction>
 #include <QApplication>
 #include <QCoreApplication>
+#include <QPlainTextEdit>
 #include <QStandardPaths>
+#include <QTableView>
 #include <QWidget>
 #include <iostream>
 #include <utility>
@@ -66,6 +69,18 @@ QWidget* findAccessibleWidget(
             && interface->text(QAccessible::Name) == name) {
             return widget;
         }
+    }
+    return nullptr;
+}
+
+QWidget* nextOrderedWidget(QWidget* widget, const QVector<QWidget*>& orderedWidgets)
+{
+    QWidget* candidate = widget->nextInFocusChain();
+    while (candidate != widget) {
+        if (orderedWidgets.contains(candidate)) {
+            return candidate;
+        }
+        candidate = candidate->nextInFocusChain();
     }
     return nullptr;
 }
@@ -169,6 +184,67 @@ int main(int argc, char** argv)
         QAccessible::Button,
         QStringLiteral("Create…"),
         "profile action accessible name should follow QAction text changes");
+
+    auto* profileTable = new QTableView(&host);
+    auto* logFilter = new zarya::ZaryaSelector(&host);
+    logFilter->setItems(
+        {{QStringLiteral("all"), QStringLiteral("All")}},
+        QStringLiteral("all"));
+    auto* copyLogAction = new zarya::ZaryaActionButton(
+        QStringLiteral("Copy selected"), &host);
+    auto* clearLogAction = new zarya::ZaryaActionButton(
+        QStringLiteral("Clear view"), &host);
+    auto* logView = new QPlainTextEdit(&host);
+    logView->setReadOnly(true);
+    zarya::configureMainWindowDataAccessibility(
+        profileTable,
+        QStringLiteral("Profiles"),
+        logFilter,
+        QStringLiteral("Log filter"),
+        {copyLogAction->focusProxy(), clearLogAction->focusProxy()},
+        logView,
+        QStringLiteral("Application log"));
+    ok &= expectAccessible(
+        profileTable,
+        QAccessible::Table,
+        QStringLiteral("Profiles"),
+        "profile table should expose its purpose");
+    ok &= expectAccessible(
+        logFilter->focusProxy(),
+        QAccessible::ButtonMenu,
+        QStringLiteral("Log filter: All"),
+        "log filter should expose its label and selected value");
+    ok &= expectAccessible(
+        logView,
+        QAccessible::EditableText,
+        QStringLiteral("Application log"),
+        "application log should expose its purpose");
+    QAccessibleInterface* logInterface = accessibleInterface(logView);
+    ok &= expect(
+        logInterface && logInterface->state().readOnly,
+        "application log should remain exposed as read-only");
+    ok &= expect(logView->tabChangesFocus(), "Tab should leave the read-only application log");
+    const QVector<QWidget*> dataFocusOrder = {
+        profileTable,
+        logFilter->focusProxy(),
+        copyLogAction->focusProxy(),
+        clearLogAction->focusProxy(),
+        logView,
+    };
+    ok &= expect(
+        nextOrderedWidget(profileTable, dataFocusOrder) == logFilter->focusProxy(),
+        "focus should move from profiles to the log filter");
+    ok &= expect(
+        nextOrderedWidget(logFilter->focusProxy(), dataFocusOrder)
+            == copyLogAction->focusProxy(),
+        "focus should move from the log filter to its first action");
+    ok &= expect(
+        nextOrderedWidget(copyLogAction->focusProxy(), dataFocusOrder)
+            == clearLogAction->focusProxy(),
+        "log actions should follow their visual order");
+    ok &= expect(
+        nextOrderedWidget(clearLogAction->focusProxy(), dataFocusOrder) == logView,
+        "focus should reach the application log after its actions");
 
     auto* selector = new zarya::ZaryaSelector(&host);
     selector->setItems(
