@@ -4,7 +4,10 @@
 #include "subscription/ShareLinkParser.h"
 #include "ui/desktopapp/ZaryaFormControls.h"
 
+#include <QAccessible>
+#include <QAccessibleEvent>
 #include <QRegularExpression>
+#include <QSignalBlocker>
 #include <QVBoxLayout>
 
 namespace zarya {
@@ -18,6 +21,7 @@ ProfileImportWidget::ProfileImportWidget(QWidget* parent)
            "One link per line."),
         this,
         140);
+    m_linksEdit->setAccessibleLabel(tr("Share links"));
 
     m_statsLabel = new ZaryaBodyText(
         tr("Paste links to see parse summary."),
@@ -43,10 +47,11 @@ ProfileImportStats ProfileImportWidget::lastStats() const
 
 void ProfileImportWidget::clear()
 {
+    const QSignalBlocker blocker(m_linksEdit);
     m_linksEdit->clear();
     m_imported.clear();
     m_stats = {};
-    m_statsLabel->setText(tr("Paste links to see parse summary."));
+    updateSummary(tr("Paste links to see parse summary."), false);
 }
 
 void ProfileImportWidget::parseLinks()
@@ -97,19 +102,29 @@ void ProfileImportWidget::parseLinks()
     }
     m_stats.totalImported = m_imported.size();
 
-    m_statsLabel->setText(
-        tr(
-            "Parsed: VLESS %1, VMess %2, Trojan %3, Shadowsocks %4, Hysteria2 %5, WireGuard %6, "
-            "Unsupported %7")
+    const QString summary =
+        tr("Parsed: VLESS %1, VMess %2, Trojan %3, Shadowsocks %4, Hysteria2 %5, WireGuard %6, "
+           "Unsupported %7")
             .arg(m_stats.vless)
             .arg(m_stats.vmess)
             .arg(m_stats.trojan)
             .arg(m_stats.shadowsocks)
             .arg(m_stats.hysteria2)
             .arg(m_stats.wireguard)
-            .arg(m_stats.unsupported));
+            .arg(m_stats.unsupported);
+    updateSummary(summary, true);
 
     emit parseCompleted(m_stats);
+}
+
+void ProfileImportWidget::updateSummary(const QString& text, bool announce)
+{
+    m_statsLabel->setText(text);
+    if (announce && isVisible()) {
+        QAccessibleAnnouncementEvent event(m_statsLabel, text);
+        event.setPoliteness(QAccessible::AnnouncementPoliteness::Polite);
+        QAccessible::updateAccessibility(&event);
+    }
 }
 
 } // namespace zarya
