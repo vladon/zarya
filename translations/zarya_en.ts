@@ -2428,6 +2428,14 @@ domain:example.com</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Required rule sets</source>
+        <translation>Required rule sets</translation>
+    </message>
+    <message>
+        <source>Rule set log</source>
+        <translation>Rule set log</translation>
+    </message>
+    <message>
         <source>Target directory: %1</source>
         <translation type="unfinished"></translation>
     </message>

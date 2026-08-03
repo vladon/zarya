@@ -5,6 +5,7 @@
 #include "rulesets/RuleSetStatus.h"
 #include "storage/AppPaths.h"
 #include "storage/AppSettings.h"
+#include "ui/RuleSetManagerAccessibility.h"
 #include "ui/desktopapp/UiMessagePresenter.h"
 #include "ui/desktopapp/ZaryaFormControls.h"
 
@@ -116,6 +117,14 @@ RuleSetManagerDialog::RuleSetManagerDialog(RuleSetManager& manager, RoutingManag
     layout->addLayout(buttonRow);
 
     onCheckStatus();
+    configureRuleSetManagerAccessibility(
+        m_requiredTable,
+        m_allTable,
+        m_logView,
+        {checkButton, m_importButton, m_compileButton, openFolderButton, closeButton},
+        tr("Required rule sets"),
+        tr("All rule sets"),
+        tr("Rule set log"));
 }
 
 void RuleSetManagerDialog::onCheckStatus()
