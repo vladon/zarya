@@ -423,25 +423,38 @@ def _find_signtool() -> str | None:
     return sorted(candidates)[-1] if candidates else None
 
 
-def verify_windows_signatures(staging: Path) -> tuple[bool, dict]:
-    exes = list(staging.rglob("Zarya.exe")) + list(staging.rglob("zarya-helper.exe"))
-    if not exes:
-        return False, {"windowsAuthenticode": "no executables found"}
+def verify_windows_signatures(staging: Path, manifest: dict) -> tuple[bool, dict]:
+    content = artifact_content_root(staging)
+    artifacts = manifest.get("artifacts") or {}
+    required = ("gui", "helper", "updater")
+    results: dict[str, str] = {}
+    exes: list[Path] = []
+    for key in required:
+        relative = artifacts.get(key)
+        if not isinstance(relative, str) or not relative.lower().endswith(".exe"):
+            results[f"manifest:{key}"] = "missing executable declaration"
+            continue
+        exe = content / relative
+        if not exe.is_file():
+            results[relative] = "missing"
+            continue
+        exes.append(exe)
+    if len(exes) != len(required):
+        return False, {"windowsAuthenticode": results}
     signtool = _find_signtool()
     if not signtool:
         return False, {"windowsAuthenticode": "signtool not available"}
-    results: dict[str, str] = {}
-    signed_any = False
+    all_valid = True
     for exe in exes:
         proc = subprocess.run(
-            [signtool, "verify", "/pa", "/v", str(exe)],
+            [signtool, "verify", "/pa", "/all", "/tw", "/v", str(exe)],
             capture_output=True,
             text=True,
         )
         ok = proc.returncode == 0
         results[exe.name] = "valid" if ok else "unsigned or invalid"
-        signed_any = signed_any or ok
-    return signed_any, {"windowsAuthenticode": results}
+        all_valid = all_valid and ok
+    return all_valid, {"windowsAuthenticode": results}
 
 
 def verify_macos_signatures(app_path: Path) -> tuple[bool, dict]:
@@ -604,10 +617,19 @@ def main() -> int:
 
             if args.require_signed and not signed:
                 errors.append("Verification failed: artifact is not signed")
+            if args.require_signed and signed and not signing.get("signatureType"):
+                errors.append("Verification failed: signature type is missing")
+            if (
+                args.require_signed
+                and signed
+                and platform == "windows"
+                and not signing.get("timestamped")
+            ):
+                errors.append("Verification failed: Windows signature is not timestamped")
 
             if signed or args.require_signed:
                 if platform == "windows":
-                    ok, details = verify_windows_signatures(staging)
+                    ok, details = verify_windows_signatures(staging, manifest)
                     if not ok and args.require_signed:
                         errors.append(f"Windows Authenticode verification failed: {details}")
                 elif platform == "macos":

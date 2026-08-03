@@ -14,6 +14,12 @@ Prefer hardware-backed certificate or secure CI secret integration.
 
 Environment variable for local/CI signing: `ZARYA_WINDOWS_CERT_THUMBPRINT`.
 
+Official Windows tag releases use SignPath Foundation. Its private key remains in
+SignPath-managed hardware; GitHub stores only a scoped submission API token in the
+protected `release-signing` environment. SignPath origin verification and manual
+approval are required for each release. See the
+[code signing policy](code-signing-policy.md).
+
 ## macOS
 
 Use Apple Developer ID certificate in secure keychain or CI signing identity.
@@ -33,6 +39,7 @@ The updater must trust a stable signing identity or public key.
 Signing runs only when:
 
 - the workflow is triggered by a release tag, and
-- `SIGNING_ENABLED` repository secret is `true`
+- the `SIGNPATH_ENABLED` repository variable is `true`
+- the protected `release-signing` environment grants access to the submission token
 
 Pull request workflows never receive signing secrets.

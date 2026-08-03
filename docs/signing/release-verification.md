@@ -15,8 +15,8 @@ sha256sum -c SHA256SUMS.txt
 
 ```bash
 python scripts/verify-release-artifacts.py \
-  --artifact dist/Zarya-0.27.0-beta-windows-x64-portable.zip \
-  --expected-version 0.27.0-beta \
+  --artifact dist/Zarya-1.5.0-windows-x64-portable.zip \
+  --expected-version 1.5.0 \
   --require-checksum \
   --allow-unsigned
 ```
@@ -26,8 +26,12 @@ python scripts/verify-release-artifacts.py \
 | Flag | Behavior |
 |------|----------|
 | `--require-checksum` | Fail if SHA256 missing or mismatched |
-| `--allow-unsigned` | Accept unsigned artifacts (0.27 default) |
+| `--allow-unsigned` | Accept unsigned artifacts while signing is unavailable |
 | `--require-signed` | Fail unless manifest and platform signatures validate |
+
+For Windows, `--require-signed` requires valid, timestamped Authenticode
+signatures on `Zarya.exe`, `zarya-helper.exe`, and `zarya-updater.exe`. One
+missing or invalid executable fails the complete artifact.
 
 ## Manifest fields
 

@@ -183,5 +183,6 @@ Write-Host "Created $ZipPath"
 
 if (-not $SkipTests) {
     & python (Join-Path $Root "scripts\smoke-package.py") --artifact $ZipPath
-    & python (Join-Path $Root "scripts\verify-release-artifacts.py") --artifact $ZipPath --expected-version $Version --require-checksum --allow-unsigned
+    $SigningVerification = if ($DoSign) { "--require-signed" } else { "--allow-unsigned" }
+    & python (Join-Path $Root "scripts\verify-release-artifacts.py") --artifact $ZipPath --expected-version $Version --require-checksum $SigningVerification
 }

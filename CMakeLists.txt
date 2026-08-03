@@ -4,6 +4,10 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ZaryaVersion.cmake)
 
 project(zarya VERSION ${ZARYA_VERSION_MAJOR}.${ZARYA_VERSION_MINOR}.${ZARYA_VERSION_PATCH} LANGUAGES CXX)
 
+if(WIN32)
+    enable_language(RC)
+endif()
+
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ZaryaBuildInfo.cmake)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -13,6 +17,23 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
+
+function(zarya_add_windows_version_resource target description original_filename)
+    if(NOT WIN32)
+        return()
+    endif()
+
+    set(ZARYA_WINDOWS_FILE_DESCRIPTION "${description}")
+    set(ZARYA_WINDOWS_ORIGINAL_FILENAME "${original_filename}")
+    set(resource_dir "${CMAKE_CURRENT_BINARY_DIR}/generated/windows-version")
+    file(MAKE_DIRECTORY "${resource_dir}")
+    set(resource_file "${resource_dir}/${target}.rc")
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/ZaryaWindowsVersionResource.rc.in"
+        "${resource_file}"
+        @ONLY)
+    target_sources(${target} PRIVATE "${resource_file}")
+endfunction()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
@@ -491,6 +512,7 @@ set(ZARYA_HEADERS
 )
 
 add_executable(zarya ${ZARYA_SOURCES} ${ZARYA_HEADERS} ${ZARYA_DESKTOP_APP_UI_SOURCES})
+zarya_add_windows_version_resource(zarya "Zarya desktop client" "Zarya.exe")
 
 target_include_directories(zarya PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${ZARYA_GENERATED_DIR})
 
@@ -567,6 +589,8 @@ if(WIN32)
 endif()
 
 add_executable(zarya-helper ${ZARYA_HELPER_SOURCES})
+zarya_add_windows_version_resource(
+    zarya-helper "Zarya privileged helper" "zarya-helper.exe")
 target_include_directories(zarya-helper PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${ZARYA_GENERATED_DIR})
 target_compile_definitions(zarya-helper PRIVATE ZARYA_VERSION_STRING="${ZARYA_VERSION_STRING}")
 zarya_link_qt_core(zarya-helper)
@@ -602,6 +626,8 @@ set(ZARYA_UPDATER_SOURCES
 )
 
 add_executable(zarya-updater ${ZARYA_UPDATER_SOURCES})
+zarya_add_windows_version_resource(
+    zarya-updater "Zarya portable updater" "zarya-updater.exe")
 target_include_directories(zarya-updater PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${ZARYA_GENERATED_DIR})
 target_compile_definitions(zarya-updater PRIVATE ZARYA_VERSION_STRING="${ZARYA_VERSION_STRING}")
 zarya_link_qt_core(zarya-updater)
