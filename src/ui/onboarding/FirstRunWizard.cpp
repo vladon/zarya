@@ -9,9 +9,11 @@
 #include "ui/desktopapp/ZaryaFormControls.h"
 #include "ui/desktopapp/ZaryaSelector.h"
 #include "ui/import/ProfileImportWidget.h"
+#include "ui/onboarding/FirstRunAccessibility.h"
 #include "ui/onboarding/FirstRunChecklistWidget.h"
 
 #include <QHBoxLayout>
+#include <QShowEvent>
 #include <QStackedLayout>
 #include <QUuid>
 #include <QVBoxLayout>
@@ -216,6 +218,14 @@ void FirstRunWizard::setupPages()
     layout->addWidget(pageHost, 1);
     layout->addLayout(navigation);
 
+    m_pageFocusTargets = {
+        m_next,
+        m_installXray,
+        m_importWidget,
+        m_routing,
+        m_runtime,
+        m_startNow,
+    };
     showPage(kPageWelcome);
     refreshCorePage();
 }
@@ -238,6 +248,30 @@ void FirstRunWizard::refreshCorePage()
     m_installXray->setText(xray.exists ? tr("Update Xray…") : tr("Install Xray"));
 }
 
+void FirstRunWizard::refreshFinishPage(bool announce)
+{
+    m_importWidget->parseLinks();
+    m_state.importedProfiles = m_importWidget->importedProfiles();
+    m_state.runtimeMode = m_runtime->currentKey() == QStringLiteral("tun")
+        ? RuntimeMode::TunSingBoxExperimental
+        : RuntimeMode::SystemProxyXray;
+
+    bool xrayInstalled = false;
+    QString xrayVersion;
+    if (m_coreManager) {
+        refreshCorePage();
+        const CoreInfo xray = m_coreManager->infoFor(CoreType::Xray);
+        xrayInstalled = xray.exists;
+        xrayVersion = xray.installedVersion;
+    }
+    m_checklist->updateFromState(
+        m_state,
+        m_state.importedProfiles.size(),
+        xrayInstalled,
+        xrayVersion,
+        announce);
+}
+
 bool FirstRunWizard::validatePage()
 {
     if (m_pages->currentIndex() == kPageRuntime
@@ -250,16 +284,9 @@ bool FirstRunWizard::validatePage()
         return false;
     }
     if (m_pages->currentIndex() == kPageFinish) {
-        m_importWidget->parseLinks();
-        m_state.importedProfiles = m_importWidget->importedProfiles();
-        refreshCorePage();
+        refreshFinishPage(false);
         if (m_coreManager) {
             const CoreInfo xray = m_coreManager->infoFor(CoreType::Xray);
-            m_checklist->updateFromState(
-                m_state,
-                m_state.importedProfiles.size(),
-                xray.exists,
-                xray.installedVersion);
             if (m_startNow->isChecked() && !xray.exists) {
                 UiMessagePresenter::warning(
                     this,
@@ -285,7 +312,27 @@ void FirstRunWizard::showPage(int index)
     m_pages->setCurrentIndex(bounded);
     m_back->setEnabled(bounded > kPageWelcome);
     m_next->setText(bounded == kPageFinish ? tr("Finish") : tr("Next"));
-    m_next->setFocus(Qt::OtherFocusReason);
+    if (isVisible()) {
+        activateCurrentPageAccessibility();
+        if (bounded == kPageFinish) {
+            refreshFinishPage(true);
+        }
+    }
+}
+
+void FirstRunWizard::activateCurrentPageAccessibility()
+{
+    const int index = m_pages->currentIndex();
+    QWidget* focusTarget = index >= 0 && index < m_pageFocusTargets.size()
+        ? m_pageFocusTargets.at(index)
+        : m_next;
+    activateFirstRunPageAccessibility(m_pages->currentWidget(), focusTarget);
+}
+
+void FirstRunWizard::showEvent(QShowEvent* event)
+{
+    QDialog::showEvent(event);
+    activateCurrentPageAccessibility();
 }
 
 void FirstRunWizard::accept()

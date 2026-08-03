@@ -408,6 +408,7 @@ set(ZARYA_SOURCES
     src/ui/SafeExitDialog.cpp
     src/ui/BetaBannerWidget.cpp
     src/ui/onboarding/FirstRunWizard.cpp
+    src/ui/onboarding/FirstRunAccessibility.cpp
     src/ui/onboarding/FirstRunState.cpp
     src/ui/onboarding/FirstRunChecklistWidget.cpp
     src/ui/import/ProfileImportWidget.cpp
@@ -857,6 +858,8 @@ add_executable(zarya_ui_accessibility_test
     tests/ui_accessibility_test.cpp
     src/ui/ImportVlessDialog.cpp
     src/ui/import/ProfileImportWidget.cpp
+    src/ui/onboarding/FirstRunAccessibility.cpp
+    src/ui/onboarding/FirstRunChecklistWidget.cpp
     src/ui/ProfileDialog.cpp
     src/ui/MainWindowAccessibility.cpp
     src/ui/desktopapp/UiMessagePresenter.cpp

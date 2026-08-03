@@ -2,6 +2,9 @@
 #include "ui/ImportVlessDialog.h"
 #include "ui/ProfileDialog.h"
 #include "ui/import/ProfileImportWidget.h"
+#include "ui/onboarding/FirstRunAccessibility.h"
+#include "ui/onboarding/FirstRunChecklistWidget.h"
+#include "ui/onboarding/FirstRunState.h"
 #include "ui/desktopapp/ProfileActionStrip.h"
 #include "ui/desktopapp/ZaryaFormControls.h"
 #include "ui/desktopapp/ZaryaSelector.h"
@@ -549,6 +552,9 @@ int main(int argc, char** argv)
     QWidget* firstRunLinks = findAccessibleWidget(
         &firstRunImport, QAccessible::EditableText, QStringLiteral("Share links"));
     ok &= expect(firstRunLinks, "first-run import should expose its labelled input");
+    ok &= expect(
+        firstRunImport.focusProxy(),
+        "first-run import should expose its text area as the page focus target");
     const QString initialImportSummary = QStringLiteral("Paste links to see parse summary.");
     ok &= expectAccessible(
         findAccessibleWidget(
@@ -584,6 +590,55 @@ int main(int argc, char** argv)
         QAccessible::StaticText,
         unsupportedSummary,
         "first-run import should expose the updated parse summary");
+
+    QWidget wizardPage;
+    wizardPage.setAccessibleName(QStringLiteral("Core setup"));
+    auto* wizardAction = new zarya::ZaryaActionButton(
+        QStringLiteral("Install Xray"), &wizardPage);
+    wizardPage.show();
+    wizardPage.activateWindow();
+    QCoreApplication::processEvents();
+    capturedAnnouncement.clear();
+    capturedPoliteness = QAccessible::AnnouncementPoliteness::Assertive;
+    previousAccessibilityHandler = QAccessible::installUpdateHandler(
+        captureAccessibilityUpdate);
+    zarya::activateFirstRunPageAccessibility(&wizardPage, wizardAction);
+    QCoreApplication::processEvents();
+    QAccessible::installUpdateHandler(previousAccessibilityHandler);
+    previousAccessibilityHandler = nullptr;
+    QWidget* expectedWizardFocus = wizardAction->focusProxy();
+    ok &= expect(
+        expectedWizardFocus && QApplication::focusWidget() == expectedWizardFocus,
+        "first-run page activation should focus the page's first interactive control");
+    ok &= expect(
+        capturedAnnouncement == QStringLiteral("Core setup"),
+        "first-run page activation should announce the page title");
+    ok &= expect(
+        capturedPoliteness == QAccessible::AnnouncementPoliteness::Polite,
+        "first-run page titles should use polite announcements");
+
+    zarya::FirstRunChecklistWidget checklist;
+    checklist.show();
+    QCoreApplication::processEvents();
+    zarya::FirstRunState checklistState;
+    checklistState.runtimeMode = zarya::RuntimeMode::SystemProxyXray;
+    const QString checklistSummary = QStringLiteral(
+        "Core: Xray missing\nProfiles: none\nRouting: selected\nDNS: selected\nRuntime: System proxy via Xray");
+    capturedAnnouncement.clear();
+    previousAccessibilityHandler = QAccessible::installUpdateHandler(
+        captureAccessibilityUpdate);
+    checklist.updateFromState(checklistState, 0, false, {});
+    QCoreApplication::processEvents();
+    QAccessible::installUpdateHandler(previousAccessibilityHandler);
+    previousAccessibilityHandler = nullptr;
+    ok &= expect(
+        capturedAnnouncement == checklistSummary,
+        "visible first-run checklist updates should announce their summary");
+    ok &= expectAccessible(
+        findAccessibleWidget(&checklist, QAccessible::StaticText, checklistSummary),
+        QAccessible::StaticText,
+        checklistSummary,
+        "first-run checklist should expose its visible summary");
 
     return ok ? 0 : 1;
 }

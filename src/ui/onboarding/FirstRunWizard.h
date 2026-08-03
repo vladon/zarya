@@ -5,6 +5,7 @@
 #include <QDialog>
 
 class QStackedLayout;
+class QShowEvent;
 
 namespace zarya {
 
@@ -45,12 +46,15 @@ Q_SIGNALS:
 protected:
     void accept() override;
     void reject() override;
+    void showEvent(QShowEvent* event) override;
 
 private:
     void setupPages();
     void refreshCorePage();
+    void refreshFinishPage(bool announce);
     bool validatePage();
     void showPage(int index);
+    void activateCurrentPageAccessibility();
 
     CoreBinaryManager* m_coreManager = nullptr;
     RoutingManager* m_routingManager = nullptr;
@@ -69,6 +73,7 @@ private:
     ZaryaCheckBox* m_tunAccepted = nullptr;
     FirstRunChecklistWidget* m_checklist = nullptr;
     ZaryaCheckBox* m_startNow = nullptr;
+    QVector<QWidget*> m_pageFocusTargets;
     FirstRunState m_state;
     bool m_skipped = false;
 };

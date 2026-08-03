@@ -14,7 +14,7 @@ public:
     explicit FirstRunChecklistWidget(QWidget* parent = nullptr);
 
     void updateFromState(const FirstRunState& state, int profileCount, bool xrayInstalled,
-                         const QString& xrayVersion);
+                         const QString& xrayVersion, bool announce = true);
 
 private:
     ZaryaBodyText* m_body = nullptr;
