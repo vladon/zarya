@@ -15,6 +15,7 @@
 #include "ui/widgets/fields/password_input.h"
 #include "ui/widgets/labels.h"
 
+#include <QAccessible>
 #include <QHBoxLayout>
 #include <QMetaObject>
 #include <QResizeEvent>
@@ -434,7 +435,7 @@ void ZaryaFormRow::setLabel(const QString& label)
 }
 
 ZaryaValidationMessage::ZaryaValidationMessage(QWidget* parent)
-    : QWidget(parent)
+    : Ui::RpWidget(parent)
 {
     auto* label = Ui::CreateChild<Ui::FlatLabel>(this, QString(), st::boxLabel);
     m_label = label;
@@ -450,17 +451,24 @@ ZaryaValidationMessage::ZaryaValidationMessage(QWidget* parent)
     hide();
 }
 
-void ZaryaValidationMessage::showMessage(const QString& message)
+void ZaryaValidationMessage::showMessage(
+    const QString& message,
+    QAccessible::AnnouncementPoliteness politeness)
 {
     auto* label = static_cast<Ui::FlatLabel*>(m_label);
     label->setText(message);
     label->setAccessibleName(message);
+    setAccessibleName(message);
     show();
+    QAccessibleAnnouncementEvent event(this, message);
+    event.setPoliteness(politeness);
+    QAccessible::updateAccessibility(&event);
 }
 
 void ZaryaValidationMessage::clear()
 {
     static_cast<Ui::FlatLabel*>(m_label)->setText(QString());
+    setAccessibleName(QString());
     hide();
 }
 

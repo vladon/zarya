@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ui/desktopapp/ZaryaAccessibleFormControl.h"
+#include "ui/rp_widget.h"
 
 #include <QString>
 #include <QVector>
@@ -204,14 +205,22 @@ private:
     ZaryaAccessibleFormControl* m_accessibleControl = nullptr;
 };
 
-class ZaryaValidationMessage final : public QWidget {
+class ZaryaValidationMessage final : public Ui::RpWidget {
     Q_OBJECT
 
 public:
     explicit ZaryaValidationMessage(QWidget* parent = nullptr);
 
-    void showMessage(const QString& message);
+    void showMessage(
+        const QString& message,
+        QAccessible::AnnouncementPoliteness politeness =
+            QAccessible::AnnouncementPoliteness::Polite);
     void clear();
+
+    QAccessible::Role accessibilityRole() override
+    {
+        return QAccessible::AlertMessage;
+    }
 
 private:
     void updateColor();

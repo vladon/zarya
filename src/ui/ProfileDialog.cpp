@@ -9,6 +9,7 @@
 
 #include "base/object_ptr.h"
 #include "styles/style_layers.h"
+#include "ui/abstract_button.h"
 #include "ui/qt_object_factory.h"
 #include "ui/rp_widget.h"
 #include "ui/widgets/pill_tabs.h"
@@ -42,14 +43,24 @@ ProfileDialog::ProfileDialog(QWidget* parent)
     setAccessibleName(tr("Profile"));
     setModal(true);
 
-    auto* tabs = Ui::CreateChild<Ui::PillTabs>(
-        this,
-        std::vector<QString>{
-            tr("Basic"),
-            tr("Transport"),
-            tr("TLS / REALITY"),
-            tr("Advanced"),
-        });
+    const std::vector<QString> tabLabels = {
+        tr("Basic"),
+        tr("Transport"),
+        tr("TLS / REALITY"),
+        tr("Advanced"),
+    };
+    auto* tabs = Ui::CreateChild<Ui::PillTabs>(this, tabLabels);
+    QVector<Ui::AbstractButton*> tabButtons;
+    for (QWidget* child : tabs->findChildren<QWidget*>(
+             QString(), Qt::FindDirectChildrenOnly)) {
+        if (auto* button = dynamic_cast<Ui::AbstractButton*>(child)) {
+            tabButtons.push_back(button);
+        }
+    }
+    Q_ASSERT(tabButtons.size() == static_cast<qsizetype>(tabLabels.size()));
+    for (qsizetype index = 0; index < tabButtons.size(); ++index) {
+        tabButtons[index]->setAccessibleName(tabLabels[index]);
+    }
     m_tabs = tabs;
 
     auto* pageHost = new QWidget(this);
@@ -215,7 +226,7 @@ ProfileDialog::ProfileDialog(QWidget* parent)
 
     resize(680, 620);
     updateProtocolFieldsVisibility();
-    m_actions->focusAccept();
+    m_nameEdit->setFocus(Qt::OtherFocusReason);
 }
 
 QWidget* ProfileDialog::createPage(QVBoxLayout** layout)
@@ -290,9 +301,18 @@ void ProfileDialog::tryAccept()
 {
     QString error;
     if (!validateInput(&error)) {
-        m_validationMessage->showMessage(error);
-        m_nameEdit->showError(m_nameEdit->text().trimmed().isEmpty());
-        m_addressEdit->showError(m_addressEdit->text().trimmed().isEmpty());
+        m_validationMessage->showMessage(
+            error,
+            QAccessible::AnnouncementPoliteness::Assertive);
+        const bool nameMissing = m_nameEdit->text().trimmed().isEmpty();
+        const bool addressMissing = m_addressEdit->text().trimmed().isEmpty();
+        m_nameEdit->showError(nameMissing);
+        m_addressEdit->showError(addressMissing);
+        if (nameMissing) {
+            m_nameEdit->setFocus(Qt::OtherFocusReason);
+        } else if (addressMissing) {
+            m_addressEdit->setFocus(Qt::OtherFocusReason);
+        }
         return;
     }
     m_validationMessage->clear();
