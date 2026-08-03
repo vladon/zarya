@@ -28,6 +28,7 @@ DiagnosticsPreviewDialog::DiagnosticsPreviewDialog(const DiagnosticsPreviewResul
 
     m_filesList = new ZaryaTextArea({}, this, 260);
     m_filesList->setReadOnly(true);
+    m_filesList->setAccessibleLabel(tr("Included files"));
     m_filesList->setText(preview.files.join(QStringLiteral("\n")));
 
     auto* closeButton = new ZaryaActionButton(tr("Close"), this);
@@ -41,6 +42,8 @@ DiagnosticsPreviewDialog::DiagnosticsPreviewDialog(const DiagnosticsPreviewResul
     layout->addWidget(m_redactionLabel);
     layout->addWidget(m_warningsLabel);
     layout->addWidget(closeButton);
+    QWidget::setTabOrder(m_filesList, closeButton);
+    m_filesList->setFocus(Qt::OtherFocusReason);
 }
 
 } // namespace zarya

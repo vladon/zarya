@@ -1,4 +1,5 @@
 #include "ui/MainWindowAccessibility.h"
+#include "ui/DiagnosticsPreviewDialog.h"
 #include "ui/ImportVlessDialog.h"
 #include "ui/ProfileDialog.h"
 #include "ui/RoutingJsonPreviewDialog.h"
@@ -692,6 +693,63 @@ int main(int argc, char** argv)
         ok &= expect(
             routingRejected,
             "assistive Close should reject the routing preview");
+    }
+
+    zarya::DiagnosticsPreviewResult diagnosticsResult;
+    diagnosticsResult.files = {
+        QStringLiteral("diagnostics.json"),
+        QStringLiteral("logs/zarya.log")};
+    diagnosticsResult.redactionMode = QStringLiteral("standard");
+    zarya::DiagnosticsPreviewDialog diagnosticsPreview(diagnosticsResult);
+    diagnosticsPreview.show();
+    QCoreApplication::processEvents();
+    ok &= expectAccessible(
+        &diagnosticsPreview,
+        QAccessible::Dialog,
+        QStringLiteral("Diagnostics Preview"),
+        "diagnostics preview should expose its dialog role and name");
+    QWidget* diagnosticsFiles = findAccessibleWidget(
+        &diagnosticsPreview,
+        QAccessible::EditableText,
+        QStringLiteral("Included files"));
+    QWidget* diagnosticsClose = findAccessibleWidget(
+        &diagnosticsPreview, QAccessible::Button, QStringLiteral("Close"));
+    ok &= expect(
+        diagnosticsFiles,
+        "diagnostics preview should expose its labelled file list");
+    ok &= expect(
+        diagnosticsClose,
+        "diagnostics preview should expose its Close action");
+    QAccessibleInterface* diagnosticsFilesInterface = accessibleInterface(diagnosticsFiles);
+    ok &= expect(
+        diagnosticsFilesInterface && diagnosticsFilesInterface->state().readOnly,
+        "diagnostics preview file list should remain read-only");
+    ok &= expect(
+        QApplication::focusWidget() == diagnosticsFiles,
+        "diagnostics preview should initially focus its file list");
+    ok &= expect(
+        diagnosticsFiles
+            && nextOrderedWidget(diagnosticsFiles, {diagnosticsClose}) == diagnosticsClose,
+        "diagnostics preview focus order should place Close after the file list");
+
+    bool diagnosticsAccepted = false;
+    QObject::connect(&diagnosticsPreview, &QDialog::accepted, [&diagnosticsAccepted] {
+        diagnosticsAccepted = true;
+    });
+    QAccessibleInterface* diagnosticsCloseInterface = accessibleInterface(diagnosticsClose);
+    QAccessibleActionInterface* diagnosticsCloseActions = diagnosticsCloseInterface
+        ? diagnosticsCloseInterface->actionInterface()
+        : nullptr;
+    ok &= expect(
+        diagnosticsCloseActions,
+        "diagnostics preview Close should expose an accessibility action");
+    if (diagnosticsCloseActions) {
+        diagnosticsCloseActions->doAction(QAccessibleActionInterface::pressAction());
+        QCoreApplication::processEvents();
+        QCoreApplication::processEvents();
+        ok &= expect(
+            diagnosticsAccepted,
+            "assistive Close should accept the diagnostics preview");
     }
 
     return ok ? 0 : 1;

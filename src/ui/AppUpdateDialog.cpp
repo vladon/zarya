@@ -46,6 +46,7 @@ AppUpdateDialog::AppUpdateDialog(AppController* controller,
 
     m_detailsText = new ZaryaTextArea({}, this, 260);
     m_detailsText->setReadOnly(true);
+    m_detailsText->setAccessibleLabel(tr("Update details"));
 
     m_checkButton = new ZaryaActionButton(tr("Check Now"), this);
     m_chooseManifestButton = new ZaryaActionButton(tr("Choose Local Manifest…"), this);
@@ -96,7 +97,15 @@ AppUpdateDialog::AppUpdateDialog(AppController* controller,
     layout->addWidget(m_detailsText, 1);
     layout->addLayout(buttonRow);
 
+    QWidget::setTabOrder(m_detailsText, m_checkButton);
+    QWidget::setTabOrder(m_checkButton, m_chooseManifestButton);
+    QWidget::setTabOrder(m_chooseManifestButton, m_downloadButton);
+    QWidget::setTabOrder(m_downloadButton, m_installButton);
+    QWidget::setTabOrder(m_installButton, m_openDownloadsButton);
+    QWidget::setTabOrder(m_openDownloadsButton, cancelButton);
+
     refreshStaticInfo();
+    m_checkButton->setFocus(Qt::OtherFocusReason);
 }
 
 void AppUpdateDialog::refreshStaticInfo()
