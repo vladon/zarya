@@ -3,6 +3,7 @@
 #include "cores/CoreInstallStatus.h"
 #include "cores/CorePaths.h"
 #include "storage/AppSettings.h"
+#include "ui/CoreManagerAccessibility.h"
 #include "ui/desktopapp/UiMessagePresenter.h"
 #include "ui/desktopapp/ZaryaFormControls.h"
 
@@ -92,6 +93,18 @@ CoreManagerDialog::CoreManagerDialog(CoreBinaryManager& manager,
     m_manager.refreshLocalState();
     refreshTable(m_manager.coreInfos());
     refreshDetails();
+    configureCoreManagerAccessibility(
+        m_table,
+        m_logView,
+        {m_checkButton,
+         m_updateButton,
+         m_updateAllButton,
+         m_rollbackButton,
+         m_openFolderButton,
+         m_resetPathButton,
+         m_cancelButton},
+        tr("Installed cores"),
+        tr("Core manager log"));
 }
 
 void CoreManagerDialog::refreshTable(const QVector<CoreInfo>& infos)

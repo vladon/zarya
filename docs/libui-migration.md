@@ -104,7 +104,9 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
    - DNS profile and server editors use toolkit tabs, forms, selectors, fields, checks, actions,
      empty states, and feedback; the DNS server table remains a Qt model/view boundary.
    - Core Manager actions, status text, and warnings use the toolkit layer; the core inventory
-     table and bounded log text engine remain Qt boundaries.
+     table and bounded log text engine remain Qt boundaries. Both native boundaries expose
+     purpose-specific accessible names; focus starts on the inventory and follows the action row
+     before reaching the read-only log.
    - Geo Data Manager source selection, options, actions, status text, and warnings use the
      toolkit layer; the file inventory table, bounded log text engine, and native folder opening
      remain Qt/platform boundaries.

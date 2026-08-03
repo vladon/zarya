@@ -265,6 +265,14 @@ Pre-import backup:
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Installed cores</source>
+        <translation>Installed cores</translation>
+    </message>
+    <message>
+        <source>Core manager log</source>
+        <translation>Core manager log</translation>
+    </message>
+    <message>
         <source>Core</source>
         <translation type="unfinished"></translation>
     </message>

@@ -233,6 +233,12 @@ Pre-import backup:
         <source>Core Manager</source>
         <translation>Менеджер ядер</translation></message>
     <message>
+        <source>Installed cores</source>
+        <translation>Установленные ядра</translation></message>
+    <message>
+        <source>Core manager log</source>
+        <translation>Журнал менеджера ядер</translation></message>
+    <message>
         <source>Core</source>
         <translation>Ядро</translation></message>
     <message>
