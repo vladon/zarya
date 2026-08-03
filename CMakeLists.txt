@@ -398,6 +398,7 @@ set(ZARYA_SOURCES
     src/ui/SingBoxConfigPreviewDialog.cpp
     src/ui/RuleSetManagerDialog.cpp
     src/ui/GeoDataManagerDialog.cpp
+    src/ui/GeoDataManagerAccessibility.cpp
     src/ui/CoreManagerDialog.cpp
     src/ui/CoreManagerAccessibility.cpp
     src/ui/AppUpdateDialog.cpp
@@ -859,6 +860,7 @@ add_executable(zarya_ui_accessibility_test
     tests/ui_accessibility_test.cpp
     src/ui/CoreManagerAccessibility.cpp
     src/ui/DiagnosticsPreviewDialog.cpp
+    src/ui/GeoDataManagerAccessibility.cpp
     src/ui/ImportVlessDialog.cpp
     src/ui/RoutingJsonPreviewDialog.cpp
     src/ui/import/ProfileImportWidget.cpp

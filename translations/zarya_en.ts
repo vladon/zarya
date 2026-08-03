@@ -1029,6 +1029,14 @@ sing-box: %3 (%4)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Geo data files</source>
+        <translation>Geo data files</translation>
+    </message>
+    <message>
+        <source>Geo data log</source>
+        <translation>Geo data log</translation>
+    </message>
+    <message>
         <source>File</source>
         <translation type="unfinished"></translation>
     </message>

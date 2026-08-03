@@ -3,6 +3,7 @@
 #include "base/algorithm.h"
 #include "geodata/GeoDataSource.h"
 #include "storage/GeoDataSettingsStore.h"
+#include "ui/GeoDataManagerAccessibility.h"
 #include "ui/desktopapp/UiMessagePresenter.h"
 #include "ui/desktopapp/ZaryaControls.h"
 #include "ui/desktopapp/ZaryaFormControls.h"
@@ -143,6 +144,21 @@ GeoDataManagerDialog::GeoDataManagerDialog(GeoDataManager& manager,
     onSourceChanged(m_sourceCombo->currentKey());
     m_targetLabel->setText(m_manager.targetDirectory());
     onCheckStatus();
+    configureGeoDataManagerAccessibility(
+        m_sourceCombo,
+        m_table,
+        {m_autoCheckCheck, m_warnMissingCheck},
+        m_logView,
+        {checkButton,
+         m_updateGeoIpButton,
+         m_updateGeoSiteButton,
+         m_updateAllButton,
+         verifyButton,
+         openFolderButton,
+         m_cancelButton,
+         closeButton},
+        tr("Geo data files"),
+        tr("Geo data log"));
 }
 
 void GeoDataManagerDialog::onSourceChanged(const QString& sourceId)
