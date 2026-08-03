@@ -1061,6 +1061,15 @@ DNS: выбран
         <source>Log filter:</source>
         <translation>Фильтр журнала:</translation></message>
     <message>
+        <source>Profiles</source>
+        <translation>Профили</translation></message>
+    <message>
+        <source>Log filter</source>
+        <translation>Фильтр журнала</translation></message>
+    <message>
+        <source>Application log</source>
+        <translation>Журнал приложения</translation></message>
+    <message>
         <source>Profile filter</source>
         <translation>Фильтр профилей</translation></message>
     <message>
