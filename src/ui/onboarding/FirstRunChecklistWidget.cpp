@@ -4,6 +4,8 @@
 #include "runtime/RuntimeBackendType.h"
 #include "ui/desktopapp/ZaryaFormControls.h"
 
+#include <QAccessible>
+#include <QAccessibleEvent>
 #include <QVBoxLayout>
 
 namespace zarya {
@@ -18,7 +20,8 @@ FirstRunChecklistWidget::FirstRunChecklistWidget(QWidget* parent)
 }
 
 void FirstRunChecklistWidget::updateFromState(const FirstRunState& state, int profileCount,
-                                              bool xrayInstalled, const QString& xrayVersion)
+                                              bool xrayInstalled, const QString& xrayVersion,
+                                              bool announce)
 {
     const QString coreLine =
         xrayInstalled
@@ -33,8 +36,14 @@ void FirstRunChecklistWidget::updateFromState(const FirstRunState& state, int pr
             ? tr("Runtime: Experimental TUN via sing-box")
             : tr("Runtime: System proxy via Xray");
 
-    m_body->setText(tr("%1\n%2\nRouting: selected\nDNS: selected\n%3")
-                        .arg(coreLine, profilesLine, runtimeLine));
+    const QString summary = tr("%1\n%2\nRouting: selected\nDNS: selected\n%3")
+                                .arg(coreLine, profilesLine, runtimeLine);
+    m_body->setText(summary);
+    if (announce && isVisible()) {
+        QAccessibleAnnouncementEvent event(this, summary);
+        event.setPoliteness(QAccessible::AnnouncementPoliteness::Polite);
+        QAccessible::updateAccessibility(&event);
+    }
 }
 
 } // namespace zarya

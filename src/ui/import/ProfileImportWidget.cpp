@@ -22,6 +22,7 @@ ProfileImportWidget::ProfileImportWidget(QWidget* parent)
         this,
         140);
     m_linksEdit->setAccessibleLabel(tr("Share links"));
+    setFocusProxy(m_linksEdit);
 
     m_statsLabel = new ZaryaBodyText(
         tr("Paste links to see parse summary."),
