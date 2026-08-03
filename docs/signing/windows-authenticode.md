@@ -18,9 +18,14 @@
 
 ## Required inputs
 
-- code-signing certificate
-- certificate password or hardware token / HSM
+- approved SignPath Foundation project for official releases, or a local code-signing certificate
+- SignPath protected environment/API token, or a hardware token/HSM for local signing
 - timestamp server URL
+
+The official tag workflow submits only GitHub-hosted build artifacts to SignPath,
+requires origin verification and manual approval, then validates all three returned
+executables before publication. The SignPath private key is never available to
+GitHub Actions.
 
 ## Example
 

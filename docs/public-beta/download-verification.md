@@ -26,3 +26,7 @@ shasum -a 256 Zarya-0.30.0-beta-macos-arm64.zip
 
 Beta builds may still be unsigned.
 Checksum verification is required.
+
+When a Windows artifact is signed, verify that `Zarya.exe`, `zarya-helper.exe`, and
+`zarya-updater.exe` report `SignPath Foundation` as the Authenticode publisher.
+See the [code signing policy](../signing/code-signing-policy.md).

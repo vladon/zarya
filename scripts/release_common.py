@@ -944,6 +944,23 @@ def update_manifest_signing(staging: Path, signing: dict[str, Any]) -> Path | No
     return manifest_path
 
 
+def refresh_manifest_checksums(staging: Path) -> Path | None:
+    """Refresh checksums after an external signer has modified packaged binaries."""
+    manifest_path = find_release_manifest(staging)
+    if manifest_path is None:
+        return None
+    data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    checksums = data.get("checksums")
+    if not isinstance(checksums, dict):
+        return manifest_path
+    for relative in list(checksums):
+        path = staging / relative
+        if path.is_file():
+            checksums[relative] = f"sha256:{sha256_file(path)}"
+    manifest_path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    return manifest_path
+
+
 def verify_clean_staging(staging: Path) -> list[str]:
     errors: list[str] = []
     content = artifact_content_root(staging)

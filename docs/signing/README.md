@@ -2,7 +2,9 @@
 
 ## Current state
 
-0.27 adds signing-ready hooks but does not require real credentials.
+Windows release signing is prepared for SignPath Foundation origin-verified builds.
+It remains disabled until the project is approved and the protected release-signing
+environment is configured. Local certificate hooks remain available for maintainers.
 
 ## Goals
 
@@ -18,9 +20,9 @@
 
 ## Platform summary
 
-| Platform | Mechanism | 0.27 status |
+| Platform | Mechanism | Current status |
 |---|---|---|
-| Windows | Authenticode | optional hook |
+| Windows | SignPath Foundation Authenticode | prepared; activation pending |
 | macOS | Developer ID + notarization | optional hook |
 | Linux | SHA256 + optional GPG/minisign | optional hook |
 
@@ -45,6 +47,7 @@ Signing required for Windows/macOS.
 ## Documentation
 
 - [Windows Authenticode](windows-authenticode.md)
+- [Code signing policy](code-signing-policy.md)
 - [macOS signing and notarization](macos-signing-notarization.md)
 - [Linux artifact signing](linux-signing.md)
 - [Key management](key-management.md)
@@ -65,3 +68,19 @@ All platform package scripts default to unsigned builds (`--skip-signing`).
 | `--minisign` | — | — | minisign |
 
 Verification: `python scripts/verify-release-artifacts.py --help`
+
+## SignPath activation
+
+The release workflow uses the checked-in
+`.signpath/artifact-configuration.xml` and is enabled only when the repository
+variable `SIGNPATH_ENABLED` is `true`. Configure these values after SignPath
+Foundation approves the project:
+
+- environment: `release-signing` with required reviewer approval
+- secret: `SIGNPATH_API_TOKEN`
+- variables: `SIGNPATH_ORGANIZATION_ID`, `SIGNPATH_PROJECT_SLUG`,
+  `SIGNPATH_SIGNING_POLICY_SLUG`, `SIGNPATH_ARTIFACT_CONFIGURATION_SLUG`
+
+The unsigned staging artifact is retained for one day and is never uploaded as a
+release artifact when SignPath signing is enabled. The signed result is finalized
+and checked with `--require-signed` before upload.

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <zip-file>
+    <pe-file path="Zarya.exe"
+             product-name="Zarya"
+             product-version="${version}"
+             company-name="vladon.dev">
+      <authenticode-sign hash-algorithm="sha256" />
+    </pe-file>
+    <pe-file path="zarya-helper.exe"
+             product-name="Zarya"
+             product-version="${version}"
+             company-name="vladon.dev">
+      <authenticode-sign hash-algorithm="sha256" />
+    </pe-file>
+    <pe-file path="zarya-updater.exe"
+             product-name="Zarya"
+             product-version="${version}"
+             company-name="vladon.dev">
+      <authenticode-sign hash-algorithm="sha256" />
+    </pe-file>
+  </zip-file>
+</artifact-configuration>

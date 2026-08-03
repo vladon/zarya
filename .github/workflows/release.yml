@@ -8,8 +8,10 @@ on:
 jobs:
   release-windows:
     runs-on: windows-latest
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+      signing-input-artifact-id: ${{ steps.upload-signing-input.outputs.artifact-id }}
     env:
-      SIGNING_ENABLED: ${{ secrets.SIGNING_ENABLED }}
       QT_VERSION: "6.8.3"
       QT_STATIC_DIR: 'C:\Qt\Static\6.8.3\msvc2022_64'
       QT_STATIC_CACHE_KEY: qt-static-6.8.3-msvc2022_64-v1
@@ -95,20 +97,14 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Test
         run: ctest --test-dir build -C Release --output-on-failure
-      - name: Package (unsigned by default)
+      - name: Package unsigned staging
         run: .\scripts\package-windows.ps1 -Configuration Release -OutputDir dist -SkipBuild -SkipSigning
-      - name: Verify release artifact
+      - name: Verify unsigned staging artifact
         run: python scripts/verify-release-artifacts.py --artifact dist/Zarya-${{ steps.ver.outputs.version }}-windows-x64-portable.zip --expected-version ${{ steps.ver.outputs.version }} --stable-release --require-checksum --allow-unsigned
-      - name: Sign release (optional)
-        if: env.SIGNING_ENABLED == 'true'
-        env:
-          ZARYA_WINDOWS_CERT_THUMBPRINT: ${{ secrets.WINDOWS_CERT_THUMBPRINT }}
-        run: |
-          Write-Host "Signing enabled for tag release"
-          .\scripts\package-windows.ps1 -Configuration Release -OutputDir dist -SkipBuild -Sign -SigningIdentity $env:ZARYA_WINDOWS_CERT_THUMBPRINT
-      - name: Audit release artifact secrets
+      - name: Audit unsigned staging artifact secrets
         run: python scripts/audit-release-artifact.py --artifact dist/Zarya-${{ steps.ver.outputs.version }}-windows-x64-portable.zip
-      - name: Upload artifacts
+      - name: Upload unsigned release artifacts
+        if: vars.SIGNPATH_ENABLED != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: zarya-windows-release
@@ -116,6 +112,75 @@ jobs:
             dist/*.zip
             dist/*.sha256
             dist/SHA256SUMS.txt
+          if-no-files-found: error
+      - name: Upload SignPath staging input
+        id: upload-signing-input
+        if: vars.SIGNPATH_ENABLED == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: zarya-windows-signing-input
+          path: dist/Zarya-${{ steps.ver.outputs.version }}-windows-x64-portable/**
+          if-no-files-found: error
+          retention-days: 1
+
+  release-windows-sign:
+    if: vars.SIGNPATH_ENABLED == 'true'
+    needs: release-windows
+    runs-on: windows-latest
+    environment: release-signing
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validate SignPath configuration
+        shell: pwsh
+        env:
+          SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+          SIGNPATH_ORGANIZATION_ID: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          SIGNPATH_PROJECT_SLUG: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          SIGNPATH_SIGNING_POLICY_SLUG: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          SIGNPATH_ARTIFACT_CONFIGURATION_SLUG: ${{ vars.SIGNPATH_ARTIFACT_CONFIGURATION_SLUG }}
+        run: |
+          $required = @(
+            'SIGNPATH_API_TOKEN',
+            'SIGNPATH_ORGANIZATION_ID',
+            'SIGNPATH_PROJECT_SLUG',
+            'SIGNPATH_SIGNING_POLICY_SLUG',
+            'SIGNPATH_ARTIFACT_CONFIGURATION_SLUG'
+          )
+          foreach ($name in $required) {
+            if ([string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($name))) {
+              throw "Missing protected SignPath setting: $name"
+            }
+          }
+      - name: Submit origin-verified SignPath request
+        uses: signpath/github-action-submit-signing-request@b9d91eadd323de506c0c81cf0c7fe7438f3360fd # v2.2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          artifact-configuration-slug: ${{ vars.SIGNPATH_ARTIFACT_CONFIGURATION_SLUG }}
+          github-artifact-id: ${{ needs.release-windows.outputs.signing-input-artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: dist/signpath-output/Zarya-${{ needs.release-windows.outputs.version }}-windows-x64-portable
+          parameters: |
+            version: ${{ toJSON(needs.release-windows.outputs.version) }}
+      - name: Finalize and verify signed package
+        shell: pwsh
+        run: |
+          .\scripts\finalize-signpath-windows.ps1 `
+            -StagingDir "dist/signpath-output/Zarya-${{ needs.release-windows.outputs.version }}-windows-x64-portable" `
+            -OutputDir dist
+      - name: Audit signed release artifact secrets
+        run: python scripts/audit-release-artifact.py --artifact dist/Zarya-${{ needs.release-windows.outputs.version }}-windows-x64-portable.zip
+      - name: Upload signed release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: zarya-windows-release
+          path: |
+            dist/*.zip
+            dist/*.sha256
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
 
   release-linux:
     runs-on: ubuntu-latest

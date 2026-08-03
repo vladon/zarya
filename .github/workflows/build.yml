@@ -19,6 +19,13 @@ jobs:
         if: github.event_name == 'pull_request'
         run: python3 scripts/check-libui-boundary.py --previous-git-ref "${{ github.event.pull_request.base.sha }}"
 
+  release-signing-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check SignPath release contract
+        run: python3 tests/release_signing_contract_test.py
+
   build-windows:
     runs-on: windows-latest
     env:

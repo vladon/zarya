@@ -467,7 +467,7 @@ python scripts\run-smoke-tests.py --artifact .\dist\Zarya-1.5.0-windows-x64-port
 python scripts\verify-release-artifacts.py --artifact .\dist\Zarya-1.5.0-windows-x64-portable.zip --expected-version 1.5.0 --release-stable --allow-unsigned
 ```
 
-See [docs/release-packaging.md](docs/release-packaging.md), [docs/release/release-process.md](docs/release/release-process.md), [docs/signing/README.md](docs/signing/README.md), and `packaging/windows/portable-layout.md`. Artifacts include `release-manifest.json`, SHA256 checksums, translations, docs, a **bundled Xray seed** under `cores/xray/`, and **pinned runetfreedom geo data** (`geoip.dat` / `geosite.dat`) in the same folder (sing-box is not bundled). Signing is optional.
+See [docs/release-packaging.md](docs/release-packaging.md), [docs/release/release-process.md](docs/release/release-process.md), [docs/signing/README.md](docs/signing/README.md), the [code signing policy](docs/signing/code-signing-policy.md), and `packaging/windows/portable-layout.md`. Artifacts include `release-manifest.json`, SHA256 checksums, translations, docs, a **bundled Xray seed** under `cores/xray/`, and **pinned runetfreedom geo data** (`geoip.dat` / `geosite.dat`) in the same folder (sing-box is not bundled). Signing is optional until the SignPath Foundation project is approved and activated.
 
 ## Verifying downloads
 
@@ -481,7 +481,8 @@ Use `SHA256SUMS.txt` or the per-artifact `.sha256` file.
 sha256sum -c SHA256SUMS.txt
 ```
 
-Signed builds are optional. See [docs/signing/](docs/signing/).
+Signed builds are optional until SignPath activation. See [docs/signing/](docs/signing/)
+and the [code signing policy](docs/signing/code-signing-policy.md).
 
 ## Diagnostics
 
