@@ -1978,6 +1978,12 @@ domain:example.com</translation></message>
         <source>sing-box Rule Sets</source>
         <translation>Наборы правил sing-box</translation></message>
     <message>
+        <source>Required rule sets</source>
+        <translation>Требуемые наборы правил</translation></message>
+    <message>
+        <source>Rule set log</source>
+        <translation>Журнал наборов правил</translation></message>
+    <message>
         <source>Target directory: %1</source>
         <translation>Целевой каталог: %1</translation></message>
     <message>

@@ -4,6 +4,7 @@
 #include "ui/GeoDataManagerAccessibility.h"
 #include "ui/ImportVlessDialog.h"
 #include "ui/ProfileDialog.h"
+#include "ui/RuleSetManagerAccessibility.h"
 #include "ui/RoutingJsonPreviewDialog.h"
 #include "ui/import/ProfileImportWidget.h"
 #include "ui/onboarding/FirstRunAccessibility.h"
@@ -885,6 +886,96 @@ int main(int argc, char** argv)
         nextOrderedWidget(checkGeoStatus->focusProxy(), geoDataManagerOrder)
             == closeGeoManager->focusProxy(),
         "Geo Data Manager actions should retain their visual order");
+
+    QDialog ruleSetManagerHost;
+    auto* requiredRuleSets = new QTableWidget(1, 1, &ruleSetManagerHost);
+    auto* allRuleSets = new QTableWidget(1, 1, &ruleSetManagerHost);
+    auto* ruleSetLog = new QPlainTextEdit(&ruleSetManagerHost);
+    ruleSetLog->setReadOnly(true);
+    auto* checkRuleSets = new zarya::ZaryaActionButton(
+        QStringLiteral("Check Status"), &ruleSetManagerHost);
+    auto* closeRuleSets = new zarya::ZaryaActionButton(
+        QStringLiteral("Close"), &ruleSetManagerHost);
+    auto* ruleSetManagerLayout = new QVBoxLayout(&ruleSetManagerHost);
+    ruleSetManagerLayout->addWidget(requiredRuleSets);
+    ruleSetManagerLayout->addWidget(allRuleSets);
+    ruleSetManagerLayout->addWidget(ruleSetLog);
+    ruleSetManagerLayout->addWidget(checkRuleSets);
+    ruleSetManagerLayout->addWidget(closeRuleSets);
+    zarya::configureRuleSetManagerAccessibility(
+        requiredRuleSets,
+        allRuleSets,
+        ruleSetLog,
+        {checkRuleSets, closeRuleSets},
+        QStringLiteral("Required rule sets"),
+        QStringLiteral("All rule sets"),
+        QStringLiteral("Rule set log"));
+    ruleSetManagerHost.show();
+    QCoreApplication::processEvents();
+    ok &= expectAccessible(
+        requiredRuleSets,
+        QAccessible::Table,
+        QStringLiteral("Required rule sets"),
+        "Rule Set Manager should name its required table");
+    ok &= expectAccessible(
+        allRuleSets,
+        QAccessible::Table,
+        QStringLiteral("All rule sets"),
+        "Rule Set Manager should name its complete inventory table");
+    ok &= expectAccessible(
+        ruleSetLog,
+        QAccessible::EditableText,
+        QStringLiteral("Rule set log"),
+        "Rule Set Manager should name its log and preserve its text role");
+    QAccessibleInterface* ruleSetLogInterface = accessibleInterface(ruleSetLog);
+    ok &= expect(
+        ruleSetLogInterface && ruleSetLogInterface->state().readOnly,
+        "Rule Set Manager log should remain read-only");
+    ok &= expect(
+        QApplication::focusWidget() == requiredRuleSets,
+        "Rule Set Manager should initially focus its visible required table");
+    const QVector<QWidget*> ruleSetManagerOrder = {
+        allRuleSets,
+        ruleSetLog,
+        checkRuleSets->focusProxy(),
+        closeRuleSets->focusProxy()};
+    ok &= expect(
+        nextOrderedWidget(requiredRuleSets, ruleSetManagerOrder) == allRuleSets,
+        "Rule Set Manager should order its tables by visual position");
+    ok &= expect(
+        nextOrderedWidget(allRuleSets, ruleSetManagerOrder) == ruleSetLog,
+        "Rule Set Manager should place its log after its tables");
+    ok &= expect(
+        nextOrderedWidget(ruleSetLog, ruleSetManagerOrder) == checkRuleSets->focusProxy(),
+        "Rule Set Manager should place actions after its log");
+
+    requiredRuleSets->hide();
+    zarya::configureRuleSetManagerAccessibility(
+        requiredRuleSets,
+        allRuleSets,
+        ruleSetLog,
+        {checkRuleSets, closeRuleSets},
+        QStringLiteral("Required rule sets"),
+        QStringLiteral("All rule sets"),
+        QStringLiteral("Rule set log"));
+    QCoreApplication::processEvents();
+    ok &= expect(
+        QApplication::focusWidget() == allRuleSets,
+        "Rule Set Manager should focus the all-items table when required items are empty");
+
+    allRuleSets->hide();
+    zarya::configureRuleSetManagerAccessibility(
+        requiredRuleSets,
+        allRuleSets,
+        ruleSetLog,
+        {checkRuleSets, closeRuleSets},
+        QStringLiteral("Required rule sets"),
+        QStringLiteral("All rule sets"),
+        QStringLiteral("Rule set log"));
+    QCoreApplication::processEvents();
+    ok &= expect(
+        QApplication::focusWidget() == checkRuleSets->focusProxy(),
+        "Rule Set Manager should focus its first action when both tables are empty");
 
     return ok ? 0 : 1;
 }

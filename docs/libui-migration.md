@@ -114,6 +114,9 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      and action order.
    - Rule Set Manager status text, sections, empty states, actions, and feedback use the toolkit
      layer; rule-set tables, bounded log text, and native file/folder pickers remain boundaries.
+     Both tables and the read-only log expose purpose-specific accessible names; initial focus
+     prefers the first visible table and otherwise the first action, with hidden empty-state
+     tables skipped in keyboard order.
    - Backup export/import types, category options, mode selectors, paths, summary text, warnings,
      confirmations, and actions use the toolkit layer; the import preview table and native file
      pickers remain Qt/platform boundaries.
