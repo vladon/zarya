@@ -1154,6 +1154,10 @@ sing-box: %3 (%4)</source>
 <context>
     <name>ProfileImportWidget</name>
     <message>
+        <source>Share links</source>
+        <translation>Share links</translation>
+    </message>
+    <message>
         <source>Paste vless://, vmess://, trojan://, ss://, hysteria2://, or wireguard:// links here.
 One link per line.</source>
         <translation type="unfinished"></translation>

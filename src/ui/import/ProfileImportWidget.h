@@ -37,6 +37,8 @@ Q_SIGNALS:
     void parseCompleted(const ProfileImportStats& stats);
 
 private:
+    void updateSummary(const QString& text, bool announce);
+
     ZaryaTextArea* m_linksEdit = nullptr;
     ZaryaBodyText* m_statsLabel = nullptr;
     QVector<Profile> m_imported;

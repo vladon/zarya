@@ -1,6 +1,7 @@
 #include "ui/MainWindowAccessibility.h"
 #include "ui/ImportVlessDialog.h"
 #include "ui/ProfileDialog.h"
+#include "ui/import/ProfileImportWidget.h"
 #include "ui/desktopapp/ProfileActionStrip.h"
 #include "ui/desktopapp/ZaryaFormControls.h"
 #include "ui/desktopapp/ZaryaSelector.h"
@@ -541,6 +542,48 @@ int main(int argc, char** argv)
         QCoreApplication::processEvents();
         ok &= expect(importRejected, "assistive Cancel should reject share-link import");
     }
+
+    zarya::ProfileImportWidget firstRunImport;
+    firstRunImport.show();
+    QCoreApplication::processEvents();
+    QWidget* firstRunLinks = findAccessibleWidget(
+        &firstRunImport, QAccessible::EditableText, QStringLiteral("Share links"));
+    ok &= expect(firstRunLinks, "first-run import should expose its labelled input");
+    const QString initialImportSummary = QStringLiteral("Paste links to see parse summary.");
+    ok &= expectAccessible(
+        findAccessibleWidget(
+            &firstRunImport, QAccessible::StaticText, initialImportSummary),
+        QAccessible::StaticText,
+        initialImportSummary,
+        "first-run import should expose its initial parse summary");
+
+    auto* firstRunEditor = firstRunImport.findChild<zarya::ZaryaTextArea*>();
+    ok &= expect(firstRunEditor, "first-run import should retain its text-area control");
+    const QString unsupportedSummary = QStringLiteral(
+        "Parsed: VLESS 0, VMess 0, Trojan 0, Shadowsocks 0, Hysteria2 0, WireGuard 0, Unsupported 1");
+    capturedAnnouncement.clear();
+    capturedPoliteness = QAccessible::AnnouncementPoliteness::Assertive;
+    previousAccessibilityHandler = QAccessible::installUpdateHandler(
+        captureAccessibilityUpdate);
+    if (firstRunEditor) {
+        firstRunEditor->setText(QStringLiteral("invalid://example"));
+        QCoreApplication::processEvents();
+        QCoreApplication::processEvents();
+    }
+    QAccessible::installUpdateHandler(previousAccessibilityHandler);
+    previousAccessibilityHandler = nullptr;
+    ok &= expect(
+        capturedAnnouncement == unsupportedSummary,
+        "first-run import should announce updated parse statistics");
+    ok &= expect(
+        capturedPoliteness == QAccessible::AnnouncementPoliteness::Polite,
+        "first-run parse statistics should use polite announcements");
+    ok &= expectAccessible(
+        findAccessibleWidget(
+            &firstRunImport, QAccessible::StaticText, unsupportedSummary),
+        QAccessible::StaticText,
+        unsupportedSummary,
+        "first-run import should expose the updated parse summary");
 
     return ok ? 0 : 1;
 }

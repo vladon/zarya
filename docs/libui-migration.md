@@ -74,9 +74,11 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      validation feedback is announced as an assertive alert. Share-link import and the first-run
      parse/checklist surfaces use shared toolkit multiline and body-text controls. The standalone
      share-link import dialog labels and initially focuses its input, keeps Cancel before Import,
-     and reports empty or invalid input as an assertive inline alert. The first-run flow uses a
-     host-only `QDialog`, stacked pages, toolkit navigation, content, selectors, fields, checks,
-     actions, and validation feedback. Subscription editing and management use
+     and reports empty or invalid input as an assertive inline alert. The first-run profile import
+     input is labelled independently of its placeholder and politely announces its live parse
+     summary. The first-run flow uses a host-only `QDialog`, stacked pages, toolkit navigation,
+     content, selectors, fields, checks, actions, and validation feedback. Subscription editing
+     and management use
      the shared toolkit fields, checkbox, multiline input, action buttons, empty/update states,
      and message presenter; the subscription table remains a Qt model/view boundary. General,
      desktop-behavior, and startup settings use toolkit sections, selectors, checks, text, and
