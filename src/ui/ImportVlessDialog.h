@@ -9,6 +9,7 @@ namespace zarya {
 
 class ZaryaDialogActionRow;
 class ZaryaTextArea;
+class ZaryaValidationMessage;
 
 class ImportVlessDialog : public QDialog {
     Q_OBJECT
@@ -22,6 +23,7 @@ private:
     void onImport();
 
     ZaryaTextArea* m_linksEdit = nullptr;
+    ZaryaValidationMessage* m_validationMessage = nullptr;
     ZaryaDialogActionRow* m_actions = nullptr;
     QVector<Profile> m_imported;
 };

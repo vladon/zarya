@@ -1123,6 +1123,10 @@ sing-box: %3 (%4)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Share links</source>
+        <translation>Share links</translation>
+    </message>
+    <message>
         <source>Paste one vless://, vmess://, trojan://, ss://, hysteria2://, or wireguard:// link per line…</source>
         <translation type="unfinished"></translation>
     </message>

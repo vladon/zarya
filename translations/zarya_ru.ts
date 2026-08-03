@@ -907,6 +907,9 @@ sing-box: %3 (%4)</translation></message>
         <source>Import share links</source>
         <translation>Импорт ссылок</translation></message>
     <message>
+        <source>Share links</source>
+        <translation>Ссылки для импорта</translation></message>
+    <message>
         <source>Paste one vless://, vmess://, trojan://, ss://, hysteria2://, or wireguard:// link per line…</source>
         <translation>Вставьте по одной ссылке vless://, vmess://, trojan://, ss://, hysteria2:// или wireguard:// в строке…</translation></message>
     <message>

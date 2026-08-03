@@ -21,6 +21,8 @@ ImportVlessDialog::ImportVlessDialog(QWidget* parent)
            "link per line…"),
         this,
         160);
+    m_linksEdit->setAccessibleLabel(tr("Share links"));
+    m_validationMessage = new ZaryaValidationMessage(this);
 
     m_actions = new ZaryaDialogActionRow(
         tr("Import"),
@@ -33,9 +35,10 @@ ImportVlessDialog::ImportVlessDialog(QWidget* parent)
     layout->setContentsMargins(20, 20, 20, 20);
     layout->setSpacing(12);
     layout->addWidget(m_linksEdit);
+    layout->addWidget(m_validationMessage);
     layout->addWidget(m_actions);
     resize(620, 340);
-    m_actions->focusAccept();
+    m_linksEdit->setFocus(Qt::OtherFocusReason);
 }
 
 QVector<Profile> ImportVlessDialog::importedProfiles() const
@@ -45,11 +48,15 @@ QVector<Profile> ImportVlessDialog::importedProfiles() const
 
 void ImportVlessDialog::onImport()
 {
+    m_validationMessage->clear();
     const QStringList lines =
         m_linksEdit->text().split(QRegularExpression(QStringLiteral("[\\r\\n]+")),
                                   Qt::SkipEmptyParts);
     if (lines.isEmpty()) {
-        UiMessagePresenter::warning(this, tr("Import"), tr("No links to import."));
+        m_validationMessage->showMessage(
+            tr("No links to import."),
+            QAccessible::AnnouncementPoliteness::Assertive);
+        m_linksEdit->setFocus(Qt::OtherFocusReason);
         return;
     }
 
@@ -69,10 +76,10 @@ void ImportVlessDialog::onImport()
     }
 
     if (m_imported.isEmpty()) {
-        UiMessagePresenter::warning(
-            this,
-            tr("Import failed"),
-            errors.join(QLatin1Char('\n')));
+        m_validationMessage->showMessage(
+            errors.isEmpty() ? tr("No links to import.") : errors.join(QLatin1Char('\n')),
+            QAccessible::AnnouncementPoliteness::Assertive);
+        m_linksEdit->setFocus(Qt::OtherFocusReason);
         return;
     }
 
