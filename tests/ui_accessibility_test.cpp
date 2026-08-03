@@ -1,4 +1,5 @@
 #include "ui/MainWindowAccessibility.h"
+#include "ui/ImportVlessDialog.h"
 #include "ui/ProfileDialog.h"
 #include "ui/desktopapp/ProfileActionStrip.h"
 #include "ui/desktopapp/ZaryaFormControls.h"
@@ -436,6 +437,109 @@ int main(int argc, char** argv)
         QCoreApplication::processEvents();
         QCoreApplication::processEvents();
         ok &= expect(profileRejected, "assistive Cancel should reject the profile dialog");
+    }
+
+    zarya::ImportVlessDialog importDialog;
+    importDialog.show();
+    QCoreApplication::processEvents();
+    ok &= expectAccessible(
+        &importDialog,
+        QAccessible::Dialog,
+        QStringLiteral("Import share links"),
+        "share-link import should expose its dialog role and name");
+    QWidget* linksField = findAccessibleWidget(
+        &importDialog, QAccessible::EditableText, QStringLiteral("Share links"));
+    QWidget* importButton = findAccessibleWidget(
+        &importDialog, QAccessible::Button, QStringLiteral("Import"));
+    QWidget* importCancelButton = findAccessibleWidget(
+        &importDialog, QAccessible::Button, QStringLiteral("Cancel"));
+    ok &= expect(linksField, "share-link import should expose its labelled input");
+    ok &= expect(importButton, "share-link import should expose its Import action");
+    ok &= expect(importCancelButton, "share-link import should expose its Cancel action");
+    ok &= expect(
+        QApplication::focusWidget() == linksField,
+        "share-link import should initially focus its input");
+    const QVector<QWidget*> importActions = {importCancelButton, importButton};
+    ok &= expect(
+        linksField && nextOrderedWidget(linksField, importActions) == importCancelButton,
+        "share-link import focus order should reach Cancel before Import");
+    ok &= expect(
+        importCancelButton
+            && nextOrderedWidget(importCancelButton, importActions) == importButton,
+        "share-link import focus order should place Import after Cancel");
+
+    QAccessibleInterface* importInterface = accessibleInterface(importButton);
+    QAccessibleActionInterface* importActionsInterface = importInterface
+        ? importInterface->actionInterface()
+        : nullptr;
+    ok &= expect(importActionsInterface, "Import should expose an accessibility action");
+    capturedAnnouncement.clear();
+    capturedPoliteness = QAccessible::AnnouncementPoliteness::Polite;
+    previousAccessibilityHandler = QAccessible::installUpdateHandler(
+        captureAccessibilityUpdate);
+    if (importActionsInterface) {
+        importActionsInterface->doAction(QAccessibleActionInterface::pressAction());
+        QCoreApplication::processEvents();
+        QCoreApplication::processEvents();
+    }
+    QAccessible::installUpdateHandler(previousAccessibilityHandler);
+    previousAccessibilityHandler = nullptr;
+    const QString noLinksMessage = QStringLiteral("No links to import.");
+    ok &= expectAccessible(
+        findAccessibleWidget(&importDialog, QAccessible::AlertMessage, noLinksMessage),
+        QAccessible::AlertMessage,
+        noLinksMessage,
+        "empty share-link import should expose an inline alert");
+    ok &= expect(
+        capturedAnnouncement == noLinksMessage,
+        "empty share-link import should announce its validation error");
+    ok &= expect(
+        capturedPoliteness == QAccessible::AnnouncementPoliteness::Assertive,
+        "share-link validation errors should be assertive");
+    ok &= expect(
+        QApplication::focusWidget() == linksField,
+        "empty share-link import should return focus to its input");
+
+    auto* linksEditor = importDialog.findChild<zarya::ZaryaTextArea*>();
+    ok &= expect(linksEditor, "share-link import should retain its text-area control");
+    if (linksEditor && importActionsInterface) {
+        linksEditor->setText(QStringLiteral("invalid://example"));
+        capturedAnnouncement.clear();
+        previousAccessibilityHandler = QAccessible::installUpdateHandler(
+            captureAccessibilityUpdate);
+        importActionsInterface->doAction(QAccessibleActionInterface::pressAction());
+        QCoreApplication::processEvents();
+        QCoreApplication::processEvents();
+        QAccessible::installUpdateHandler(previousAccessibilityHandler);
+        previousAccessibilityHandler = nullptr;
+        ok &= expect(
+            !capturedAnnouncement.isEmpty() && capturedAnnouncement != noLinksMessage,
+            "invalid share-link import should announce the parser error inline");
+        ok &= expectAccessible(
+            findAccessibleWidget(
+                &importDialog, QAccessible::AlertMessage, capturedAnnouncement),
+            QAccessible::AlertMessage,
+            capturedAnnouncement,
+            "invalid share-link import should expose parser errors as alerts");
+        ok &= expect(
+            QApplication::focusWidget() == linksField,
+            "invalid share-link import should return focus to its input");
+    }
+
+    bool importRejected = false;
+    QObject::connect(&importDialog, &QDialog::rejected, [&importRejected] {
+        importRejected = true;
+    });
+    QAccessibleInterface* importCancelInterface = accessibleInterface(importCancelButton);
+    QAccessibleActionInterface* importCancelActions = importCancelInterface
+        ? importCancelInterface->actionInterface()
+        : nullptr;
+    ok &= expect(importCancelActions, "import Cancel should expose an accessibility action");
+    if (importCancelActions) {
+        importCancelActions->doAction(QAccessibleActionInterface::pressAction());
+        QCoreApplication::processEvents();
+        QCoreApplication::processEvents();
+        ok &= expect(importRejected, "assistive Cancel should reject share-link import");
     }
 
     return ok ? 0 : 1;
