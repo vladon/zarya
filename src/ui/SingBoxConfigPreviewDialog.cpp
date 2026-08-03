@@ -28,6 +28,7 @@ SingBoxConfigPreviewDialog::SingBoxConfigPreviewDialog(const QString& jsonText,
     auto* warningsSection = new ZaryaFormSection(tr("Warnings"), this);
     m_warningsView = new ZaryaTextArea({}, this, 100);
     m_warningsView->setReadOnly(true);
+    m_warningsView->setAccessibleLabel(tr("Warnings"));
     m_warningsView->setText(warnings.isEmpty() ? tr("(none)")
                                                 : warnings.join(QStringLiteral("\n")));
     warningsSection->addWidget(m_warningsView);
@@ -35,6 +36,7 @@ SingBoxConfigPreviewDialog::SingBoxConfigPreviewDialog(const QString& jsonText,
     auto* jsonSection = new ZaryaFormSection(tr("Generated JSON"), this);
     m_editor = new ZaryaTextArea({}, this, 300);
     m_editor->setReadOnly(true);
+    m_editor->setAccessibleLabel(tr("Generated JSON"));
     m_editor->setText(jsonText);
     jsonSection->addWidget(m_editor);
 
@@ -66,6 +68,7 @@ SingBoxConfigPreviewDialog::SingBoxConfigPreviewDialog(const QString& jsonText,
     layout->addWidget(jsonSection, 1);
     layout->addLayout(actionRow);
     layout->addWidget(closeButton);
+    (warnings.isEmpty() ? m_editor : m_warningsView)->setFocus(Qt::OtherFocusReason);
 }
 
 void SingBoxConfigPreviewDialog::onCopy()

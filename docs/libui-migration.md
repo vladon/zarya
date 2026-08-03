@@ -97,8 +97,8 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
    - Progress: Routing Manager actions, empty state, confirmations, and feedback use the shared
      toolkit layer; its table remains a Qt model/view boundary. Routing profile and rule editing
      use toolkit fields, selectors, sections, actions, inline validation, and empty states; the
-     rules table remains a Qt model/view boundary. Routing JSON preview uses a read-only toolkit
-     text area and action.
+     rules table remains a Qt model/view boundary. Routing JSON preview uses a purpose-labelled,
+     initially focused read-only toolkit text area followed by its Close action.
    - DNS Manager actions, empty state, validation confirmations, and feedback use the toolkit
      layer; its profile table remains a Qt model/view boundary.
    - DNS profile and server editors use toolkit tabs, forms, selectors, fields, checks, actions,
@@ -124,7 +124,9 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
    - Safe-exit recovery options and actions use the toolkit layer without changing runtime,
      system-proxy, or kill-switch cleanup behavior.
    - sing-box config preview content, warnings, actions, validation results, and save failures use
-     the toolkit layer; the native save picker remains a platform boundary.
+     the toolkit layer. Its read-only warnings and JSON have purpose-specific accessible names;
+     initial focus prefers real warnings and otherwise the generated JSON. The native save picker
+     remains a platform boundary.
    - App updater metadata, progress/status text, plan details, actions, verification/staging
      errors, install confirmation, and result feedback use the toolkit layer; update planning,
      verification, platform installers, and native file/folder integration remain unchanged.
