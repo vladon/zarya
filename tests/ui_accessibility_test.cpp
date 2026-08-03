@@ -1,6 +1,7 @@
 #include "ui/MainWindowAccessibility.h"
 #include "ui/CoreManagerAccessibility.h"
 #include "ui/DiagnosticsPreviewDialog.h"
+#include "ui/GeoDataManagerAccessibility.h"
 #include "ui/ImportVlessDialog.h"
 #include "ui/ProfileDialog.h"
 #include "ui/RoutingJsonPreviewDialog.h"
@@ -808,6 +809,82 @@ int main(int argc, char** argv)
     ok &= expect(
         nextOrderedWidget(updateSelected->focusProxy(), coreManagerOrder) == coreLog,
         "Core Manager focus order should place the log after its actions");
+
+    QDialog geoDataManagerHost;
+    auto* geoSource = new zarya::ZaryaSelector(&geoDataManagerHost);
+    geoSource->setItems(
+        {{QStringLiteral("official"), QStringLiteral("Official")}},
+        QStringLiteral("official"));
+    geoSource->setAccessibleLabel(QStringLiteral("Source"));
+    auto* geoTable = new QTableWidget(1, 1, &geoDataManagerHost);
+    auto* autoCheck = new zarya::ZaryaCheckBox(
+        QStringLiteral("Check on startup"), &geoDataManagerHost);
+    auto* warnMissing = new zarya::ZaryaCheckBox(
+        QStringLiteral("Warn if missing"), &geoDataManagerHost);
+    auto* geoLog = new QPlainTextEdit(&geoDataManagerHost);
+    geoLog->setReadOnly(true);
+    auto* checkGeoStatus = new zarya::ZaryaActionButton(
+        QStringLiteral("Check Status"), &geoDataManagerHost);
+    auto* closeGeoManager = new zarya::ZaryaActionButton(
+        QStringLiteral("Close"), &geoDataManagerHost);
+    auto* geoDataManagerLayout = new QVBoxLayout(&geoDataManagerHost);
+    geoDataManagerLayout->addWidget(geoSource);
+    geoDataManagerLayout->addWidget(geoTable);
+    geoDataManagerLayout->addWidget(autoCheck);
+    geoDataManagerLayout->addWidget(warnMissing);
+    geoDataManagerLayout->addWidget(geoLog);
+    geoDataManagerLayout->addWidget(checkGeoStatus);
+    geoDataManagerLayout->addWidget(closeGeoManager);
+    zarya::configureGeoDataManagerAccessibility(
+        geoSource,
+        geoTable,
+        {autoCheck, warnMissing},
+        geoLog,
+        {checkGeoStatus, closeGeoManager},
+        QStringLiteral("Geo data files"),
+        QStringLiteral("Geo data log"));
+    geoDataManagerHost.show();
+    QCoreApplication::processEvents();
+    ok &= expectAccessible(
+        geoTable,
+        QAccessible::Table,
+        QStringLiteral("Geo data files"),
+        "Geo Data Manager should expose its inventory table name and role");
+    ok &= expectAccessible(
+        geoLog,
+        QAccessible::EditableText,
+        QStringLiteral("Geo data log"),
+        "Geo Data Manager should expose its log name and text role");
+    QAccessibleInterface* geoLogInterface = accessibleInterface(geoLog);
+    ok &= expect(
+        geoLogInterface && geoLogInterface->state().readOnly,
+        "Geo Data Manager log should remain read-only");
+    ok &= expect(
+        QApplication::focusWidget() == geoSource->focusProxy(),
+        "Geo Data Manager should initially focus its source selector");
+    const QVector<QWidget*> geoDataManagerOrder = {
+        geoTable,
+        autoCheck->focusProxy(),
+        warnMissing->focusProxy(),
+        geoLog,
+        checkGeoStatus->focusProxy(),
+        closeGeoManager->focusProxy()};
+    ok &= expect(
+        nextOrderedWidget(geoSource->focusProxy(), geoDataManagerOrder) == geoTable,
+        "Geo Data Manager should place the inventory after its source selector");
+    ok &= expect(
+        nextOrderedWidget(geoTable, geoDataManagerOrder) == autoCheck->focusProxy(),
+        "Geo Data Manager should place options after its inventory");
+    ok &= expect(
+        nextOrderedWidget(warnMissing->focusProxy(), geoDataManagerOrder) == geoLog,
+        "Geo Data Manager should place its log after options");
+    ok &= expect(
+        nextOrderedWidget(geoLog, geoDataManagerOrder) == checkGeoStatus->focusProxy(),
+        "Geo Data Manager should place actions after its log");
+    ok &= expect(
+        nextOrderedWidget(checkGeoStatus->focusProxy(), geoDataManagerOrder)
+            == closeGeoManager->focusProxy(),
+        "Geo Data Manager actions should retain their visual order");
 
     return ok ? 0 : 1;
 }

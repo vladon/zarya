@@ -836,6 +836,12 @@ sing-box: %3 (%4)</translation></message>
         <source>Geo Data Manager</source>
         <translation>Менеджер геоданных</translation></message>
     <message>
+        <source>Geo data files</source>
+        <translation>Файлы геоданных</translation></message>
+    <message>
+        <source>Geo data log</source>
+        <translation>Журнал геоданных</translation></message>
+    <message>
         <source>File</source>
         <translation>Файл</translation></message>
     <message>

@@ -109,7 +109,9 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      before reaching the read-only log.
    - Geo Data Manager source selection, options, actions, status text, and warnings use the
      toolkit layer; the file inventory table, bounded log text engine, and native folder opening
-     remain Qt/platform boundaries.
+     remain Qt/platform boundaries. The native inventory and read-only log expose
+     purpose-specific accessible names; focus follows the visual source, inventory, options, log,
+     and action order.
    - Rule Set Manager status text, sections, empty states, actions, and feedback use the toolkit
      layer; rule-set tables, bounded log text, and native file/folder pickers remain boundaries.
    - Backup export/import types, category options, mode selectors, paths, summary text, warnings,
