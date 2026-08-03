@@ -1,6 +1,7 @@
 #include "ui/MainWindowAccessibility.h"
 #include "ui/ImportVlessDialog.h"
 #include "ui/ProfileDialog.h"
+#include "ui/RoutingJsonPreviewDialog.h"
 #include "ui/import/ProfileImportWidget.h"
 #include "ui/onboarding/FirstRunAccessibility.h"
 #include "ui/onboarding/FirstRunChecklistWidget.h"
@@ -315,6 +316,11 @@ int main(int argc, char** argv)
         QAccessible::EditableText,
         QStringLiteral("Values"),
         "text area should use the form label as its accessible name");
+    textArea->setReadOnly(true);
+    QAccessibleInterface* textAreaInterface = accessibleInterface(textArea->focusProxy());
+    ok &= expect(
+        textAreaInterface && textAreaInterface->state().readOnly,
+        "read-only text areas should expose their state");
 
     auto* numberField = new zarya::ZaryaNumberField(QStringLiteral("1-10"), 1, 10, &host);
     new zarya::ZaryaFormRow(QStringLiteral("Retries"), numberField, &host);
@@ -639,6 +645,54 @@ int main(int argc, char** argv)
         QAccessible::StaticText,
         checklistSummary,
         "first-run checklist should expose its visible summary");
+
+    zarya::RoutingJsonPreviewDialog routingPreview(
+        QStringLiteral("{\"routing\":{}}"));
+    routingPreview.show();
+    QCoreApplication::processEvents();
+    ok &= expectAccessible(
+        &routingPreview,
+        QAccessible::Dialog,
+        QStringLiteral("Xray Routing JSON Preview"),
+        "routing preview should expose its dialog role and name");
+    QWidget* routingJson = findAccessibleWidget(
+        &routingPreview,
+        QAccessible::EditableText,
+        QStringLiteral("Generated routing JSON"));
+    QWidget* routingClose = findAccessibleWidget(
+        &routingPreview, QAccessible::Button, QStringLiteral("Close"));
+    ok &= expect(routingJson, "routing preview should expose its labelled JSON");
+    ok &= expect(routingClose, "routing preview should expose its Close action");
+    QAccessibleInterface* routingJsonInterface = accessibleInterface(routingJson);
+    ok &= expect(
+        routingJsonInterface && routingJsonInterface->state().readOnly,
+        "routing preview JSON should remain read-only");
+    ok &= expect(
+        QApplication::focusWidget() == routingJson,
+        "routing preview should initially focus its JSON");
+    ok &= expect(
+        routingJson && nextOrderedWidget(routingJson, {routingClose}) == routingClose,
+        "routing preview focus order should place Close after JSON");
+
+    bool routingRejected = false;
+    QObject::connect(&routingPreview, &QDialog::rejected, [&routingRejected] {
+        routingRejected = true;
+    });
+    QAccessibleInterface* routingCloseInterface = accessibleInterface(routingClose);
+    QAccessibleActionInterface* routingCloseActions = routingCloseInterface
+        ? routingCloseInterface->actionInterface()
+        : nullptr;
+    ok &= expect(
+        routingCloseActions,
+        "routing preview Close should expose an accessibility action");
+    if (routingCloseActions) {
+        routingCloseActions->doAction(QAccessibleActionInterface::pressAction());
+        QCoreApplication::processEvents();
+        QCoreApplication::processEvents();
+        ok &= expect(
+            routingRejected,
+            "assistive Close should reject the routing preview");
+    }
 
     return ok ? 0 : 1;
 }

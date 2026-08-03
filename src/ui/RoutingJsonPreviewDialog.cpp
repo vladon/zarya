@@ -14,6 +14,7 @@ RoutingJsonPreviewDialog::RoutingJsonPreviewDialog(const QString& jsonText, QWid
 
     m_editor = new ZaryaTextArea(QString(), this, 380);
     m_editor->setReadOnly(true);
+    m_editor->setAccessibleLabel(tr("Generated routing JSON"));
     m_editor->setText(jsonText);
 
     auto* closeButton = new ZaryaActionButton(tr("Close"), this);
@@ -24,6 +25,7 @@ RoutingJsonPreviewDialog::RoutingJsonPreviewDialog(const QString& jsonText, QWid
     layout->setSpacing(12);
     layout->addWidget(m_editor);
     layout->addWidget(closeButton);
+    m_editor->setFocus(Qt::OtherFocusReason);
 }
 
 } // namespace zarya

@@ -2388,6 +2388,10 @@ domain:example.com</source>
 <context>
     <name>RoutingJsonPreviewDialog</name>
     <message>
+        <source>Generated routing JSON</source>
+        <translation>Generated routing JSON</translation>
+    </message>
+    <message>
         <source>Xray Routing JSON Preview</source>
         <translation type="unfinished"></translation>
     </message>

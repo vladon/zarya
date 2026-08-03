@@ -28,6 +28,27 @@
 namespace zarya {
 namespace {
 
+class AccessibleTextAreaField final : public Ui::InputField {
+public:
+    using Ui::InputField::InputField;
+
+    [[nodiscard]] Ui::AccessibilityState accessibilityState() const override
+    {
+        auto result = Ui::InputField::accessibilityState();
+        result.readOnly = rawTextEdit()->isReadOnly();
+        return result;
+    }
+
+    void setReadOnly(bool readOnly)
+    {
+        if (rawTextEdit()->isReadOnly() == readOnly) {
+            return;
+        }
+        rawTextEdit()->setReadOnly(readOnly);
+        accessibilityStateChanged({.readOnly = true});
+    }
+};
+
 void fitField(QWidget* field, int width)
 {
     field->resize(std::max(width, 0), field->sizeHint().height());
@@ -166,7 +187,7 @@ ZaryaTextArea::ZaryaTextArea(
     int minimumHeight)
     : QWidget(parent)
 {
-    auto* field = Ui::CreateChild<Ui::InputField>(
+    auto* field = Ui::CreateChild<AccessibleTextAreaField>(
         this,
         st::defaultInputField,
         Ui::InputField::Mode::MultiLine,
@@ -193,7 +214,7 @@ void ZaryaTextArea::setText(const QString& text)
 
 void ZaryaTextArea::setReadOnly(bool readOnly)
 {
-    static_cast<Ui::InputField*>(m_field)->rawTextEdit()->setReadOnly(readOnly);
+    static_cast<AccessibleTextAreaField*>(m_field)->setReadOnly(readOnly);
 }
 
 void ZaryaTextArea::clear()

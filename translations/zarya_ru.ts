@@ -1947,6 +1947,9 @@ domain:example.com</translation></message>
 <context>
     <name>RoutingJsonPreviewDialog</name>
     <message>
+        <source>Generated routing JSON</source>
+        <translation>Сформированный JSON маршрутизации</translation></message>
+    <message>
         <source>Xray Routing JSON Preview</source>
         <translation>Предпросмотр JSON маршрутизации Xray</translation></message>
     <message>
