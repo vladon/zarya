@@ -829,6 +829,7 @@ add_test(NAME ui_animation_policy COMMAND zarya_ui_animation_policy_test)
 
 add_executable(zarya_ui_accessibility_test
     tests/ui_accessibility_test.cpp
+    src/ui/ProfileDialog.cpp
     src/ui/MainWindowAccessibility.cpp
     src/ui/desktopapp/ZaryaBaseIntegration.cpp
     src/ui/desktopapp/ZaryaUiIntegration.cpp
@@ -847,6 +848,10 @@ add_executable(zarya_ui_accessibility_test
     src/app/StartupOptions.cpp
     src/packaging/PackagingInfo.cpp
     src/platform/Platform.cpp
+    src/domain/Profile.cpp
+    src/domain/ProfileValidation.cpp
+    src/domain/ProtocolType.cpp
+    src/domain/CoreType.cpp
     ${ZARYA_SETTINGS_SUPPORT_SOURCES}
 )
 target_include_directories(zarya_ui_accessibility_test PRIVATE

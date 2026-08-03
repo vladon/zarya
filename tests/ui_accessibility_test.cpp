@@ -1,4 +1,5 @@
 #include "ui/MainWindowAccessibility.h"
+#include "ui/ProfileDialog.h"
 #include "ui/desktopapp/ProfileActionStrip.h"
 #include "ui/desktopapp/ZaryaFormControls.h"
 #include "ui/desktopapp/ZaryaSelector.h"
@@ -17,6 +18,23 @@
 #include <utility>
 
 namespace {
+
+QString capturedAnnouncement;
+QAccessible::AnnouncementPoliteness capturedPoliteness =
+    QAccessible::AnnouncementPoliteness::Polite;
+QAccessible::UpdateHandler previousAccessibilityHandler = nullptr;
+
+void captureAccessibilityUpdate(QAccessibleEvent* event)
+{
+    if (event->type() == QAccessible::Announcement) {
+        auto* announcement = static_cast<QAccessibleAnnouncementEvent*>(event);
+        capturedAnnouncement = announcement->message();
+        capturedPoliteness = announcement->politeness();
+    }
+    if (previousAccessibilityHandler) {
+        previousAccessibilityHandler(event);
+    }
+}
 
 bool expect(bool condition, const char* message)
 {
@@ -332,6 +350,93 @@ int main(int argc, char** argv)
     ok &= expect(
         !statusRow->focusProxy(),
         "informational form rows should not expose a false focus target");
+
+    zarya::ProfileDialog profileDialog;
+    profileDialog.show();
+    QCoreApplication::processEvents();
+    ok &= expectAccessible(
+        &profileDialog,
+        QAccessible::Dialog,
+        QStringLiteral("Profile"),
+        "profile dialog should expose its window role and name");
+    for (const QString& section : {
+             QStringLiteral("Basic"),
+             QStringLiteral("Transport"),
+             QStringLiteral("TLS / REALITY"),
+             QStringLiteral("Advanced")}) {
+        ok &= expect(
+            findAccessibleWidget(&profileDialog, QAccessible::Button, section),
+            "profile dialog section tabs should expose their names");
+    }
+    QWidget* nameField = findAccessibleWidget(
+        &profileDialog, QAccessible::EditableText, QStringLiteral("Name"));
+    QWidget* saveButton = findAccessibleWidget(
+        &profileDialog, QAccessible::Button, QStringLiteral("Save"));
+    QWidget* cancelButton = findAccessibleWidget(
+        &profileDialog, QAccessible::Button, QStringLiteral("Cancel"));
+    ok &= expect(nameField, "profile dialog should expose its name field");
+    ok &= expect(saveButton, "profile dialog should expose its Save action");
+    ok &= expect(cancelButton, "profile dialog should expose its Cancel action");
+    ok &= expect(
+        QApplication::focusWidget() == nameField,
+        "profile dialog should place initial focus on the first field");
+    const QVector<QWidget*> profileActions = {cancelButton, saveButton};
+    ok &= expect(
+        nameField && nextOrderedWidget(nameField, profileActions) == cancelButton,
+        "profile dialog focus order should reach Cancel before Save");
+    ok &= expect(
+        cancelButton && nextOrderedWidget(cancelButton, profileActions) == saveButton,
+        "profile dialog focus order should place Save after Cancel");
+
+    capturedAnnouncement.clear();
+    capturedPoliteness = QAccessible::AnnouncementPoliteness::Polite;
+    previousAccessibilityHandler = QAccessible::installUpdateHandler(
+        captureAccessibilityUpdate);
+    QAccessibleInterface* saveInterface = accessibleInterface(saveButton);
+    QAccessibleActionInterface* saveActions = saveInterface
+        ? saveInterface->actionInterface()
+        : nullptr;
+    ok &= expect(saveActions, "profile Save should expose an accessibility action");
+    if (saveActions) {
+        saveActions->doAction(QAccessibleActionInterface::pressAction());
+        QCoreApplication::processEvents();
+        QCoreApplication::processEvents();
+    }
+    QAccessible::installUpdateHandler(previousAccessibilityHandler);
+    previousAccessibilityHandler = nullptr;
+    const QString requiredMessage =
+        QStringLiteral("Name and address are required; port must be 1–65535.");
+    ok &= expectAccessible(
+        findAccessibleWidget(
+            &profileDialog, QAccessible::AlertMessage, requiredMessage),
+        QAccessible::AlertMessage,
+        requiredMessage,
+        "profile validation should expose alert semantics");
+    ok &= expect(
+        capturedAnnouncement == requiredMessage,
+        "profile validation should send an accessibility announcement");
+    ok &= expect(
+        capturedPoliteness == QAccessible::AnnouncementPoliteness::Assertive,
+        "profile validation announcement should be assertive");
+    ok &= expect(
+        QApplication::focusWidget() == nameField,
+        "invalid profile submission should return focus to the first missing field");
+
+    bool profileRejected = false;
+    QObject::connect(&profileDialog, &QDialog::rejected, [&profileRejected] {
+        profileRejected = true;
+    });
+    QAccessibleInterface* cancelInterface = accessibleInterface(cancelButton);
+    QAccessibleActionInterface* cancelActions = cancelInterface
+        ? cancelInterface->actionInterface()
+        : nullptr;
+    ok &= expect(cancelActions, "profile Cancel should expose an accessibility action");
+    if (cancelActions) {
+        cancelActions->doAction(QAccessibleActionInterface::pressAction());
+        QCoreApplication::processEvents();
+        QCoreApplication::processEvents();
+        ok &= expect(profileRejected, "assistive Cancel should reject the profile dialog");
+    }
 
     return ok ? 0 : 1;
 }
