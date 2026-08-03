@@ -1,4 +1,5 @@
 #include "ui/MainWindowAccessibility.h"
+#include "ui/CoreManagerAccessibility.h"
 #include "ui/DiagnosticsPreviewDialog.h"
 #include "ui/ImportVlessDialog.h"
 #include "ui/ProfileDialog.h"
@@ -17,9 +18,12 @@
 #include <QAction>
 #include <QApplication>
 #include <QCoreApplication>
+#include <QDialog>
 #include <QPlainTextEdit>
 #include <QStandardPaths>
+#include <QTableWidget>
 #include <QTableView>
+#include <QVBoxLayout>
 #include <QWidget>
 #include <iostream>
 #include <utility>
@@ -751,6 +755,59 @@ int main(int argc, char** argv)
             diagnosticsAccepted,
             "assistive Close should accept the diagnostics preview");
     }
+
+    QDialog coreManagerHost;
+    auto* coreTable = new QTableWidget(1, 1, &coreManagerHost);
+    auto* checkVersions = new zarya::ZaryaActionButton(
+        QStringLiteral("Check Versions"), &coreManagerHost);
+    auto* updateSelected = new zarya::ZaryaActionButton(
+        QStringLiteral("Update Selected"), &coreManagerHost);
+    auto* coreLog = new QPlainTextEdit(&coreManagerHost);
+    coreLog->setReadOnly(true);
+    auto* coreManagerLayout = new QVBoxLayout(&coreManagerHost);
+    coreManagerLayout->addWidget(coreTable);
+    coreManagerLayout->addWidget(checkVersions);
+    coreManagerLayout->addWidget(updateSelected);
+    coreManagerLayout->addWidget(coreLog);
+    zarya::configureCoreManagerAccessibility(
+        coreTable,
+        coreLog,
+        {checkVersions, updateSelected},
+        QStringLiteral("Installed cores"),
+        QStringLiteral("Core manager log"));
+    coreManagerHost.show();
+    QCoreApplication::processEvents();
+    ok &= expectAccessible(
+        coreTable,
+        QAccessible::Table,
+        QStringLiteral("Installed cores"),
+        "Core Manager should expose its inventory table name and role");
+    ok &= expectAccessible(
+        coreLog,
+        QAccessible::EditableText,
+        QStringLiteral("Core manager log"),
+        "Core Manager should expose its log name and text role");
+    QAccessibleInterface* coreLogInterface = accessibleInterface(coreLog);
+    ok &= expect(
+        coreLogInterface && coreLogInterface->state().readOnly,
+        "Core Manager log should remain read-only");
+    ok &= expect(
+        QApplication::focusWidget() == coreTable,
+        "Core Manager should initially focus its inventory table");
+    const QVector<QWidget*> coreManagerOrder = {
+        checkVersions->focusProxy(),
+        updateSelected->focusProxy(),
+        coreLog};
+    ok &= expect(
+        nextOrderedWidget(coreTable, coreManagerOrder) == checkVersions->focusProxy(),
+        "Core Manager focus order should place actions after the inventory table");
+    ok &= expect(
+        nextOrderedWidget(checkVersions->focusProxy(), coreManagerOrder)
+            == updateSelected->focusProxy(),
+        "Core Manager actions should retain their visual order");
+    ok &= expect(
+        nextOrderedWidget(updateSelected->focusProxy(), coreManagerOrder) == coreLog,
+        "Core Manager focus order should place the log after its actions");
 
     return ok ? 0 : 1;
 }

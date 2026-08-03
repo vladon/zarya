@@ -399,6 +399,7 @@ set(ZARYA_SOURCES
     src/ui/RuleSetManagerDialog.cpp
     src/ui/GeoDataManagerDialog.cpp
     src/ui/CoreManagerDialog.cpp
+    src/ui/CoreManagerAccessibility.cpp
     src/ui/AppUpdateDialog.cpp
     src/ui/BackupExportDialog.cpp
     src/ui/BackupImportDialog.cpp
@@ -856,6 +857,7 @@ add_test(NAME ui_animation_policy COMMAND zarya_ui_animation_policy_test)
 
 add_executable(zarya_ui_accessibility_test
     tests/ui_accessibility_test.cpp
+    src/ui/CoreManagerAccessibility.cpp
     src/ui/DiagnosticsPreviewDialog.cpp
     src/ui/ImportVlessDialog.cpp
     src/ui/RoutingJsonPreviewDialog.cpp
