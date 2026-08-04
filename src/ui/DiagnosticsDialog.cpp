@@ -11,6 +11,7 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QHBoxLayout>
+#include <QTimer>
 #include <QUrl>
 #include <QVBoxLayout>
 
@@ -87,7 +88,9 @@ DiagnosticsDialog::DiagnosticsDialog(DiagnosticsManager& manager,
     layout->addLayout(outputRow);
     layout->addLayout(buttons);
 
-    m_redactionGroup->focusProxy()->setFocus(Qt::OtherFocusReason);
+    QTimer::singleShot(0, m_redactionGroup, [this] {
+        m_redactionGroup->focusProxy()->setFocus(Qt::OtherFocusReason);
+    });
 }
 
 DiagnosticsOptions DiagnosticsDialog::buildOptions() const
