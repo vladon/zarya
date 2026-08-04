@@ -1,5 +1,6 @@
 #include "ui/MainWindowAccessibility.h"
 #include "ui/CoreManagerAccessibility.h"
+#include "ui/DnsManagerAccessibility.h"
 #include "ui/DiagnosticsPreviewDialog.h"
 #include "ui/GeoDataManagerAccessibility.h"
 #include "ui/ImportVlessDialog.h"
@@ -1078,6 +1079,55 @@ int main(int argc, char** argv)
     ok &= expect(
         QApplication::focusWidget() == newRoutingProfile->focusProxy(),
         "Routing Manager should focus New when its table is empty");
+
+    QDialog dnsManagerHost;
+    auto* dnsProfiles = new QTableWidget(1, 1, &dnsManagerHost);
+    auto* newDnsProfile = new zarya::ZaryaActionButton(
+        QStringLiteral("New"), &dnsManagerHost);
+    auto* editDnsProfile = new zarya::ZaryaActionButton(
+        QStringLiteral("Edit"), &dnsManagerHost);
+    auto* closeDnsManager = new zarya::ZaryaActionButton(
+        QStringLiteral("Close"), &dnsManagerHost);
+    auto* dnsManagerLayout = new QVBoxLayout(&dnsManagerHost);
+    dnsManagerLayout->addWidget(dnsProfiles);
+    dnsManagerLayout->addWidget(newDnsProfile);
+    dnsManagerLayout->addWidget(editDnsProfile);
+    dnsManagerLayout->addWidget(closeDnsManager);
+    zarya::configureDnsManagerAccessibility(
+        dnsProfiles,
+        {newDnsProfile, editDnsProfile, closeDnsManager},
+        QStringLiteral("DNS Profiles"));
+    dnsManagerHost.show();
+    QCoreApplication::processEvents();
+    ok &= expectAccessible(
+        dnsProfiles,
+        QAccessible::Table,
+        QStringLiteral("DNS Profiles"),
+        "DNS Manager should expose its table name and role");
+    ok &= expect(
+        QApplication::focusWidget() == dnsProfiles,
+        "DNS Manager should initially focus its visible table");
+    const QVector<QWidget*> dnsManagerOrder = {
+        newDnsProfile->focusProxy(),
+        editDnsProfile->focusProxy(),
+        closeDnsManager->focusProxy()};
+    ok &= expect(
+        nextOrderedWidget(dnsProfiles, dnsManagerOrder) == newDnsProfile->focusProxy(),
+        "DNS Manager should place New after its table");
+    ok &= expect(
+        nextOrderedWidget(newDnsProfile->focusProxy(), dnsManagerOrder)
+            == editDnsProfile->focusProxy(),
+        "DNS Manager actions should retain their visual order");
+
+    dnsProfiles->hide();
+    zarya::configureDnsManagerAccessibility(
+        dnsProfiles,
+        {newDnsProfile, editDnsProfile, closeDnsManager},
+        QStringLiteral("DNS Profiles"));
+    QCoreApplication::processEvents();
+    ok &= expect(
+        QApplication::focusWidget() == newDnsProfile->focusProxy(),
+        "DNS Manager should focus New when its table is empty");
 
     return ok ? 0 : 1;
 }

@@ -3,6 +3,7 @@
 #include "base/algorithm.h"
 #include "dns/DnsValidator.h"
 #include "dns/XrayDnsGenerator.h"
+#include "ui/DnsManagerAccessibility.h"
 #include "ui/DnsProfileDialog.h"
 #include "ui/RoutingJsonPreviewDialog.h"
 #include "ui/desktopapp/UiMessagePresenter.h"
@@ -77,6 +78,16 @@ DnsManagerDialog::DnsManagerDialog(DnsManager& manager,
     layout->addWidget(m_table);
     layout->addLayout(buttons);
     refreshTable();
+    configureDnsManagerAccessibility(
+        m_table,
+        {newButton,
+         editButton,
+         duplicateButton,
+         deleteButton,
+         setActiveButton,
+         previewButton,
+         closeButton},
+        tr("DNS Profiles"));
 }
 
 void DnsManagerDialog::refreshTable()

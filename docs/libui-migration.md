@@ -104,7 +104,9 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      rules table remains a Qt model/view boundary. Routing JSON preview uses a purpose-labelled,
      initially focused read-only toolkit text area followed by its Close action.
    - DNS Manager actions, empty state, validation confirmations, and feedback use the toolkit
-     layer; its profile table remains a Qt model/view boundary.
+     layer; its profile table remains a Qt model/view boundary with a purpose-specific accessible
+     name. Initial focus prefers the populated table and otherwise New, followed by management
+     actions in visual order.
    - DNS profile and server editors use toolkit tabs, forms, selectors, fields, checks, actions,
      empty states, and feedback; the DNS server table remains a Qt model/view boundary.
    - Core Manager actions, status text, and warnings use the toolkit layer; the core inventory
