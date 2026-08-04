@@ -1,5 +1,6 @@
 #include "ui/SubscriptionManagerDialog.h"
 
+#include "ui/SubscriptionManagerAccessibility.h"
 #include "domain/ProfileSourceType.h"
 #include "domain/Subscription.h"
 #include "i18n/ZaryaTr.h"
@@ -81,6 +82,10 @@ SubscriptionManagerDialog::SubscriptionManagerDialog(
     layout->addWidget(m_tableView);
     layout->addWidget(m_updateSummaryLabel);
     layout->addLayout(buttons);
+    configureSubscriptionManagerAccessibility(
+        m_tableView,
+        {addButton, editButton, deleteButton, updateButton, updateAllButton, closeButton},
+        tr("Subscriptions"));
 }
 
 void SubscriptionManagerDialog::showUpdateSummary(const SubscriptionUpdateStats& stats)

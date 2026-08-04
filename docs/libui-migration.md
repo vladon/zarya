@@ -81,7 +81,9 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      their titles, focus the first relevant control, and prepare and announce the Finish checklist
      when it becomes visible. Subscription editing and management use
      the shared toolkit fields, checkbox, multiline input, action buttons, empty/update states,
-     and message presenter; the subscription table remains a Qt model/view boundary. General,
+     and message presenter; the subscription table remains a Qt model/view boundary with a
+     purpose-specific accessible name. Initial focus prefers the populated table and otherwise
+     Add, followed by the remaining actions in visual order. General,
      desktop-behavior, and startup settings use toolkit sections, selectors, checks, text, and
      number fields while retaining the existing settings persistence and autostart backend.
      Stable core, system-proxy, and testing settings also use toolkit fields, selectors, actions,
