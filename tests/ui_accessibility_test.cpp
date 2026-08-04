@@ -367,6 +367,13 @@ int main(int argc, char** argv)
             "radio option names should follow form label changes");
     }
 
+    radioGroup->setAccessibleLabel(QStringLiteral("Backup type"));
+    ok &= expectAccessible(
+        radioGroup->focusProxy(),
+        QAccessible::RadioButton,
+        QStringLiteral("Backup type: System proxy"),
+        "standalone radio groups should expose their semantic label");
+
     auto* status = new zarya::ZaryaBodyText(QStringLiteral("Ready"), &host);
     auto* statusRow = new zarya::ZaryaFormRow(QStringLiteral("Status"), status, &host);
     ok &= expect(

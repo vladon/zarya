@@ -27,6 +27,7 @@ BackupExportDialog::BackupExportDialog(BackupManager& manager,
     m_backupType = new ZaryaRadioGroup(0, this);
     m_backupType->addOption(0, tr("Full configuration backup"));
     m_backupType->addOption(1, tr("Redacted diagnostic backup"));
+    m_backupType->setAccessibleLabel(tr("Backup type"));
     auto* typeSection = new ZaryaFormSection(tr("Backup type"), this);
     typeSection->addWidget(m_backupType);
 
@@ -67,6 +68,7 @@ BackupExportDialog::BackupExportDialog(BackupManager& manager,
         QStringLiteral("zarya-backup-%1.zarya-backup.zip")
             .arg(QDate::currentDate().toString(QStringLiteral("yyyy-MM-dd")));
     m_outputEdit = new ZaryaTextField(tr("Output"), this);
+    m_outputEdit->setAccessibleLabel(tr("Output"));
     m_outputEdit->setText(defaultName);
     auto* browseButton = new ZaryaActionButton(tr("Browse…"), this);
     connect(browseButton, &ZaryaActionButton::clicked, this, &BackupExportDialog::onBrowse);
@@ -86,6 +88,8 @@ BackupExportDialog::BackupExportDialog(BackupManager& manager,
     layout->addWidget(includeSection);
     layout->addLayout(outputRow);
     layout->addWidget(actions);
+
+    m_backupType->focusProxy()->setFocus(Qt::OtherFocusReason);
 
     connect(m_backupType, &ZaryaRadioGroup::valueChanged, this,
             [this](int value) {
