@@ -140,7 +140,8 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
    - Migrate gated sing-box TUN, helper, kill-switch, and updater UI without changing
      `FeatureGate` behavior.
    - Progress: readiness/recovery guidance and its navigation actions use the toolkit layer
-     without changing availability checks or recovery routing.
+     without changing availability checks or recovery routing. Initial focus starts on Open Core
+     Manager, the first recommended recovery action.
    - Safe-exit recovery options and actions use the toolkit layer without changing runtime,
      system-proxy, or kill-switch cleanup behavior. Initial keyboard focus starts on Stop runtime.
    - sing-box config preview content, warnings, actions, validation results, and save failures use

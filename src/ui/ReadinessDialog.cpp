@@ -48,6 +48,8 @@ ReadinessDialog::ReadinessDialog(QWidget* parent)
     layout->addWidget(settingsButton);
     layout->addStretch();
     layout->addWidget(closeButton);
+
+    coreButton->focusProxy()->setFocus(Qt::OtherFocusReason);
 }
 
 } // namespace zarya

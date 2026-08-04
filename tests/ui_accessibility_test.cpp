@@ -8,6 +8,7 @@
 #include "ui/ProfileDialog.h"
 #include "ui/RuleSetManagerAccessibility.h"
 #include "ui/RoutingManagerAccessibility.h"
+#include "ui/ReadinessDialog.h"
 #include "ui/SafeExitDialog.h"
 #include "ui/SubscriptionManagerAccessibility.h"
 #include "ui/RoutingJsonPreviewDialog.h"
@@ -1241,6 +1242,16 @@ int main(int argc, char** argv)
     ok &= expect(
         QApplication::focusWidget() == stopRuntime,
         "Safe Exit should initially focus Stop runtime");
+
+    zarya::ReadinessDialog readinessDialog;
+    readinessDialog.show();
+    QCoreApplication::processEvents();
+    QWidget* coreManager = findAccessibleWidget(
+        &readinessDialog, QAccessible::Button, QStringLiteral("Open Core Manager"));
+    ok &= expect(coreManager, "Readiness should expose Open Core Manager");
+    ok &= expect(
+        QApplication::focusWidget() == coreManager,
+        "Readiness should initially focus Open Core Manager");
 
     return ok ? 0 : 1;
 }
