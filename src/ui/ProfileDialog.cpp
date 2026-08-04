@@ -17,6 +17,7 @@
 
 #include <QKeyEvent>
 #include <QStackedLayout>
+#include <QTimer>
 #include <QUuid>
 #include <QVBoxLayout>
 #include <rpl/rpl.h>
@@ -226,7 +227,9 @@ ProfileDialog::ProfileDialog(QWidget* parent)
 
     resize(680, 620);
     updateProtocolFieldsVisibility();
-    m_nameEdit->setFocus(Qt::OtherFocusReason);
+    QTimer::singleShot(0, m_nameEdit, [this] {
+        m_nameEdit->setFocus(Qt::OtherFocusReason);
+    });
 }
 
 QWidget* ProfileDialog::createPage(QVBoxLayout** layout)
