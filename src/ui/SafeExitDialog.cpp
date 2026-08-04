@@ -32,6 +32,8 @@ SafeExitDialog::SafeExitDialog(QWidget* parent)
     layout->addWidget(m_disableKillSwitchCheck);
     layout->addWidget(actions);
     resize(420, 220);
+
+    m_stopRuntimeCheck->focusProxy()->setFocus(Qt::OtherFocusReason);
 }
 
 SafeExitOptions SafeExitDialog::options() const

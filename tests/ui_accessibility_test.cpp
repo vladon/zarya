@@ -8,6 +8,7 @@
 #include "ui/ProfileDialog.h"
 #include "ui/RuleSetManagerAccessibility.h"
 #include "ui/RoutingManagerAccessibility.h"
+#include "ui/SafeExitDialog.h"
 #include "ui/SubscriptionManagerAccessibility.h"
 #include "ui/RoutingJsonPreviewDialog.h"
 #include "ui/import/ProfileImportWidget.h"
@@ -1230,6 +1231,16 @@ int main(int argc, char** argv)
         nextOrderedWidget(importBackup->focusProxy(), backupImportOrder)
             == cancelBackupImport->focusProxy(),
         "Backup Import should place Cancel after Import");
+
+    zarya::SafeExitDialog safeExitDialog;
+    safeExitDialog.show();
+    QCoreApplication::processEvents();
+    QWidget* stopRuntime = findAccessibleWidget(
+        &safeExitDialog, QAccessible::CheckBox, QStringLiteral("Stop runtime"));
+    ok &= expect(stopRuntime, "Safe Exit should expose the stop-runtime checkbox");
+    ok &= expect(
+        QApplication::focusWidget() == stopRuntime,
+        "Safe Exit should initially focus Stop runtime");
 
     return ok ? 0 : 1;
 }
