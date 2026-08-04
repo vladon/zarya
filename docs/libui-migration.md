@@ -142,7 +142,7 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
    - Progress: readiness/recovery guidance and its navigation actions use the toolkit layer
      without changing availability checks or recovery routing.
    - Safe-exit recovery options and actions use the toolkit layer without changing runtime,
-     system-proxy, or kill-switch cleanup behavior.
+     system-proxy, or kill-switch cleanup behavior. Initial keyboard focus starts on Stop runtime.
    - sing-box config preview content, warnings, actions, validation results, and save failures use
      the toolkit layer. Its read-only warnings and JSON have purpose-specific accessible names;
      initial focus prefers real warnings and otherwise the generated JSON. The native save picker
