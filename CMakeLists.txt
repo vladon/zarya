@@ -904,7 +904,9 @@ add_executable(zarya_ui_accessibility_test
     src/domain/ProfileValidation.cpp
     src/domain/ProtocolType.cpp
     src/domain/CoreType.cpp
+    src/domain/DnsServer.cpp
     src/subscription/ShareLinkParser.cpp
+    src/i18n/TranslatableEnums.cpp
     src/i18n/ZaryaTr.cpp
     ${ZARYA_SETTINGS_SUPPORT_SOURCES}
 )
