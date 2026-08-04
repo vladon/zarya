@@ -124,7 +124,9 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      prefers the first visible table and otherwise the first action, with hidden empty-state
      tables skipped in keyboard order.
    - Backup export/import types, category options, mode selectors, paths, summary text, warnings,
-     confirmations, and actions use the toolkit layer; the import preview table and native file
+     confirmations, and actions use the toolkit layer. Backup Export labels its backup-type radio
+     group and output field for assistive technologies and starts on the selected backup type; the
+     import preview table and native file
      pickers remain Qt/platform boundaries. The preview table has a purpose-specific accessible
      name; focus starts on Browse before an archive is loaded and moves to the preview after a
      successful load, then follows the import settings and action order.
