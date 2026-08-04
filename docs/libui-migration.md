@@ -134,6 +134,8 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      feedback, and actions use the toolkit layer; the preview file list and native save/folder
      integration remain Qt/platform boundaries. The read-only preview file list has a
      purpose-specific accessible name, receives initial focus, and precedes Close in focus order.
+     The bundle form labels its redaction choices and output field for assistive technologies and
+     starts keyboard interaction on the selected redaction level.
 6. **Experimental and update surfaces**
    - Migrate gated sing-box TUN, helper, kill-switch, and updater UI without changing
      `FeatureGate` behavior.

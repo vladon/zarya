@@ -31,6 +31,7 @@ DiagnosticsDialog::DiagnosticsDialog(DiagnosticsManager& manager,
         0, tr("Strict — redact credentials, hosts, URLs, usernames in paths"));
     m_redactionGroup->addOption(
         1, tr("Basic — redact credentials but keep hosts and ports"));
+    m_redactionGroup->setAccessibleLabel(tr("Redaction"));
     auto* redactionSection = new ZaryaFormSection(tr("Redaction"), this);
     redactionSection->addWidget(m_redactionGroup);
 
@@ -52,6 +53,7 @@ DiagnosticsDialog::DiagnosticsDialog(DiagnosticsManager& manager,
         QStringLiteral("zarya-diagnostics-%1.zarya-diagnostics.zip")
             .arg(QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd-HHmmss")));
     m_outputEdit = new ZaryaTextField(tr("Output"), this);
+    m_outputEdit->setAccessibleLabel(tr("Output"));
     m_outputEdit->setText(defaultName);
     auto* browseButton = new ZaryaActionButton(tr("Browse…"), this);
     connect(browseButton, &ZaryaActionButton::clicked,
@@ -84,6 +86,8 @@ DiagnosticsDialog::DiagnosticsDialog(DiagnosticsManager& manager,
     layout->addWidget(new ZaryaBodyText(tr("Output"), this));
     layout->addLayout(outputRow);
     layout->addLayout(buttons);
+
+    m_redactionGroup->focusProxy()->setFocus(Qt::OtherFocusReason);
 }
 
 DiagnosticsOptions DiagnosticsDialog::buildOptions() const
