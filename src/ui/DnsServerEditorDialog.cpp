@@ -62,6 +62,8 @@ DnsServerEditorDialog::DnsServerEditorDialog(const DnsServer& server, QWidget* p
     layout->addWidget(new ZaryaFormRow(tr("Note"), m_noteEdit, this));
     layout->addWidget(actions);
     resize(620, 650);
+
+    m_addressEdit->setFocus(Qt::OtherFocusReason);
 }
 
 DnsServer DnsServerEditorDialog::server() const
