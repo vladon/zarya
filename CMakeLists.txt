@@ -871,6 +871,7 @@ add_executable(zarya_ui_accessibility_test
     src/ui/BetaBannerWidget.cpp
     src/ui/ReadinessDialog.cpp
     src/ui/SafeExitDialog.cpp
+    src/ui/SubscriptionDialog.cpp
     src/ui/SubscriptionManagerAccessibility.cpp
     src/ui/RoutingManagerAccessibility.cpp
     src/ui/DnsManagerAccessibility.cpp
@@ -902,6 +903,7 @@ add_executable(zarya_ui_accessibility_test
     src/platform/Platform.cpp
     src/domain/Profile.cpp
     src/domain/ProfileValidation.cpp
+    src/domain/Subscription.cpp
     src/domain/ProtocolType.cpp
     src/domain/CoreType.cpp
     src/domain/DnsServer.cpp

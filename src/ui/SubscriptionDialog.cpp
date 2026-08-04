@@ -2,6 +2,7 @@
 
 #include "ui/desktopapp/ZaryaFormControls.h"
 
+#include <QTimer>
 #include <QVBoxLayout>
 
 namespace zarya {
@@ -48,7 +49,9 @@ SubscriptionDialog::SubscriptionDialog(QWidget* parent, Subscription& subscripti
     layout->addWidget(new ZaryaFormRow(tr("Remarks"), m_remarksEdit, this));
     layout->addWidget(actions);
     resize(600, 420);
-    m_nameEdit->setFocus(Qt::OtherFocusReason);
+    QTimer::singleShot(0, m_nameEdit, [this] {
+        m_nameEdit->setFocus(Qt::OtherFocusReason);
+    });
 }
 
 bool SubscriptionDialog::editSubscription(QWidget* parent, Subscription& subscription)
