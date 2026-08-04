@@ -6,6 +6,7 @@
 #include "ui/desktopapp/ZaryaFormControls.h"
 
 #include <QRegularExpression>
+#include <QTimer>
 #include <QVBoxLayout>
 
 namespace zarya {
@@ -38,7 +39,9 @@ ImportVlessDialog::ImportVlessDialog(QWidget* parent)
     layout->addWidget(m_validationMessage);
     layout->addWidget(m_actions);
     resize(620, 340);
-    m_linksEdit->setFocus(Qt::OtherFocusReason);
+    QTimer::singleShot(0, m_linksEdit, [this] {
+        m_linksEdit->setFocus(Qt::OtherFocusReason);
+    });
 }
 
 QVector<Profile> ImportVlessDialog::importedProfiles() const
