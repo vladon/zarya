@@ -5,6 +5,7 @@
 #include "ui/ImportVlessDialog.h"
 #include "ui/ProfileDialog.h"
 #include "ui/RuleSetManagerAccessibility.h"
+#include "ui/RoutingManagerAccessibility.h"
 #include "ui/SubscriptionManagerAccessibility.h"
 #include "ui/RoutingJsonPreviewDialog.h"
 #include "ui/import/ProfileImportWidget.h"
@@ -1027,6 +1028,56 @@ int main(int argc, char** argv)
     ok &= expect(
         QApplication::focusWidget() == addSubscription->focusProxy(),
         "Subscription Manager should focus Add when its table is empty");
+
+    QDialog routingManagerHost;
+    auto* routingProfiles = new QTableWidget(1, 1, &routingManagerHost);
+    auto* newRoutingProfile = new zarya::ZaryaActionButton(
+        QStringLiteral("New"), &routingManagerHost);
+    auto* editRoutingProfile = new zarya::ZaryaActionButton(
+        QStringLiteral("Edit"), &routingManagerHost);
+    auto* closeRoutingManager = new zarya::ZaryaActionButton(
+        QStringLiteral("Close"), &routingManagerHost);
+    auto* routingManagerLayout = new QVBoxLayout(&routingManagerHost);
+    routingManagerLayout->addWidget(routingProfiles);
+    routingManagerLayout->addWidget(newRoutingProfile);
+    routingManagerLayout->addWidget(editRoutingProfile);
+    routingManagerLayout->addWidget(closeRoutingManager);
+    zarya::configureRoutingManagerAccessibility(
+        routingProfiles,
+        {newRoutingProfile, editRoutingProfile, closeRoutingManager},
+        QStringLiteral("Routing Profiles"));
+    routingManagerHost.show();
+    QCoreApplication::processEvents();
+    ok &= expectAccessible(
+        routingProfiles,
+        QAccessible::Table,
+        QStringLiteral("Routing Profiles"),
+        "Routing Manager should expose its table name and role");
+    ok &= expect(
+        QApplication::focusWidget() == routingProfiles,
+        "Routing Manager should initially focus its visible table");
+    const QVector<QWidget*> routingManagerOrder = {
+        newRoutingProfile->focusProxy(),
+        editRoutingProfile->focusProxy(),
+        closeRoutingManager->focusProxy()};
+    ok &= expect(
+        nextOrderedWidget(routingProfiles, routingManagerOrder)
+            == newRoutingProfile->focusProxy(),
+        "Routing Manager should place New after its table");
+    ok &= expect(
+        nextOrderedWidget(newRoutingProfile->focusProxy(), routingManagerOrder)
+            == editRoutingProfile->focusProxy(),
+        "Routing Manager actions should retain their visual order");
+
+    routingProfiles->hide();
+    zarya::configureRoutingManagerAccessibility(
+        routingProfiles,
+        {newRoutingProfile, editRoutingProfile, closeRoutingManager},
+        QStringLiteral("Routing Profiles"));
+    QCoreApplication::processEvents();
+    ok &= expect(
+        QApplication::focusWidget() == newRoutingProfile->focusProxy(),
+        "Routing Manager should focus New when its table is empty");
 
     return ok ? 0 : 1;
 }
