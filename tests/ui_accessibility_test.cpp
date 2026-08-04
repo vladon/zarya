@@ -5,6 +5,7 @@
 #include "ui/ImportVlessDialog.h"
 #include "ui/ProfileDialog.h"
 #include "ui/RuleSetManagerAccessibility.h"
+#include "ui/SubscriptionManagerAccessibility.h"
 #include "ui/RoutingJsonPreviewDialog.h"
 #include "ui/import/ProfileImportWidget.h"
 #include "ui/onboarding/FirstRunAccessibility.h"
@@ -976,6 +977,56 @@ int main(int argc, char** argv)
     ok &= expect(
         QApplication::focusWidget() == checkRuleSets->focusProxy(),
         "Rule Set Manager should focus its first action when both tables are empty");
+
+    QDialog subscriptionManagerHost;
+    auto* subscriptionsTable = new QTableView(&subscriptionManagerHost);
+    auto* addSubscription = new zarya::ZaryaActionButton(
+        QStringLiteral("Add"), &subscriptionManagerHost);
+    auto* editSubscription = new zarya::ZaryaActionButton(
+        QStringLiteral("Edit"), &subscriptionManagerHost);
+    auto* closeSubscriptions = new zarya::ZaryaActionButton(
+        QStringLiteral("Close"), &subscriptionManagerHost);
+    auto* subscriptionManagerLayout = new QVBoxLayout(&subscriptionManagerHost);
+    subscriptionManagerLayout->addWidget(subscriptionsTable);
+    subscriptionManagerLayout->addWidget(addSubscription);
+    subscriptionManagerLayout->addWidget(editSubscription);
+    subscriptionManagerLayout->addWidget(closeSubscriptions);
+    zarya::configureSubscriptionManagerAccessibility(
+        subscriptionsTable,
+        {addSubscription, editSubscription, closeSubscriptions},
+        QStringLiteral("Subscriptions"));
+    subscriptionManagerHost.show();
+    QCoreApplication::processEvents();
+    ok &= expectAccessible(
+        subscriptionsTable,
+        QAccessible::Table,
+        QStringLiteral("Subscriptions"),
+        "Subscription Manager should expose its table name and role");
+    ok &= expect(
+        QApplication::focusWidget() == subscriptionsTable,
+        "Subscription Manager should initially focus its visible table");
+    const QVector<QWidget*> subscriptionManagerOrder = {
+        addSubscription->focusProxy(),
+        editSubscription->focusProxy(),
+        closeSubscriptions->focusProxy()};
+    ok &= expect(
+        nextOrderedWidget(subscriptionsTable, subscriptionManagerOrder)
+            == addSubscription->focusProxy(),
+        "Subscription Manager should place Add after its table");
+    ok &= expect(
+        nextOrderedWidget(addSubscription->focusProxy(), subscriptionManagerOrder)
+            == editSubscription->focusProxy(),
+        "Subscription Manager actions should retain their visual order");
+
+    subscriptionsTable->hide();
+    zarya::configureSubscriptionManagerAccessibility(
+        subscriptionsTable,
+        {addSubscription, editSubscription, closeSubscriptions},
+        QStringLiteral("Subscriptions"));
+    QCoreApplication::processEvents();
+    ok &= expect(
+        QApplication::focusWidget() == addSubscription->focusProxy(),
+        "Subscription Manager should focus Add when its table is empty");
 
     return ok ? 0 : 1;
 }

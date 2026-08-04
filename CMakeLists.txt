@@ -391,6 +391,7 @@ set(ZARYA_SOURCES
     src/ui/ImportVlessDialog.cpp
     src/ui/SubscriptionDialog.cpp
     src/ui/SubscriptionManagerDialog.cpp
+    src/ui/SubscriptionManagerAccessibility.cpp
     src/ui/RoutingManagerDialog.cpp
     src/ui/RoutingProfileDialog.cpp
     src/ui/RoutingRuleEditorDialog.cpp
@@ -863,6 +864,7 @@ add_executable(zarya_ui_accessibility_test
     src/ui/DiagnosticsPreviewDialog.cpp
     src/ui/GeoDataManagerAccessibility.cpp
     src/ui/RuleSetManagerAccessibility.cpp
+    src/ui/SubscriptionManagerAccessibility.cpp
     src/ui/ImportVlessDialog.cpp
     src/ui/RoutingJsonPreviewDialog.cpp
     src/ui/import/ProfileImportWidget.cpp
