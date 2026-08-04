@@ -108,7 +108,8 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      name. Initial focus prefers the populated table and otherwise New, followed by management
      actions in visual order.
    - DNS profile and server editors use toolkit tabs, forms, selectors, fields, checks, actions,
-     empty states, and feedback; the DNS server table remains a Qt model/view boundary.
+     empty states, and feedback; the DNS server table remains a Qt model/view boundary. The server
+     editor initially focuses its labelled Address field.
    - Core Manager actions, status text, and warnings use the toolkit layer; the core inventory
      table and bounded log text engine remain Qt boundaries. Both native boundaries expose
      purpose-specific accessible names; focus starts on the inventory and follows the action row

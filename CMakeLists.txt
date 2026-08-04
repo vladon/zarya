@@ -874,6 +874,7 @@ add_executable(zarya_ui_accessibility_test
     src/ui/SubscriptionManagerAccessibility.cpp
     src/ui/RoutingManagerAccessibility.cpp
     src/ui/DnsManagerAccessibility.cpp
+    src/ui/DnsServerEditorDialog.cpp
     src/ui/ImportVlessDialog.cpp
     src/ui/RoutingJsonPreviewDialog.cpp
     src/ui/import/ProfileImportWidget.cpp

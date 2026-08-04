@@ -3,6 +3,7 @@
 #include "ui/MainWindowAccessibility.h"
 #include "ui/CoreManagerAccessibility.h"
 #include "ui/DnsManagerAccessibility.h"
+#include "ui/DnsServerEditorDialog.h"
 #include "ui/DiagnosticsPreviewDialog.h"
 #include "ui/GeoDataManagerAccessibility.h"
 #include "ui/ImportVlessDialog.h"
@@ -1261,6 +1262,16 @@ int main(int argc, char** argv)
     ok &= expect(
         betaBanner.focusProxy(),
         "Beta banner should expose Dismiss as its focus target");
+
+    zarya::DnsServerEditorDialog dnsServerDialog(zarya::DnsServer{});
+    dnsServerDialog.show();
+    QCoreApplication::processEvents();
+    QWidget* dnsAddress = findAccessibleWidget(
+        &dnsServerDialog, QAccessible::EditableText, QStringLiteral("Address"));
+    ok &= expect(dnsAddress, "DNS Server editor should expose its address field");
+    ok &= expect(
+        QApplication::focusWidget() == dnsAddress,
+        "DNS Server editor should initially focus Address");
 
     return ok ? 0 : 1;
 }
