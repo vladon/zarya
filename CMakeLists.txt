@@ -422,6 +422,7 @@ set(ZARYA_SOURCES
     src/ui/theme/ThemeTokens.cpp
     src/ui/theme/ThemeManager.cpp
     src/ui/DnsManagerDialog.cpp
+    src/ui/DnsManagerAccessibility.cpp
     src/ui/DnsProfileDialog.cpp
     src/ui/DnsServerEditorDialog.cpp
     src/ui/models/ProfileTableModel.cpp
@@ -867,6 +868,7 @@ add_executable(zarya_ui_accessibility_test
     src/ui/RuleSetManagerAccessibility.cpp
     src/ui/SubscriptionManagerAccessibility.cpp
     src/ui/RoutingManagerAccessibility.cpp
+    src/ui/DnsManagerAccessibility.cpp
     src/ui/ImportVlessDialog.cpp
     src/ui/RoutingJsonPreviewDialog.cpp
     src/ui/import/ProfileImportWidget.cpp
