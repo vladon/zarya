@@ -206,6 +206,7 @@ DnsProfileDialog::DnsProfileDialog(const DnsProfile& profile, bool readOnly, QWi
         m_disableFallbackIfMatchCheck->setEnabled(false);
     }
     refreshServersTable();
+    m_nameEdit->setFocus(Qt::OtherFocusReason);
 }
 
 DnsProfile DnsProfileDialog::profile() const
