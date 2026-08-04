@@ -4,6 +4,7 @@
 #include "domain/RoutingMode.h"
 #include "routing/XrayRoutingGenerator.h"
 #include "ui/RoutingJsonPreviewDialog.h"
+#include "ui/RoutingManagerAccessibility.h"
 #include "ui/RoutingProfileDialog.h"
 #include "ui/desktopapp/UiMessagePresenter.h"
 #include "ui/desktopapp/ZaryaControls.h"
@@ -80,6 +81,16 @@ RoutingManagerDialog::RoutingManagerDialog(RoutingManager& manager,
     layout->addWidget(m_table);
     layout->addLayout(buttons);
     refreshTable();
+    configureRoutingManagerAccessibility(
+        m_table,
+        {newButton,
+         editButton,
+         duplicateButton,
+         deleteButton,
+         setActiveButton,
+         previewButton,
+         closeButton},
+        tr("Routing Profiles"));
 }
 
 void RoutingManagerDialog::refreshTable()
