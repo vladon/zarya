@@ -125,7 +125,9 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      tables skipped in keyboard order.
    - Backup export/import types, category options, mode selectors, paths, summary text, warnings,
      confirmations, and actions use the toolkit layer; the import preview table and native file
-     pickers remain Qt/platform boundaries.
+     pickers remain Qt/platform boundaries. The preview table has a purpose-specific accessible
+     name; focus starts on Browse before an archive is loaded and moves to the preview after a
+     successful load, then follows the import settings and action order.
    - Diagnostics redaction and include options, output path, preview context, multi-action result
      feedback, and actions use the toolkit layer; the preview file list and native save/folder
      integration remain Qt/platform boundaries. The read-only preview file list has a
