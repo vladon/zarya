@@ -1,4 +1,5 @@
 #include "ui/BackupImportAccessibility.h"
+#include "ui/BetaBannerWidget.h"
 #include "ui/MainWindowAccessibility.h"
 #include "ui/CoreManagerAccessibility.h"
 #include "ui/DnsManagerAccessibility.h"
@@ -1252,6 +1253,14 @@ int main(int argc, char** argv)
     ok &= expect(
         QApplication::focusWidget() == coreManager,
         "Readiness should initially focus Open Core Manager");
+
+    zarya::BetaBannerWidget betaBanner;
+    ok &= expect(
+        !betaBanner.accessibleName().isEmpty(),
+        "Beta banner should expose its warning text as an accessible name");
+    ok &= expect(
+        betaBanner.focusProxy(),
+        "Beta banner should expose Dismiss as its focus target");
 
     return ok ? 0 : 1;
 }

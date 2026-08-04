@@ -39,8 +39,10 @@ BetaBannerWidget::BetaBannerWidget(QWidget* parent)
         bannerText = tr("Zarya beta — experimental features may break networking. "
                         "Use Diagnostics Bundle when reporting issues.");
     }
+    setAccessibleName(bannerText);
     auto* label = new ZaryaBodyText(bannerText, this);
     auto* dismiss = new ZaryaActionButton(tr("Dismiss"), this);
+    setFocusProxy(dismiss);
     connect(dismiss, &ZaryaActionButton::clicked, this, [this]() {
         AppSettings::instance().setDismissBetaBanner(true);
         hide();

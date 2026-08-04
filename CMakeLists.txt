@@ -868,6 +868,7 @@ add_executable(zarya_ui_accessibility_test
     src/ui/DiagnosticsPreviewDialog.cpp
     src/ui/GeoDataManagerAccessibility.cpp
     src/ui/RuleSetManagerAccessibility.cpp
+    src/ui/BetaBannerWidget.cpp
     src/ui/ReadinessDialog.cpp
     src/ui/SafeExitDialog.cpp
     src/ui/SubscriptionManagerAccessibility.cpp
