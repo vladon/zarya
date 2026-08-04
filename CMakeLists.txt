@@ -407,6 +407,7 @@ set(ZARYA_SOURCES
     src/ui/AppUpdateDialog.cpp
     src/ui/BackupExportDialog.cpp
     src/ui/BackupImportDialog.cpp
+    src/ui/BackupImportAccessibility.cpp
     src/ui/DiagnosticsDialog.cpp
     src/ui/DiagnosticsPreviewDialog.cpp
     src/ui/ReadinessDialog.cpp
@@ -862,6 +863,7 @@ add_test(NAME ui_animation_policy COMMAND zarya_ui_animation_policy_test)
 
 add_executable(zarya_ui_accessibility_test
     tests/ui_accessibility_test.cpp
+    src/ui/BackupImportAccessibility.cpp
     src/ui/CoreManagerAccessibility.cpp
     src/ui/DiagnosticsPreviewDialog.cpp
     src/ui/GeoDataManagerAccessibility.cpp

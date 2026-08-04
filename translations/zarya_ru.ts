@@ -134,6 +134,9 @@ Install and restart now?</source><translation>Zarya закроется на вр
         <source>Included</source>
         <translation>Включено</translation></message>
     <message>
+        <source>Backup import preview</source>
+        <translation>Предварительный просмотр импорта резервной копии</translation></message>
+    <message>
         <source>Browse…</source>
         <translation>Обзор…</translation></message>
     <message>

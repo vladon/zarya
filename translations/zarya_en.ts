@@ -148,6 +148,10 @@ Install and restart now?</source><translation type="unfinished"></translation></
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Backup import preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Browse…</source>
         <translation type="unfinished"></translation>
     </message>

@@ -1,3 +1,4 @@
+#include "ui/BackupImportAccessibility.h"
 #include "ui/MainWindowAccessibility.h"
 #include "ui/CoreManagerAccessibility.h"
 #include "ui/DnsManagerAccessibility.h"
@@ -1128,6 +1129,100 @@ int main(int argc, char** argv)
     ok &= expect(
         QApplication::focusWidget() == newDnsProfile->focusProxy(),
         "DNS Manager should focus New when its table is empty");
+
+    QDialog backupImportHost;
+    auto* backupPreview = new QTableWidget(1, 3, &backupImportHost);
+    auto* profilesMode = new zarya::ZaryaSelector(&backupImportHost);
+    auto* subscriptionsMode = new zarya::ZaryaSelector(&backupImportHost);
+    auto* routingMode = new zarya::ZaryaSelector(&backupImportHost);
+    auto* dnsMode = new zarya::ZaryaSelector(&backupImportHost);
+    auto* settingsMode = new zarya::ZaryaSelector(&backupImportHost);
+    for (zarya::ZaryaSelector* selector : {
+             profilesMode, subscriptionsMode, routingMode, dnsMode, settingsMode}) {
+        selector->setItems(
+            {{QStringLiteral("merge"), QStringLiteral("Merge")}},
+            QStringLiteral("merge"));
+    }
+    auto* machineSpecificSettings = new zarya::ZaryaCheckBox(
+        QStringLiteral("Import machine-specific settings"), &backupImportHost);
+    auto* browseBackup = new zarya::ZaryaActionButton(
+        QStringLiteral("Browse"), &backupImportHost);
+    auto* importBackup = new zarya::ZaryaActionButton(
+        QStringLiteral("Import Selected"), &backupImportHost);
+    auto* cancelBackupImport = new zarya::ZaryaActionButton(
+        QStringLiteral("Cancel"), &backupImportHost);
+    auto* backupImportLayout = new QVBoxLayout(&backupImportHost);
+    backupImportLayout->addWidget(backupPreview);
+    backupImportLayout->addWidget(profilesMode);
+    backupImportLayout->addWidget(subscriptionsMode);
+    backupImportLayout->addWidget(routingMode);
+    backupImportLayout->addWidget(dnsMode);
+    backupImportLayout->addWidget(settingsMode);
+    backupImportLayout->addWidget(machineSpecificSettings);
+    backupImportLayout->addWidget(browseBackup);
+    backupImportLayout->addWidget(importBackup);
+    backupImportLayout->addWidget(cancelBackupImport);
+    zarya::configureBackupImportAccessibility(
+        backupPreview,
+        {profilesMode, subscriptionsMode, routingMode, dnsMode, settingsMode},
+        machineSpecificSettings,
+        browseBackup,
+        importBackup,
+        cancelBackupImport,
+        QStringLiteral("Backup import preview"),
+        false);
+    backupImportHost.show();
+    QCoreApplication::processEvents();
+    ok &= expectAccessible(
+        backupPreview,
+        QAccessible::Table,
+        QStringLiteral("Backup import preview"),
+        "Backup Import should expose its preview table name and role");
+    ok &= expect(
+        QApplication::focusWidget() == browseBackup->focusProxy(),
+        "Backup Import should initially focus Browse without a preview");
+    zarya::configureBackupImportAccessibility(
+        backupPreview,
+        {profilesMode, subscriptionsMode, routingMode, dnsMode, settingsMode},
+        machineSpecificSettings,
+        browseBackup,
+        importBackup,
+        cancelBackupImport,
+        QStringLiteral("Backup import preview"),
+        true);
+    QCoreApplication::processEvents();
+    ok &= expect(
+        QApplication::focusWidget() == backupPreview,
+        "Backup Import should focus the preview table after loading an archive");
+    const QVector<QWidget*> backupImportOrder = {
+        profilesMode->focusProxy(),
+        subscriptionsMode->focusProxy(),
+        routingMode->focusProxy(),
+        dnsMode->focusProxy(),
+        settingsMode->focusProxy(),
+        machineSpecificSettings->focusProxy(),
+        browseBackup->focusProxy(),
+        importBackup->focusProxy(),
+        cancelBackupImport->focusProxy()};
+    ok &= expect(
+        nextOrderedWidget(backupPreview, backupImportOrder) == profilesMode->focusProxy(),
+        "Backup Import should place mode selectors after the preview");
+    ok &= expect(
+        nextOrderedWidget(settingsMode->focusProxy(), backupImportOrder)
+            == machineSpecificSettings->focusProxy(),
+        "Backup Import should place machine-specific settings after modes");
+    ok &= expect(
+        nextOrderedWidget(machineSpecificSettings->focusProxy(), backupImportOrder)
+            == browseBackup->focusProxy(),
+        "Backup Import should place Browse after import settings");
+    ok &= expect(
+        nextOrderedWidget(browseBackup->focusProxy(), backupImportOrder)
+            == importBackup->focusProxy(),
+        "Backup Import should place Import after Browse");
+    ok &= expect(
+        nextOrderedWidget(importBackup->focusProxy(), backupImportOrder)
+            == cancelBackupImport->focusProxy(),
+        "Backup Import should place Cancel after Import");
 
     return ok ? 0 : 1;
 }

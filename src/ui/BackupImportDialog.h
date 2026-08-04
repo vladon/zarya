@@ -36,6 +36,7 @@ private Q_SLOTS:
 private:
     void clearPreview();
     void showPreview(const BackupManifest& manifest);
+    void configureAccessibility(bool previewAvailable);
     ImportMode modeFromSelector(ZaryaSelector* selector) const;
     void cleanupStaging();
 
@@ -54,7 +55,9 @@ private:
     ZaryaSelector* m_routingMode = nullptr;
     ZaryaSelector* m_dnsMode = nullptr;
     ZaryaSelector* m_settingsMode = nullptr;
+    ZaryaActionButton* m_browseButton = nullptr;
     ZaryaActionButton* m_importButton = nullptr;
+    ZaryaActionButton* m_cancelButton = nullptr;
 
     QString m_archivePath;
     QString m_stagingDir;

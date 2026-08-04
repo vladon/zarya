@@ -2,6 +2,7 @@
 
 #include "backup/BackupCategory.h"
 #include "backup/BackupValidator.h"
+#include "ui/BackupImportAccessibility.h"
 #include "ui/desktopapp/UiMessagePresenter.h"
 #include "ui/desktopapp/ZaryaFormControls.h"
 #include "ui/desktopapp/ZaryaSelector.h"
@@ -37,8 +38,8 @@ BackupImportDialog::BackupImportDialog(BackupManager& manager, bool coreRunning,
     m_table->horizontalHeader()->setStretchLastSection(true);
     m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
-    auto* browseButton = new ZaryaActionButton(tr("Browse…"), this);
-    connect(browseButton, &ZaryaActionButton::clicked, this, &BackupImportDialog::onBrowse);
+    m_browseButton = new ZaryaActionButton(tr("Browse…"), this);
+    connect(m_browseButton, &ZaryaActionButton::clicked, this, &BackupImportDialog::onBrowse);
 
     const auto modeKey = [](ImportMode mode) {
         return QString::number(static_cast<int>(mode));
@@ -80,15 +81,15 @@ BackupImportDialog::BackupImportDialog(BackupManager& manager, bool coreRunning,
 
     m_importButton = new ZaryaActionButton(tr("Import Selected"), this);
     m_importButton->setEnabled(false);
-    auto* cancelButton = new ZaryaActionButton(tr("Cancel"), this);
+    m_cancelButton = new ZaryaActionButton(tr("Cancel"), this);
     connect(m_importButton, &ZaryaActionButton::clicked, this, &BackupImportDialog::onImport);
-    connect(cancelButton, &ZaryaActionButton::clicked, this, &QDialog::reject);
+    connect(m_cancelButton, &ZaryaActionButton::clicked, this, &QDialog::reject);
 
     auto* buttons = new QHBoxLayout;
-    buttons->addWidget(browseButton);
+    buttons->addWidget(m_browseButton);
     buttons->addStretch();
     buttons->addWidget(m_importButton);
-    buttons->addWidget(cancelButton);
+    buttons->addWidget(m_cancelButton);
 
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(24, 24, 24, 24);
@@ -99,6 +100,8 @@ BackupImportDialog::BackupImportDialog(BackupManager& manager, bool coreRunning,
     layout->addWidget(modesSection);
     layout->addWidget(m_machineSpecificCheck);
     layout->addLayout(buttons);
+
+    configureAccessibility(false);
 
     if (m_killSwitchActive || m_coreRunning) {
         m_importButton->setEnabled(false);
@@ -142,6 +145,7 @@ void BackupImportDialog::clearPreview()
     m_table->setRowCount(0);
     m_importButton->setEnabled(false);
     m_warningsLabel->clear();
+    configureAccessibility(false);
 }
 
 void BackupImportDialog::showPreview(const BackupManifest& manifest)
@@ -196,6 +200,21 @@ void BackupImportDialog::showPreview(const BackupManifest& manifest)
     if (!m_killSwitchActive && !m_coreRunning) {
         m_importButton->setEnabled(true);
     }
+
+    configureAccessibility(true);
+}
+
+void BackupImportDialog::configureAccessibility(bool previewAvailable)
+{
+    configureBackupImportAccessibility(
+        m_table,
+        {m_profilesMode, m_subscriptionsMode, m_routingMode, m_dnsMode, m_settingsMode},
+        m_machineSpecificCheck,
+        m_browseButton,
+        m_importButton,
+        m_cancelButton,
+        tr("Backup import preview"),
+        previewAvailable);
 }
 
 void BackupImportDialog::onBrowse()
