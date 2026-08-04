@@ -80,6 +80,8 @@ RoutingRuleEditorDialog::RoutingRuleEditorDialog(const RoutingRule& rule, bool r
     layout->addWidget(m_validationMessage);
     layout->addWidget(buttons);
     resize(620, 430);
+
+    m_actionCombo->setFocus(Qt::OtherFocusReason);
 }
 
 RoutingRule RoutingRuleEditorDialog::rule() const

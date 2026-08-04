@@ -101,7 +101,9 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      name. Initial focus prefers the populated table and otherwise New, followed by management
      actions in visual order. Routing profile and rule editing
      use toolkit fields, selectors, sections, actions, inline validation, and empty states; the
-     rules table remains a Qt model/view boundary. Routing JSON preview uses a purpose-labelled,
+     rules table remains a Qt model/view boundary. Routing rule editing starts on its Action
+     selector while invalid empty Values retains corrective focus. Routing JSON preview uses a
+     purpose-labelled,
      initially focused read-only toolkit text area followed by its Close action.
    - DNS Manager actions, empty state, validation confirmations, and feedback use the toolkit
      layer; its profile table remains a Qt model/view boundary with a purpose-specific accessible
