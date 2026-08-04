@@ -162,6 +162,7 @@ RoutingProfileDialog::RoutingProfileDialog(const RoutingProfile& profile, bool r
     layout->addWidget(m_validationMessage);
     layout->addWidget(actions);
     refreshRulesTable();
+    m_nameEdit->setFocus(Qt::OtherFocusReason);
 }
 
 RoutingProfile RoutingProfileDialog::profile() const
