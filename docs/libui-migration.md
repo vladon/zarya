@@ -155,7 +155,8 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      Check Now and the action row follows a deterministic keyboard order. Its complete
      user-facing string set is synchronized in EN/RU catalogs.
    - Stable/beta/experimental banner text and dismissal use the toolkit layer, with a
-     theme-aware painted warning surface and unchanged release-channel policy.
+     theme-aware painted warning surface and unchanged release-channel policy. The warning text
+     is exposed as the banner's accessible name and its Dismiss action is the focus target.
    - Settings, including gated TUN, helper, kill-switch, update, routing, DNS, startup, and
      desktop behavior controls, use shared toolkit form primitives and feedback while preserving
      the existing `FeatureGate`, persistence, native file pickers, and recovery behavior.
