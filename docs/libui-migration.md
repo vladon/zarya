@@ -83,7 +83,9 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      the shared toolkit fields, checkbox, multiline input, action buttons, empty/update states,
      and message presenter; the subscription table remains a Qt model/view boundary with a
      purpose-specific accessible name. Initial focus prefers the populated table and otherwise
-     Add, followed by the remaining actions in visual order. General,
+     Add, followed by the remaining actions in visual order. Subscription editing is covered by
+     the headless accessibility contract, including Name/URL labels, initial Name focus, and
+     assistive Cancel activation. General,
      desktop-behavior, and startup settings use toolkit sections, selectors, checks, text, and
      number fields while retaining the existing settings persistence and autostart backend.
      Stable core, system-proxy, and testing settings also use toolkit fields, selectors, actions,

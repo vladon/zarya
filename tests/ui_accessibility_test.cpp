@@ -13,6 +13,7 @@
 #include "ui/ReadinessDialog.h"
 #include "ui/SafeExitDialog.h"
 #include "ui/SubscriptionManagerAccessibility.h"
+#include "ui/SubscriptionDialog.h"
 #include "ui/RoutingJsonPreviewDialog.h"
 #include "ui/import/ProfileImportWidget.h"
 #include "ui/onboarding/FirstRunAccessibility.h"
@@ -33,6 +34,7 @@
 #include <QStandardPaths>
 #include <QTableWidget>
 #include <QTableView>
+#include <QTimer>
 #include <QVBoxLayout>
 #include <QWidget>
 #include <iostream>
@@ -470,6 +472,46 @@ int main(int argc, char** argv)
         QCoreApplication::processEvents();
         ok &= expect(profileRejected, "assistive Cancel should reject the profile dialog");
     }
+
+    zarya::Subscription subscription;
+    QTimer::singleShot(0, [&ok] {
+        QTimer::singleShot(0, [&ok] {
+            auto* subscriptionDialog = qobject_cast<QDialog*>(QApplication::activeModalWidget());
+            if (!expect(subscriptionDialog, "subscription editor should become modal")) {
+                return;
+            }
+            ok &= expectAccessible(
+                subscriptionDialog,
+                QAccessible::Dialog,
+                QStringLiteral("Subscription"),
+                "subscription editor should expose its dialog role and name");
+            QWidget* subscriptionName = findAccessibleWidget(
+                subscriptionDialog, QAccessible::EditableText, QStringLiteral("Name"));
+            QWidget* subscriptionUrl = findAccessibleWidget(
+                subscriptionDialog, QAccessible::EditableText, QStringLiteral("URL"));
+            QWidget* subscriptionCancel = findAccessibleWidget(
+                subscriptionDialog, QAccessible::Button, QStringLiteral("Cancel"));
+            ok &= expect(subscriptionName, "subscription editor should expose its Name field");
+            ok &= expect(subscriptionUrl, "subscription editor should expose its URL field");
+            ok &= expect(subscriptionCancel, "subscription editor should expose its Cancel action");
+            ok &= expect(
+                QApplication::focusWidget() == subscriptionName,
+                "subscription editor should initially focus Name");
+            QAccessibleInterface* subscriptionCancelInterface =
+                accessibleInterface(subscriptionCancel);
+            QAccessibleActionInterface* subscriptionCancelActions = subscriptionCancelInterface
+                ? subscriptionCancelInterface->actionInterface()
+                : nullptr;
+            ok &= expect(subscriptionCancelActions,
+                         "subscription Cancel should expose an accessibility action");
+            if (subscriptionCancelActions) {
+                subscriptionCancelActions->doAction(QAccessibleActionInterface::pressAction());
+            }
+        });
+    });
+    ok &= expect(
+        !zarya::SubscriptionDialog::editSubscription(&host, subscription),
+        "assistive Cancel should reject the subscription editor");
 
     zarya::ImportVlessDialog importDialog;
     importDialog.show();
