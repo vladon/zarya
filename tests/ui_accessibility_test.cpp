@@ -869,8 +869,7 @@ int main(int argc, char** argv)
         {checkVersions, updateSelected},
         QStringLiteral("Installed cores"),
         QStringLiteral("Core manager log"));
-    coreManagerHost.show();
-    QCoreApplication::processEvents();
+    openDialogAndProcessDeferredFocus(&coreManagerHost);
     ok &= expectAccessible(
         coreTable,
         QAccessible::Table,
@@ -936,8 +935,7 @@ int main(int argc, char** argv)
         {checkGeoStatus, closeGeoManager},
         QStringLiteral("Geo data files"),
         QStringLiteral("Geo data log"));
-    geoDataManagerHost.show();
-    QCoreApplication::processEvents();
+    openDialogAndProcessDeferredFocus(&geoDataManagerHost);
     ok &= expectAccessible(
         geoTable,
         QAccessible::Table,
@@ -1002,8 +1000,7 @@ int main(int argc, char** argv)
         QStringLiteral("Required rule sets"),
         QStringLiteral("All rule sets"),
         QStringLiteral("Rule set log"));
-    ruleSetManagerHost.show();
-    QCoreApplication::processEvents();
+    openDialogAndProcessDeferredFocus(&ruleSetManagerHost);
     ok &= expectAccessible(
         requiredRuleSets,
         QAccessible::Table,
@@ -1086,8 +1083,7 @@ int main(int argc, char** argv)
         subscriptionsTable,
         {addSubscription, editSubscription, closeSubscriptions},
         QStringLiteral("Subscriptions"));
-    subscriptionManagerHost.show();
-    QCoreApplication::processEvents();
+    openDialogAndProcessDeferredFocus(&subscriptionManagerHost);
     ok &= expectAccessible(
         subscriptionsTable,
         QAccessible::Table,
@@ -1136,8 +1132,7 @@ int main(int argc, char** argv)
         routingProfiles,
         {newRoutingProfile, editRoutingProfile, closeRoutingManager},
         QStringLiteral("Routing Profiles"));
-    routingManagerHost.show();
-    QCoreApplication::processEvents();
+    openDialogAndProcessDeferredFocus(&routingManagerHost);
     ok &= expectAccessible(
         routingProfiles,
         QAccessible::Table,
@@ -1186,8 +1181,7 @@ int main(int argc, char** argv)
         dnsProfiles,
         {newDnsProfile, editDnsProfile, closeDnsManager},
         QStringLiteral("DNS Profiles"));
-    dnsManagerHost.show();
-    QCoreApplication::processEvents();
+    openDialogAndProcessDeferredFocus(&dnsManagerHost);
     ok &= expectAccessible(
         dnsProfiles,
         QAccessible::Table,

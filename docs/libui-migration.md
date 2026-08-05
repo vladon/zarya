@@ -197,7 +197,9 @@ and remains required before a release, rather than blocking every migration PR.
   are verified. Shared form controls have an automated headless accessibility contract covering
   roles, labelled fields and selectors, focus proxies, and assistive activation. The contract
   also opens representative preview, recovery, and backup dialogs through their modal lifecycle
-  before checking their initial focus, order, and assistive actions.
+  before checking their initial focus, order, and assistive actions. Manager initial focus is
+  scheduled after the host window is shown, including the Core, Geo Data, Rule Set, Routing,
+  DNS, and Subscription workflows.
 - Light, dark, and system themes update both Qt hosts and `lib_ui` content without restart unless
   the existing setting explicitly requires one.
 - Semantic state always includes text; color is supplementary.

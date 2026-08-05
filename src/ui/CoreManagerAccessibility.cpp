@@ -1,4 +1,5 @@
 #include "ui/CoreManagerAccessibility.h"
+#include "ui/ManagerAccessibility.h"
 
 #include <QPlainTextEdit>
 #include <QTableWidget>
@@ -22,7 +23,7 @@ void configureCoreManagerAccessibility(
         previous = action;
     }
     QWidget::setTabOrder(previous, logView);
-    table->setFocus(Qt::OtherFocusReason);
+    scheduleManagerInitialFocus(table);
 }
 
 } // namespace zarya

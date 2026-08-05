@@ -1,4 +1,5 @@
 #include "ui/GeoDataManagerAccessibility.h"
+#include "ui/ManagerAccessibility.h"
 
 #include <QPlainTextEdit>
 #include <QTableWidget>
@@ -31,7 +32,7 @@ void configureGeoDataManagerAccessibility(
         QWidget::setTabOrder(previous, action);
         previous = action;
     }
-    sourceSelector->setFocus(Qt::OtherFocusReason);
+    scheduleManagerInitialFocus(sourceSelector);
 }
 
 } // namespace zarya
