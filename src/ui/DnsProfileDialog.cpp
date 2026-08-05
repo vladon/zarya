@@ -16,6 +16,7 @@
 #include <QJsonDocument>
 #include <QStackedLayout>
 #include <QTableWidget>
+#include <QTimer>
 #include <QVBoxLayout>
 
 #include "ui/qt_object_factory.h"
@@ -206,7 +207,9 @@ DnsProfileDialog::DnsProfileDialog(const DnsProfile& profile, bool readOnly, QWi
         m_disableFallbackIfMatchCheck->setEnabled(false);
     }
     refreshServersTable();
-    m_nameEdit->setFocus(Qt::OtherFocusReason);
+    QTimer::singleShot(0, m_nameEdit, [this] {
+        m_nameEdit->setFocus(Qt::OtherFocusReason);
+    });
 }
 
 DnsProfile DnsProfileDialog::profile() const
