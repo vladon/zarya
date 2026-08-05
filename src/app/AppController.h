@@ -8,6 +8,8 @@
 #include "runtime/singbox/SingBoxConfigGenerator.h"
 
 #include <QObject>
+#include <QElapsedTimer>
+#include <QTimer>
 #include <functional>
 #include <memory>
 
@@ -90,6 +92,8 @@ private:
     bool confirmSingBoxConfigWarningsIfNeeded(const SingBoxConfigGenerationResult& result);
     bool confirmRuleSetsIfNeeded(const RoutingProfile& routingProfile,
                                  const DnsProfile& dnsProfile);
+    void waitForSystemProxyReady();
+    void checkSystemProxyReady();
     void setupRuntimeBackends();
 
     std::unique_ptr<RuntimeBackendFactory> m_runtimeFactory;
@@ -110,6 +114,9 @@ private:
     std::function<void()> m_openRuleSetManager;
     bool m_lastStartWasAutostart = false;
     RuntimeState m_runtimeState = RuntimeState::Stopped;
+    QElapsedTimer m_systemProxyReadyElapsed;
+    QTimer m_systemProxyReadyTimer;
+    static constexpr int kSystemProxyReadyTimeoutMs = 5000;
 };
 
 } // namespace zarya
