@@ -1,4 +1,5 @@
 #include "ui/SubscriptionManagerAccessibility.h"
+#include "ui/ManagerAccessibility.h"
 
 #include <QTableView>
 #include <QWidget>
@@ -21,7 +22,7 @@ void configureSubscriptionManagerAccessibility(
     QWidget* initialFocus = !table->isHidden()
         ? static_cast<QWidget*>(table)
         : !actions.isEmpty() ? actions.front() : static_cast<QWidget*>(table);
-    initialFocus->setFocus(Qt::OtherFocusReason);
+    scheduleManagerInitialFocus(initialFocus);
 }
 
 } // namespace zarya

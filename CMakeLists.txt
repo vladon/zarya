@@ -386,6 +386,7 @@ set(ZARYA_SOURCES
     src/packaging/PortableMigration.cpp
     src/ui/MainWindow.cpp
     src/ui/MainWindowAccessibility.cpp
+    src/ui/ManagerAccessibility.cpp
     src/ui/TrayController.cpp
     src/ui/SettingsDialog.cpp
     src/ui/ImportVlessDialog.cpp
@@ -863,6 +864,7 @@ add_test(NAME ui_animation_policy COMMAND zarya_ui_animation_policy_test)
 
 add_executable(zarya_ui_accessibility_test
     tests/ui_accessibility_test.cpp
+    src/ui/ManagerAccessibility.cpp
     src/backup/BackupCategory.cpp
     src/backup/BackupManager.h
     src/ui/BackupImportAccessibility.cpp

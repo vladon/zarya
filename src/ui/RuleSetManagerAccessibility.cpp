@@ -1,4 +1,5 @@
 #include "ui/RuleSetManagerAccessibility.h"
+#include "ui/ManagerAccessibility.h"
 
 #include <QPlainTextEdit>
 #include <QTableWidget>
@@ -32,7 +33,7 @@ void configureRuleSetManagerAccessibility(
         : !allTable->isHidden()
             ? static_cast<QWidget*>(allTable)
             : !actions.isEmpty() ? actions.front() : static_cast<QWidget*>(logView);
-    initialFocus->setFocus(Qt::OtherFocusReason);
+    scheduleManagerInitialFocus(initialFocus);
 }
 
 } // namespace zarya
