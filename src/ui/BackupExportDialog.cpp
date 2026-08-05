@@ -10,6 +10,7 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QHBoxLayout>
+#include <QTimer>
 #include <QVBoxLayout>
 
 namespace zarya {
@@ -89,7 +90,9 @@ BackupExportDialog::BackupExportDialog(BackupManager& manager,
     layout->addLayout(outputRow);
     layout->addWidget(actions);
 
-    m_backupType->focusProxy()->setFocus(Qt::OtherFocusReason);
+    QTimer::singleShot(0, m_backupType, [this] {
+        m_backupType->focusProxy()->setFocus(Qt::OtherFocusReason);
+    });
 
     connect(m_backupType, &ZaryaRadioGroup::valueChanged, this,
             [this](int value) {
