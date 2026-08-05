@@ -4,6 +4,7 @@
 #include "diagnostics/DiagnosticsOptions.h"
 
 #include <QDialog>
+#include <QShowEvent>
 
 namespace zarya {
 
@@ -17,6 +18,8 @@ public:
     DiagnosticsPreviewDialog(const DiagnosticsPreviewResult& preview, QWidget* parent = nullptr);
 
 private:
+    void showEvent(QShowEvent* event) override;
+
     ZaryaBodyText* m_redactionLabel = nullptr;
     ZaryaBodyText* m_warningsLabel = nullptr;
     ZaryaTextArea* m_filesList = nullptr;

@@ -195,7 +195,9 @@ and remains required before a release, rather than blocking every migration PR.
 - English and Russian strings are complete and fit at common display scaling.
 - Tab order, keyboard activation, focus visibility, accessible names, and screen-reader roles
   are verified. Shared form controls have an automated headless accessibility contract covering
-  roles, labelled fields and selectors, focus proxies, and assistive activation.
+  roles, labelled fields and selectors, focus proxies, and assistive activation. The contract
+  also opens representative preview, recovery, and backup dialogs through their modal lifecycle
+  before checking their initial focus, order, and assistive actions.
 - Light, dark, and system themes update both Qt hosts and `lib_ui` content without restart unless
   the existing setting explicitly requires one.
 - Semantic state always includes text; color is supplementary.

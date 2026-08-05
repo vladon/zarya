@@ -1,5 +1,7 @@
 #include "ui/BackupImportAccessibility.h"
+#include "backup/BackupManager.h"
 #include "ui/BetaBannerWidget.h"
+#include "ui/BackupExportDialog.h"
 #include "ui/MainWindowAccessibility.h"
 #include "ui/CoreManagerAccessibility.h"
 #include "ui/DnsManagerAccessibility.h"
@@ -30,6 +32,7 @@
 #include <QApplication>
 #include <QCoreApplication>
 #include <QDialog>
+#include <QEventLoop>
 #include <QPlainTextEdit>
 #include <QStandardPaths>
 #include <QTableWidget>
@@ -65,6 +68,12 @@ bool expect(bool condition, const char* message)
         std::cerr << message << '\n';
     }
     return condition;
+}
+
+bool focusIsWithin(QWidget* widget)
+{
+    QWidget* focused = QApplication::focusWidget();
+    return widget && focused && (focused == widget || widget->isAncestorOf(focused));
 }
 
 QAccessibleInterface* accessibleInterface(QWidget* widget)
@@ -126,7 +135,35 @@ QWidget* nextOrderedWidget(QWidget* widget, const QVector<QWidget*>& orderedWidg
     return nullptr;
 }
 
+void openDialogAndProcessDeferredFocus(QDialog* dialog)
+{
+    dialog->open();
+    QEventLoop eventLoop;
+    QTimer::singleShot(20, &eventLoop, &QEventLoop::quit);
+    eventLoop.exec();
+    QCoreApplication::processEvents();
+}
+
 } // namespace
+
+namespace zarya {
+
+// BackupExportDialog's accessibility fixture never exports an archive. Keep its
+// production constructor usable without linking the archive/persistence stack.
+BackupManager::BackupManager(QObject* parent)
+    : QObject(parent)
+{
+}
+
+bool BackupManager::exportBackup(const BackupExportOptions&, QString* error)
+{
+    if (error) {
+        error->clear();
+    }
+    return true;
+}
+
+} // namespace zarya
 
 int main(int argc, char** argv)
 {
@@ -712,8 +749,7 @@ int main(int argc, char** argv)
 
     zarya::RoutingJsonPreviewDialog routingPreview(
         QStringLiteral("{\"routing\":{}}"));
-    routingPreview.show();
-    QCoreApplication::processEvents();
+    openDialogAndProcessDeferredFocus(&routingPreview);
     ok &= expectAccessible(
         &routingPreview,
         QAccessible::Dialog,
@@ -732,7 +768,7 @@ int main(int argc, char** argv)
         routingJsonInterface && routingJsonInterface->state().readOnly,
         "routing preview JSON should remain read-only");
     ok &= expect(
-        QApplication::focusWidget() == routingJson,
+        focusIsWithin(routingJson),
         "routing preview should initially focus its JSON");
     ok &= expect(
         routingJson && nextOrderedWidget(routingJson, {routingClose}) == routingClose,
@@ -764,8 +800,7 @@ int main(int argc, char** argv)
         QStringLiteral("logs/zarya.log")};
     diagnosticsResult.redactionMode = QStringLiteral("standard");
     zarya::DiagnosticsPreviewDialog diagnosticsPreview(diagnosticsResult);
-    diagnosticsPreview.show();
-    QCoreApplication::processEvents();
+    openDialogAndProcessDeferredFocus(&diagnosticsPreview);
     ok &= expectAccessible(
         &diagnosticsPreview,
         QAccessible::Dialog,
@@ -788,7 +823,7 @@ int main(int argc, char** argv)
         diagnosticsFilesInterface && diagnosticsFilesInterface->state().readOnly,
         "diagnostics preview file list should remain read-only");
     ok &= expect(
-        QApplication::focusWidget() == diagnosticsFiles,
+        focusIsWithin(diagnosticsFiles),
         "diagnostics preview should initially focus its file list");
     ok &= expect(
         diagnosticsFiles
@@ -1277,25 +1312,103 @@ int main(int argc, char** argv)
             == cancelBackupImport->focusProxy(),
         "Backup Import should place Cancel after Import");
 
+    zarya::BackupManager backupManager;
+    zarya::BackupExportDialog backupExportDialog(backupManager, {});
+    openDialogAndProcessDeferredFocus(&backupExportDialog);
+    ok &= expectAccessible(
+        &backupExportDialog,
+        QAccessible::Dialog,
+        QStringLiteral("Export Backup"),
+        "Backup Export should expose its dialog role and name");
+    QWidget* backupType = findAccessibleWidget(
+        &backupExportDialog,
+        QAccessible::RadioButton,
+        QStringLiteral("Backup type: Full configuration backup"));
+    QWidget* backupOutput = findAccessibleWidget(
+        &backupExportDialog, QAccessible::EditableText, QStringLiteral("Output"));
+    ok &= expect(backupType, "Backup Export should expose its labelled backup type");
+    ok &= expect(backupOutput, "Backup Export should expose its labelled output field");
+    ok &= expect(
+        QApplication::focusWidget() == backupType,
+        "Backup Export should focus its selected backup type after opening");
+    ok &= expect(
+        backupType && nextOrderedWidget(backupType, {backupOutput}) == backupOutput,
+        "Backup Export should place output after its backup type choices");
+    backupExportDialog.reject();
+
     zarya::SafeExitDialog safeExitDialog;
-    safeExitDialog.show();
-    QCoreApplication::processEvents();
+    openDialogAndProcessDeferredFocus(&safeExitDialog);
+    ok &= expectAccessible(
+        &safeExitDialog,
+        QAccessible::Dialog,
+        QStringLiteral("Exit Zarya"),
+        "Safe Exit should expose its dialog role and name");
     QWidget* stopRuntime = findAccessibleWidget(
         &safeExitDialog, QAccessible::CheckBox, QStringLiteral("Stop runtime"));
+    QWidget* safeExit = findAccessibleWidget(
+        &safeExitDialog, QAccessible::Button, QStringLiteral("Exit Safely"));
     ok &= expect(stopRuntime, "Safe Exit should expose the stop-runtime checkbox");
     ok &= expect(
         QApplication::focusWidget() == stopRuntime,
-        "Safe Exit should initially focus Stop runtime");
+        "Safe Exit should focus Stop runtime after opening");
+    ok &= expect(safeExit, "Safe Exit should expose its primary action");
+    ok &= expect(
+        stopRuntime && nextOrderedWidget(stopRuntime, {safeExit}) == safeExit,
+        "Safe Exit should place its action row after recovery options");
+    bool safeExitAccepted = false;
+    QObject::connect(&safeExitDialog, &QDialog::accepted, [&safeExitAccepted] {
+        safeExitAccepted = true;
+    });
+    QAccessibleInterface* safeExitInterface = accessibleInterface(safeExit);
+    QAccessibleActionInterface* safeExitActions = safeExitInterface
+        ? safeExitInterface->actionInterface()
+        : nullptr;
+    ok &= expect(safeExitActions, "Safe Exit action should expose an accessibility action");
+    if (safeExitActions) {
+        safeExitActions->doAction(QAccessibleActionInterface::pressAction());
+        QCoreApplication::processEvents();
+        QCoreApplication::processEvents();
+        ok &= expect(safeExitAccepted, "assistive Exit Safely should accept the dialog");
+    }
 
     zarya::ReadinessDialog readinessDialog;
-    readinessDialog.show();
-    QCoreApplication::processEvents();
+    openDialogAndProcessDeferredFocus(&readinessDialog);
+    ok &= expectAccessible(
+        &readinessDialog,
+        QAccessible::Dialog,
+        QStringLiteral("Zarya Setup"),
+        "Readiness should expose its dialog role and name");
     QWidget* coreManager = findAccessibleWidget(
         &readinessDialog, QAccessible::Button, QStringLiteral("Open Core Manager"));
     ok &= expect(coreManager, "Readiness should expose Open Core Manager");
     ok &= expect(
         QApplication::focusWidget() == coreManager,
-        "Readiness should initially focus Open Core Manager");
+        "Readiness should focus Open Core Manager after opening");
+    QWidget* importProfile = findAccessibleWidget(
+        &readinessDialog, QAccessible::Button, QStringLiteral("Import Profile"));
+    ok &= expect(importProfile, "Readiness should expose Import Profile");
+    ok &= expect(
+        coreManager && nextOrderedWidget(coreManager, {importProfile}) == importProfile,
+        "Readiness should place Import Profile after Open Core Manager");
+    bool coreManagerRequested = false;
+    QObject::connect(
+        &readinessDialog, &zarya::ReadinessDialog::openCoreManagerRequested,
+        [&coreManagerRequested] { coreManagerRequested = true; });
+    QAccessibleInterface* coreManagerInterface = accessibleInterface(coreManager);
+    QAccessibleActionInterface* coreManagerActions = coreManagerInterface
+        ? coreManagerInterface->actionInterface()
+        : nullptr;
+    ok &= expect(
+        coreManagerActions,
+        "Readiness Open Core Manager should expose an accessibility action");
+    if (coreManagerActions) {
+        coreManagerActions->doAction(QAccessibleActionInterface::pressAction());
+        QCoreApplication::processEvents();
+        QCoreApplication::processEvents();
+        ok &= expect(
+            coreManagerRequested,
+            "assistive Open Core Manager should request the recovery workflow");
+    }
 
     zarya::BetaBannerWidget betaBanner;
     ok &= expect(

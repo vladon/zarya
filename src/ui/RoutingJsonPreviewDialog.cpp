@@ -26,6 +26,11 @@ RoutingJsonPreviewDialog::RoutingJsonPreviewDialog(const QString& jsonText, QWid
     layout->setSpacing(12);
     layout->addWidget(m_editor);
     layout->addWidget(closeButton);
+}
+
+void RoutingJsonPreviewDialog::showEvent(QShowEvent* event)
+{
+    QDialog::showEvent(event);
     QTimer::singleShot(0, m_editor, [this] {
         m_editor->setFocus(Qt::OtherFocusReason);
     });

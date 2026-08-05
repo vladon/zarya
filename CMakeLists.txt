@@ -863,7 +863,10 @@ add_test(NAME ui_animation_policy COMMAND zarya_ui_animation_policy_test)
 
 add_executable(zarya_ui_accessibility_test
     tests/ui_accessibility_test.cpp
+    src/backup/BackupCategory.cpp
+    src/backup/BackupManager.h
     src/ui/BackupImportAccessibility.cpp
+    src/ui/BackupExportDialog.cpp
     src/ui/CoreManagerAccessibility.cpp
     src/ui/DiagnosticsPreviewDialog.cpp
     src/ui/GeoDataManagerAccessibility.cpp
