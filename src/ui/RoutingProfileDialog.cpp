@@ -14,6 +14,7 @@
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QTableWidget>
+#include <QTimer>
 #include <QVBoxLayout>
 
 #include <QJsonDocument>
@@ -162,7 +163,9 @@ RoutingProfileDialog::RoutingProfileDialog(const RoutingProfile& profile, bool r
     layout->addWidget(m_validationMessage);
     layout->addWidget(actions);
     refreshRulesTable();
-    m_nameEdit->setFocus(Qt::OtherFocusReason);
+    QTimer::singleShot(0, m_nameEdit, [this] {
+        m_nameEdit->setFocus(Qt::OtherFocusReason);
+    });
 }
 
 RoutingProfile RoutingProfileDialog::profile() const
