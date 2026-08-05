@@ -44,6 +44,11 @@ DiagnosticsPreviewDialog::DiagnosticsPreviewDialog(const DiagnosticsPreviewResul
     layout->addWidget(m_warningsLabel);
     layout->addWidget(closeButton);
     QWidget::setTabOrder(m_filesList, closeButton);
+}
+
+void DiagnosticsPreviewDialog::showEvent(QShowEvent* event)
+{
+    QDialog::showEvent(event);
     QTimer::singleShot(0, m_filesList, [this] {
         m_filesList->setFocus(Qt::OtherFocusReason);
     });

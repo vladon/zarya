@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QDialog>
+#include <QShowEvent>
 
 namespace zarya {
 
@@ -13,6 +14,8 @@ public:
     explicit RoutingJsonPreviewDialog(const QString& jsonText, QWidget* parent = nullptr);
 
 private:
+    void showEvent(QShowEvent* event) override;
+
     ZaryaTextArea* m_editor = nullptr;
 };
 
