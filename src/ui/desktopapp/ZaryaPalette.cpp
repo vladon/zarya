@@ -40,13 +40,13 @@ void applyDesktopAppPalette(const ThemeTokens& tokens)
     setColor("windowSubTextFgOver", tokens.textPrimary);
     setColor("windowBoldFg", tokens.textPrimary);
     setColor("windowBoldFgOver", tokens.textPrimary);
-    setColor("windowBgActive", tokens.accent);
+    setColor("windowBgActive", tokens.accentFill);
     setColor("windowFgActive", tokens.accentFg);
     setColor("windowActiveTextFg", tokens.accent);
     setColor("windowShadowFgFallback", tokens.border);
 
-    setColor("activeButtonBg", tokens.accent);
-    setColor("activeButtonBgOver", tokens.accentHover);
+    setColor("activeButtonBg", tokens.accentFill);
+    setColor("activeButtonBgOver", tokens.accentFillHover);
     setColor("activeButtonBgRipple", withAlpha(tokens.accentFg, 48));
     setColor("activeButtonFg", tokens.accentFg);
     setColor("activeButtonFgOver", tokens.accentFg);

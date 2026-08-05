@@ -13,6 +13,8 @@ struct ThemeTokens {
     QColor textDisabled;
     QColor accent;
     QColor accentHover;
+    QColor accentFill;
+    QColor accentFillHover;
     QColor accentFg;
     QColor border;
     QColor danger;
@@ -20,6 +22,11 @@ struct ThemeTokens {
     QColor success;
     QColor info;
     QColor experimental;
+    QColor dangerSurface;
+    QColor warningSurface;
+    QColor successSurface;
+    QColor infoSurface;
+    QColor experimentalSurface;
     int radiusSm = 4;
     int radiusMd = 6;
 };

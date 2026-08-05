@@ -4,6 +4,10 @@ description: A calm and dependable desktop control surface for proxy profiles an
 colors:
   signal-blue: "#1f6feb"
   signal-blue-hover: "#1858c7"
+  light-interactive-blue: "#0969da"
+  light-interactive-blue-hover: "#0550ae"
+  dark-interactive-blue: "#58a6ff"
+  dark-interactive-blue-hover: "#79c0ff"
   light-canvas: "#f4f6f8"
   light-surface: "#ffffff"
   light-panel: "#eef1f4"
@@ -16,10 +20,26 @@ colors:
   dark-ink: "#e6edf3"
   dark-muted: "#8b949e"
   dark-border: "#30363d"
-  danger: "#cf222e"
-  warning: "#bf8700"
-  success: "#1a7f37"
-  experimental: "#8250df"
+  light-danger: "#cf222e"
+  light-warning: "#946200"
+  light-success: "#1a7f37"
+  light-info: "#0969da"
+  light-experimental: "#8250df"
+  light-danger-surface: "#ffebe9"
+  light-warning-surface: "#fff8c5"
+  light-success-surface: "#dafbe1"
+  light-info-surface: "#ddf4ff"
+  light-experimental-surface: "#fbefff"
+  dark-danger: "#f85149"
+  dark-warning: "#d29922"
+  dark-success: "#3fb950"
+  dark-info: "#58a6ff"
+  dark-experimental: "#a371f7"
+  dark-danger-surface: "#2c1c1d"
+  dark-warning-surface: "#3d2e00"
+  dark-success-surface: "#12261e"
+  dark-info-surface: "#121d2f"
+  dark-experimental-surface: "#211a2c"
 typography:
   title:
     fontFamily: "system-ui"
@@ -89,8 +109,10 @@ or configure the runtime, but decoration never competes with state, recovery, or
 
 ## Colors
 
-Signal Blue is reserved for primary actions, focus, selection, and links. Neutral layers create
-structure; semantic colors communicate operational state.
+Signal Blue is reserved for primary actions, focus, selection, and links. Its primary-action and
+selection fill stays `#1f6feb`, while links and focus use theme-specific foreground variants so
+both roles retain WCAG 2.1 AA-equivalent contrast. Neutral layers create structure; semantic
+colors communicate operational state.
 
 ### Primary
 
@@ -100,8 +122,8 @@ structure; semantic colors communicate operational state.
 
 ### Secondary
 
-- **Success, Warning, Danger, and Experimental:** semantic states accompanied by an icon or
-  explicit label.
+- **Success, Warning, Danger, Info, and Experimental:** semantic foregrounds are paired with
+  theme-specific tinted surfaces and accompanied by an icon or explicit label.
 
 ### Neutral
 

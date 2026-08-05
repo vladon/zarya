@@ -862,6 +862,15 @@ add_executable(zarya_ui_animation_policy_test
 target_include_directories(zarya_ui_animation_policy_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME ui_animation_policy COMMAND zarya_ui_animation_policy_test)
 
+add_executable(zarya_ui_theme_contrast_test
+    tests/ui_theme_contrast_test.cpp
+    src/ui/theme/ThemeTokens.cpp
+)
+target_include_directories(zarya_ui_theme_contrast_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+zarya_link_qt_core(zarya_ui_theme_contrast_test)
+target_link_libraries(zarya_ui_theme_contrast_test PRIVATE Qt6::Gui)
+add_test(NAME ui_theme_contrast COMMAND zarya_ui_theme_contrast_test)
+
 add_executable(zarya_ui_accessibility_test
     tests/ui_accessibility_test.cpp
     src/ui/ManagerAccessibility.cpp
@@ -991,6 +1000,7 @@ set(ZARYA_TEST_TARGETS
     zarya_geodata_verifier_test
     zarya_core_checksum_test
     zarya_ui_animation_policy_test
+    zarya_ui_theme_contrast_test
     zarya_ui_accessibility_test
     zarya_smoke_test
     zarya_version_test

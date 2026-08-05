@@ -87,7 +87,7 @@ void ThemeManager::applyPalette(const ThemeTokens& tokens) const
     palette.setColor(QPalette::Button, tokens.panelBg);
     palette.setColor(QPalette::ButtonText, tokens.textPrimary);
     palette.setColor(QPalette::BrightText, tokens.accentFg);
-    palette.setColor(QPalette::Highlight, tokens.accent);
+    palette.setColor(QPalette::Highlight, tokens.accentFill);
     palette.setColor(QPalette::HighlightedText, tokens.accentFg);
     palette.setColor(QPalette::Link, tokens.accent);
     palette.setColor(QPalette::LinkVisited, tokens.accentHover);
@@ -114,6 +114,7 @@ QString ThemeManager::buildStyleSheet(const ThemeTokens& tokens) const
     const QString textPrimary = colorCss(tokens.textPrimary);
     const QString textSecondary = colorCss(tokens.textSecondary);
     const QString accent = colorCss(tokens.accent);
+    const QString accentFill = colorCss(tokens.accentFill);
     const QString accentFg = colorCss(tokens.accentFg);
     const QString border = colorCss(tokens.border);
     const QString radiusSm = QString::number(tokens.radiusSm);
@@ -129,7 +130,7 @@ QString ThemeManager::buildStyleSheet(const ThemeTokens& tokens) const
         "  border-bottom: 1px solid @border;"
         "}"
         "QMenuBar::item:selected {"
-        "  background-color: @accent;"
+        "  background-color: @accentFill;"
         "  color: @accentFg;"
         "}"
         "QMenu {"
@@ -138,7 +139,7 @@ QString ThemeManager::buildStyleSheet(const ThemeTokens& tokens) const
         "  border: 1px solid @border;"
         "}"
         "QMenu::item:selected {"
-        "  background-color: @accent;"
+        "  background-color: @accentFill;"
         "  color: @accentFg;"
         "}"
         "QPlainTextEdit {"
@@ -147,7 +148,7 @@ QString ThemeManager::buildStyleSheet(const ThemeTokens& tokens) const
         "  border: 1px solid @border;"
         "  border-radius: @radiusSmpx;"
         "  padding: 4px 6px;"
-        "  selection-background-color: @accent;"
+        "  selection-background-color: @accentFill;"
         "  selection-color: @accentFg;"
         "}"
         "QPlainTextEdit:focus {"
@@ -168,7 +169,7 @@ QString ThemeManager::buildStyleSheet(const ThemeTokens& tokens) const
         "  border: 1px solid @border;"
         "  border-radius: @radiusSmpx;"
         "  gridline-color: @border;"
-        "  selection-background-color: @accent;"
+        "  selection-background-color: @accentFill;"
         "  selection-color: @accentFg;"
         "}"
         "QScrollBar:vertical {"
@@ -207,6 +208,7 @@ QString ThemeManager::buildStyleSheet(const ThemeTokens& tokens) const
     css.replace(QStringLiteral("@textPrimary"), textPrimary);
     css.replace(QStringLiteral("@textSecondary"), textSecondary);
     css.replace(QStringLiteral("@accentFg"), accentFg);
+    css.replace(QStringLiteral("@accentFill"), accentFill);
     css.replace(QStringLiteral("@accent"), accent);
     css.replace(QStringLiteral("@border"), border);
     css.replace(QStringLiteral("@radiusSm"), radiusSm);

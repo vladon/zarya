@@ -14,25 +14,24 @@
 namespace zarya {
 namespace {
 
-void badgeColors(StatusBadgeKind kind, const ThemeTokens& tokens, bool dark, QColor* bg,
-                 QColor* fg)
+void badgeColors(StatusBadgeKind kind, const ThemeTokens& tokens, QColor* bg, QColor* fg)
 {
     *fg = tokens.textPrimary;
     switch (kind) {
     case StatusBadgeKind::Ok:
-        *bg = dark ? QColor(QStringLiteral("#238636")).darker(140) : QColor(QStringLiteral("#dafbe1"));
+        *bg = tokens.successSurface;
         *fg = tokens.success;
         break;
     case StatusBadgeKind::Warning:
-        *bg = dark ? QColor(QStringLiteral("#9e6a03")).darker(150) : QColor(QStringLiteral("#fff8c5"));
+        *bg = tokens.warningSurface;
         *fg = tokens.warning;
         break;
     case StatusBadgeKind::Error:
-        *bg = dark ? QColor(QStringLiteral("#da3633")).darker(150) : QColor(QStringLiteral("#ffebe9"));
+        *bg = tokens.dangerSurface;
         *fg = tokens.danger;
         break;
     case StatusBadgeKind::Experimental:
-        *bg = dark ? QColor(QStringLiteral("#8957e5")).darker(150) : QColor(QStringLiteral("#fbefff"));
+        *bg = tokens.experimentalSurface;
         *fg = tokens.experimental;
         break;
     case StatusBadgeKind::Unsupported:
@@ -40,7 +39,7 @@ void badgeColors(StatusBadgeKind kind, const ThemeTokens& tokens, bool dark, QCo
         *fg = tokens.textSecondary;
         break;
     case StatusBadgeKind::Running:
-        *bg = dark ? QColor(QStringLiteral("#1158c7")).darker(140) : QColor(QStringLiteral("#ddf4ff"));
+        *bg = tokens.infoSurface;
         *fg = tokens.info;
         break;
     case StatusBadgeKind::Stopped:
@@ -112,8 +111,7 @@ void StatusBadgeLibUiEmbed::resizeEvent(QResizeEvent* event)
 
 void StatusBadgeLibUiEmbed::applyColors()
 {
-    badgeColors(m_kind, ThemeManager::instance().tokens(),
-                ThemeManager::instance().effectiveIsDark(), &m_bg, &m_fg);
+    badgeColors(m_kind, ThemeManager::instance().tokens(), &m_bg, &m_fg);
     auto* label = static_cast<Ui::FlatLabel*>(m_labelHost);
     label->setTextColorOverride(m_fg);
 }
