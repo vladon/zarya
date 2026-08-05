@@ -42,6 +42,7 @@ BetaBannerWidget::BetaBannerWidget(QWidget* parent)
     setAccessibleName(bannerText);
     auto* label = new ZaryaBodyText(bannerText, this);
     auto* dismiss = new ZaryaActionButton(tr("Dismiss"), this);
+    dismiss->setMinimumSize(96, 34);
     setFocusProxy(dismiss);
     connect(dismiss, &ZaryaActionButton::clicked, this, [this]() {
         AppSettings::instance().setDismissBetaBanner(true);
@@ -53,6 +54,7 @@ BetaBannerWidget::BetaBannerWidget(QWidget* parent)
     layout->setSpacing(12);
     layout->addWidget(label, 1);
     layout->addWidget(dismiss);
+    setMinimumHeight(58);
 
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
             &BetaBannerWidget::applyTheme);
@@ -68,13 +70,9 @@ void BetaBannerWidget::paintEvent(QPaintEvent* event)
 {
     QWidget::paintEvent(event);
     const ThemeTokens tokens = ThemeManager::instance().tokens();
-    const bool dark = ThemeManager::instance().effectiveIsDark();
-    const QColor bg =
-        dark ? QColor(QStringLiteral("#3d2e00")) : QColor(QStringLiteral("#fff8c5"));
-    const QColor border = dark ? tokens.warning.darker(120) : QColor(QStringLiteral("#d4a72c"));
     QPainter painter(this);
-    painter.fillRect(rect(), bg);
-    painter.setPen(border);
+    painter.fillRect(rect(), tokens.warningSurface);
+    painter.setPen(tokens.warning);
     painter.drawLine(rect().bottomLeft(), rect().bottomRight());
 }
 

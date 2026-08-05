@@ -28,6 +28,8 @@
 #include "ui/theme/ThemeManager.h"
 #include "ui/theme/ThemeMode.h"
 
+#include "styles/style_widgets.h"
+
 #include <QAccessible>
 #include <QAccessibleActionInterface>
 #include <QAction>
@@ -94,6 +96,27 @@ bool expectAccessible(
     return expect(interface, message)
         && expect(interface->role() == role, message)
         && expect(interface->text(QAccessible::Name) == name, message);
+}
+
+bool expectThemeWiring(
+    const QApplication& app,
+    const zarya::ThemeTokens& tokens,
+    const char* message)
+{
+    const QPalette palette = app.palette();
+    return expect(
+        palette.color(QPalette::Highlight) == tokens.accentFill
+            && palette.color(QPalette::HighlightedText) == tokens.accentFg
+            && palette.color(QPalette::Link) == tokens.accent
+            && palette.color(QPalette::LinkVisited) == tokens.accentHover
+            && app.styleSheet().contains(tokens.accent.name())
+            && app.styleSheet().contains(tokens.accentFill.name())
+            && st::defaultActiveButton.textBg->c == tokens.accentFill
+            && st::defaultActiveButton.textBgOver->c == tokens.accentFillHover
+            && st::defaultActiveButton.textFg->c == tokens.accentFg
+            && st::defaultLightButton.textFg->c == tokens.accent
+            && st::defaultLightButton.textFgOver->c == tokens.accentHover,
+        message);
 }
 
 QVector<QWidget*> accessibleRadioButtons(QWidget* group)
@@ -199,6 +222,8 @@ int main(int argc, char** argv)
         app.styleSheet().contains(lightTheme.windowBg.name())
             && app.styleSheet().contains(lightTheme.accent.name()),
         "light theme should update the Qt host stylesheet");
+    ok &= expectThemeWiring(
+        app, lightTheme, "light theme should update Qt and lib_ui contrast roles");
 
     themeManager.setMode(zarya::ThemeMode::Dark);
     const zarya::ThemeTokens darkTheme = themeManager.tokens();
@@ -211,6 +236,8 @@ int main(int argc, char** argv)
         app.styleSheet().contains(darkTheme.windowBg.name())
             && app.styleSheet().contains(darkTheme.accent.name()),
         "dark theme should update the Qt host stylesheet");
+    ok &= expectThemeWiring(
+        app, darkTheme, "dark theme should update Qt and lib_ui contrast roles");
     themeManager.setMode(zarya::ThemeMode::System);
     ok &= expect(
         themeManager.mode() == zarya::ThemeMode::System && themeChangedCount >= 3,
@@ -1446,6 +1473,14 @@ int main(int argc, char** argv)
     ok &= expect(
         betaBanner.focusProxy(),
         "Beta banner should expose Dismiss as its focus target");
+    ok &= expect(
+        betaBanner.minimumHeight() >= 58,
+        "Beta banner should reserve enough height for its warning and Dismiss action");
+    ok &= expect(
+        betaBanner.focusProxy()
+            && betaBanner.focusProxy()->minimumWidth() >= 96
+            && betaBanner.focusProxy()->minimumHeight() >= 34,
+        "Beta banner should keep its Dismiss action visible");
 
     zarya::DnsServerEditorDialog dnsServerDialog(zarya::DnsServer{});
     dnsServerDialog.show();

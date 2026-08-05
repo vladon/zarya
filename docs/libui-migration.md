@@ -163,7 +163,8 @@ reduces the inventory. Approved infrastructure and native/model-view boundaries 
      user-facing string set is synchronized in EN/RU catalogs.
    - Stable/beta/experimental banner text and dismissal use the toolkit layer, with a
      theme-aware painted warning surface and unchanged release-channel policy. The warning text
-     is exposed as the banner's accessible name and its Dismiss action is the focus target.
+     is exposed as the banner's accessible name and its Dismiss action is the focus target; the
+     minimum layout keeps both visible at common display scaling.
    - Settings, including gated TUN, helper, kill-switch, update, routing, DNS, startup, and
      desktop behavior controls, use shared toolkit form primitives and feedback while preserving
      the existing `FeatureGate`, persistence, native file pickers, and recovery behavior.
@@ -202,8 +203,10 @@ and remains required before a release, rather than blocking every migration PR.
   DNS, and Subscription workflows.
 - Light, dark, and system themes update both Qt hosts and `lib_ui` content without restart unless
   the existing setting explicitly requires one. The headless accessibility contract switches all
-  three modes and checks the refreshed Qt palette, stylesheet, and theme-change signal; release
-  visual review still checks EN/RU copy at 100% and 150% display scaling.
+  three modes and checks the refreshed Qt palette, stylesheet, `lib_ui` button roles, and
+  theme-change signal. `zarya_ui_theme_contrast_test` enforces a 4.5:1 WCAG text-contrast floor
+  for neutral text, interactive foreground/fill roles, and semantic foreground/surface pairs;
+  release visual review still checks EN/RU copy at 100% and 150% display scaling.
 - Semantic state always includes text; color is supplementary.
 - Animations are state-driven and short. The global toolkit animation state follows Qt desktop
   effects and zero-duration style hints, including theme, style, and application-state changes at
