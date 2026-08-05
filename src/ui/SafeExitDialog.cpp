@@ -2,6 +2,7 @@
 
 #include "ui/desktopapp/ZaryaFormControls.h"
 
+#include <QTimer>
 #include <QVBoxLayout>
 
 namespace zarya {
@@ -33,7 +34,9 @@ SafeExitDialog::SafeExitDialog(QWidget* parent)
     layout->addWidget(actions);
     resize(420, 220);
 
-    m_stopRuntimeCheck->focusProxy()->setFocus(Qt::OtherFocusReason);
+    QTimer::singleShot(0, m_stopRuntimeCheck, [this] {
+        m_stopRuntimeCheck->focusProxy()->setFocus(Qt::OtherFocusReason);
+    });
 }
 
 SafeExitOptions SafeExitDialog::options() const
