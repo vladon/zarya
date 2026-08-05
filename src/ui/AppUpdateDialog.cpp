@@ -23,6 +23,7 @@
 #include <QDir>
 #include <QFileDialog>
 #include <QHBoxLayout>
+#include <QTimer>
 #include <QUrl>
 #include <QVBoxLayout>
 
@@ -105,7 +106,9 @@ AppUpdateDialog::AppUpdateDialog(AppController* controller,
     QWidget::setTabOrder(m_openDownloadsButton, cancelButton);
 
     refreshStaticInfo();
-    m_checkButton->setFocus(Qt::OtherFocusReason);
+    QTimer::singleShot(0, m_checkButton, [this] {
+        m_checkButton->setFocus(Qt::OtherFocusReason);
+    });
 }
 
 void AppUpdateDialog::refreshStaticInfo()
