@@ -2,6 +2,7 @@
 
 #include "ui/desktopapp/ZaryaFormControls.h"
 
+#include <QTimer>
 #include <QVBoxLayout>
 
 namespace zarya {
@@ -25,7 +26,9 @@ RoutingJsonPreviewDialog::RoutingJsonPreviewDialog(const QString& jsonText, QWid
     layout->setSpacing(12);
     layout->addWidget(m_editor);
     layout->addWidget(closeButton);
-    m_editor->setFocus(Qt::OtherFocusReason);
+    QTimer::singleShot(0, m_editor, [this] {
+        m_editor->setFocus(Qt::OtherFocusReason);
+    });
 }
 
 } // namespace zarya
