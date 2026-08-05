@@ -25,6 +25,8 @@
 #include "ui/desktopapp/ZaryaFormControls.h"
 #include "ui/desktopapp/ZaryaSelector.h"
 #include "ui/desktopapp/ZaryaUiIntegration.h"
+#include "ui/theme/ThemeManager.h"
+#include "ui/theme/ThemeMode.h"
 
 #include <QAccessible>
 #include <QAccessibleActionInterface>
@@ -34,6 +36,7 @@
 #include <QDialog>
 #include <QEventLoop>
 #include <QPlainTextEdit>
+#include <QPalette>
 #include <QStandardPaths>
 #include <QTableWidget>
 #include <QTableView>
@@ -180,6 +183,38 @@ int main(int argc, char** argv)
 
     bool ok = true;
     QWidget host;
+
+    auto& themeManager = zarya::ThemeManager::instance();
+    int themeChangedCount = 0;
+    QObject::connect(&themeManager, &zarya::ThemeManager::themeChanged,
+                     [&themeChangedCount] { ++themeChangedCount; });
+    themeManager.setMode(zarya::ThemeMode::Light);
+    const zarya::ThemeTokens lightTheme = themeManager.tokens();
+    ok &= expect(!themeManager.effectiveIsDark(), "light theme should apply without restart");
+    ok &= expect(
+        app.palette().color(QPalette::Window) == lightTheme.windowBg
+            && app.palette().color(QPalette::Text) == lightTheme.textPrimary,
+        "light theme should update the Qt palette");
+    ok &= expect(
+        app.styleSheet().contains(lightTheme.windowBg.name())
+            && app.styleSheet().contains(lightTheme.accent.name()),
+        "light theme should update the Qt host stylesheet");
+
+    themeManager.setMode(zarya::ThemeMode::Dark);
+    const zarya::ThemeTokens darkTheme = themeManager.tokens();
+    ok &= expect(themeManager.effectiveIsDark(), "dark theme should apply without restart");
+    ok &= expect(
+        app.palette().color(QPalette::Window) == darkTheme.windowBg
+            && app.palette().color(QPalette::Text) == darkTheme.textPrimary,
+        "dark theme should update the Qt palette");
+    ok &= expect(
+        app.styleSheet().contains(darkTheme.windowBg.name())
+            && app.styleSheet().contains(darkTheme.accent.name()),
+        "dark theme should update the Qt host stylesheet");
+    themeManager.setMode(zarya::ThemeMode::System);
+    ok &= expect(
+        themeManager.mode() == zarya::ThemeMode::System && themeChangedCount >= 3,
+        "system theme selection should reapply the shared palette contract");
 
     auto* action = new zarya::ZaryaActionButton(QStringLiteral("Apply"), &host);
     ok &= expect(action->focusProxy(), "action button should expose its inner focus target");

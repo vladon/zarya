@@ -201,7 +201,9 @@ and remains required before a release, rather than blocking every migration PR.
   scheduled after the host window is shown, including the Core, Geo Data, Rule Set, Routing,
   DNS, and Subscription workflows.
 - Light, dark, and system themes update both Qt hosts and `lib_ui` content without restart unless
-  the existing setting explicitly requires one.
+  the existing setting explicitly requires one. The headless accessibility contract switches all
+  three modes and checks the refreshed Qt palette, stylesheet, and theme-change signal; release
+  visual review still checks EN/RU copy at 100% and 150% display scaling.
 - Semantic state always includes text; color is supplementary.
 - Animations are state-driven and short. The global toolkit animation state follows Qt desktop
   effects and zero-duration style hints, including theme, style, and application-state changes at
