@@ -37,6 +37,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonDocument>
+#include <QTcpSocket>
 #include <QWidget>
 
 namespace zarya {
@@ -93,16 +94,19 @@ AppController::AppController(CoreManager* coreManager, SystemProxyController* sy
     m_runtimeFactory = std::make_unique<RuntimeBackendFactory>(coreManager);
     setupRuntimeBackends();
 
+    m_systemProxyReadyTimer.setInterval(100);
+    connect(&m_systemProxyReadyTimer, &QTimer::timeout, this,
+            &AppController::checkSystemProxyReady);
+
     connect(m_coreManager, &CoreManager::started, this, [this](const QString& coreName) {
         Q_UNUSED(coreName);
         m_runtimeState = RuntimeState::Running;
         emit coreStateChanged(true);
-        if (m_afterCoreStarted) {
-            m_afterCoreStarted();
-        }
+        waitForSystemProxyReady();
     });
     connect(m_coreManager, &CoreManager::stopped, this, [this]() {
         m_runtimeState = RuntimeState::Stopped;
+        m_systemProxyReadyTimer.stop();
         emit coreStateChanged(false);
     });
     connect(m_coreManager, &CoreManager::logLine, this, &AppController::logLine);
@@ -173,6 +177,41 @@ void AppController::setAfterCoreStartedCallback(std::function<void()> callback)
     m_afterCoreStarted = std::move(callback);
 }
 
+void AppController::waitForSystemProxyReady()
+{
+    m_systemProxyReadyTimer.stop();
+    m_systemProxyReadyElapsed.start();
+    QTimer::singleShot(0, this, &AppController::checkSystemProxyReady);
+}
+
+void AppController::checkSystemProxyReady()
+{
+    if (!isCoreRunning() || m_activeRuntimeMode != RuntimeMode::SystemProxyXray) {
+        return;
+    }
+
+    QTcpSocket socket;
+    socket.connectToHost(QHostAddress::LocalHost,
+                         static_cast<quint16>(AppSettings::instance().mixedPort()));
+    if (socket.waitForConnected(100)) {
+        socket.disconnectFromHost();
+        m_systemProxyReadyTimer.stop();
+        emit logLine(QStringLiteral("Local Xray mixed proxy is ready."));
+        if (m_afterCoreStarted) {
+            m_afterCoreStarted();
+        }
+        return;
+    }
+
+    if (m_systemProxyReadyElapsed.elapsed() >= kSystemProxyReadyTimeoutMs) {
+        m_systemProxyReadyTimer.stop();
+        emit logLine(QStringLiteral(
+            "Local Xray mixed proxy did not become ready; system proxy will remain off."));
+        return;
+    }
+
+    m_systemProxyReadyTimer.start();
+}
 void AppController::setSaveApplicationStateCallback(std::function<bool(QString*)> callback)
 {
     m_saveApplicationState = std::move(callback);
