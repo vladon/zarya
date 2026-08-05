@@ -2,6 +2,7 @@
 
 #include "ui/desktopapp/ZaryaFormControls.h"
 
+#include <QTimer>
 #include <QVBoxLayout>
 
 namespace zarya {
@@ -43,7 +44,9 @@ DiagnosticsPreviewDialog::DiagnosticsPreviewDialog(const DiagnosticsPreviewResul
     layout->addWidget(m_warningsLabel);
     layout->addWidget(closeButton);
     QWidget::setTabOrder(m_filesList, closeButton);
-    m_filesList->setFocus(Qt::OtherFocusReason);
+    QTimer::singleShot(0, m_filesList, [this] {
+        m_filesList->setFocus(Qt::OtherFocusReason);
+    });
 }
 
 } // namespace zarya
