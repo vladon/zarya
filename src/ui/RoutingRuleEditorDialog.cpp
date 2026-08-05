@@ -4,6 +4,7 @@
 #include "ui/desktopapp/ZaryaFormControls.h"
 #include "ui/desktopapp/ZaryaSelector.h"
 
+#include <QTimer>
 #include <QVBoxLayout>
 
 namespace zarya {
@@ -81,7 +82,9 @@ RoutingRuleEditorDialog::RoutingRuleEditorDialog(const RoutingRule& rule, bool r
     layout->addWidget(buttons);
     resize(620, 430);
 
-    m_actionCombo->setFocus(Qt::OtherFocusReason);
+    QTimer::singleShot(0, m_actionCombo, [this] {
+        m_actionCombo->setFocus(Qt::OtherFocusReason);
+    });
 }
 
 RoutingRule RoutingRuleEditorDialog::rule() const
