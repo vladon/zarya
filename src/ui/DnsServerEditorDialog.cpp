@@ -3,6 +3,7 @@
 #include "ui/desktopapp/ZaryaFormControls.h"
 #include "ui/desktopapp/ZaryaSelector.h"
 
+#include <QTimer>
 #include <QVBoxLayout>
 
 namespace zarya {
@@ -63,7 +64,9 @@ DnsServerEditorDialog::DnsServerEditorDialog(const DnsServer& server, QWidget* p
     layout->addWidget(actions);
     resize(620, 650);
 
-    m_addressEdit->setFocus(Qt::OtherFocusReason);
+    QTimer::singleShot(0, m_addressEdit, [this] {
+        m_addressEdit->setFocus(Qt::OtherFocusReason);
+    });
 }
 
 DnsServer DnsServerEditorDialog::server() const
