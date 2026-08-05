@@ -2,6 +2,7 @@
 
 #include "ui/desktopapp/ZaryaFormControls.h"
 
+#include <QTimer>
 #include <QVBoxLayout>
 
 namespace zarya {
@@ -49,7 +50,9 @@ ReadinessDialog::ReadinessDialog(QWidget* parent)
     layout->addStretch();
     layout->addWidget(closeButton);
 
-    coreButton->focusProxy()->setFocus(Qt::OtherFocusReason);
+    QTimer::singleShot(0, coreButton, [coreButton] {
+        coreButton->focusProxy()->setFocus(Qt::OtherFocusReason);
+    });
 }
 
 } // namespace zarya
