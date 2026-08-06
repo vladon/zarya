@@ -30,15 +30,17 @@ function(zarya_configure_embedded_xray target)
     endif()
 
     if(WIN32)
-        file(GLOB _zarya_vs_clang_candidates
-            "${CMAKE_GENERATOR_INSTANCE}/VC/Tools/Llvm/x64/bin/clang.exe"
-            "$ENV{VSINSTALLDIR}/VC/Tools/Llvm/x64/bin/clang.exe"
-            "$ENV{ProgramFiles}/Microsoft Visual Studio/*/*/VC/Tools/Llvm/x64/bin/clang.exe")
-        if(NOT _zarya_vs_clang_candidates)
-            message(FATAL_ERROR
-                "Embedded Xray requires Visual Studio LLVM clang.exe. Install the Visual Studio C++ Clang tools component.")
+        set(_zarya_xray_cgo "${ZARYA_XRAY_CGO_COMPILER}")
+        if(NOT _zarya_xray_cgo)
+            find_program(_zarya_xray_cgo NAMES x86_64-w64-mingw32-gcc gcc
+                HINTS "C:/mingw64/bin" "C:/ProgramData/chocolatey/lib/mingw/tools/install/mingw64/bin" "$ENV{MINGW_ROOT}/bin")
         endif()
-        list(GET _zarya_vs_clang_candidates 0 _zarya_xray_clang)
+        if(NOT _zarya_xray_cgo)
+            message(FATAL_ERROR
+                "Embedded Xray requires a MinGW-w64 GCC CGO compiler. This is used only for the Go bridge; all C++ targets remain Visual Studio/MSVC.")
+        endif()
+        set(ZARYA_XRAY_CGO_COMPILER "${_zarya_xray_cgo}" CACHE FILEPATH
+            "MinGW-w64 GCC compiler used only to build the embedded Xray Go bridge" FORCE)
     endif()
 
     set(_zarya_bridge_source "${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/embedded/xray/bridge")
@@ -57,14 +59,7 @@ function(zarya_configure_embedded_xray target)
 
     set(_zarya_go_env ${CMAKE_COMMAND} -E env "CGO_ENABLED=1")
     if(WIN32)
-        # Go's Windows CGO driver unconditionally adds -mthreads. Visual Studio
-        # LLVM targets the MSVC CRT and rejects that MinGW-only flag, so use a
-        # generated wrapper that removes only that argument before invoking the
-        # Visual Studio clang executable.
-        set(_zarya_xray_cgo_wrapper "${CMAKE_CURRENT_BINARY_DIR}/${target}-cgo-clang-msvc.cmd")
-        file(GENERATE OUTPUT "${_zarya_xray_cgo_wrapper}" CONTENT
-            "@echo off\nsetlocal EnableExtensions\nset \"args=%*\"\nset \"args=%args:-mthreads=%\"\n\"${_zarya_xray_clang}\" %args%\n")
-        list(APPEND _zarya_go_env "CC=${_zarya_xray_cgo_wrapper}")
+        list(APPEND _zarya_go_env "CC=${ZARYA_XRAY_CGO_COMPILER}")
     endif()
 
     file(GLOB_RECURSE _zarya_bridge_inputs CONFIGURE_DEPENDS

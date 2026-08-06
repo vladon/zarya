@@ -115,7 +115,7 @@ void EmbeddedXrayRuntimeHost::loadBridge()
     }
 
     m_library.setFileName(m_libraryPath);
-    m_library.setLoadHints(QLibrary::ResolveAllSymbolsHint | QLibrary::PreventUnloadHint);
+    m_library.setLoadHints(QLibrary::PreventUnloadHint);
     if (!m_library.load()) {
         m_loadStatus = sanitize(QStringLiteral("Embedded Xray failed to load: %1")
                                     .arg(m_library.errorString()));
