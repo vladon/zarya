@@ -18,9 +18,9 @@ AppError appErrorFromCode(const QString& code, const QString& details)
     error.details = details;
 
     if (code == ErrorCode::coreXrayMissing()) {
-        error.title = ZaryaTr::tr("Xray not found");
-        error.message = ZaryaTr::tr("The Xray executable is missing or not configured.");
-        error.suggestedAction = ZaryaTr::tr("Open Core Manager and install Xray.");
+        error.title = ZaryaTr::tr("Built-in Xray unavailable");
+        error.message = ZaryaTr::tr("The embedded Xray library is missing, damaged, or incompatible.");
+        error.suggestedAction = ZaryaTr::tr("Repair or reinstall Zarya, then retry.");
         error.area = QStringLiteral("Core");
     } else if (code == ErrorCode::helperNotConnected()) {
         error.title = ZaryaTr::tr("Helper not connected");

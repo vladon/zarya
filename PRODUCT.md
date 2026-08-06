@@ -14,7 +14,7 @@ experimental features without making the primary workflow feel complicated.
 
 ## Product Purpose
 
-Zarya makes proxy profiles and external cores manageable as one calm desktop application.
+Zarya makes proxy profiles, embedded Xray, and external cores manageable as one calm desktop application.
 Success means that the recommended Xray system-proxy path is obvious, state changes are
 trustworthy, recovery is always visible, and advanced configuration remains available through
 progressive disclosure.

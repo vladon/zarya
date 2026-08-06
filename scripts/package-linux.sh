@@ -62,6 +62,10 @@ HELPER_BIN="$BUILD_DIR/zarya-helper"
 [[ -x "$HELPER_BIN" ]] || HELPER_BIN="$BUILD_DIR/Release/zarya-helper"
 UPDATER_BIN="$BUILD_DIR/zarya-updater"
 [[ -x "$UPDATER_BIN" ]] || UPDATER_BIN="$BUILD_DIR/Release/zarya-updater"
+CORE_TEST_WORKER="$(dirname "$BIN")/zarya-core-test-worker"
+[[ -x "$CORE_TEST_WORKER" ]] || { echo "zarya-core-test-worker is missing" >&2; exit 1; }
+XRAY_BRIDGE="$(dirname "$BIN")/libzarya-xray.so"
+[[ -f "$XRAY_BRIDGE" ]] || { echo "libzarya-xray.so is missing" >&2; exit 1; }
 
 rm -rf "$STAGING"
 mkdir -p "$STAGING"
@@ -72,6 +76,9 @@ cp "$HELPER_BIN" "$STAGING/zarya-helper"
 chmod +x "$STAGING/zarya-helper"
 cp "$UPDATER_BIN" "$STAGING/zarya-updater"
 chmod +x "$STAGING/zarya-updater"
+cp "$XRAY_BRIDGE" "$STAGING/libzarya-xray.so"
+cp "$CORE_TEST_WORKER" "$STAGING/zarya-core-test-worker"
+chmod +x "$STAGING/zarya-core-test-worker"
 touch "$STAGING/portable.flag"
 
 cp "$ROOT/packaging/linux/zarya.desktop.in" "$STAGING/zarya.desktop"
@@ -119,7 +126,8 @@ write_release_manifest(
     gui_artifact="zarya",
     helper_artifact="zarya-helper",
     updater_artifact="zarya-updater",
-    bundle_xray=False if $SKIP_BUNDLE_XRAY else None,
+    embedded_xray_artifact="libzarya-xray.so",
+    core_test_worker_artifact="zarya-core-test-worker",
     bundle_geodata=False if $SKIP_BUNDLE_GEODATA else None,
 )
 write_build_integrity(staging)

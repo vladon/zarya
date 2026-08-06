@@ -357,12 +357,18 @@ bool BackupExporter::exportToArchive(const BackupExportOptions& options, QString
         }
         manifest.categories.insert(backupCategoryKey(category), entry);
 
+        if (category == BackupCategory::AppSettings && !entry.file.isEmpty()) {
+            QSettings settings(QDir(stagingDir).filePath(entry.file), QSettings::IniFormat);
+            settings.remove(QStringLiteral("cores/xrayPath"));
+            settings.sync();
+        }
+
         if (manifest.redacted && !entry.file.isEmpty() && !entry.file.endsWith(QLatin1Char('/'))) {
             const QString stagedFile = QDir(stagingDir).filePath(entry.file);
             if (category == BackupCategory::AppSettings) {
                 QSettings settings(stagedFile, QSettings::IniFormat);
                 for (const QString& key :
-                     {QStringLiteral("cores/xrayPath"), QStringLiteral("cores/singBoxPath")}) {
+                     {QStringLiteral("cores/singBoxPath")}) {
                     const QString path = settings.value(key).toString();
                     if (!path.isEmpty()) {
                         settings.setValue(key, QFileInfo(path).fileName());

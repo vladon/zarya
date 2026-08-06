@@ -19,5 +19,17 @@
              company-name="vladon.dev">
       <authenticode-sign hash-algorithm="sha256" />
     </pe-file>
+    <pe-file path="zarya-core-test-worker.exe"
+             product-name="Zarya"
+             product-version="${version}"
+             company-name="vladon.dev">
+      <authenticode-sign hash-algorithm="sha256" />
+    </pe-file>
+    <pe-file path="zarya-xray.dll"
+             product-name="Zarya"
+             product-version="${version}"
+             company-name="vladon.dev">
+      <authenticode-sign hash-algorithm="sha256" />
+    </pe-file>
   </zip-file>
 </artifact-configuration>

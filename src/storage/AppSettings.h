@@ -16,13 +16,8 @@ public:
 
     static QSettings& settings();
 
-    QString xrayExecutablePath() const;
-    void setXrayExecutablePath(const QString& path);
-
     int mixedPort() const;
     void setMixedPort(int port);
-
-    QString resolvedXrayPath() const;
 
     QString singBoxExecutablePath() const;
     void setSingBoxExecutablePath(const QString& path);

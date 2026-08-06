@@ -2,63 +2,362 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="en_US">
 <context>
-    <name>ZaryaSplitView</name>
-    <message><source>Resize profiles and logs</source><translation type="unfinished"></translation></message>
-    <message><source>Use Up and Down arrow keys to resize</source><translation type="unfinished"></translation></message>
+    <name>AppController</name>
+    <message>
+        <source>Geo data missing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>DNS profile uses geo rules but geo data files are missing (%1).
+
+Xray validation may fail.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open Geo Data Manager</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation type="unfinished">Continue</translation>
+    </message>
+    <message>
+        <source>Cancel Start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>DNS warnings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>DNS profile has validation warnings:
+
+%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open DNS Profiles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The active routing profile uses geoip/geosite rules, but geo data files are missing (%1).
+
+Xray validation may fail.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change system proxy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zarya will change Windows system proxy settings. Continue?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Cancel</translation>
+    </message>
+    <message>
+        <source>Profile running</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A profile is already running. Stop and start the selected profile?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop and Start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Missing sing-box rule sets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The active TUN routing/DNS profiles require sing-box rule sets that are missing:
+
+%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>sing-box rule sets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The active TUN routing/DNS profiles reference sing-box rule sets that are missing:
+
+%1
+
+Continue anyway? sing-box check is the final authority.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open Rule Set Manager</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot start TUN</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Generated sing-box config has blocking issues:
+
+%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>sing-box config warnings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Generated sing-box config has warnings:
+
+%1
+
+Continue?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview Config</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unsupported profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Config generation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Routing warnings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Routing profile has validation warnings:
+
+%1
+
+Continue?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Config validation failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>System proxy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zarya could not restore previous system proxy settings. Retry restore or exit anyway?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exit Anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Xray start failed</source>
+        <translation>Xray start failed</translation>
+    </message>
+    <message>
+        <source>Xray unavailable</source>
+        <translation>Xray unavailable</translation>
+    </message>
 </context>
 <context>
     <name>AppUpdateDialog</name>
-    <message><source>Zarya App Updates</source><translation type="unfinished"></translation></message>
-    <message><source>No update checked yet.</source><translation type="unfinished"></translation></message>
-    <message><source>Update details</source><translation>Update details</translation></message>
-    <message><source>Check Now</source><translation type="unfinished"></translation></message>
-    <message><source>Choose Local Manifest…</source><translation type="unfinished"></translation></message>
-    <message><source>Download and Verify</source><translation type="unfinished"></translation></message>
-    <message><source>Install and Restart</source><translation type="unfinished"></translation></message>
-    <message><source>Open Downloads Folder</source><translation type="unfinished"></translation></message>
-    <message><source>Cancel</source><translation type="unfinished"></translation></message>
-    <message><source>Update information</source><translation type="unfinished"></translation></message>
-    <message><source>Current version</source><translation type="unfinished"></translation></message>
-    <message><source>Channel</source><translation type="unfinished"></translation></message>
-    <message><source>Installation mode</source><translation type="unfinished"></translation></message>
-    <message><source>Manifest</source><translation type="unfinished"></translation></message>
-    <message><source>Status</source><translation type="unfinished"></translation></message>
-    <message><source>Local file: %1</source><translation type="unfinished"></translation></message>
-    <message><source>Not configured</source><translation type="unfinished"></translation></message>
-    <message><source>Configured URL</source><translation type="unfinished"></translation></message>
-    <message><source>Update available: %1</source><translation type="unfinished"></translation></message>
-    <message><source>Selected asset:</source><translation type="unfinished"></translation></message>
-    <message><source>  Size: %1 bytes</source><translation type="unfinished"></translation></message>
-    <message><source>Self-update installation is experimental and disabled in this RC build.</source><translation type="unfinished"></translation></message>
-    <message><source>You can download and verify updates manually.</source><translation type="unfinished"></translation></message>
-    <message><source>Ready to install portable update.</source><translation type="unfinished"></translation></message>
-    <message><source>Zarya will close and restart.</source><translation type="unfinished"></translation></message>
-    <message><source>The update artifact was downloaded and verified.</source><translation type="unfinished"></translation></message>
-    <message><source>Install:</source><translation type="unfinished"></translation></message>
-    <message><source>You are using the latest version for the selected channel.</source><translation type="unfinished"></translation></message>
-    <message><source>Warning: %1</source><translation type="unfinished"></translation></message>
-    <message><source>Blocked: %1</source><translation type="unfinished"></translation></message>
-    <message><source>Choose Update Manifest</source><translation type="unfinished"></translation></message>
-    <message><source>Update manifest (*.json);;All files (*.*)</source><translation type="unfinished"></translation></message>
-    <message><source>App Updates</source><translation type="unfinished"></translation></message>
-    <message><source>This update asset has no checksum. Enable unsigned app update download in Settings or use a signed manifest asset.</source><translation type="unfinished"></translation></message>
-    <message><source>Downloading %1…</source><translation type="unfinished"></translation></message>
-    <message><source>Downloading… %1 / %2 bytes</source><translation type="unfinished"></translation></message>
-    <message><source>Download failed.</source><translation type="unfinished"></translation></message>
-    <message><source>SHA256 verification failed.</source><translation type="unfinished"></translation></message>
-    <message><source>Staging update…</source><translation type="unfinished"></translation></message>
-    <message><source>Staging failed.</source><translation type="unfinished"></translation></message>
-    <message><source>Download verified. Ready to install portable update.</source><translation type="unfinished"></translation></message>
-    <message><source>Download completed.
+    <message>
+        <source>Zarya App Updates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No update checked yet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update details</source>
+        <translation>Update details</translation>
+    </message>
+    <message>
+        <source>Check Now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose Local Manifest…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Download and Verify</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install and Restart</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open Downloads Folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Cancel</translation>
+    </message>
+    <message>
+        <source>Update information</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Current version</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Channel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installation mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Manifest</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Status</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Local file: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not configured</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Configured URL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update available: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Selected asset:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>  Size: %1 bytes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Self-update installation is experimental and disabled in this RC build.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You can download and verify updates manually.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ready to install portable update.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zarya will close and restart.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The update artifact was downloaded and verified.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You are using the latest version for the selected channel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Warning: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blocked: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose Update Manifest</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update manifest (*.json);;All files (*.*)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>App Updates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This update asset has no checksum. Enable unsigned app update download in Settings or use a signed manifest asset.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloading %1…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloading… %1 / %2 bytes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Download failed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SHA256 verification failed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Staging update…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Staging failed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Download verified. Ready to install portable update.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Download completed.
 SHA256 verified.
 
-%1</source><translation type="unfinished"></translation></message>
-    <message><source>Install Update</source><translation type="unfinished"></translation></message>
-    <message><source>Zarya will close while the updater replaces application files.
+%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install Update</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zarya will close while the updater replaces application files.
 User data under data/ will be preserved.
 
-Install and restart now?</source><translation type="unfinished"></translation></message>
-    <message><source>Checking for updates…</source><translation type="unfinished"></translation></message>
+Install and restart now?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Checking for updates…</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>BackupExportDialog</name>
@@ -92,7 +391,7 @@ Install and restart now?</source><translation type="unfinished"></translation></
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Cancel</translation>
     </message>
     <message>
         <source>Output</source>
@@ -123,7 +422,10 @@ Install and restart now?</source><translation type="unfinished"></translation></
 %1</source>
         <translation type="unfinished"></translation>
     </message>
-    <message><source>Continue</source><translation type="unfinished"></translation></message>
+    <message>
+        <source>Continue</source>
+        <translation type="unfinished">Continue</translation>
+    </message>
 </context>
 <context>
     <name>BackupImportDialog</name>
@@ -173,7 +475,7 @@ Install and restart now?</source><translation type="unfinished"></translation></
     </message>
     <message>
         <source>Profiles</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Profiles</translation>
     </message>
     <message>
         <source>Subscriptions</source>
@@ -201,7 +503,7 @@ Install and restart now?</source><translation type="unfinished"></translation></
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Cancel</translation>
     </message>
     <message>
         <source>included</source>
@@ -246,7 +548,10 @@ Pre-import backup:
 %1</source>
         <translation type="unfinished"></translation>
     </message>
-    <message><source>Continue</source><translation type="unfinished"></translation></message>
+    <message>
+        <source>Continue</source>
+        <translation type="unfinished">Continue</translation>
+    </message>
 </context>
 <context>
     <name>BetaBannerWidget</name>
@@ -258,9 +563,18 @@ Pre-import backup:
         <source>Dismiss</source>
         <translation type="unfinished"></translation>
     </message>
-    <message><source>Experimental features are enabled. They are not part of the stable support scope. Use Diagnostics Bundle when reporting issues.</source><translation type="unfinished"></translation></message>
-    <message><source>Zarya release candidate — experimental features are disabled by default. Use Diagnostics Bundle when reporting issues.</source><translation type="unfinished"></translation></message>
-    <message><source>Zarya stable release — experimental features are disabled by default. Use Diagnostics Bundle when reporting issues.</source><translation type="unfinished"></translation></message>
+    <message>
+        <source>Experimental features are enabled. They are not part of the stable support scope. Use Diagnostics Bundle when reporting issues.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zarya release candidate — experimental features are disabled by default. Use Diagnostics Bundle when reporting issues.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zarya stable release — experimental features are disabled by default. Use Diagnostics Bundle when reporting issues.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>CoreManagerDialog</name>
@@ -368,6 +682,30 @@ Pre-import backup:
         <source>Downloading %1: %2 / %3 bytes</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Built into Zarya</source>
+        <translation>Built into Zarya</translation>
+    </message>
+    <message>
+        <source>Provider: Zarya App Update</source>
+        <translation>Provider: Zarya App Update</translation>
+    </message>
+    <message>
+        <source>Distribution: Built into Zarya</source>
+        <translation>Distribution: Built into Zarya</translation>
+    </message>
+    <message>
+        <source>ABI version: %1</source>
+        <translation>ABI version: %1</translation>
+    </message>
+    <message>
+        <source>Load status: %1</source>
+        <translation>Load status: %1</translation>
+    </message>
+    <message>
+        <source>Xray is updated together with Zarya.</source>
+        <translation>Xray is updated together with Zarya.</translation>
+    </message>
 </context>
 <context>
     <name>DiagnosticsDialog</name>
@@ -421,7 +759,7 @@ Pre-import backup:
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Cancel</translation>
     </message>
     <message>
         <source>Output</source>
@@ -440,19 +778,30 @@ Pre-import backup:
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Close</source>
+        <translation type="unfinished">Close</translation>
+    </message>
+    <message>
         <source>Diagnostics bundle created:
-%1
-
-This bundle is redacted, but review it before sharing.</source>
+%1</source>
         <translation type="unfinished"></translation>
     </message>
-    <message><source>Close</source><translation type="unfinished"></translation></message>
-    <message><source>Diagnostics bundle created:
-%1</source><translation type="unfinished"></translation></message>
-    <message><source>Issue reporting instructions are not bundled with this build.</source><translation type="unfinished"></translation></message>
-    <message><source>Open Folder</source><translation type="unfinished"></translation></message>
-    <message><source>Open Issue Template</source><translation type="unfinished"></translation></message>
-    <message><source>This bundle is redacted, but review the diagnostics archive before sharing it publicly.</source><translation type="unfinished"></translation></message>
+    <message>
+        <source>Issue reporting instructions are not bundled with this build.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open Folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open Issue Template</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This bundle is redacted, but review the diagnostics archive before sharing it publicly.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>DiagnosticsPreviewDialog</name>
@@ -484,7 +833,7 @@ Secrets included: %2</source>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Close</translation>
     </message>
     <message>
         <source>Included files:</source>
@@ -539,7 +888,7 @@ Secrets included: %2</source>
     </message>
     <message>
         <source>Delete</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Delete</translation>
     </message>
     <message>
         <source>Set Active</source>
@@ -551,7 +900,7 @@ Secrets included: %2</source>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Close</translation>
     </message>
     <message>
         <source> (active)</source>
@@ -768,11 +1117,11 @@ Save anyway?</source>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Cancel</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Close</translation>
     </message>
 </context>
 <context>
@@ -831,6 +1180,45 @@ Save anyway?</source>
     </message>
     <message>
         <source>Cancel</source>
+        <translation type="unfinished">Cancel</translation>
+    </message>
+</context>
+<context>
+    <name>FirstRunChecklistWidget</name>
+    <message>
+        <source>Core: Xray installed (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>unknown version</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Core: Xray missing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Profiles: %1 profile(s)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Profiles: none</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Runtime: Experimental TUN via sing-box</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Runtime: System proxy via Xray</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1
+%2
+Routing: selected
+DNS: selected
+%3</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -845,38 +1233,11 @@ Save anyway?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Zarya is a cross-platform proxy client.
-
-Recommended setup:
-1. Confirm Xray core (bundled in release builds, or install via Core Manager)
-2. Add a profile or subscription
-3. Choose routing/DNS behavior
-4. Start a profile</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Core setup</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Xray is required for the default system-proxy mode.
-sing-box is only needed for experimental TUN mode.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Install Xray</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Update Xray…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Install sing-box (experimental TUN)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Choose existing Xray binary</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1017,14 +1378,68 @@ sing-box: %3 (%4)</source>
         <source>Confirm that you understand TUN mode is experimental.</source>
         <translation type="unfinished"></translation>
     </message>
-    <message><source>Back</source><translation type="unfinished"></translation></message>
-    <message><source>Next</source><translation type="unfinished"></translation></message>
-    <message><source>Configure Helper</source><translation type="unfinished"></translation></message>
-    <message><source>Continue without helper</source><translation type="unfinished"></translation></message>
-    <message><source>Core required</source><translation type="unfinished"></translation></message>
-    <message><source>Install or choose an Xray binary before starting a profile.</source><translation type="unfinished"></translation></message>
-    <message><source>Profile required</source><translation type="unfinished"></translation></message>
-    <message><source>Import or add at least one profile before starting.</source><translation type="unfinished"></translation></message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Configure Helper</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Continue without helper</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Core required</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Profile required</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import or add at least one profile before starting.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zarya is a cross-platform proxy client.
+
+Recommended setup:
+1. Confirm the built-in Xray core is available
+2. Add a profile or subscription
+3. Choose routing/DNS behavior
+4. Start a profile</source>
+        <translation>Zarya is a cross-platform proxy client.
+
+Recommended setup:
+1. Confirm the built-in Xray core is available
+2. Add a profile or subscription
+3. Choose routing/DNS behavior
+4. Start a profile</translation>
+    </message>
+    <message>
+        <source>Xray is built into Zarya for the default system-proxy mode.
+sing-box is only needed for experimental TUN mode.</source>
+        <translation>Xray is built into Zarya for the default system-proxy mode.
+sing-box is only needed for experimental TUN mode.</translation>
+    </message>
+    <message>
+        <source>built in</source>
+        <translation>built in</translation>
+    </message>
+    <message>
+        <source>unavailable</source>
+        <translation>unavailable</translation>
+    </message>
+    <message>
+        <source>Built-in Xray is unavailable. Repair or reinstall Zarya before starting a profile.</source>
+        <translation>Built-in Xray is unavailable. Repair or reinstall Zarya before starting a profile.</translation>
+    </message>
 </context>
 <context>
     <name>GeoDataManagerDialog</name>
@@ -1094,11 +1509,11 @@ sing-box: %3 (%4)</source>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Cancel</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Close</translation>
     </message>
     <message>
         <source>Source:</source>
@@ -1157,14 +1572,10 @@ sing-box: %3 (%4)</source>
     </message>
     <message>
         <source>Import</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Import</translation>
     </message>
     <message>
         <source>No links to import.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1173,66 +1584,7 @@ sing-box: %3 (%4)</source>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>ProfileImportWidget</name>
-    <message>
-        <source>Share links</source>
-        <translation>Share links</translation>
-    </message>
-    <message>
-        <source>Paste vless://, vmess://, trojan://, ss://, hysteria2://, or wireguard:// links here.
-One link per line.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Paste links to see parse summary.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Parsed: VLESS %1, VMess %2, Trojan %3, Shadowsocks %4, Hysteria2 %5, WireGuard %6, Unsupported %7</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>FirstRunChecklistWidget</name>
-    <message>
-        <source>Core: Xray installed (%1)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>unknown version</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Core: Xray missing</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Profiles: %1 profile(s)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Profiles: none</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Runtime: Experimental TUN via sing-box</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Runtime: System proxy via Xray</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1
-%2
-Routing: selected
-DNS: selected
-%3</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Cancel</translation>
     </message>
 </context>
 <context>
@@ -1306,7 +1658,7 @@ DNS: selected
     </message>
     <message>
         <source>Warnings</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Warnings</translation>
     </message>
     <message>
         <source>Runtime</source>
@@ -1545,15 +1897,7 @@ DNS: selected
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Desktop App UI &amp;spike…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>&amp;About</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Main</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1667,7 +2011,7 @@ Add a proxy profile manually, paste a share link, or add a subscription.</source
     </message>
     <message>
         <source>Save failed</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Save failed</translation>
     </message>
     <message>
         <source>Update failed</source>
@@ -1679,7 +2023,7 @@ Add a proxy profile manually, paste a share link, or add a subscription.</source
     </message>
     <message>
         <source>%1 subscription(s) failed to update.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 subscription(s) failed to update.</translation>
     </message>
     <message>
         <source>Edit profile</source>
@@ -1774,65 +2118,165 @@ Open import dialog anyway?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Zarya 0.7
-
-Native proxy profile manager with system tray, Xray multi-protocol support, Windows system proxy, subscriptions, and node testing.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>%1
 
 Step %2 of %3</source>
         <translation type="unfinished"></translation>
     </message>
-    <message><source>Start</source><translation type="unfinished"></translation></message>
-    <message><source>Cancel</source><translation type="unfinished"></translation></message>
-    <message><source>Running</source><translation type="unfinished"></translation></message>
-    <message><source>Stopped</source><translation type="unfinished"></translation></message>
-    <message><source>Unsupported</source><translation type="unfinished"></translation></message>
-    <message><source>Off</source><translation type="unfinished"></translation></message>
-    <message><source>On</source><translation type="unfinished"></translation></message>
-    <message><source>On via %1</source><translation type="unfinished"></translation></message>
-    <message><source>Failed</source><translation type="unfinished"></translation></message>
-    <message><source>Needs recovery</source><translation type="unfinished"></translation></message>
-    <message><source>Enabling</source><translation type="unfinished"></translation></message>
-    <message><source>Disabling</source><translation type="unfinished"></translation></message>
-    <message><source>Available</source><translation type="unfinished"></translation></message>
-    <message><source>Unavailable</source><translation type="unfinished"></translation></message>
-    <message><source>Testing: %1/%2 | Core: %3 | Runtime: %4 | Kill switch: %5 | System proxy: %6 | Routing: %7 | DNS: %8</source><translation type="unfinished"></translation></message>
-    <message><source>Idle | Core: %1 | Runtime: %2 | Kill switch: %3 | System proxy: %4 | Routing: %5 | DNS: %6 | Tray: %7</source><translation type="unfinished"></translation></message>
-    <message><source> | Proxy 127.0.0.1:%1</source><translation type="unfinished"></translation></message>
-    <message><source>&amp;Known Limitations</source><translation type="unfinished"></translation></message>
-    <message><source>&amp;Quick Start</source><translation type="unfinished"></translation></message>
-    <message><source>&amp;Report Issue…</source><translation type="unfinished"></translation></message>
-    <message><source>A proxy core is currently running. Import is disabled until the core is stopped.
+    <message>
+        <source>Start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Cancel</translation>
+    </message>
+    <message>
+        <source>Running</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stopped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unsupported</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>On via %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs recovery</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enabling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disabling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unavailable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Testing: %1/%2 | Core: %3 | Runtime: %4 | Kill switch: %5 | System proxy: %6 | Routing: %7 | DNS: %8</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Idle | Core: %1 | Runtime: %2 | Kill switch: %3 | System proxy: %4 | Routing: %5 | DNS: %6 | Tray: %7</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> | Proxy 127.0.0.1:%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Known Limitations</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Quick Start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Report Issue…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A proxy core is currently running. Import is disabled until the core is stopped.
 
-Open import dialog anyway?</source><translation type="unfinished"></translation></message>
-    <message><source>Check for App &amp;Updates…</source><translation type="unfinished"></translation></message>
-    <message><source>Copy &amp;Support Summary</source><translation type="unfinished"></translation></message>
-    <message><source>Could not copy support summary to the clipboard.</source><translation type="unfinished"></translation></message>
-    <message><source>Experimental TUN mode is disabled in stable builds by default.
+Open import dialog anyway?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check for App &amp;Updates…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy &amp;Support Summary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not copy support summary to the clipboard.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Experimental TUN mode is disabled in stable builds by default.
 Effective runtime: Xray system proxy.
 
-Enable experimental features in Settings → Release channel if you intend to use TUN.</source><translation type="unfinished"></translation></message>
-    <message><source>Experimental runtime disabled</source><translation type="unfinished"></translation></message>
-    <message><source>Experimental runtime is disabled.
+Enable experimental features in Settings → Release channel if you intend to use TUN.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Experimental runtime disabled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Experimental runtime is disabled.
 Effective runtime: Xray system proxy.
 
-Enable experimental features in Settings → Release channel if you intend to use TUN.</source><translation type="unfinished"></translation></message>
-    <message><source>Have a portable Zarya folder with profiles or subscriptions?
+Enable experimental features in Settings → Release channel if you intend to use TUN.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Have a portable Zarya folder with profiles or subscriptions?
 
 You can import data from a portable Zarya folder without modifying the original folder.
 
-Import now?</source><translation type="unfinished"></translation></message>
-    <message><source>Help</source><translation type="unfinished"></translation></message>
-    <message><source>Import from Portable Zarya &amp;Folder…</source><translation type="unfinished"></translation></message>
-    <message><source>Import from Portable Zarya Folder</source><translation type="unfinished"></translation></message>
-    <message><source>Issue reporting instructions are not bundled with this build.</source><translation type="unfinished"></translation></message>
-    <message><source>Known limitations doc is not bundled with this build.</source><translation type="unfinished"></translation></message>
-    <message><source>Portable Import</source><translation type="unfinished"></translation></message>
-    <message><source>Portable Zarya data</source><translation type="unfinished"></translation></message>
-    <message><source>Portable Zarya data found:
+Import now?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Help</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import from Portable Zarya &amp;Folder…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import from Portable Zarya Folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Issue reporting instructions are not bundled with this build.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Known limitations doc is not bundled with this build.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Portable Import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Portable Zarya data</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Portable Zarya data found:
 
 Profiles: %1
 Subscriptions: %2
@@ -1843,22 +2287,53 @@ Settings: %5
 A temporary backup archive will be created and opened in the import flow.
 The original portable folder will not be modified.
 
-Continue?</source><translation type="unfinished"></translation></message>
-    <message><source>Public Beta &amp;Guide</source><translation type="unfinished"></translation></message>
-    <message><source>Public beta guide is not bundled with this build.</source><translation type="unfinished"></translation></message>
-    <message><source>Quick start guide is not bundled with this build.</source><translation type="unfinished"></translation></message>
-    <message><source>Select Xray executable</source><translation type="unfinished"></translation></message>
-    <message><source>Select sing-box executable</source><translation type="unfinished"></translation></message>
-    <message><source>Support Summary</source><translation type="unfinished"></translation></message>
-    <message><source>Support summary copied to the clipboard.
+Continue?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Public Beta &amp;Guide</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Public beta guide is not bundled with this build.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quick start guide is not bundled with this build.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select sing-box executable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Support Summary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Support summary copied to the clipboard.
 
-Review it before pasting into an issue. Do not include proxy links or passwords.</source><translation type="unfinished"></translation></message>
-    <message><source>The selected folder does not look like a portable Zarya install.
+Review it before pasting into an issue. Do not include proxy links or passwords.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The selected folder does not look like a portable Zarya install.
 
-Expected portable.flag or a data/ folder with profiles, subscriptions, or settings.</source><translation type="unfinished"></translation></message>
-    <message><source>Xray system proxy</source><translation type="unfinished"></translation></message>
-    <message><source>no</source><translation type="unfinished"></translation></message>
-    <message><source>yes</source><translation type="unfinished"></translation></message>
+Expected portable.flag or a data/ folder with profiles, subscriptions, or settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Xray system proxy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>no</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>yes</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>ProfileDialog</name>
@@ -2007,15 +2482,31 @@ Expected portable.flag or a data/ folder with profiles, subscriptions, or settin
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Validation</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Save</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel</source>
+        <translation type="unfinished">Cancel</translation>
+    </message>
+</context>
+<context>
+    <name>ProfileImportWidget</name>
+    <message>
+        <source>Share links</source>
+        <translation>Share links</translation>
+    </message>
+    <message>
+        <source>Paste vless://, vmess://, trojan://, ss://, hysteria2://, or wireguard:// links here.
+One link per line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste links to see parse summary.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Parsed: VLESS %1, VMess %2, Trojan %3, Shadowsocks %4, Hysteria2 %5, WireGuard %6, Unsupported %7</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2091,19 +2582,44 @@ Expected portable.flag or a data/ folder with profiles, subscriptions, or settin
     </message>
 </context>
 <context>
-    <name>ReadinessDialog</name>
+    <name>QObject</name>
     <message>
-        <source>Zarya Setup</source>
+        <source>A previous update attempt was not completed. The pending update plan for %1 is stale.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Zarya is not fully configured yet.
-
-Recommended next steps:
-1. Confirm Xray (bundled in release builds, or install via Core Manager)
-2. Import or add a profile
-3. Choose routing profile
-4. Start profile</source>
+        <source>App Update</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open Update Folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show Log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The app update failed and was rolled back.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zarya was updated successfully.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zarya was updated to %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ReadinessDialog</name>
+    <message>
+        <source>Zarya Setup</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2120,7 +2636,38 @@ Recommended next steps:
     </message>
     <message>
         <source>Close</source>
+        <translation type="unfinished">Close</translation>
+    </message>
+    <message>
+        <source>Zarya is not fully configured yet.
+
+Recommended next steps:
+1. Confirm the built-in Xray core is available
+2. Import or add a profile
+3. Choose routing profile
+4. Start profile</source>
+        <translation>Zarya is not fully configured yet.
+
+Recommended next steps:
+1. Confirm the built-in Xray core is available
+2. Import or add a profile
+3. Choose routing profile
+4. Start profile</translation>
+    </message>
+</context>
+<context>
+    <name>RoutingJsonPreviewDialog</name>
+    <message>
+        <source>Generated routing JSON</source>
+        <translation>Generated routing JSON</translation>
+    </message>
+    <message>
+        <source>Xray Routing JSON Preview</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">Close</translation>
     </message>
 </context>
 <context>
@@ -2163,7 +2710,7 @@ Recommended next steps:
     </message>
     <message>
         <source>Delete</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Delete</translation>
     </message>
     <message>
         <source>Set Active</source>
@@ -2175,7 +2722,7 @@ Recommended next steps:
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Close</translation>
     </message>
     <message>
         <source> (active)</source>
@@ -2313,10 +2860,6 @@ Recommended next steps:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Profile</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Name is required.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2350,11 +2893,11 @@ Recommended next steps:
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Cancel</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Close</translation>
     </message>
 </context>
 <context>
@@ -2390,10 +2933,6 @@ domain:example.com</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Rule</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>At least one value is required.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2403,26 +2942,11 @@ domain:example.com</source>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Cancel</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>RoutingJsonPreviewDialog</name>
-    <message>
-        <source>Generated routing JSON</source>
-        <translation>Generated routing JSON</translation>
-    </message>
-    <message>
-        <source>Xray Routing JSON Preview</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Close</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Close</translation>
     </message>
 </context>
 <context>
@@ -2493,7 +3017,7 @@ domain:example.com</source>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Close</translation>
     </message>
     <message>
         <source>Required by active TUN config</source>
@@ -2537,7 +3061,7 @@ domain:example.com</source>
     </message>
     <message>
         <source>Import</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Import</translation>
     </message>
     <message>
         <source>Select a rule set row first.</source>
@@ -2592,7 +3116,10 @@ What should happen?</source>
         <source>Exit Safely</source>
         <translation type="unfinished"></translation>
     </message>
-    <message><source>Cancel</source><translation type="unfinished"></translation></message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Cancel</translation>
+    </message>
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -2686,10 +3213,6 @@ What should happen?</source>
     </message>
     <message>
         <source>Enable system proxy after auto-starting profile</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Xray executable</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2849,19 +3372,11 @@ What should happen?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Start Helper</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Connect</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Check Status</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>TUN mode changes system routes and may require administrator/root permissions. zarya-helper is experimental and is not installed as a privileged service in this milestone.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2877,19 +3392,11 @@ What should happen?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Helper status</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Require local .srs rule sets before starting TUN</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Manage rule sets from Tools → sing-box Rule Sets. Xray geoip.dat/geosite.dat are separate from sing-box .srs files.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Rule sets</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2977,10 +3484,6 @@ What should happen?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Enable Now</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Disable Now</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2998,22 +3501,6 @@ What should happen?</source>
     </message>
     <message>
         <source>Experimental TUN mode</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>TUN mode is experimental. It may change network routes and DNS behavior.
-
-If it fails, Zarya will attempt to stop sing-box and restore state, but this mode is not production-ready yet.
-
-Kill switch is experimental and requires zarya-helper mode.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enable Experimental TUN</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Select Xray executable</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3084,191 +3571,251 @@ Select a profile and press Start, or use a running TUN session.</source>
         <source>running=%1, pid=%2</source>
         <translation type="unfinished"></translation>
     </message>
-    <message><source> · Connected</source><translation type="unfinished"></translation></message>
-    <message><source>Allow unsigned app update download (no checksum)</source><translation type="unfinished"></translation></message>
-    <message><source>Also recover/remove Zarya kill switch rules on uninstall</source><translation type="unfinished"></translation></message>
-    <message><source>App updates</source><translation type="unfinished"></translation></message>
-    <message><source>App updates update Zarya itself. Core updates (below) update Xray and sing-box.</source><translation type="unfinished"></translation></message>
-    <message><source>Beta</source><translation type="unfinished"></translation></message>
-    <message><source>Channel</source><translation type="unfinished"></translation></message>
-    <message><source>Check app updates on startup</source><translation type="unfinished"></translation></message>
-    <message><source>Continue</source><translation type="unfinished"></translation></message>
-    <message><source>Dev</source><translation type="unfinished"></translation></message>
-    <message><source>Enable</source><translation type="unfinished"></translation></message>
-    <message><source>Experimental TUN, helper, and kill switch controls are hidden. Recovery actions remain available when needed.</source><translation type="unfinished"></translation></message>
-    <message><source>Experimental features</source><translation type="unfinished"></translation></message>
-    <message><source>Experimental features are disabled. Runtime will use Xray system-proxy mode.</source><translation type="unfinished"></translation></message>
-    <message><source>Experimental features are hidden in release-candidate and stable builds.
-Xray system-proxy mode is the recommended stable path.</source><translation type="unfinished"></translation></message>
-    <message><source>Experimental features disabled</source><translation type="unfinished"></translation></message>
-    <message><source>Experimental features may break networking and are not part of stable support.</source><translation type="unfinished"></translation></message>
-    <message><source>Experimental kill switch</source><translation type="unfinished"></translation></message>
-    <message><source>Helper self-test</source><translation type="unfinished"></translation></message>
-    <message><source>Helper service is not installed. Optional — only needed for experimental TUN/kill switch.</source><translation type="unfinished"></translation></message>
-    <message><source>Helper service recovery</source><translation type="unfinished"></translation></message>
-    <message><source>Helper service: %1</source><translation type="unfinished"></translation></message>
-    <message><source>How it works</source><translation type="unfinished"></translation></message>
-    <message><source>IPC connection</source><translation type="unfinished"></translation></message>
-    <message><source>Install</source><translation type="unfinished"></translation></message>
-    <message><source>Install helper service</source><translation type="unfinished"></translation></message>
-    <message><source>Installing Zarya Helper service requires Administrator privileges.</source><translation type="unfinished"></translation></message>
-    <message><source>Installing the helper requires administrator/root privileges.
+    <message>
+        <source> · Connected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Allow unsigned app update download (no checksum)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Also recover/remove Zarya kill switch rules on uninstall</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>App updates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Beta</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Channel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check app updates on startup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation type="unfinished">Continue</translation>
+    </message>
+    <message>
+        <source>Dev</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Experimental TUN, helper, and kill switch controls are hidden. Recovery actions remain available when needed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Experimental features</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Experimental features are disabled. Runtime will use Xray system-proxy mode.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Experimental features are hidden in release-candidate and stable builds.
+Xray system-proxy mode is the recommended stable path.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Experimental features disabled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Experimental features may break networking and are not part of stable support.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Experimental kill switch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Helper self-test</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Helper service is not installed. Optional — only needed for experimental TUN/kill switch.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Helper service recovery</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Helper service: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How it works</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>IPC connection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install helper service</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing Zarya Helper service requires Administrator privileges.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing the helper requires administrator/root privileges.
 The helper can start TUN mode and manage kill switch rules.
-Only install it from a trusted Zarya build.</source><translation type="unfinished"></translation></message>
-    <message><source>Kill switch is experimental and may block networking if it fails.</source><translation type="unfinished"></translation></message>
-    <message><source>Leave empty to use Help → Check for App Updates with a local manifest</source><translation type="unfinished"></translation></message>
-    <message><source>Make sure you know the recovery procedure before enabling it.</source><translation type="unfinished"></translation></message>
-    <message><source>Manifest URL</source><translation type="unfinished"></translation></message>
-    <message><source>Manual helper</source><translation type="unfinished"></translation></message>
-    <message><source>Privileged helper backend</source><translation type="unfinished"></translation></message>
-    <message><source>Recommended for beta:
+Only install it from a trusted Zarya build.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Kill switch is experimental and may block networking if it fails.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave empty to use Help → Check for App Updates with a local manifest</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make sure you know the recovery procedure before enabling it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Manifest URL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Manual helper</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Privileged helper backend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recommended for beta:
 Xray system-proxy mode.
 
-Continue with experimental TUN?</source><translation type="unfinished"></translation></message>
-    <message><source>Release Candidate</source><translation type="unfinished"></translation></message>
-    <message><source>Release channel</source><translation type="unfinished"></translation></message>
-    <message><source>Restart Service</source><translation type="unfinished"></translation></message>
-    <message><source>Restart helper service</source><translation type="unfinished"></translation></message>
-    <message><source>Run Self-Test</source><translation type="unfinished"></translation></message>
-    <message><source>Runtime mode</source><translation type="unfinished"></translation></message>
-    <message><source>Service status</source><translation type="unfinished"></translation></message>
-    <message><source>Show Experimental Features…</source><translation type="unfinished"></translation></message>
-    <message><source>Show experimental features (TUN, helper, kill switch)</source><translation type="unfinished"></translation></message>
-    <message><source>Stable</source><translation type="unfinished"></translation></message>
-    <message><source>Stable scope</source><translation type="unfinished"></translation></message>
-    <message><source>Start Manual Helper</source><translation type="unfinished"></translation></message>
-    <message><source>Start Service</source><translation type="unfinished"></translation></message>
-    <message><source>Start helper service</source><translation type="unfinished"></translation></message>
-    <message><source>Stop Service</source><translation type="unfinished"></translation></message>
-    <message><source>Stop helper service</source><translation type="unfinished"></translation></message>
-    <message><source>Switch to Xray system proxy</source><translation type="unfinished"></translation></message>
-    <message><source>TUN mode is experimental and is not the recommended beta path.</source><translation type="unfinished"></translation></message>
-    <message><source>TUN mode requires sing-box and may require zarya-helper. System-proxy mode does not require the helper service.</source><translation type="unfinished"></translation></message>
-    <message><source>TUN, zarya-helper, and kill switch are experimental. Use Xray system-proxy mode for the recommended stable path.</source><translation type="unfinished"></translation></message>
-    <message><source>This build is unsigned. Installing privileged helper from unsigned builds is not recommended for production use.</source><translation type="unfinished"></translation></message>
-    <message><source>Uninstall</source><translation type="unfinished"></translation></message>
-    <message><source>Uninstall helper service</source><translation type="unfinished"></translation></message>
+Continue with experimental TUN?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Release Candidate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Release channel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restart Service</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restart helper service</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run Self-Test</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Runtime mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Service status</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show Experimental Features…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show experimental features (TUN, helper, kill switch)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stable scope</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start Manual Helper</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start Service</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start helper service</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop Service</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop helper service</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to Xray system proxy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>TUN mode is experimental and is not the recommended beta path.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>TUN mode requires sing-box and may require zarya-helper. System-proxy mode does not require the helper service.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>TUN, zarya-helper, and kill switch are experimental. Use Xray system-proxy mode for the recommended stable path.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This build is unsigned. Installing privileged helper from unsigned builds is not recommended for production use.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Uninstall</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Uninstall helper service</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Save</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>StatusDashboardWidget</name>
-    <message>
-        <source>Zarya is not configured yet</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Cancel</translation>
     </message>
     <message>
-        <source>%1. Install Xray core</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1. Add a profile or subscription</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1. Start a profile</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Open Core Manager</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Add Profile</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Add Subscription</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Run Setup</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Paste Link</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import Backup</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Stop</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Diagnostics</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Logs</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Test</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Subscriptions</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Runtime: Running — %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Experimental runtime active</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Recommended: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Running</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Profile: %1
-Local proxy: %2
-System proxy: %3
-Routing: %4</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Open Logs</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Create Diagnostics</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Runtime: Stopped — %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Stopped</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Selected profile: %1
-Routing: %2
-DNS: %3
-System proxy: %4
-Core: %5</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Start</source>
-        <translation type="unfinished"></translation>
+        <source>App updates include Zarya and its built-in Xray. Core updates below apply to sing-box.</source>
+        <translation>App updates include Zarya and its built-in Xray. Core updates below apply to sing-box.</translation>
     </message>
 </context>
 <context>
@@ -3331,6 +3878,108 @@ Core: %5</source>
     </message>
 </context>
 <context>
+    <name>StatusDashboardWidget</name>
+    <message>
+        <source>Zarya is not configured yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1. Add a profile or subscription</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1. Start a profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open Core Manager</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add Profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add Subscription</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run Setup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste Link</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import Backup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Test</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Runtime: Running — %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Experimental runtime active</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recommended: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Running</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Profile: %1
+Local proxy: %2
+System proxy: %3
+Routing: %4</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open Logs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create Diagnostics</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Runtime: Stopped — %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stopped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Selected profile: %1
+Routing: %2
+DNS: %3
+System proxy: %4
+Core: %5</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1. Repair or reinstall Zarya (embedded Xray is unavailable)</source>
+        <translation>%1. Repair or reinstall Zarya (embedded Xray is unavailable)</translation>
+    </message>
+</context>
+<context>
     <name>SubscriptionDialog</name>
     <message>
         <source>Subscription</source>
@@ -3362,7 +4011,7 @@ Core: %5</source>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Cancel</translation>
     </message>
 </context>
 <context>
@@ -3381,7 +4030,7 @@ Core: %5</source>
     </message>
     <message>
         <source>Delete</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Delete</translation>
     </message>
     <message>
         <source>Update</source>
@@ -3393,7 +4042,7 @@ Core: %5</source>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Close</translation>
     </message>
     <message>
         <source>Last update: —</source>
@@ -3423,7 +4072,7 @@ Choose whether to delete its imported profiles or keep them as manual profiles.<
     </message>
     <message>
         <source>Save failed</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Save failed</translation>
     </message>
     <message>
         <source>Update subscription</source>
@@ -3451,7 +4100,7 @@ Choose whether to delete its imported profiles or keep them as manual profiles.<
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Cancel</translation>
     </message>
     <message>
         <source>Updating subscription…</source>
@@ -3482,7 +4131,7 @@ Choose whether to delete its imported profiles or keep them as manual profiles.<
     </message>
     <message>
         <source>Profiles</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Profiles</translation>
     </message>
     <message>
         <source>Last Updated</source>
@@ -3572,19 +4221,18 @@ Choose whether to delete its imported profiles or keep them as manual profiles.<
     </message>
 </context>
 <context>
+    <name>ZaryaSplitView</name>
+    <message>
+        <source>Resize profiles and logs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use Up and Down arrow keys to resize</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ZaryaTr</name>
-    <message>
-        <source>Xray not found</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The Xray executable is missing or not configured.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Open Core Manager and install Xray.</source>
-        <translation type="unfinished"></translation>
-    </message>
     <message>
         <source>Helper not connected</source>
         <translation type="unfinished"></translation>
@@ -3647,7 +4295,7 @@ Choose whether to delete its imported profiles or keep them as manual profiles.<
     </message>
     <message>
         <source>Error</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Error</translation>
     </message>
     <message>
         <source>An error occurred.</source>
@@ -3655,14 +4303,6 @@ Choose whether to delete its imported profiles or keep them as manual profiles.<
     </message>
     <message>
         <source>Zarya</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Open Core Manager</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Choose Existing Binary</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3695,7 +4335,7 @@ Choose whether to delete its imported profiles or keep them as manual profiles.<
     </message>
     <message>
         <source>Continue</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Continue</translation>
     </message>
     <message>
         <source>Open Geo Data Manager</source>
@@ -3815,7 +4455,7 @@ Choose whether to delete its imported profiles or keep them as manual profiles.<
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Cancel</translation>
     </message>
     <message>
         <source>OK</source>
@@ -3883,77 +4523,17 @@ Networking may remain affected.</source>
 Continue anyway?</source>
         <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>AppController</name>
-    <message><source>Geo data missing</source><translation type="unfinished"></translation></message>
-    <message><source>DNS profile uses geo rules but geo data files are missing (%1).
-
-Xray validation may fail.</source><translation type="unfinished"></translation></message>
-    <message><source>Open Geo Data Manager</source><translation type="unfinished"></translation></message>
-    <message><source>Continue</source><translation type="unfinished"></translation></message>
-    <message><source>Cancel Start</source><translation type="unfinished"></translation></message>
-    <message><source>DNS warnings</source><translation type="unfinished"></translation></message>
-    <message><source>DNS profile has validation warnings:
-
-%1</source><translation type="unfinished"></translation></message>
-    <message><source>Open DNS Profiles</source><translation type="unfinished"></translation></message>
-    <message><source>The active routing profile uses geoip/geosite rules, but geo data files are missing (%1).
-
-Xray validation may fail.</source><translation type="unfinished"></translation></message>
-    <message><source>Change system proxy</source><translation type="unfinished"></translation></message>
-    <message><source>Zarya will change Windows system proxy settings. Continue?</source><translation type="unfinished"></translation></message>
-    <message><source>Cancel</source><translation type="unfinished"></translation></message>
-    <message><source>Profile running</source><translation type="unfinished"></translation></message>
-    <message><source>A profile is already running. Stop and start the selected profile?</source><translation type="unfinished"></translation></message>
-    <message><source>Stop and Start</source><translation type="unfinished"></translation></message>
-    <message><source>Missing sing-box rule sets</source><translation type="unfinished"></translation></message>
-    <message><source>The active TUN routing/DNS profiles require sing-box rule sets that are missing:
-
-%1</source><translation type="unfinished"></translation></message>
-    <message><source>sing-box rule sets</source><translation type="unfinished"></translation></message>
-    <message><source>The active TUN routing/DNS profiles reference sing-box rule sets that are missing:
-
-%1
-
-Continue anyway? sing-box check is the final authority.</source><translation type="unfinished"></translation></message>
-    <message><source>Open Rule Set Manager</source><translation type="unfinished"></translation></message>
-    <message><source>Cannot start TUN</source><translation type="unfinished"></translation></message>
-    <message><source>Generated sing-box config has blocking issues:
-
-%1</source><translation type="unfinished"></translation></message>
-    <message><source>sing-box config warnings</source><translation type="unfinished"></translation></message>
-    <message><source>Generated sing-box config has warnings:
-
-%1
-
-Continue?</source><translation type="unfinished"></translation></message>
-    <message><source>Preview Config</source><translation type="unfinished"></translation></message>
-    <message><source>Unsupported profile</source><translation type="unfinished"></translation></message>
-    <message><source>Config generation</source><translation type="unfinished"></translation></message>
-    <message><source>Routing warnings</source><translation type="unfinished"></translation></message>
-    <message><source>Routing profile has validation warnings:
-
-%1
-
-Continue?</source><translation type="unfinished"></translation></message>
-    <message><source>Config write</source><translation type="unfinished"></translation></message>
-    <message><source>Xray not found</source><translation type="unfinished"></translation></message>
-    <message><source>Config validation failed</source><translation type="unfinished"></translation></message>
-    <message><source>System proxy</source><translation type="unfinished"></translation></message>
-    <message><source>Zarya could not restore previous system proxy settings. Retry restore or exit anyway?</source><translation type="unfinished"></translation></message>
-    <message><source>Retry</source><translation type="unfinished"></translation></message>
-    <message><source>Exit Anyway</source><translation type="unfinished"></translation></message>
-</context>
-<context>
-    <name>QObject</name>
-    <message><source>A previous update attempt was not completed. The pending update plan for %1 is stale.</source><translation type="unfinished"></translation></message>
-    <message><source>App Update</source><translation type="unfinished"></translation></message>
-    <message><source>OK</source><translation type="unfinished"></translation></message>
-    <message><source>Open Update Folder</source><translation type="unfinished"></translation></message>
-    <message><source>Show Log</source><translation type="unfinished"></translation></message>
-    <message><source>The app update failed and was rolled back.</source><translation type="unfinished"></translation></message>
-    <message><source>Zarya was updated successfully.</source><translation type="unfinished"></translation></message>
-    <message><source>Zarya was updated to %1.</source><translation type="unfinished"></translation></message>
+    <message>
+        <source>Built-in Xray unavailable</source>
+        <translation>Built-in Xray unavailable</translation>
+    </message>
+    <message>
+        <source>The embedded Xray library is missing, damaged, or incompatible.</source>
+        <translation>The embedded Xray library is missing, damaged, or incompatible.</translation>
+    </message>
+    <message>
+        <source>Repair or reinstall Zarya, then retry.</source>
+        <translation>Repair or reinstall Zarya, then retry.</translation>
+    </message>
 </context>
 </TS>

@@ -4,6 +4,8 @@
 #include "core/CoreManager.h"
 #include "core/ICoreAdapter.h"
 #include "core/XrayAdapter.h"
+#include "runtime/core/CoreRuntimeTypes.h"
+#include "runtime/embedded/xray/EmbeddedXrayRuntimeHost.h"
 #include "cores/CoreInstallStatus.h"
 #include "cores/CoreBinaryManager.h"
 #include "cores/CorePaths.h"
@@ -166,13 +168,10 @@ QJsonObject collectPaths(const DiagnosticsOptions& options, const DiagnosticsCon
     object.insert(QStringLiteral("dataDir"), pathField(AppPaths::dataDir()));
     object.insert(QStringLiteral("runtimeDir"), pathField(AppPaths::runtimeDir()));
     object.insert(QStringLiteral("coresDir"), pathField(AppPaths::coresDir()));
-    object.insert(QStringLiteral("xrayPath"), pathField(AppSettings::instance().resolvedXrayPath()));
     object.insert(QStringLiteral("singBoxPath"),
                   pathField(AppSettings::instance().resolvedSingBoxPath()));
 
-    const QString xrayPath = AppSettings::instance().resolvedXrayPath();
     const QString singBoxPath = AppSettings::instance().resolvedSingBoxPath();
-    object.insert(QStringLiteral("xrayPathExists"), QFile::exists(xrayPath));
     object.insert(QStringLiteral("singBoxPathExists"), QFile::exists(singBoxPath));
     object.insert(QStringLiteral("ruleSetDirExists"), QDir(AppPaths::singBoxRuleSetDir()).exists());
 
@@ -471,25 +470,31 @@ QJsonObject collectValidation(const DiagnosticsOptions& options, const Diagnosti
                               DiagnosticsRedactor::redactText(xrayConfig.errorMessage,
                                                               options.redactionMode));
     } else {
-        const QString configPath =
-            QDir(AppPaths::testRuntimeDir())
-                .filePath(QStringLiteral("diagnostics-xray-config.json"));
-        QFile file(configPath);
-        if (file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-            file.write(QJsonDocument(xrayConfig.config).toJson(QJsonDocument::Compact));
-        }
-        const CoreValidationResult result = context.coreManager->validateConfig(
-            AppSettings::instance().resolvedXrayPath(), configPath);
-        xrayValidation.insert(QStringLiteral("attempted"), true);
-        xrayValidation.insert(QStringLiteral("exitCode"), result.exitCode);
-        xrayValidation.insert(QStringLiteral("success"), result.success);
-        xrayValidation.insert(QStringLiteral("stdoutRedacted"),
-                              DiagnosticsRedactor::redactText(result.output, options.redactionMode));
-        xrayValidation.insert(QStringLiteral("stderrRedacted"),
-                              DiagnosticsRedactor::redactText(result.errorMessage,
-                                                              options.redactionMode));
-        if (!result.success) {
-            warn(snapshot, QStringLiteral("Xray config validation failed"));
+        EmbeddedXrayRuntimeHost* embedded = context.appController->embeddedXrayRuntimeHost();
+        if (!embedded || !embedded->isAvailable()) {
+            xrayValidation.insert(QStringLiteral("attempted"), false);
+            xrayValidation.insert(QStringLiteral("success"), false);
+            xrayValidation.insert(QStringLiteral("stderrRedacted"),
+                                  DiagnosticsRedactor::redactText(
+                                      embedded ? embedded->loadStatus()
+                                               : QStringLiteral("Embedded Xray runtime host is unavailable."),
+                                      options.redactionMode));
+        } else {
+            CoreLaunchRequest request;
+            request.coreType = CoreType::Xray;
+            request.configJson = QJsonDocument(xrayConfig.config).toJson(QJsonDocument::Compact);
+            request.assetDir = AppPaths::xrayCoreDir();
+            request.dataDir = AppPaths::dataDir();
+            const CoreOperationResult result = embedded->validate(request);
+            xrayValidation.insert(QStringLiteral("attempted"), true);
+            xrayValidation.insert(QStringLiteral("success"), result.success);
+            xrayValidation.insert(QStringLiteral("errorCode"), result.errorCode);
+            xrayValidation.insert(QStringLiteral("stderrRedacted"),
+                                  DiagnosticsRedactor::redactText(result.message,
+                                                                  options.redactionMode));
+            if (!result.success) {
+                warn(snapshot, QStringLiteral("Xray config validation failed"));
+            }
         }
     }
     root.insert(QStringLiteral("xrayConfigValidation"), xrayValidation);
@@ -584,6 +589,28 @@ QString collectRedactedLogs(const DiagnosticsOptions& options)
 QJsonObject coreManagerEntry(const CoreInfo& info, bool requireChecksum)
 {
     QJsonObject core;
+    QString distribution;
+    switch (info.distributionKind) {
+    case CoreDistributionKind::Embedded:
+        distribution = QStringLiteral("embedded");
+        break;
+    case CoreDistributionKind::ManagedExecutable:
+        distribution = QStringLiteral("managedExecutable");
+        break;
+    case CoreDistributionKind::ExternalExecutable:
+        distribution = QStringLiteral("externalExecutable");
+        break;
+    }
+    core.insert(QStringLiteral("distributionKind"), distribution);
+    core.insert(QStringLiteral("embeddedVersion"),
+                info.distributionKind == CoreDistributionKind::Embedded
+                    ? QJsonValue(info.installedVersion)
+                    : QJsonValue(QJsonValue::Null));
+    core.insert(QStringLiteral("abiVersion"), info.abiVersion);
+    core.insert(QStringLiteral("loadStatus"), info.loadStatus);
+    core.insert(QStringLiteral("libraryPath"),
+                DiagnosticsRedactor::redactPath(info.libraryPath,
+                                                DiagnosticsRedactionMode::Strict, false));
     core.insert(QStringLiteral("managedPath"),
                 DiagnosticsRedactor::redactPath(info.executablePath,
                                                 DiagnosticsRedactionMode::Strict, false));

@@ -88,6 +88,14 @@ QString redactShareLinks(const QString& text)
 QString redactSensitiveKeysInText(const QString& text, DiagnosticsRedactionMode mode)
 {
     QString result = redactShareLinks(text);
+    static const QRegularExpression sensitiveJsonValue(
+        QStringLiteral(R"re("(password|passwd|uuid|id|token|secret|publickey|shortid)"\s*:\s*"[^"]*")re"),
+        QRegularExpression::CaseInsensitiveOption);
+    result.replace(sensitiveJsonValue, QStringLiteral(R"("\1":"<redacted>")"));
+    static const QRegularExpression urlCredentials(
+        QStringLiteral(R"((https?://)[^/\s:@]+:[^@\s/]+@)"),
+        QRegularExpression::CaseInsensitiveOption);
+    result.replace(urlCredentials, QStringLiteral("\\1<redacted>@"));
     static const QRegularExpression uuidPattern(
         QStringLiteral(R"(\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b)"));
     result.replace(uuidPattern, kRedacted);

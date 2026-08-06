@@ -108,7 +108,8 @@ void StatusUnconfiguredPanel::updateModel(const StatusDashboardModel& model)
     QStringList steps;
     int step = 1;
     if (!model.xrayInstalled) {
-        steps << StatusDashboardWidget::tr("%1. Install Xray core").arg(step++);
+        steps << StatusDashboardWidget::tr("%1. Repair or reinstall Zarya (embedded Xray is unavailable)")
+                     .arg(step++);
     }
     if (!model.hasProfiles) {
         steps << StatusDashboardWidget::tr("%1. Add a profile or subscription").arg(step++);

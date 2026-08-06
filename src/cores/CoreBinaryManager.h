@@ -11,6 +11,7 @@ namespace zarya {
 
 class CoreManager;
 class CoreDownloader;
+class EmbeddedXrayRuntimeHost;
 
 class CoreBinaryManager : public QObject {
     Q_OBJECT
@@ -19,6 +20,7 @@ public:
     explicit CoreBinaryManager(QObject* parent = nullptr);
 
     void setProcessCoreManager(CoreManager* coreManager);
+    void setEmbeddedXrayRuntimeHost(EmbeddedXrayRuntimeHost* host);
     void setSingBoxRunningCallback(const std::function<bool()>& callback);
 
     QVector<CoreInfo> coreInfos() const;
@@ -57,11 +59,12 @@ private:
     void finishVersionChecks();
 
     CoreManager* m_processCoreManager = nullptr;
+    EmbeddedXrayRuntimeHost* m_embeddedXrayRuntimeHost = nullptr;
     std::function<bool()> m_singBoxRunningCallback;
     QVector<CoreInfo> m_infos;
     QHash<CoreType, CoreRelease> m_latestReleases;
     CoreDownloader* m_downloader = nullptr;
-    CoreType m_activeDownloadType = CoreType::Xray;
+    CoreType m_activeDownloadType = CoreType::SingBox;
     int m_pendingChecks = 0;
 };
 

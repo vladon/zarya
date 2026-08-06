@@ -1,12 +1,8 @@
-Release builds may ship a bundled Xray executable in this directory so the app can start without downloading on first launch.
+Xray is embedded in Zarya and is updated with the application.
 
-You can:
-- leave the bundled binary as-is
-- replace it via Tools → Core Manager (updates the managed install)
-- point Settings → Xray executable at another binary (external path)
+This directory stores only Xray assets used at runtime:
+- geoip.dat
+- geosite.dat
+- matcher cache data
 
-Expected executable:
-- Windows: xray.exe
-- macOS/Linux: xray
-
-Release builds may also ship pinned runetfreedom geoip.dat and geosite.dat here so bypass routing works offline. Tools → Geo Data Manager can still update or switch sources.
+Do not place an Xray executable here. If the embedded runtime cannot load, repair or reinstall Zarya.

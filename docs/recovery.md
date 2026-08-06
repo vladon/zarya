@@ -4,7 +4,7 @@
 
 If Zarya was killed while a profile was running, the next startup **automatically** runs recovery actions and logs them in the UI. A short progress dialog shows each step so startup does not look hung:
 
-- Terminate leftover managed `xray` / `sing-box` processes (same resolved executable paths as Settings)
+- Terminate leftover managed `sing-box` and `zarya-core-test-worker` processes; embedded Xray has no child process
 - Restore system proxy (when Zarya-owned proxy restore on exit is enabled)
 - Recover kill switch (when marker is present)
 - Clean runtime temp config files (`config-xray.json`, `config-singbox.json`, `sing-box-tun.json`)

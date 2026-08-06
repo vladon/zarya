@@ -5,8 +5,6 @@
 #include "storage/AppSettings.h"
 #include "storage/DefaultSettings.h"
 
-#include <QFile>
-
 namespace zarya {
 
 namespace {
@@ -43,11 +41,6 @@ SettingsValidationResult SettingsValidator::validateAndFixOnStartup()
         settings.setEnableExperimentalKillSwitch(false);
         result.autoFixed.append(
             QStringLiteral("Kill switch was enabled without helper mode; disabled for beta safety."));
-    }
-
-    const QString xrayPath = settings.resolvedXrayPath();
-    if (!xrayPath.isEmpty() && !QFile::exists(xrayPath)) {
-        result.warnings.append(QStringLiteral("Xray executable not found at configured path."));
     }
 
     const QString autoStartId = settings.lastStartedProfileId();

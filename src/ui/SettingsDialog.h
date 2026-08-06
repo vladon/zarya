@@ -32,7 +32,6 @@ public:
                             QWidget* parent = nullptr);
 
 private Q_SLOTS:
-    void onBrowseXray();
     void onBrowseSingBox();
     void onStartHelper();
     void onConnectHelper();
@@ -63,7 +62,6 @@ private Q_SLOTS:
 private:
     bool validateAndSave();
 
-    ZaryaTextField* m_xrayPathEdit = nullptr;
     ZaryaNumberField* m_mixedPortSpin = nullptr;
     ZaryaCheckBox* m_autoEnableSystemProxyCheck = nullptr;
     ZaryaCheckBox* m_restoreProxyOnExitCheck = nullptr;

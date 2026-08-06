@@ -38,16 +38,6 @@ bool AppSettings::defaultAutoEnableSystemProxyOnStart()
 #endif
 }
 
-QString AppSettings::xrayExecutablePath() const
-{
-    return settings().value(QStringLiteral("cores/xrayPath")).toString();
-}
-
-void AppSettings::setXrayExecutablePath(const QString& path)
-{
-    settings().setValue(QStringLiteral("cores/xrayPath"), path.trimmed());
-}
-
 int AppSettings::mixedPort() const
 {
     QSettings& s = settings();
@@ -66,15 +56,6 @@ void AppSettings::setMixedPort(int port)
     s.setValue(QStringLiteral("proxy/mixedPort"), port);
     s.remove(QStringLiteral("proxy/socksPort"));
     s.remove(QStringLiteral("proxy/httpPort"));
-}
-
-QString AppSettings::resolvedXrayPath() const
-{
-    const QString configured = xrayExecutablePath().trimmed();
-    if (!configured.isEmpty()) {
-        return configured;
-    }
-    return Platform::defaultXrayExecutablePath();
 }
 
 QString AppSettings::singBoxExecutablePath() const

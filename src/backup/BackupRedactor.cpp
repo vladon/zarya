@@ -70,7 +70,7 @@ void redactSubscriptionObject(QJsonObject& object, BackupRedactionMode mode, Red
 void redactSettingsValue(const QString& key, QJsonValue& value, BackupRedactionMode mode,
                          RedactionReport* report)
 {
-    if (key == QStringLiteral("cores/xrayPath") || key == QStringLiteral("cores/singBoxPath")) {
+    if (key == QStringLiteral("cores/singBoxPath")) {
         const QString path = value.toString();
         if (!path.isEmpty()) {
             value = QFileInfo(path).fileName();

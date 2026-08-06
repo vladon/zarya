@@ -32,9 +32,7 @@ public:
 
 Q_SIGNALS:
     void openCoreManagerRequested();
-    void chooseXrayBinaryRequested();
     void chooseSingBoxBinaryRequested();
-    void installXrayRequested();
     void installSingBoxRequested();
     void openRoutingProfilesRequested();
     void openDnsProfilesRequested();
@@ -63,7 +61,6 @@ private:
     QStackedLayout* m_pages = nullptr;
     ZaryaActionButton* m_back = nullptr;
     ZaryaActionButton* m_next = nullptr;
-    ZaryaActionButton* m_installXray = nullptr;
     ProfileImportWidget* m_importWidget = nullptr;
     ZaryaTextField* m_subscriptionUrl = nullptr;
     ZaryaTextField* m_subscriptionName = nullptr;

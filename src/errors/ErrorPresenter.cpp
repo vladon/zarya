@@ -54,10 +54,8 @@ ErrorAction ErrorPresenter::showWithActions(QWidget* parent, const AppError& err
     QVector<UiMessageAction> actions;
     QHash<QString, ErrorAction> actionMap;
     if (error.code == ErrorCode::coreXrayMissing()) {
-        addAction(&actions, &actionMap, ZaryaTr::tr("Open Core Manager"),
-                  ErrorAction::OpenCoreManager, UiMessageActionRole::Primary, true);
-        addAction(&actions, &actionMap, ZaryaTr::tr("Choose Existing Binary"),
-                  ErrorAction::ChooseExistingBinary);
+        addAction(&actions, &actionMap, ZaryaTr::tr("Create Diagnostics"),
+                  ErrorAction::CreateDiagnostics, UiMessageActionRole::Primary, true);
         addAction(&actions, &actionMap, ZaryaTr::tr("Cancel"), ErrorAction::Cancel,
                   UiMessageActionRole::Secondary, false, true);
     } else if (error.code == ErrorCode::coreValidationFailed()) {

@@ -12,9 +12,9 @@ namespace zarya {
 
 namespace {
 
-QString coreDirName(CoreType type)
+QString coreDirName(CoreType)
 {
-    return type == CoreType::Xray ? QStringLiteral("xray") : QStringLiteral("sing-box");
+    return QStringLiteral("sing-box");
 }
 
 bool copyFilePreserve(const QString& source, const QString& destination, QString* errorMessage)
@@ -45,6 +45,9 @@ QString CoreRollbackManager::backupRootDir()
 
 QStringList CoreRollbackManager::listBackups(CoreType type)
 {
+    if (type == CoreType::Xray) {
+        return {};
+    }
     const QDir dir(backupRootDir());
     const QString prefix = coreDirName(type) + QLatin1Char('-');
     QStringList entries = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
@@ -61,17 +64,17 @@ QStringList CoreRollbackManager::listBackups(CoreType type)
 bool CoreRollbackManager::createBackup(CoreType type, const QString& installDir,
                                        const QString& version, QString* errorMessage)
 {
-    const QString executableName = type == CoreType::Xray
-                                         ? (QStringLiteral("xray")
+    if (type == CoreType::Xray) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("Xray is embedded and has no executable rollback.");
+        }
+        return false;
+    }
+    const QString executableName = QStringLiteral("sing-box")
 #ifdef Q_OS_WIN
-                                            + QStringLiteral(".exe")
+                                       + QStringLiteral(".exe")
 #endif
-                                            )
-                                         : (QStringLiteral("sing-box")
-#ifdef Q_OS_WIN
-                                            + QStringLiteral(".exe")
-#endif
-                                            );
+        ;
 
     const QString sourceExecutable = QDir(installDir).filePath(executableName);
     if (!QFile::exists(sourceExecutable)) {
@@ -84,11 +87,8 @@ bool CoreRollbackManager::createBackup(CoreType type, const QString& installDir,
         QDir(backupRootDir()).filePath(QStringLiteral("%1-%2-%3").arg(coreDirName(type), safeVersion, timestamp));
     QDir().mkpath(backupDir);
 
-    const QStringList preserveFiles = type == CoreType::Xray
-                                          ? QStringList{executableName, QStringLiteral("VERSION"),
-                                                        QStringLiteral(".zarya-core.json")}
-                                          : QStringList{executableName, QStringLiteral("VERSION"),
-                                                        QStringLiteral(".zarya-core.json")};
+    const QStringList preserveFiles = {executableName, QStringLiteral("VERSION"),
+                                       QStringLiteral(".zarya-core.json")};
 
     for (const QString& fileName : preserveFiles) {
         const QString source = QDir(installDir).filePath(fileName);

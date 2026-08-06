@@ -53,13 +53,18 @@ On Windows, `zarya-helper` may link system libraries such as `Fwpuclnt`, `Ws2_32
 
 Application icons and bundled imagery are part of the Zarya project unless otherwise noted in the repository.
 
-## Not bundled by default
+## Xray-core
 
-**Xray** and **sing-box** are **not** included in the default Zarya release artifact.
+Zarya vendors and links [XTLS/Xray-core](https://github.com/XTLS/Xray-core) under
+the **Mozilla Public License 2.0**. The exact tag, commit, Go toolchain and update
+procedure are recorded in `third_party/xray-core.zarya.json`; the corresponding
+upstream source and license are retained in `third_party/xray-core/`.
 
-Zarya can download them from upstream release sources via **Core Manager**. Use upstream project names and license terms when installing cores:
+## Downloaded core
 
-- [Xray](https://github.com/XTLS/Xray-core)
+**sing-box** is not included in the default Zarya release artifact. Zarya can
+download it from upstream through **Core Manager**; its upstream license applies:
+
 - [sing-box](https://github.com/SagerNet/sing-box)
 
 Geo data files (`geoip.dat`, `geosite.dat`) ship as a pinned **runetfreedom** seed in release packages (next to Xray) and can also be updated via **Geo Data Manager**. sing-box rule sets are downloaded separately via rule-set tools. Built-in geo sources include:

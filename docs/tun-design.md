@@ -72,7 +72,7 @@ Add optional transparent proxy (TUN) mode to Zarya without breaking the existing
 
 ## Geo data compatibility
 
-- Xray uses `geoip.dat` / `geosite.dat` next to the Xray executable (Geo Data Manager).
+- Embedded Xray uses `geoip.dat` / `geosite.dat` from the app-managed `cores/xray/` asset directory (Geo Data Manager).
 - sing-box may require its own **rule-set** format (`.srs`) under `data/sing-box/rule-set/`.
 - 0.14 translates `geosite:` / `geoip:` matchers and warns when rule-sets are missing; no sing-box rule-set downloader yet.
 

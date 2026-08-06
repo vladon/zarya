@@ -12,7 +12,7 @@ The following features are supported on the stable channel:
 - Routing profiles for Xray
 - DNS profiles for Xray
 - Xray Geo Data Manager
-- Core Manager for Xray and sing-box
+- Core Manager reports embedded Xray and manages external sing-box
 - Node testing
 - Tray / safe shutdown
 - Startup recovery

@@ -11,6 +11,8 @@ Zarya-authored signed binaries:
 - `Zarya.exe`
 - `zarya-helper.exe`
 - `zarya-updater.exe`
+- `zarya-core-test-worker.exe`
+- `zarya-xray.dll`
 
 Downloaded or bundled third-party cores, including Xray and sing-box, are not
 signed as Zarya-authored code. Their versions and checksums are recorded by the

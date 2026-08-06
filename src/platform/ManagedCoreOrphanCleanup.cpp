@@ -1,6 +1,7 @@
 #include "platform/ManagedCoreOrphanCleanup.h"
 
 #include "storage/AppSettings.h"
+#include "storage/AppPaths.h"
 
 #include <QDir>
 #include <QFileInfo>
@@ -20,15 +21,17 @@ namespace {
 QStringList managedCoreExecutablePaths()
 {
     QStringList paths;
-    const AppSettings& settings = AppSettings::instance();
-    const QString xray = settings.resolvedXrayPath().trimmed();
-    const QString singBox = settings.resolvedSingBoxPath().trimmed();
-    if (!xray.isEmpty()) {
-        paths.append(xray);
-    }
+    const QString singBox = AppSettings::instance().resolvedSingBoxPath().trimmed();
     if (!singBox.isEmpty()) {
         paths.append(singBox);
     }
+#if defined(Q_OS_WIN)
+    paths.append(QDir(AppPaths::applicationDir())
+                     .filePath(QStringLiteral("zarya-core-test-worker.exe")));
+#else
+    paths.append(QDir(AppPaths::applicationDir())
+                     .filePath(QStringLiteral("zarya-core-test-worker")));
+#endif
     return paths;
 }
 

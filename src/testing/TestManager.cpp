@@ -91,7 +91,7 @@ public:
                 QStringLiteral("Test URL: %1").arg(settings.testUrl()));
 
             const TestResult delayResult = RealDelayTester::run(
-                profile, settings.realDelayTimeoutMs(), settings.testUrl(), log);
+                profile, settings.realDelayTimeoutMs(), settings.testUrl(), log, m_cancelFlag);
 
             if (delayResult.status == TestStatus::Unsupported) {
                 profile.lastRealDelayMs = -1;

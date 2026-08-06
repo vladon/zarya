@@ -26,7 +26,7 @@ namespace {
 
 bool isMachineSpecificSettingsKey(const QString& key)
 {
-    return key == QStringLiteral("cores/xrayPath") || key == QStringLiteral("cores/singBoxPath")
+    return key == QStringLiteral("cores/singBoxPath")
            || key == QStringLiteral("startup/startAtLogin")
            || key == QStringLiteral("startup/lastStartedProfileId")
            || key == QStringLiteral("proxy/macPreferredNetworkService")
@@ -364,6 +364,9 @@ bool BackupImporter::importSettings(const QString& filePath, bool machineSpecifi
     QSettings& target = AppSettings::settings();
     const QStringList keys = imported.allKeys();
     for (const QString& key : keys) {
+        if (key == QStringLiteral("cores/xrayPath")) {
+            continue;
+        }
         if (!machineSpecific && isMachineSpecificSettingsKey(key)) {
             continue;
         }

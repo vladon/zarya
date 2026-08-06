@@ -1,8 +1,6 @@
 #include "runtime/xray/XraySystemProxyRuntimeBackend.h"
 
-#include "storage/AppSettings.h"
-
-#include <QFileInfo>
+#include "runtime/core/ICoreRuntimeHost.h"
 
 namespace zarya {
 
@@ -27,6 +25,11 @@ void XraySystemProxyRuntimeBackend::setRunningHandler(std::function<bool()> hand
     m_runningHandler = std::move(handler);
 }
 
+void XraySystemProxyRuntimeBackend::setRuntimeHost(ICoreRuntimeHost* host)
+{
+    m_runtimeHost = host;
+}
+
 QString XraySystemProxyRuntimeBackend::displayName() const
 {
     return QStringLiteral("Xray system proxy");
@@ -39,16 +42,17 @@ RuntimeBackendType XraySystemProxyRuntimeBackend::type() const
 
 bool XraySystemProxyRuntimeBackend::isSupported(QString* reason) const
 {
-    if (!QFileInfo::exists(AppSettings::instance().resolvedXrayPath())) {
+    if (m_runtimeHost && m_runtimeHost->isAvailable()) {
         if (reason) {
-            *reason = QStringLiteral("Xray executable not found.");
+            reason->clear();
         }
-        return false;
+        return true;
     }
     if (reason) {
-        reason->clear();
+        *reason = m_runtimeHost ? m_runtimeHost->loadStatus()
+                                : QStringLiteral("Embedded Xray runtime host is unavailable.");
     }
-    return true;
+    return false;
 }
 
 bool XraySystemProxyRuntimeBackend::validateProfile(const Profile& profile, QString* reason) const

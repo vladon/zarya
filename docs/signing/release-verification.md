@@ -30,7 +30,7 @@ python scripts/verify-release-artifacts.py \
 | `--require-signed` | Fail unless manifest and platform signatures validate |
 
 For Windows, `--require-signed` requires valid, timestamped Authenticode
-signatures on `Zarya.exe`, `zarya-helper.exe`, and `zarya-updater.exe`. One
+signatures on `Zarya.exe`, `zarya-helper.exe`, `zarya-updater.exe`, `zarya-core-test-worker.exe`, and `zarya-xray.dll`. One
 missing or invalid executable fails the complete artifact.
 
 ## Manifest fields

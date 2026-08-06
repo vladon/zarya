@@ -6,6 +6,8 @@
 
 namespace zarya {
 
+class ICoreRuntimeHost;
+
 class XraySystemProxyRuntimeBackend : public IRuntimeBackend {
     Q_OBJECT
 
@@ -15,6 +17,7 @@ public:
     void setStartHandler(std::function<bool(const Profile&, const RuntimeStartOptions&)> handler);
     void setStopHandler(std::function<bool()> handler);
     void setRunningHandler(std::function<bool()> handler);
+    void setRuntimeHost(ICoreRuntimeHost* host);
 
     QString displayName() const override;
     RuntimeBackendType type() const override;
@@ -30,6 +33,7 @@ private:
     std::function<bool(const Profile&, const RuntimeStartOptions&)> m_startHandler;
     std::function<bool()> m_stopHandler;
     std::function<bool()> m_runningHandler;
+    ICoreRuntimeHost* m_runtimeHost = nullptr;
 };
 
 } // namespace zarya

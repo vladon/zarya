@@ -45,13 +45,13 @@ bool CoreAssetSelector::isRejectedAsset(const QString& name)
 int CoreAssetSelector::scoreAsset(const CoreAsset& asset, CoreType type,
                                   const CorePlatformInfo& platform)
 {
-    if (isRejectedAsset(asset.name)) {
+    if (type == CoreType::Xray || isRejectedAsset(asset.name)) {
         return -1000;
     }
 
     int score = 0;
     const QString name = lower(asset.name);
-    const QString coreName = type == CoreType::Xray ? QStringLiteral("xray") : QStringLiteral("sing-box");
+    const QString coreName = QStringLiteral("sing-box");
     if (name.contains(coreName)) {
         score += 50;
     }

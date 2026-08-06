@@ -19,6 +19,10 @@ DetectedVersion CoreVersionDetector::detect(const QString& executablePath, CoreT
                                             int timeoutMs)
 {
     DetectedVersion result;
+    if (type == CoreType::Xray) {
+        result.error = QStringLiteral("Xray is embedded and has no executable version command.");
+        return result;
+    }
     if (executablePath.trimmed().isEmpty() || !QFile::exists(executablePath)) {
         result.error = QStringLiteral("Core executable not found.");
         return result;
@@ -56,11 +60,7 @@ DetectedVersion CoreVersionDetector::detect(const QString& executablePath, CoreT
         return result;
     }
 
-    if (type == CoreType::Xray && result.rawOutput.contains(QStringLiteral("Xray"), Qt::CaseInsensitive)) {
-        result.ok = true;
-        result.version = result.rawOutput;
-        return result;
-    }
+
 
     result.error = QStringLiteral("Could not parse version from output.");
     return result;

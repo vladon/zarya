@@ -426,13 +426,13 @@ def _find_signtool() -> str | None:
 def verify_windows_signatures(staging: Path, manifest: dict) -> tuple[bool, dict]:
     content = artifact_content_root(staging)
     artifacts = manifest.get("artifacts") or {}
-    required = ("gui", "helper", "updater")
+    required = ("gui", "helper", "updater", "coreTestWorker", "xrayBridge")
     results: dict[str, str] = {}
     exes: list[Path] = []
     for key in required:
         relative = artifacts.get(key)
-        if not isinstance(relative, str) or not relative.lower().endswith(".exe"):
-            results[f"manifest:{key}"] = "missing executable declaration"
+        if not isinstance(relative, str) or not relative.lower().endswith((".exe", ".dll")):
+            results[f"manifest:{key}"] = "missing signed-binary declaration"
             continue
         exe = content / relative
         if not exe.is_file():

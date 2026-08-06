@@ -8,6 +8,8 @@
 namespace zarya {
 
 class CoreManager;
+class CoreRuntimeCoordinator;
+class EmbeddedXrayRuntimeHost;
 
 class RuntimeBackendFactory {
 public:
@@ -20,9 +22,12 @@ public:
 
     SingBoxTunRuntimeBackend* singBoxTunBackend();
     XraySystemProxyRuntimeBackend* xraySystemProxyBackend();
+    EmbeddedXrayRuntimeHost* embeddedXrayHost();
 
 private:
     CoreManager* m_coreManager = nullptr;
+    CoreRuntimeCoordinator* m_runtimeCoordinator = nullptr;
+    EmbeddedXrayRuntimeHost* m_embeddedXrayHost = nullptr;
     XraySystemProxyRuntimeBackend* m_xrayBackend = nullptr;
     SingBoxTunRuntimeBackend* m_singBoxBackend = nullptr;
 };

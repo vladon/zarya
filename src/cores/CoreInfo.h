@@ -2,6 +2,7 @@
 
 #include "cores/CoreInstallStatus.h"
 #include "domain/CoreType.h"
+#include "runtime/core/CoreRuntimeTypes.h"
 
 #include <QDateTime>
 #include <QString>
@@ -14,10 +15,18 @@ struct CoreInfo {
 
     QString executablePath;
     QString installDir;
+    QString libraryPath;
 
     bool exists = false;
     bool managed = false;
     bool running = false;
+
+    CoreDistributionKind distributionKind = CoreDistributionKind::ManagedExecutable;
+    CoreRuntimeCapabilities capabilities = CoreRuntimeCapability::Validation
+                                           | CoreRuntimeCapability::Update
+                                           | CoreRuntimeCapability::Rollback;
+    int abiVersion = 0;
+    QString loadStatus;
 
     QString installedVersion;
     QString latestVersion;

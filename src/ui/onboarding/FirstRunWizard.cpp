@@ -93,7 +93,7 @@ void FirstRunWizard::setupPages()
     welcome.section->addWidget(new ZaryaBodyText(
         tr("Zarya is a cross-platform proxy client.\n\n"
            "Recommended setup:\n"
-           "1. Confirm Xray core (bundled in release builds, or install via Core Manager)\n"
+           "1. Confirm the built-in Xray core is available\n"
            "2. Add a profile or subscription\n"
            "3. Choose routing/DNS behavior\n"
            "4. Start a profile"),
@@ -103,16 +103,12 @@ void FirstRunWizard::setupPages()
     m_coreStatus = new ZaryaBodyText({}, corePage.widget);
     corePage.section->addWidget(m_coreStatus);
     corePage.section->addWidget(new ZaryaBodyText(
-        tr("Xray is required for the default system-proxy mode.\n"
+        tr("Xray is built into Zarya for the default system-proxy mode.\n"
            "sing-box is only needed for experimental TUN mode."),
         corePage.widget));
-    m_installXray = addWizardButton(corePage.section, tr("Install Xray"));
-    auto* chooseXray = addWizardButton(corePage.section, tr("Choose existing Xray binary"));
     auto* openCore = addWizardButton(corePage.section, tr("Open Core Manager"));
     auto* installSingBox = addWizardButton(corePage.section, tr("Install sing-box (experimental TUN)"));
     auto* chooseSingBox = addWizardButton(corePage.section, tr("Choose existing sing-box binary"));
-    connect(m_installXray, &ZaryaActionButton::clicked, this, &FirstRunWizard::installXrayRequested);
-    connect(chooseXray, &ZaryaActionButton::clicked, this, &FirstRunWizard::chooseXrayBinaryRequested);
     connect(openCore, &ZaryaActionButton::clicked, this, &FirstRunWizard::openCoreManagerRequested);
     connect(installSingBox, &ZaryaActionButton::clicked, this, &FirstRunWizard::installSingBoxRequested);
     connect(chooseSingBox, &ZaryaActionButton::clicked, this, &FirstRunWizard::chooseSingBoxBinaryRequested);
@@ -220,7 +216,7 @@ void FirstRunWizard::setupPages()
 
     m_pageFocusTargets = {
         m_next,
-        m_installXray,
+        m_coreStatus,
         m_importWidget,
         m_routing,
         m_runtime,
@@ -241,11 +237,10 @@ void FirstRunWizard::refreshCorePage()
     m_coreStatus->setText(
         tr("Xray: %1 (%2)\nsing-box: %3 (%4)")
             .arg(
-                xray.exists ? tr("installed") : tr("missing"),
+                xray.exists ? tr("built in") : tr("unavailable"),
                 xray.installedVersion.isEmpty() ? QStringLiteral("—") : xray.installedVersion,
                 singBox.exists ? tr("installed") : tr("missing"),
                 singBox.installedVersion.isEmpty() ? QStringLiteral("—") : singBox.installedVersion));
-    m_installXray->setText(xray.exists ? tr("Update Xray…") : tr("Install Xray"));
 }
 
 void FirstRunWizard::refreshFinishPage(bool announce)
@@ -291,7 +286,7 @@ bool FirstRunWizard::validatePage()
                 UiMessagePresenter::warning(
                     this,
                     tr("Core required"),
-                    tr("Install or choose an Xray binary before starting a profile."));
+                    tr("Built-in Xray is unavailable. Repair or reinstall Zarya before starting a profile."));
                 return false;
             }
         }

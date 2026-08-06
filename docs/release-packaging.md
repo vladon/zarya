@@ -30,6 +30,8 @@ Layout inside the ZIP:
 Zarya-<version>-windows-x64-portable/
   Zarya.exe
   zarya-helper.exe
+  zarya-core-test-worker.exe
+  zarya-xray.dll
   portable.flag
   translations/
   docs/
@@ -99,21 +101,15 @@ sha256sum -c SHA256SUMS.txt
 - sing-box
 - sing-box rule sets
 
-## Bundled Xray seed
+## Embedded Xray
 
-Release packaging downloads a **pinned** Xray binary into `cores/xray/` (see `packaging/cores/xray-pin.json`) so first launch works offline. Override with `ZARYA_BUNDLE_XRAY=0`, `-SkipBundleXray`, or `--skip-bundle-xray`.
+Release builds compile the pinned vendored source described by
+`third_party/xray-core.zarya.json`. Windows/Linux packages contain a signed companion
+library; macOS statically links the Go archive. Packages contain no `xray.exe`.
 
-On macOS, `portable.flag` is stored in `Zarya.app/Contents/Resources`; mutable
-portable data, runtime state, managed cores, and Xray geo files remain under
-`Contents/MacOS`. The local macOS build wrapper preserves both the marker and
-those mutable directories when it has to replace the app bundle.
-
-Users can still:
-
-- replace the managed binary via **Tools → Core Manager**
-- point **Settings → Xray executable** at an external path
-
-`release-manifest.json` reports `included.xray`, `included.xrayVersion`, and `included.xraySource`.
+The release manifest reports `included.xrayDistribution=embedded`, the embedded tag,
+commit and ABI version, and the bridge checksum when a companion file exists. Package
+verification rejects a missing bridge or an unexpected Xray executable.
 
 ## Bundled geo data (runetfreedom)
 
@@ -123,7 +119,7 @@ Users can still replace files via **Tools → Geo Data Manager** (any built-in s
 
 `release-manifest.json` reports `included.geoData`, `included.geoDataSource`, and `included.geoDataVersion`.
 
-Install/update cores via **Tools → Core Manager**. Geo updates remain available in Geo Data Manager.
+Update built-in Xray through **Zarya App Update**. Core Manager continues to manage sing-box; Geo updates remain available in Geo Data Manager.
 
 ## Smoke tests
 

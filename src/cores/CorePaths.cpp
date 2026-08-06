@@ -16,9 +16,10 @@ QString CorePaths::managedInstallDir(CoreType type)
 
 QString CorePaths::managedExecutablePath(CoreType type)
 {
-    const AppSettings& settings = AppSettings::instance();
-    const QString configured = type == CoreType::Xray ? settings.xrayExecutablePath().trimmed()
-                                                      : settings.singBoxExecutablePath().trimmed();
+    if (type == CoreType::Xray) {
+        return {};
+    }
+    const QString configured = AppSettings::instance().singBoxExecutablePath().trimmed();
     if (!configured.isEmpty()) {
         return configured;
     }
