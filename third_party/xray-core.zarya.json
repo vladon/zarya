@@ -1,0 +1,11 @@
+{
+  "name": "Xray-core",
+  "repository": "https://github.com/XTLS/Xray-core.git",
+  "tag": "v26.3.27",
+  "moduleVersion": "v1.260327.0",
+  "commit": "d2758a023cd7f4174a5a5fa4ff66e487d4342ba0",
+  "goVersion": "1.26.x",
+  "license": "MPL-2.0",
+  "sourceDirectory": "third_party/xray-core",
+  "updateCommand": ".\\scripts\\update-vendored-xray.ps1 -Tag v26.3.27 -ExpectedCommit d2758a023cd7f4174a5a5fa4ff66e487d4342ba0"
+}

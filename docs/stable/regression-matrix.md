@@ -5,7 +5,7 @@ Recommended-path failures block 1.0. Experimental-path failures do not block sta
 ## Windows 11 x64
 
 - [ ] fresh start
-- [ ] install Xray
+- [ ] launch the built-in Xray offline without installing a core
 - [ ] import profile
 - [ ] start/stop
 - [ ] system proxy restore

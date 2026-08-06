@@ -97,18 +97,6 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     generalGroup->addWidget(new ZaryaFormRow(tr("Language"), m_languageCombo, generalGroup));
     generalGroup->addWidget(new ZaryaFormRow(tr("Theme"), m_themeCombo, generalGroup));
 
-    m_xrayPathEdit = new ZaryaTextField(tr("Xray executable"), this);
-    m_xrayPathEdit->setText(settings.xrayExecutablePath());
-    auto* browseButton = new ZaryaActionButton(tr("Browse…"), this);
-    connect(browseButton, &ZaryaActionButton::clicked, this, &SettingsDialog::onBrowseXray);
-
-    auto* pathRow = new QWidget(this);
-    auto* pathLayout = new QHBoxLayout(pathRow);
-    pathLayout->setContentsMargins(0, 0, 0, 0);
-    pathLayout->setSpacing(8);
-    pathLayout->addWidget(m_xrayPathEdit, 1);
-    pathLayout->addWidget(browseButton);
-
     m_mixedPortSpin = new ZaryaNumberField(QStringLiteral("1–65535"), 1, 65535, this);
     m_mixedPortSpin->setValue(settings.mixedPort());
     connect(m_mixedPortSpin, &ZaryaNumberField::valueChanged, this,
@@ -224,7 +212,6 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     m_autoStartDelaySpin->setValue(settings.autoStartDelaySeconds());
 
     auto* coreGroup = new ZaryaFormSection(tr("Cores"), this);
-    coreGroup->addWidget(new ZaryaFormRow(tr("Xray executable"), pathRow, this));
     coreGroup->addWidget(new ZaryaFormRow(tr("Local proxy port"), m_mixedPortSpin, this));
 
     auto* proxyGroup = new ZaryaFormSection(tr("Proxy Mode"), this);
@@ -553,7 +540,7 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
         settings.allowUnsignedAppUpdates());
 
     auto* appUpdatesNote = new ZaryaBodyText(
-        tr("App updates update Zarya itself. Core updates (below) update Xray and sing-box."),
+        tr("App updates include Zarya and its built-in Xray. Core updates below apply to sing-box."),
         this);
 
     auto* appUpdatesGroup = new ZaryaFormSection(tr("App updates"), this);
@@ -847,16 +834,6 @@ bool SettingsDialog::confirmKillSwitchWarningIfNeeded()
     return true;
 }
 
-void SettingsDialog::onBrowseXray()
-{
-    const QString path =
-        QFileDialog::getOpenFileName(this, tr("Select Xray executable"), {},
-                                   QStringLiteral("Executables (*.exe);;All files (*.*)"));
-    if (!path.isEmpty()) {
-        m_xrayPathEdit->setText(path);
-    }
-}
-
 void SettingsDialog::updateProxyEndpointLabel()
 {
     m_proxyEndpointLabel->setText(
@@ -932,7 +909,6 @@ bool SettingsDialog::validateAndSave()
     }
 
     AppSettings& settings = AppSettings::instance();
-    settings.setXrayExecutablePath(m_xrayPathEdit->text().trimmed());
     settings.setMixedPort(m_mixedPortSpin->value());
     settings.setAutoEnableSystemProxyOnStart(m_autoEnableSystemProxyCheck->isChecked());
     settings.setRestoreProxyOnExit(m_restoreProxyOnExitCheck->isChecked());

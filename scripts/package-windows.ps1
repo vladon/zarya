@@ -64,12 +64,24 @@ if (-not (Test-Path $UpdaterExe)) {
     throw "zarya-updater.exe not found under $BuildOutput"
 }
 
+$CoreTestWorker = Join-Path $BuildOutput "zarya-core-test-worker.exe"
+if (-not (Test-Path $CoreTestWorker)) {
+    throw "zarya-core-test-worker.exe not found under $BuildOutput"
+}
+
+$XrayBridge = Join-Path $BuildOutput "zarya-xray.dll"
+if (-not (Test-Path $XrayBridge)) {
+    throw "zarya-xray.dll not found under $BuildOutput"
+}
+
 if (Test-Path $Staging) { Remove-Item -Recurse -Force $Staging }
 New-Item -ItemType Directory -Path $Staging | Out-Null
 
 Copy-Item $GuiExe (Join-Path $Staging "Zarya.exe")
 Copy-Item $HelperExe (Join-Path $Staging "zarya-helper.exe")
 Copy-Item $UpdaterExe (Join-Path $Staging "zarya-updater.exe")
+Copy-Item $XrayBridge (Join-Path $Staging "zarya-xray.dll")
+Copy-Item $CoreTestWorker (Join-Path $Staging "zarya-core-test-worker.exe")
 New-Item -ItemType File -Path (Join-Path $Staging "portable.flag") | Out-Null
 
 python -c @"
@@ -114,7 +126,8 @@ write_release_manifest(
     gui_artifact='Zarya.exe',
     helper_artifact='zarya-helper.exe',
     updater_artifact='zarya-updater.exe',
-    bundle_xray=$(if ($SkipBundleXray.IsPresent) { 'False' } else { 'None' }),
+    embedded_xray_artifact='zarya-xray.dll',
+    core_test_worker_artifact='zarya-core-test-worker.exe',
     bundle_geodata=$(if ($SkipBundleGeodata.IsPresent) { 'False' } else { 'None' }),
 )
 write_build_integrity(staging)
@@ -143,6 +156,8 @@ if ($DoSign) {
     & $SignScript -File (Join-Path $Staging "Zarya.exe") -CertificateThumbprint $Thumb -TimestampUrl $TimestampUrl -Verify
     & $SignScript -File (Join-Path $Staging "zarya-helper.exe") -CertificateThumbprint $Thumb -TimestampUrl $TimestampUrl -Verify
     & $SignScript -File (Join-Path $Staging "zarya-updater.exe") -CertificateThumbprint $Thumb -TimestampUrl $TimestampUrl -Verify
+    & $SignScript -File (Join-Path $Staging "zarya-xray.dll") -CertificateThumbprint $Thumb -TimestampUrl $TimestampUrl -Verify
+    & $SignScript -File (Join-Path $Staging "zarya-core-test-worker.exe") -CertificateThumbprint $Thumb -TimestampUrl $TimestampUrl -Verify
     $env:ZARYA_PACKAGE_SIGNED = "windows-authenticode"
 } else {
     Write-Host "No signing requested; skipping signing step"

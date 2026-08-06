@@ -116,7 +116,10 @@ void CoreManagerDialog::refreshTable(const QVector<CoreInfo>& infos)
         m_table->setItem(row, 1, new QTableWidgetItem(info.installedVersion));
         m_table->setItem(row, 2, new QTableWidgetItem(info.latestVersion));
         m_table->setItem(row, 3, new QTableWidgetItem(coreInstallStatusToString(info.status)));
-        m_table->setItem(row, 4, new QTableWidgetItem(info.executablePath));
+        const QString location = info.distributionKind == CoreDistributionKind::Embedded
+            ? tr("Built into Zarya")
+            : info.executablePath;
+        m_table->setItem(row, 4, new QTableWidgetItem(location));
     }
     if (m_table->rowCount() > 0 && m_table->currentRow() < 0) {
         m_table->selectRow(0);
@@ -126,7 +129,15 @@ void CoreManagerDialog::refreshTable(const QVector<CoreInfo>& infos)
 void CoreManagerDialog::refreshDetails()
 {
     const CoreInfo info = m_manager.infoFor(selectedCoreType());
-    QString details = tr("Provider: GitHub Releases") + QLatin1Char('\n');
+    const bool embedded = info.distributionKind == CoreDistributionKind::Embedded;
+    QString details = embedded ? tr("Provider: Zarya App Update") + QLatin1Char('\n')
+                               : tr("Provider: GitHub Releases") + QLatin1Char('\n');
+    if (embedded) {
+        details += tr("Distribution: Built into Zarya") + QLatin1Char('\n');
+        details += tr("ABI version: %1").arg(info.abiVersion) + QLatin1Char('\n');
+        details += tr("Load status: %1").arg(info.loadStatus) + QLatin1Char('\n');
+        details += tr("Xray is updated together with Zarya.") + QLatin1Char('\n');
+    }
     if (!info.selectedAssetName.isEmpty()) {
         details += tr("Selected asset: %1").arg(info.selectedAssetName) + QLatin1Char('\n');
     }
@@ -152,6 +163,10 @@ void CoreManagerDialog::refreshDetails()
         details += tr("Warning: core is running. Stop it before updating.")
                    + QLatin1Char('\n');
     }
+    m_updateButton->setEnabled(!embedded);
+    m_rollbackButton->setEnabled(!embedded);
+    m_openFolderButton->setEnabled(!embedded);
+    m_resetPathButton->setEnabled(!embedded);
     m_detailsLabel->setText(details);
 }
 
@@ -166,10 +181,14 @@ CoreType CoreManagerDialog::selectedCoreType() const
 
 void CoreManagerDialog::setBusy(bool busy)
 {
+    const bool embedded =
+        m_manager.infoFor(selectedCoreType()).distributionKind == CoreDistributionKind::Embedded;
     m_checkButton->setEnabled(!busy);
-    m_updateButton->setEnabled(!busy);
+    m_updateButton->setEnabled(!busy && !embedded);
     m_updateAllButton->setEnabled(!busy);
-    m_rollbackButton->setEnabled(!busy);
+    m_rollbackButton->setEnabled(!busy && !embedded);
+    m_openFolderButton->setEnabled(!busy && !embedded);
+    m_resetPathButton->setEnabled(!busy && !embedded);
     m_cancelButton->setEnabled(busy);
 }
 

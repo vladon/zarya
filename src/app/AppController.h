@@ -19,6 +19,7 @@ namespace zarya {
 
 class CoreManager;
 class DnsManager;
+class EmbeddedXrayRuntimeHost;
 class GeoDataManager;
 class HelperProcessManager;
 class RuleSetManager;
@@ -55,6 +56,7 @@ public:
     RuntimeState runtimeState() const;
     RuntimeMode activeRuntimeMode() const;
     HelperProcessManager* helperProcessManager() const;
+    EmbeddedXrayRuntimeHost* embeddedXrayRuntimeHost() const;
     bool recoverPreviousSession(QStringList* logLines = nullptr);
 
     bool enableSystemProxyManual();

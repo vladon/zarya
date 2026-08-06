@@ -1,35 +1,19 @@
 # Zarya Core Update Manager
 
-## Managed cores
+## Runtime distributions
 
-- **Xray** — system proxy runtime (release artifacts may ship a bundled seed under `cores/xray/`)
-- **sing-box** — experimental TUN runtime (not bundled)
+- **Xray** — embedded system-proxy runtime. Core Manager shows **Built into Zarya**,
+  the Xray/ABI versions and load status. Download, update, rollback, folder and path
+  actions are disabled; Xray is updated with the app.
+- **sing-box** — external managed executable for experimental TUN. Existing download,
+  checksum, install and rollback behavior remains unchanged.
 
-Zarya can download upstream release archives from GitHub, verify checksums when available, extract to staging, and install into the managed cores directory. Bundled Xray is only the initial seed; Core Manager updates replace it.
-
-## Managed vs external paths
-
-By default, only cores inside the Zarya-managed directory are updated:
-
-- Portable: `cores/xray/`, `cores/sing-box/`
-- Non-portable: under application data `cores/`
-
-If Settings points to an external executable path, status shows **External** and update is blocked unless **Allow managing cores outside Zarya-managed directory** is enabled.
-
-## Release sources
-
-| Core | Provider |
-|------|----------|
-| Xray | GitHub `XTLS/Xray-core` latest release |
-| sing-box | GitHub `SagerNet/sing-box` latest release |
-
-No GitHub token is required. Rate limits may require retrying later.
+`cores/xray/` stores geo assets only. Managed executable paths and the update flow below
+apply exclusively to sing-box. Existing `cores/xrayPath` values are inert and ignored.
 
 ## Checksum policy
 
 When a companion checksum asset is found (`.sha256`, `.dgst`, `SHA256SUMS`, etc.), the downloaded archive is verified before install.
-
-Xray releases publish openssl digests as `<archive>.dgst` (including `SHA2-256=`). Zarya accepts those sidecars and parses the SHA-256 line.
 
 If no sidecar exists, Zarya uses the GitHub Releases API `digest` field (`sha256:…`) when present (sing-box and most modern GitHub assets).
 
@@ -47,7 +31,7 @@ If no checksum is available:
 5. Extract to `runtime/core-updates/extract/`
 6. Verify staged executable (`version` command)
 7. Backup current core to `cores/.backup/`
-8. Copy new executable; preserve Xray `geoip.dat` / `geosite.dat`
+8. Copy the new sing-box executable
 9. Write `VERSION` and `.zarya-core.json`
 10. Final verification; rollback backup on failure
 
@@ -55,7 +39,7 @@ If no checksum is available:
 
 ## Rollback
 
-**Tools → Core Manager → Rollback** restores the latest backup for the selected core (when not running).
+**Tools → Core Manager → Rollback** restores the latest sing-box backup when it is not running.
 
 Backup retention is configurable in Settings → Core updates (default: 2).
 

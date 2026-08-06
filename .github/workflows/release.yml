@@ -17,6 +17,11 @@ jobs:
       QT_STATIC_CACHE_KEY: qt-static-6.8.3-msvc2022_64-v1
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.26.5"
+          cache: true
+          cache-dependency-path: src/runtime/embedded/xray/bridge/go.sum
       - name: Read version
         id: ver
         shell: bash
@@ -80,7 +85,10 @@ jobs:
         shell: pwsh
         run: .\scripts\setup-msvc-actions.ps1
       - name: Install Ninja
-        run: choco install ninja -y --no-progress
+        run: choco install ninja mingw -y --no-progress
+      - name: Verify vendored Xray bridge
+        working-directory: src/runtime/embedded/xray/bridge
+        run: go mod verify && go test ./...
       - name: Configure
         shell: pwsh
         run: |
@@ -186,6 +194,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.26.5"
+          cache: true
+          cache-dependency-path: src/runtime/embedded/xray/bridge/go.sum
       - name: Read version
         id: ver
         run: |
@@ -210,6 +223,9 @@ jobs:
           arch: linux_gcc_64
       - name: Check translations
         run: python3 scripts/check-translations.py
+      - name: Verify vendored Xray bridge
+        working-directory: src/runtime/embedded/xray/bridge
+        run: go mod verify && go test ./...
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
       - name: Build
@@ -237,6 +253,11 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.26.5"
+          cache: true
+          cache-dependency-path: src/runtime/embedded/xray/bridge/go.sum
       - name: Read version
         id: ver
         run: |
@@ -253,6 +274,9 @@ jobs:
           arch: clang_64
       - name: Check translations
         run: python3 scripts/check-translations.py
+      - name: Verify vendored Xray bridge
+        working-directory: src/runtime/embedded/xray/bridge
+        run: go mod verify && go test ./...
       - name: Configure
         run: |
           cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \

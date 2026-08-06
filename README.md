@@ -1,6 +1,6 @@
 # Zarya
 
-Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles and launching external proxy cores (Xray, sing-box). Milestones 0.1–0.28: profiles, subscriptions, Xray, routing, geo data, DNS, system proxy, experimental TUN, sing-box rule sets, core update manager, backup import/export, diagnostics bundle, beta hardening, privileged helper, experimental kill switch (Linux nft / Windows WFP PoC), tray, autostart, English/Russian UI, release packaging, signing-ready hooks, and **0.28.0-beta** helper service design. **0.29.0-beta** adds public beta docs and issue templates. **0.30.0-beta** adds feedback triage, richer diagnostics, and Copy Support Summary. **0.31.0-beta** adds production installer planning and portable-to-installed migration skeleton. **0.32.0-beta** adds app self-update design (manifest check, download-and-verify; no auto-install). **0.33.0-beta** adds stable release hardening — feature gating, 1.0 scope, and release criteria. **0.34.0-beta** adds a Windows MSI installer PoC (WiX); portable ZIP remains recommended. **0.35.0-beta** adds portable app updater PoC via external `zarya-updater` (Windows/Linux portable; installed MSI remains manual). **0.36.0-rc1** was the first release candidate — experimental features disabled by default, RC docs/checklists, redaction audit script, and gated app updater install. **1.0.0** is the first stable release — stable channel defaults, stable release docs/checklists, and the same experimental feature gating without RC/beta pre-release banner wording.
+Zarya is a cross-platform Qt 6 desktop client for managing proxy profiles. Xray is built into the application; sing-box currently remains an externally managed core for the experimental TUN backend. Milestones 0.1–0.28: profiles, subscriptions, Xray, routing, geo data, DNS, system proxy, experimental TUN, sing-box rule sets, core update manager, backup import/export, diagnostics bundle, beta hardening, privileged helper, experimental kill switch (Linux nft / Windows WFP PoC), tray, autostart, English/Russian UI, release packaging, signing-ready hooks, and **0.28.0-beta** helper service design. **0.29.0-beta** adds public beta docs and issue templates. **0.30.0-beta** adds feedback triage, richer diagnostics, and Copy Support Summary. **0.31.0-beta** adds production installer planning and portable-to-installed migration skeleton. **0.32.0-beta** adds app self-update design (manifest check, download-and-verify; no auto-install). **0.33.0-beta** adds stable release hardening — feature gating, 1.0 scope, and release criteria. **0.34.0-beta** adds a Windows MSI installer PoC (WiX); portable ZIP remains recommended. **0.35.0-beta** adds portable app updater PoC via external `zarya-updater` (Windows/Linux portable; installed MSI remains manual). **0.36.0-rc1** was the first release candidate — experimental features disabled by default, RC docs/checklists, redaction audit script, and gated app updater install. **1.0.0** is the first stable release — stable channel defaults, stable release docs/checklists, and the same experimental feature gating without RC/beta pre-release banner wording.
 
 Zarya supports **English** and **Russian** UI. Change language in **Settings → General → Language** (restart required for full effect). See [docs/localization.md](docs/localization.md).
 
@@ -76,29 +76,16 @@ cmake --build build
 
 Adjust `CMAKE_PREFIX_PATH` to match your Qt 6 installation.
 
-## Proxy core binaries
+## Embedded Xray core
 
-Place **Xray** next to the built `zarya` binary (or set an explicit path in **Settings**):
+Xray-core is vendored and built into Zarya. Windows and Linux packages place an app-owned
+`zarya-xray.dll` / `libzarya-xray.so` next to the GUI; macOS links a Go `c-archive`
+into the app bundle. Zarya passes generated JSON to Xray in memory and enables the system
+proxy only after the local mixed port is ready.
 
-| Platform | Default path (if Settings empty) |
-|----------|----------------------------------|
-| Windows  | `./cores/xray/xray.exe` |
-| Linux/macOS | `./cores/xray/xray` |
-
-Example layout for local testing:
-
-```
-zarya/
-  build/Release/
-    zarya.exe
-  cores/
-    xray/
-      xray.exe
-```
-
-In **Settings**, you can use a relative path such as `.\cores\xray\xray.exe` (from the working directory when you launch Zarya) or an absolute path.
-
-The app **starts and runs without** Xray installed. Profile management, import, and config generation work offline. Starting a profile runs `xray run -test` first; if Xray is missing or validation fails, the core is not started and the log panel shows details.
+`cores/xray/` is retained for `geoip.dat`, `geosite.dat`, and matcher cache data. Xray
+is updated through **Zarya App Update**, not Core Manager. sing-box remains an external,
+managed executable for experimental TUN. See [embedded Xray runtime](docs/embedded-xray.md).
 
 ## Stable status (1.5.0)
 
@@ -129,11 +116,11 @@ Zarya can **check** update manifests and **download/verify** artifacts. **Instal
 - Portable install via external `zarya-updater` when explicitly enabled (dev/beta default)
 - Docs: [docs/updater/README.md](docs/updater/README.md), [docs/updater/portable-update-implementation.md](docs/updater/portable-update-implementation.md)
 
-Core Manager updates Xray/sing-box. App updates update Zarya itself.
+App Update updates Zarya and its built-in Xray. Core Manager updates external sing-box.
 
 ## Stable scope
 
-**1.5.0 stable:** Xray system-proxy desktop client with native Windows, macOS, GNOME, and KDE Plasma integration; failure-safe proxy restore; six stable share-link protocols; bundled Xray and runetfreedom geo seeds; and a `lib_ui`-based status surface.
+**1.5.0 stable:** Xray system-proxy desktop client with native Windows, macOS, GNOME, and KDE Plasma integration; failure-safe proxy restore; six stable share-link protocols; embedded Xray and bundled runetfreedom geo data; and a `lib_ui`-based status surface.
 
 **Experimental (beta/dev or explicit opt-in):** TUN, helper, kill switch.
 
@@ -151,7 +138,7 @@ See [docs/installer/windows-msi-poc.md](docs/installer/windows-msi-poc.md).
 
 ## Quick start
 
-1. Use the bundled Xray under `cores/xray/` (release builds), or open **Tools → Core Manager** to install/update it.
+1. Confirm **Tools → Core Manager** reports Xray as **Built into Zarya**.
 2. Import a profile link (**File → Import Profile Links…**) or add a subscription.
 3. Choose **Routing: Bypass LAN** (default) in the setup wizard or **Tools → Routing Profiles**.
 4. Choose **DNS: System DNS** (default).
@@ -161,14 +148,10 @@ See [docs/installer/windows-msi-poc.md](docs/installer/windows-msi-poc.md).
 
 Zarya shows a setup wizard on first launch. You can reopen it from **Help → Run Setup Wizard**.
 
-## Configure Xray path
+## Configure the local proxy
 
-1. Open **File → Settings…**
-2. Set **Xray executable** (Browse or paste path).
-3. Set **Local proxy port** (default `10808`) — mixed SOCKS5 + HTTP on one port.
-4. Click **Save**.
-
-Settings are stored with `QSettings` (organization **Zarya**).
+Open **File → Settings…** and set the local proxy port (default `10808`). The Xray
+runtime path is app-owned and has no user setting.
 
 ## Import a VLESS REALITY link
 
@@ -309,7 +292,7 @@ Built-in modes:
 
 Rules are translated into Xray `routing.rules` with `outboundTag` set to `proxy`, `direct`, or `block`. Block rules are ordered before direct, then proxy; a final catch-all sends remaining traffic to `proxy`.
 
-- `geosite:…` and `geoip:…` require compatible `geosite.dat` / `geoip.dat` next to your Xray binary.
+- `geosite:…` and `geoip:…` require compatible `geosite.dat` / `geoip.dat` under `cores/xray/`.
 - **Domain strategy** defaults to **AsIs** (also supports IPIfNonMatch and IPOnDemand).
 - Built-in profiles cannot be deleted; duplicate them to customize.
 - **Real delay** tests always use **Proxy All** routing so bypass rules do not skew latency measurements.
@@ -318,11 +301,11 @@ Profiles are stored in `routing.json` under the app data directory. The active p
 
 ## Geo data manager
 
-Xray routing can use `geoip:…` and `geosite:…` tags (for example `geoip:ru`, `geosite:ru`, `geosite:category-ads-all`) when matching `geoip.dat` and `geosite.dat` files are available next to the configured Xray executable.
+Xray routing can use `geoip:…` and `geosite:…` tags (for example `geoip:ru`, `geosite:ru`, `geosite:category-ads-all`) when matching `geoip.dat` and `geosite.dat` files are available under `cores/xray/`.
 
 Open **Tools → Geo Data Manager…** to:
 
-- Check whether `geoip.dat` / `geosite.dat` exist beside your Xray binary
+- Check whether `geoip.dat` / `geosite.dat` exist under `cores/xray/`
 - Download updates from a built-in source (compatible with Xray/V2Ray-style routing):
   - **runetfreedom russia-v2ray-rules-dat** (default; Russia-focused; also the release seed)
   - **Loyalsoldier v2ray-rules-dat** (general-purpose)
@@ -330,7 +313,7 @@ Open **Tools → Geo Data Manager…** to:
 - Verify downloads using published `.sha256sum` files before replacing existing data
 - Open the Xray resource directory in your file manager
 
-**File placement:** Zarya places active geo files in the same directory as the Xray executable (for example `cores/xray/geoip.dat`). If that directory is not writable, use **Settings** to choose another Xray path.
+**File placement:** Zarya places active geo files under `cores/xray/` (for example `cores/xray/geoip.dat`).
 
 **On start:** If the active routing profile uses geo rules but required files are missing, Zarya can warn before validation (**Open Geo Data Manager**, **Continue**, or **Cancel Start**). Final authority remains Xray `run -test`.
 
@@ -371,7 +354,7 @@ Zarya’s default mode remains **system proxy via Xray**. An opt-in **experiment
 
 ## Core update manager (0.19)
 
-- **Tools → Core Manager** — download, verify, and install **Xray** and **sing-box** from GitHub releases.
+- **Tools → Core Manager** — show the embedded **Xray** version and download, verify, and install external **sing-box**.
 - Checksum verification when upstream provides checksum assets; backup and rollback supported.
 - Does not update Zarya itself, helper, or Wintun — see `docs/core-update-manager.md`.
 
@@ -438,7 +421,7 @@ On launch, Zarya can wait a few seconds after login before auto-starting a profi
 
 Place `portable.flag` next to the executable, or pass `--portable`.
 
-Data is stored under `./data` (profiles, subscriptions, routing, `settings.ini`). Runtime files go under `./runtime`. Core binaries are expected under `./cores/xray/`.
+Data is stored under `./data` (profiles, subscriptions, routing, `settings.ini`). Runtime files go under `./runtime`. Xray assets live under `./cores/xray/`; the embedded runtime is app-owned.
 
 Non-portable mode continues to use the OS app data directory.
 
@@ -467,7 +450,7 @@ python scripts\run-smoke-tests.py --artifact .\dist\Zarya-1.5.0-windows-x64-port
 python scripts\verify-release-artifacts.py --artifact .\dist\Zarya-1.5.0-windows-x64-portable.zip --expected-version 1.5.0 --release-stable --allow-unsigned
 ```
 
-See [docs/release-packaging.md](docs/release-packaging.md), [docs/release/release-process.md](docs/release/release-process.md), [docs/signing/README.md](docs/signing/README.md), the [code signing policy](docs/signing/code-signing-policy.md), and `packaging/windows/portable-layout.md`. Artifacts include `release-manifest.json`, SHA256 checksums, translations, docs, a **bundled Xray seed** under `cores/xray/`, and **pinned runetfreedom geo data** (`geoip.dat` / `geosite.dat`) in the same folder (sing-box is not bundled). Signing is optional until the SignPath Foundation project is approved and activated.
+See [docs/release-packaging.md](docs/release-packaging.md), [docs/release/release-process.md](docs/release/release-process.md), [docs/signing/README.md](docs/signing/README.md), the [code signing policy](docs/signing/code-signing-policy.md), and `packaging/windows/portable-layout.md`. Artifacts include `release-manifest.json`, SHA256 checksums, translations, docs, an **embedded Xray runtime**, a core-test worker, and **pinned runetfreedom geo data** under `cores/xray/` (`geoip.dat` / `geosite.dat`) in the same folder (sing-box is not bundled). Signing is optional until the SignPath Foundation project is approved and activated.
 
 ## Verifying downloads
 

@@ -230,10 +230,6 @@ QString AppPaths::xrayCoreDir()
 
 QString AppPaths::xrayResourceDir()
 {
-    const QString xrayPath = AppSettings::instance().resolvedXrayPath().trimmed();
-    if (!xrayPath.isEmpty()) {
-        return QFileInfo(xrayPath).absolutePath();
-    }
     return xrayCoreDir();
 }
 

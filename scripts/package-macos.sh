@@ -324,11 +324,11 @@ write_release_manifest(
 
     updater_artifact="Zarya.app/Contents/MacOS/zarya-updater" if Path("$MACOS_DIR/zarya-updater").exists() else None,
 
-    bundle_xray=False if $SKIP_BUNDLE_XRAY else None,
+    core_test_worker_artifact="Zarya.app/Contents/MacOS/zarya-core-test-worker",
 
     bundle_geodata=False if $SKIP_BUNDLE_GEODATA else None,
 
-    xray_cores_parent=Path("$MACOS_DIR"),
+    cores_parent=Path("$MACOS_DIR"),
 
 )
 
@@ -559,7 +559,7 @@ if [[ "$SIGN" -eq 0 ]]; then
 
   done < <(find "$APP_PATH/Contents/Frameworks" "$APP_PATH/Contents/PlugIns" -type f)
 
-  for executable_name in zarya zarya-helper zarya-updater; do
+  for executable_name in zarya zarya-helper zarya-updater zarya-core-test-worker; do
 
     if [[ -x "$MACOS_DIR/$executable_name" ]]; then
 

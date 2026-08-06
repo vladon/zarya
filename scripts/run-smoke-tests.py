@@ -16,10 +16,8 @@ from release_common import (  # noqa: E402
     FORBIDDEN_ARTIFACT_NAMES,
     git_commit_short,
     load_geodata_pin,
-    load_xray_pin,
     read_cmake_version,
     verify_clean_staging,
-    xray_asset_key,
 )
 
 SCHEMA_FILES = ()
@@ -77,7 +75,9 @@ def verify_source_tree(source_root: Path) -> list[str]:
         "docs/installer/windows-msi-poc.md",
         "packaging/windows/wix/Product.wxs",
         "packaging/windows/wix/Registry.wxs",
-        "packaging/cores/xray-pin.json",
+        "third_party/xray-core.zarya.json",
+        "third_party/xray-core/LICENSE",
+        "third_party/xray-core/go.mod",
         "packaging/cores/README.md",
         "packaging/geodata/runetfreedom-pin.json",
         "packaging/geodata/README.md",
@@ -89,25 +89,21 @@ def verify_source_tree(source_root: Path) -> list[str]:
             errors.append(f"missing {relative}")
 
     try:
-        pin = load_xray_pin()
-        for platform, arch in (
-            ("windows", "x64"),
-            ("windows", "arm64"),
-            ("macos", "x64"),
-            ("macos", "arm64"),
-            ("linux", "x64"),
-            ("linux", "arm64"),
-        ):
-            key = xray_asset_key(platform, arch)
-            if key not in pin["assets"]:
-                errors.append(f"xray-pin.json missing asset key {key}")
-            else:
-                asset = pin["assets"][key]
-                sha = str(asset.get("sha256") or "").replace("sha256:", "")
-                if len(sha) != 64:
-                    errors.append(f"xray-pin.json invalid sha256 for {key}")
+        source = json.loads((source_root / "third_party/xray-core.zarya.json").read_text(encoding="utf-8"))
+        expected = {
+            "tag": "v26.3.27",
+            "commit": "d2758a023cd7f4174a5a5fa4ff66e487d4342ba0",
+            "goVersion": "1.26.x",
+            "license": "MPL-2.0",
+        }
+        for key, value in expected.items():
+            if source.get(key) != value:
+                errors.append(f"xray source manifest {key}: expected {value}, found {source.get(key)}")
+        go_mod = (source_root / "third_party/xray-core/go.mod").read_text(encoding="utf-8")
+        if "module github.com/xtls/xray-core" not in go_mod or "\ngo 1.26\n" not in go_mod:
+            errors.append("vendored Xray go.mod does not match the pinned module/toolchain")
     except (OSError, ValueError, KeyError, json.JSONDecodeError) as exc:
-        errors.append(f"invalid packaging/cores/xray-pin.json: {exc}")
+        errors.append(f"invalid third_party/xray-core.zarya.json: {exc}")
 
     try:
         geo_pin = load_geodata_pin()

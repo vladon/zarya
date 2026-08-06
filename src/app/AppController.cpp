@@ -20,6 +20,8 @@
 #include "storage/AppSettings.h"
 #include "storage/GeoDataSettingsStore.h"
 #include "runtime/RuntimeBackendFactory.h"
+#include "runtime/core/CoreRuntimeTypes.h"
+#include "runtime/embedded/xray/EmbeddedXrayRuntimeHost.h"
 #include "runtime/ConfigWarning.h"
 #include "runtime/singbox/SingBoxConfigGenerator.h"
 #include "helperclient/HelperProcessManager.h"
@@ -34,6 +36,7 @@
 #include "testing/TestManager.h"
 
 #include <QDialog>
+#include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonDocument>
@@ -136,7 +139,14 @@ void AppController::setupRuntimeBackends()
             return true;
         }
         restoreSystemProxyAutomatic();
-        m_coreManager->stop();
+        EmbeddedXrayRuntimeHost* embedded = m_runtimeFactory->embeddedXrayHost();
+        if (embedded && embedded->state() != CoreRuntimeState::Stopped) {
+            const CoreOperationResult stopped = embedded->stop();
+            if (!stopped.success) {
+                emit logLine(stopped.message);
+                return false;
+            }
+        }
         m_activeRuntimeMode = RuntimeMode::SystemProxyXray;
         AppSettings::instance().markCleanShutdown();
         return true;
@@ -144,6 +154,13 @@ void AppController::setupRuntimeBackends()
     xrayBackend->setRunningHandler([this]() { return isCoreRunning(); });
     connect(xrayBackend, &IRuntimeBackend::logLine, this, &AppController::logLine);
     connect(xrayBackend, &IRuntimeBackend::errorOccurred, this, &AppController::logLine);
+
+    EmbeddedXrayRuntimeHost* embedded = m_runtimeFactory->embeddedXrayHost();
+    connect(embedded, &ICoreRuntimeHost::logLine, this, &AppController::logLine);
+    connect(embedded, &ICoreRuntimeHost::errorOccurred, this,
+            [this](const QString& code, const QString& message) {
+                emit logLine(QStringLiteral("%1: %2").arg(code, message));
+            });
 
     SingBoxTunRuntimeBackend* singBoxBackend = m_runtimeFactory->singBoxTunBackend();
     singBoxBackend->setDialogParent(m_dialogParent);
@@ -170,6 +187,11 @@ HelperProcessManager* AppController::helperProcessManager() const
         return nullptr;
     }
     return m_runtimeFactory->singBoxTunBackend()->helperManager();
+}
+
+EmbeddedXrayRuntimeHost* AppController::embeddedXrayRuntimeHost() const
+{
+    return m_runtimeFactory ? m_runtimeFactory->embeddedXrayHost() : nullptr;
 }
 
 void AppController::setAfterCoreStartedCallback(std::function<void()> callback)
@@ -206,7 +228,13 @@ void AppController::checkSystemProxyReady()
     if (m_systemProxyReadyElapsed.elapsed() >= kSystemProxyReadyTimeoutMs) {
         m_systemProxyReadyTimer.stop();
         emit logLine(QStringLiteral(
-            "Local Xray mixed proxy did not become ready; system proxy will remain off."));
+            "Local Xray mixed proxy did not become ready; stopping Xray and leaving system proxy off."));
+        EmbeddedXrayRuntimeHost* embedded = m_runtimeFactory->embeddedXrayHost();
+        if (embedded && embedded->state() != CoreRuntimeState::Stopped) {
+            embedded->stop();
+        }
+        m_runtimeState = RuntimeState::Failed;
+        emit coreStateChanged(false);
         return;
     }
 
@@ -325,8 +353,6 @@ bool AppController::confirmDnsWarningsIfNeeded(const DnsProfile& dnsProfile,
 
 void AppController::logGeoDataContext()
 {
-    const QString executablePath = AppSettings::instance().resolvedXrayPath();
-    emit logLine(QStringLiteral("Xray executable: %1").arg(executablePath));
     emit logLine(QStringLiteral("Xray resource directory: %1").arg(AppPaths::xrayResourceDir()));
 
     if (!m_geoDataManager) {
@@ -399,6 +425,14 @@ bool AppController::confirmGeoDataIfNeeded(const RoutingProfile& routingProfile)
 
 bool AppController::isCoreRunning() const
 {
+    if (m_runtimeFactory) {
+        const CoreRuntimeState embeddedState = m_runtimeFactory->embeddedXrayHost()->state();
+        if (embeddedState == CoreRuntimeState::Starting
+            || embeddedState == CoreRuntimeState::Running
+            || embeddedState == CoreRuntimeState::Stopping) {
+            return true;
+        }
+    }
     if (m_coreManager && m_coreManager->isRunning()) {
         return true;
     }
@@ -872,60 +906,58 @@ bool AppController::startProfileSystemProxyXray(const Profile& profile, bool fro
         return false;
     }
 
-    const QString configPath = configPathFor(profile.coreType);
-    QString writeError;
-    if (!writeConfigFile(configPath, generation.config, &writeError)) {
-        emit logLine(QStringLiteral("Failed to write config: %1").arg(writeError));
-        if (m_dialogParent) {
-            UiMessagePresenter::warning(m_dialogParent, tr("Config write"), writeError);
-        }
-        return false;
-    }
-
-    emit logLine(QStringLiteral("Config path: %1").arg(configPath));
-
-    const QString executablePath = AppSettings::instance().resolvedXrayPath();
-    logGeoDataContext();
-    if (!QFileInfo::exists(executablePath)) {
-        const QString message =
-            QStringLiteral("Xray executable not found:\n%1\n\nConfigure the path in Settings.")
-                .arg(executablePath);
+    const QByteArray configJson = QJsonDocument(generation.config).toJson(QJsonDocument::Compact);
+    EmbeddedXrayRuntimeHost* embedded = m_runtimeFactory->embeddedXrayHost();
+    if (!embedded || !embedded->isAvailable()) {
+        const QString message = QStringLiteral("Built-in Xray is unavailable. Repair or reinstall Zarya.\n\n%1")
+                                    .arg(embedded ? embedded->loadStatus()
+                                                  : QStringLiteral("runtime host is missing"));
         emit logLine(message);
         if (m_dialogParent) {
-            UiMessagePresenter::warning(m_dialogParent, tr("Xray not found"), message);
+            UiMessagePresenter::warning(m_dialogParent, tr("Xray unavailable"), message);
         }
         return false;
     }
 
-    emit logLine(QStringLiteral("Validating Xray config…"));
-    const CoreValidationResult validation =
-        m_coreManager->validateConfig(executablePath, configPath);
-    if (!validation.output.isEmpty()) {
-        emit logLine(validation.output);
-    }
+    const QString assetDir = AppPaths::xrayCoreDir();
+    QDir().mkpath(assetDir);
+    CoreLaunchRequest request;
+    request.coreType = CoreType::Xray;
+    request.configJson = configJson;
+    request.assetDir = assetDir;
+    request.dataDir = AppPaths::dataDir();
+
+    emit logLine(QStringLiteral("Validating built-in Xray %1 (ABI %2)…")
+                     .arg(embedded->version())
+                     .arg(embedded->abiVersion()));
+    const CoreOperationResult validation = embedded->validate(request);
     if (!validation.success) {
-        if (profile.protocol == ProtocolType::Vmess) {
-            emit logLine(QStringLiteral("Validation failed for VMess profile"));
-            if (vmessFailureMayBeClockSkew(validation.output + validation.errorMessage)) {
-                emit logLine(
-                    QStringLiteral("VMess note: check system UTC time synchronization."));
-            }
-        }
-        emit logLine(QStringLiteral("Validation failed."));
+        emit logLine(QStringLiteral("%1: %2").arg(validation.errorCode, validation.message));
         if (m_dialogParent) {
             UiMessagePresenter::warning(m_dialogParent, tr("Config validation failed"),
-                                        validation.errorMessage);
+                                        validation.message);
         }
         return false;
     }
-    emit logLine(QStringLiteral("Validation OK"));
 
-    emit logLine(QStringLiteral("Starting Xray…"));
+    emit logLine(QStringLiteral("Starting built-in Xray…"));
     m_runtimeState = RuntimeState::Starting;
-    m_coreManager->startCore(executablePath, configPath, m_xrayAdapter->displayName());
-    AppSettings::instance().setLastStartedProfileId(profile.id);
+    const CoreOperationResult started = embedded->start(request);
+    if (!started.success) {
+        m_runtimeState = RuntimeState::Failed;
+        emit logLine(QStringLiteral("%1: %2").arg(started.errorCode, started.message));
+        if (m_dialogParent) {
+            UiMessagePresenter::warning(m_dialogParent, tr("Xray start failed"), started.message);
+        }
+        return false;
+    }
+
+    m_runtimeState = RuntimeState::Running;
     m_activeRuntimeMode = RuntimeMode::SystemProxyXray;
+    AppSettings::instance().setLastStartedProfileId(profile.id);
     AppSettings::instance().markCleanShutdown();
+    emit coreStateChanged(true);
+    waitForSystemProxyReady();
     return true;
 }
 
@@ -971,7 +1003,16 @@ bool AppController::stopCurrentProfile()
     }
 
     restoreSystemProxyAutomatic();
-    m_coreManager->stop();
+    EmbeddedXrayRuntimeHost* embedded = m_runtimeFactory->embeddedXrayHost();
+    if (embedded && embedded->state() != CoreRuntimeState::Stopped) {
+        const CoreOperationResult stopped = embedded->stop();
+        if (!stopped.success) {
+            m_runtimeState = RuntimeState::Failed;
+            emit logLine(stopped.message);
+            return false;
+        }
+        emit coreStateChanged(false);
+    }
     m_activeRuntimeMode = RuntimeMode::SystemProxyXray;
     m_runtimeState = RuntimeState::Stopped;
     AppSettings::instance().markCleanShutdown();

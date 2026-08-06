@@ -1,69 +1,379 @@
 <?xml version='1.0' encoding='utf-8'?>
 <TS version="2.1" language="ru_RU">
 <context>
-    <name>ZaryaSplitView</name>
-    <message><source>Resize profiles and logs</source><translation>Изменить размер областей профилей и журнала</translation></message>
-    <message><source>Use Up and Down arrow keys to resize</source><translation>Используйте стрелки вверх и вниз для изменения размера</translation></message>
+    <name>AppController</name>
+    <message>
+        <source>Geo data missing</source>
+        <translation>Геоданные отсутствуют</translation>
+    </message>
+    <message>
+        <source>DNS profile uses geo rules but geo data files are missing (%1).
+
+Xray validation may fail.</source>
+        <translation>Профиль DNS использует геоправила, но файлы геоданных отсутствуют (%1).
+
+Проверка Xray может завершиться ошибкой.</translation>
+    </message>
+    <message>
+        <source>Open Geo Data Manager</source>
+        <translation>Открыть менеджер геоданных</translation></message>
+    <message>
+        <source>Continue</source>
+        <translation>Продолжить</translation></message>
+    <message>
+        <source>Cancel Start</source>
+        <translation>Отменить запуск</translation>
+    </message>
+    <message>
+        <source>DNS warnings</source>
+        <translation>Предупреждения DNS</translation>
+    </message>
+    <message>
+        <source>DNS profile has validation warnings:
+
+%1</source>
+        <translation>Профиль DNS содержит предупреждения проверки:
+
+%1</translation>
+    </message>
+    <message>
+        <source>Open DNS Profiles</source>
+        <translation>Открыть профили DNS</translation></message>
+    <message>
+        <source>The active routing profile uses geoip/geosite rules, but geo data files are missing (%1).
+
+Xray validation may fail.</source>
+        <translation>Активный профиль маршрутизации использует правила geoip/geosite, но файлы геоданных отсутствуют (%1).
+
+Проверка Xray может завершиться ошибкой.</translation>
+    </message>
+    <message>
+        <source>Change system proxy</source>
+        <translation>Изменить системный прокси</translation></message>
+    <message>
+        <source>Zarya will change Windows system proxy settings. Continue?</source>
+        <translation>Zarya изменит настройки системного прокси Windows. Продолжить?</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation></message>
+    <message>
+        <source>Profile running</source>
+        <translation>Профиль запущен</translation>
+    </message>
+    <message>
+        <source>A profile is already running. Stop and start the selected profile?</source>
+        <translation>Профиль уже запущен. Остановить его и запустить выбранный профиль?</translation>
+    </message>
+    <message>
+        <source>Stop and Start</source>
+        <translation>Остановить и запустить</translation>
+    </message>
+    <message>
+        <source>Missing sing-box rule sets</source>
+        <translation>Отсутствуют наборы правил sing-box</translation>
+    </message>
+    <message>
+        <source>The active TUN routing/DNS profiles require sing-box rule sets that are missing:
+
+%1</source>
+        <translation>Активным профилям маршрутизации и DNS для TUN требуются отсутствующие наборы правил sing-box:
+
+%1</translation>
+    </message>
+    <message>
+        <source>sing-box rule sets</source>
+        <translation>Наборы правил sing-box</translation>
+    </message>
+    <message>
+        <source>The active TUN routing/DNS profiles reference sing-box rule sets that are missing:
+
+%1
+
+Continue anyway? sing-box check is the final authority.</source>
+        <translation>Активные профили маршрутизации и DNS для TUN ссылаются на отсутствующие наборы правил sing-box:
+
+%1
+
+Всё равно продолжить? Окончательный результат определяется проверкой sing-box.</translation>
+    </message>
+    <message>
+        <source>Open Rule Set Manager</source>
+        <translation>Открыть менеджер наборов правил</translation></message>
+    <message>
+        <source>Cannot start TUN</source>
+        <translation>Не удалось запустить TUN</translation>
+    </message>
+    <message>
+        <source>Generated sing-box config has blocking issues:
+
+%1</source>
+        <translation>В созданной конфигурации sing-box есть блокирующие проблемы:
+
+%1</translation>
+    </message>
+    <message>
+        <source>sing-box config warnings</source>
+        <translation>Предупреждения конфигурации sing-box</translation>
+    </message>
+    <message>
+        <source>Generated sing-box config has warnings:
+
+%1
+
+Continue?</source>
+        <translation>В созданной конфигурации sing-box есть предупреждения:
+
+%1
+
+Продолжить?</translation>
+    </message>
+    <message>
+        <source>Preview Config</source>
+        <translation>Предпросмотр конфигурации</translation>
+    </message>
+    <message>
+        <source>Unsupported profile</source>
+        <translation>Неподдерживаемый профиль</translation></message>
+    <message>
+        <source>Config generation</source>
+        <translation>Создание конфигурации</translation>
+    </message>
+    <message>
+        <source>Routing warnings</source>
+        <translation>Предупреждения маршрутизации</translation>
+    </message>
+    <message>
+        <source>Routing profile has validation warnings:
+
+%1
+
+Continue?</source>
+        <translation>Профиль маршрутизации содержит предупреждения проверки:
+
+%1
+
+Продолжить?</translation>
+    </message>
+    <message>
+        <source>Config validation failed</source>
+        <translation>Ошибка проверки конфигурации</translation>
+    </message>
+    <message>
+        <source>System proxy</source>
+        <translation>Системный прокси</translation></message>
+    <message>
+        <source>Zarya could not restore previous system proxy settings. Retry restore or exit anyway?</source>
+        <translation>Zarya не удалось восстановить предыдущие настройки системного прокси. Повторить восстановление или всё равно выйти?</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>Повторить</translation>
+    </message>
+    <message>
+        <source>Exit Anyway</source>
+        <translation>Всё равно выйти</translation>
+    </message>
+    <message>
+        <source>Xray start failed</source>
+        <translation>Не удалось запустить Xray</translation>
+    </message>
+    <message>
+        <source>Xray unavailable</source>
+        <translation>Xray недоступен</translation></message>
 </context>
 <context>
     <name>AppUpdateDialog</name>
-    <message><source>Zarya App Updates</source><translation>Обновления Zarya</translation></message>
-    <message><source>No update checked yet.</source><translation>Проверка обновлений ещё не выполнялась.</translation></message>
-    <message><source>Update details</source><translation>Сведения об обновлении</translation></message>
-    <message><source>Check Now</source><translation>Проверить сейчас</translation></message>
-    <message><source>Choose Local Manifest…</source><translation>Выбрать локальный манифест…</translation></message>
-    <message><source>Download and Verify</source><translation>Скачать и проверить</translation></message>
-    <message><source>Install and Restart</source><translation>Установить и перезапустить</translation></message>
-    <message><source>Open Downloads Folder</source><translation>Открыть папку загрузок</translation></message>
-    <message><source>Cancel</source><translation>Отмена</translation></message>
-    <message><source>Update information</source><translation>Информация об обновлении</translation></message>
-    <message><source>Current version</source><translation>Текущая версия</translation></message>
-    <message><source>Channel</source><translation>Канал</translation></message>
-    <message><source>Installation mode</source><translation>Режим установки</translation></message>
-    <message><source>Manifest</source><translation>Манифест</translation></message>
-    <message><source>Status</source><translation>Статус</translation></message>
-    <message><source>Local file: %1</source><translation>Локальный файл: %1</translation></message>
-    <message><source>Not configured</source><translation>Не настроено</translation></message>
-    <message><source>Configured URL</source><translation>URL настроен</translation></message>
-    <message><source>Update available: %1</source><translation>Доступно обновление: %1</translation></message>
-    <message><source>Selected asset:</source><translation>Выбранный файл:</translation></message>
-    <message><source>  Size: %1 bytes</source><translation>  Размер: %1 байт</translation></message>
-    <message><source>Self-update installation is experimental and disabled in this RC build.</source><translation>Установка самообновлений экспериментальна и отключена в этой RC-сборке.</translation></message>
-    <message><source>You can download and verify updates manually.</source><translation>Обновления можно скачать и проверить вручную.</translation></message>
-    <message><source>Ready to install portable update.</source><translation>Переносимое обновление готово к установке.</translation></message>
-    <message><source>Zarya will close and restart.</source><translation>Zarya закроется и перезапустится.</translation></message>
-    <message><source>The update artifact was downloaded and verified.</source><translation>Файл обновления скачан и проверен.</translation></message>
-    <message><source>Install:</source><translation>Установка:</translation></message>
-    <message><source>You are using the latest version for the selected channel.</source><translation>Используется последняя версия для выбранного канала.</translation></message>
-    <message><source>Warning: %1</source><translation>Предупреждение: %1</translation></message>
-    <message><source>Blocked: %1</source><translation>Заблокировано: %1</translation></message>
-    <message><source>Choose Update Manifest</source><translation>Выбор манифеста обновления</translation></message>
-    <message><source>Update manifest (*.json);;All files (*.*)</source><translation>Манифест обновления (*.json);;Все файлы (*.*)</translation></message>
-    <message><source>App Updates</source><translation>Обновления приложения</translation></message>
-    <message><source>This update asset has no checksum. Enable unsigned app update download in Settings or use a signed manifest asset.</source><translation>У файла обновления нет контрольной суммы. Разрешите загрузку неподписанных обновлений в настройках или используйте файл из подписанного манифеста.</translation></message>
-    <message><source>Downloading %1…</source><translation>Загрузка %1…</translation></message>
-    <message><source>Downloading… %1 / %2 bytes</source><translation>Загрузка… %1 / %2 байт</translation></message>
-    <message><source>Download failed.</source><translation>Не удалось скачать обновление.</translation></message>
-    <message><source>SHA256 verification failed.</source><translation>Проверка SHA256 не пройдена.</translation></message>
-    <message><source>Staging update…</source><translation>Подготовка обновления…</translation></message>
-    <message><source>Staging failed.</source><translation>Не удалось подготовить обновление.</translation></message>
-    <message><source>Download verified. Ready to install portable update.</source><translation>Загрузка проверена. Переносимое обновление готово к установке.</translation></message>
-    <message><source>Download completed.
+    <message>
+        <source>Zarya App Updates</source>
+        <translation>Обновления Zarya</translation>
+    </message>
+    <message>
+        <source>No update checked yet.</source>
+        <translation>Проверка обновлений ещё не выполнялась.</translation>
+    </message>
+    <message>
+        <source>Update details</source>
+        <translation>Сведения об обновлении</translation>
+    </message>
+    <message>
+        <source>Check Now</source>
+        <translation>Проверить сейчас</translation>
+    </message>
+    <message>
+        <source>Choose Local Manifest…</source>
+        <translation>Выбрать локальный манифест…</translation>
+    </message>
+    <message>
+        <source>Download and Verify</source>
+        <translation>Скачать и проверить</translation>
+    </message>
+    <message>
+        <source>Install and Restart</source>
+        <translation>Установить и перезапустить</translation>
+    </message>
+    <message>
+        <source>Open Downloads Folder</source>
+        <translation>Открыть папку загрузок</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation></message>
+    <message>
+        <source>Update information</source>
+        <translation>Информация об обновлении</translation>
+    </message>
+    <message>
+        <source>Current version</source>
+        <translation>Текущая версия</translation>
+    </message>
+    <message>
+        <source>Channel</source>
+        <translation>Канал</translation>
+    </message>
+    <message>
+        <source>Installation mode</source>
+        <translation>Режим установки</translation>
+    </message>
+    <message>
+        <source>Manifest</source>
+        <translation>Манифест</translation>
+    </message>
+    <message>
+        <source>Status</source>
+        <translation>Статус</translation></message>
+    <message>
+        <source>Local file: %1</source>
+        <translation>Локальный файл: %1</translation>
+    </message>
+    <message>
+        <source>Not configured</source>
+        <translation>Не настроено</translation>
+    </message>
+    <message>
+        <source>Configured URL</source>
+        <translation>URL настроен</translation>
+    </message>
+    <message>
+        <source>Update available: %1</source>
+        <translation>Доступно обновление: %1</translation>
+    </message>
+    <message>
+        <source>Selected asset:</source>
+        <translation>Выбранный файл:</translation>
+    </message>
+    <message>
+        <source>  Size: %1 bytes</source>
+        <translation>  Размер: %1 байт</translation>
+    </message>
+    <message>
+        <source>Self-update installation is experimental and disabled in this RC build.</source>
+        <translation>Установка самообновлений экспериментальна и отключена в этой RC-сборке.</translation>
+    </message>
+    <message>
+        <source>You can download and verify updates manually.</source>
+        <translation>Обновления можно скачать и проверить вручную.</translation>
+    </message>
+    <message>
+        <source>Ready to install portable update.</source>
+        <translation>Переносимое обновление готово к установке.</translation>
+    </message>
+    <message>
+        <source>Zarya will close and restart.</source>
+        <translation>Zarya закроется и перезапустится.</translation>
+    </message>
+    <message>
+        <source>The update artifact was downloaded and verified.</source>
+        <translation>Файл обновления скачан и проверен.</translation>
+    </message>
+    <message>
+        <source>Install:</source>
+        <translation>Установка:</translation>
+    </message>
+    <message>
+        <source>You are using the latest version for the selected channel.</source>
+        <translation>Используется последняя версия для выбранного канала.</translation>
+    </message>
+    <message>
+        <source>Warning: %1</source>
+        <translation>Предупреждение: %1</translation>
+    </message>
+    <message>
+        <source>Blocked: %1</source>
+        <translation>Заблокировано: %1</translation>
+    </message>
+    <message>
+        <source>Choose Update Manifest</source>
+        <translation>Выбор манифеста обновления</translation>
+    </message>
+    <message>
+        <source>Update manifest (*.json);;All files (*.*)</source>
+        <translation>Манифест обновления (*.json);;Все файлы (*.*)</translation>
+    </message>
+    <message>
+        <source>App Updates</source>
+        <translation>Обновления приложения</translation>
+    </message>
+    <message>
+        <source>This update asset has no checksum. Enable unsigned app update download in Settings or use a signed manifest asset.</source>
+        <translation>У файла обновления нет контрольной суммы. Разрешите загрузку неподписанных обновлений в настройках или используйте файл из подписанного манифеста.</translation>
+    </message>
+    <message>
+        <source>Downloading %1…</source>
+        <translation>Загрузка %1…</translation>
+    </message>
+    <message>
+        <source>Downloading… %1 / %2 bytes</source>
+        <translation>Загрузка… %1 / %2 байт</translation>
+    </message>
+    <message>
+        <source>Download failed.</source>
+        <translation>Не удалось скачать обновление.</translation>
+    </message>
+    <message>
+        <source>SHA256 verification failed.</source>
+        <translation>Проверка SHA256 не пройдена.</translation>
+    </message>
+    <message>
+        <source>Staging update…</source>
+        <translation>Подготовка обновления…</translation>
+    </message>
+    <message>
+        <source>Staging failed.</source>
+        <translation>Не удалось подготовить обновление.</translation>
+    </message>
+    <message>
+        <source>Download verified. Ready to install portable update.</source>
+        <translation>Загрузка проверена. Переносимое обновление готово к установке.</translation>
+    </message>
+    <message>
+        <source>Download completed.
 SHA256 verified.
 
-%1</source><translation>Загрузка завершена.
+%1</source>
+        <translation>Загрузка завершена.
 SHA256 проверен.
 
-%1</translation></message>
-    <message><source>Install Update</source><translation>Установка обновления</translation></message>
-    <message><source>Zarya will close while the updater replaces application files.
+%1</translation>
+    </message>
+    <message>
+        <source>Install Update</source>
+        <translation>Установка обновления</translation>
+    </message>
+    <message>
+        <source>Zarya will close while the updater replaces application files.
 User data under data/ will be preserved.
 
-Install and restart now?</source><translation>Zarya закроется на время замены файлов приложения.
+Install and restart now?</source>
+        <translation>Zarya закроется на время замены файлов приложения.
 Пользовательские данные в data/ будут сохранены.
 
-Установить обновление и перезапустить сейчас?</translation></message>
-    <message><source>Checking for updates…</source><translation>Проверка обновлений…</translation></message>
+Установить обновление и перезапустить сейчас?</translation>
+    </message>
+    <message>
+        <source>Checking for updates…</source>
+        <translation>Проверка обновлений…</translation>
+    </message>
 </context>
 <context>
     <name>BackupExportDialog</name>
@@ -114,7 +424,9 @@ Install and restart now?</source><translation>Zarya закроется на вр
 %1</source>
         <translation>Резервная копия создана:
 %1</translation></message>
-    <message><source>Continue</source><translation>Продолжить</translation></message>
+    <message>
+        <source>Continue</source>
+        <translation>Продолжить</translation></message>
 </context>
 <context>
     <name>BackupImportDialog</name>
@@ -135,7 +447,8 @@ Install and restart now?</source><translation>Zarya закроется на вр
         <translation>Включено</translation></message>
     <message>
         <source>Backup import preview</source>
-        <translation>Предварительный просмотр импорта резервной копии</translation></message>
+        <translation>Предварительный просмотр импорта резервной копии</translation>
+    </message>
     <message>
         <source>Browse…</source>
         <translation>Обзор…</translation></message>
@@ -216,7 +529,9 @@ Pre-import backup:
 
 Резервная копия перед импортом:
 %1</translation></message>
-    <message><source>Continue</source><translation>Продолжить</translation></message>
+    <message>
+        <source>Continue</source>
+        <translation>Продолжить</translation></message>
 </context>
 <context>
     <name>BetaBannerWidget</name>
@@ -226,9 +541,18 @@ Pre-import backup:
     <message>
         <source>Dismiss</source>
         <translation>Скрыть</translation></message>
-    <message><source>Experimental features are enabled. They are not part of the stable support scope. Use Diagnostics Bundle when reporting issues.</source><translation>Экспериментальные функции включены. Они не входят в стабильный объём поддержки. При сообщении о проблемах используйте пакет диагностики.</translation></message>
-    <message><source>Zarya release candidate — experimental features are disabled by default. Use Diagnostics Bundle when reporting issues.</source><translation>Релиз-кандидат Zarya — экспериментальные функции по умолчанию отключены. При сообщении о проблемах используйте пакет диагностики.</translation></message>
-    <message><source>Zarya stable release — experimental features are disabled by default. Use Diagnostics Bundle when reporting issues.</source><translation>Стабильный выпуск Zarya — экспериментальные функции по умолчанию отключены. При сообщении о проблемах используйте пакет диагностики.</translation></message>
+    <message>
+        <source>Experimental features are enabled. They are not part of the stable support scope. Use Diagnostics Bundle when reporting issues.</source>
+        <translation>Экспериментальные функции включены. Они не входят в стабильный объём поддержки. При сообщении о проблемах используйте пакет диагностики.</translation>
+    </message>
+    <message>
+        <source>Zarya release candidate — experimental features are disabled by default. Use Diagnostics Bundle when reporting issues.</source>
+        <translation>Релиз-кандидат Zarya — экспериментальные функции по умолчанию отключены. При сообщении о проблемах используйте пакет диагностики.</translation>
+    </message>
+    <message>
+        <source>Zarya stable release — experimental features are disabled by default. Use Diagnostics Bundle when reporting issues.</source>
+        <translation>Стабильный выпуск Zarya — экспериментальные функции по умолчанию отключены. При сообщении о проблемах используйте пакет диагностики.</translation>
+    </message>
 </context>
 <context>
     <name>CoreManagerDialog</name>
@@ -237,10 +561,12 @@ Pre-import backup:
         <translation>Менеджер ядер</translation></message>
     <message>
         <source>Installed cores</source>
-        <translation>Установленные ядра</translation></message>
+        <translation>Установленные ядра</translation>
+    </message>
     <message>
         <source>Core manager log</source>
-        <translation>Журнал менеджера ядер</translation></message>
+        <translation>Журнал менеджера ядер</translation>
+    </message>
     <message>
         <source>Core</source>
         <translation>Ядро</translation></message>
@@ -285,31 +611,64 @@ Pre-import backup:
         <translation>Это ядро находится вне каталога, управляемого Zarya.</translation></message>
     <message>
         <source>Provider: GitHub Releases</source>
-        <translation>Источник: GitHub Releases</translation></message>
+        <translation>Источник: GitHub Releases</translation>
+    </message>
     <message>
         <source>Selected asset: %1</source>
-        <translation>Выбранный файл: %1</translation></message>
+        <translation>Выбранный файл: %1</translation>
+    </message>
     <message>
         <source>Checksum: %1</source>
-        <translation>Контрольная сумма: %1</translation></message>
+        <translation>Контрольная сумма: %1</translation>
+    </message>
     <message>
         <source>Last checked: %1</source>
-        <translation>Последняя проверка: %1</translation></message>
+        <translation>Последняя проверка: %1</translation>
+    </message>
     <message>
         <source>Last updated: %1</source>
-        <translation>Последнее обновление: %1</translation></message>
+        <translation>Последнее обновление: %1</translation>
+    </message>
     <message>
         <source>Last error: %1</source>
-        <translation>Последняя ошибка: %1</translation></message>
+        <translation>Последняя ошибка: %1</translation>
+    </message>
     <message>
         <source>Warning: core path is external and not managed by Zarya.</source>
-        <translation>Предупреждение: путь к ядру находится вне каталога, управляемого Zarya.</translation></message>
+        <translation>Предупреждение: путь к ядру находится вне каталога, управляемого Zarya.</translation>
+    </message>
     <message>
         <source>Warning: core is running. Stop it before updating.</source>
-        <translation>Предупреждение: ядро запущено. Остановите его перед обновлением.</translation></message>
+        <translation>Предупреждение: ядро запущено. Остановите его перед обновлением.</translation>
+    </message>
     <message>
         <source>Downloading %1: %2 / %3 bytes</source>
-        <translation>Загрузка %1: %2 / %3 байт</translation></message>
+        <translation>Загрузка %1: %2 / %3 байт</translation>
+    </message>
+    <message>
+        <source>Built into Zarya</source>
+        <translation>Встроено в Zarya</translation>
+    </message>
+    <message>
+        <source>Provider: Zarya App Update</source>
+        <translation>Источник: обновление Zarya</translation>
+    </message>
+    <message>
+        <source>Distribution: Built into Zarya</source>
+        <translation>Тип поставки: встроено в Zarya</translation>
+    </message>
+    <message>
+        <source>ABI version: %1</source>
+        <translation>Версия ABI: %1</translation>
+    </message>
+    <message>
+        <source>Load status: %1</source>
+        <translation>Состояние загрузки: %1</translation>
+    </message>
+    <message>
+        <source>Xray is updated together with Zarya.</source>
+        <translation>Xray обновляется вместе с Zarya.</translation>
+    </message>
 </context>
 <context>
     <name>DiagnosticsDialog</name>
@@ -365,22 +724,29 @@ Pre-import backup:
         <source>Diagnostics bundle created: %1</source>
         <translation>Пакет диагностики создан: %1</translation></message>
     <message>
+        <source>Close</source>
+        <translation>Закрыть</translation></message>
+    <message>
         <source>Diagnostics bundle created:
-%1
-
-This bundle is redacted, but review it before sharing.</source>
+%1</source>
         <translation>Пакет диагностики создан:
-%1
-
-Этот пакет отредактирован, но проверьте его перед отправкой.</translation></message>
-    <message><source>Close</source><translation>Закрыть</translation></message>
-    <message><source>Diagnostics bundle created:
-%1</source><translation>Пакет диагностики создан:
-%1</translation></message>
-    <message><source>Issue reporting instructions are not bundled with this build.</source><translation>Инструкции по отправке отчёта о проблеме не включены в эту сборку.</translation></message>
-    <message><source>Open Folder</source><translation>Открыть папку</translation></message>
-    <message><source>Open Issue Template</source><translation>Открыть шаблон отчёта</translation></message>
-    <message><source>This bundle is redacted, but review the diagnostics archive before sharing it publicly.</source><translation>Секретные данные в пакете скрыты, но проверьте архив диагностики перед публичной отправкой.</translation></message>
+%1</translation>
+    </message>
+    <message>
+        <source>Issue reporting instructions are not bundled with this build.</source>
+        <translation>Инструкции по отправке отчёта о проблеме не включены в эту сборку.</translation>
+    </message>
+    <message>
+        <source>Open Folder</source>
+        <translation>Открыть папку</translation></message>
+    <message>
+        <source>Open Issue Template</source>
+        <translation>Открыть шаблон отчёта</translation>
+    </message>
+    <message>
+        <source>This bundle is redacted, but review the diagnostics archive before sharing it publicly.</source>
+        <translation>Секретные данные в пакете скрыты, но проверьте архив диагностики перед публичной отправкой.</translation>
+    </message>
 </context>
 <context>
     <name>DiagnosticsPreviewDialog</name>
@@ -414,7 +780,8 @@ Secrets included: %2</source>
         <translation>Включённые файлы:</translation></message>
     <message>
         <source>Included files</source>
-        <translation>Включённые файлы</translation></message>
+        <translation>Включённые файлы</translation>
+    </message>
 </context>
 <context>
     <name>DnsManagerDialog</name>
@@ -496,10 +863,12 @@ Save anyway?</source>
 Всё равно сохранить?</translation></message>
     <message>
         <source>Save anyway</source>
-        <translation>Всё равно сохранить</translation></message>
+        <translation>Всё равно сохранить</translation>
+    </message>
     <message>
         <source>No DNS profiles are available. Create one to get started.</source>
-        <translation>Нет доступных профилей DNS. Создайте профиль, чтобы начать.</translation></message>
+        <translation>Нет доступных профилей DNS. Создайте профиль, чтобы начать.</translation>
+    </message>
     <message>
         <source>DNS profile changed: %1</source>
         <translation>Профиль DNS изменён: %1</translation></message>
@@ -511,13 +880,16 @@ Save anyway?</source>
         <translation>Предпросмотр JSON DNS</translation></message>
     <message>
         <source>Select a DNS profile.</source>
-        <translation>Выберите профиль DNS.</translation></message>
+        <translation>Выберите профиль DNS.</translation>
+    </message>
     <message>
         <source>Delete DNS profile</source>
-        <translation>Удаление профиля DNS</translation></message>
+        <translation>Удаление профиля DNS</translation>
+    </message>
     <message>
-        <source>Delete DNS profile &quot;%1&quot;?</source>
-        <translation>Удалить профиль DNS «%1»?</translation></message>
+        <source>Delete DNS profile "%1"?</source>
+        <translation>Удалить профиль DNS «%1»?</translation>
+    </message>
 </context>
 <context>
     <name>DnsProfileDialog</name>
@@ -619,10 +991,12 @@ Save anyway?</source>
         <translation>Предпросмотр JSON DNS</translation></message>
     <message>
         <source>No DNS servers yet. Add a server to this profile.</source>
-        <translation>В этом профиле пока нет DNS-серверов. Добавьте сервер.</translation></message>
+        <translation>В этом профиле пока нет DNS-серверов. Добавьте сервер.</translation>
+    </message>
     <message>
         <source>Save</source>
-        <translation>Сохранить</translation></message>
+        <translation>Сохранить</translation>
+    </message>
     <message>
         <source>Cancel</source>
         <translation>Отмена</translation></message>
@@ -664,16 +1038,62 @@ Save anyway?</source>
         <translation>Примечание</translation></message>
     <message>
         <source>One domain per line</source>
-        <translation>Один домен на строку</translation></message>
+        <translation>Один домен на строку</translation>
+    </message>
     <message>
         <source>One expected IP per line</source>
-        <translation>Один ожидаемый IP на строку</translation></message>
+        <translation>Один ожидаемый IP на строку</translation>
+    </message>
     <message>
         <source>OK</source>
-        <translation>ОК</translation></message>
+        <translation>ОК</translation>
+    </message>
     <message>
         <source>Cancel</source>
         <translation>Отмена</translation></message>
+</context>
+<context>
+    <name>FirstRunChecklistWidget</name>
+    <message>
+        <source>Core: Xray installed (%1)</source>
+        <translation>Ядро: Xray установлен (%1)</translation>
+    </message>
+    <message>
+        <source>unknown version</source>
+        <translation>версия неизвестна</translation>
+    </message>
+    <message>
+        <source>Core: Xray missing</source>
+        <translation>Ядро: Xray отсутствует</translation>
+    </message>
+    <message>
+        <source>Profiles: %1 profile(s)</source>
+        <translation>Профили: %1</translation>
+    </message>
+    <message>
+        <source>Profiles: none</source>
+        <translation>Профили: нет</translation>
+    </message>
+    <message>
+        <source>Runtime: Experimental TUN via sing-box</source>
+        <translation>Режим: экспериментальный TUN через sing-box</translation>
+    </message>
+    <message>
+        <source>Runtime: System proxy via Xray</source>
+        <translation>Режим: системный прокси через Xray</translation>
+    </message>
+    <message>
+        <source>%1
+%2
+Routing: selected
+DNS: selected
+%3</source>
+        <translation>%1
+%2
+Маршрутизация: выбрана
+DNS: выбран
+%3</translation>
+    </message>
 </context>
 <context>
     <name>FirstRunWizard</name>
@@ -684,40 +1104,11 @@ Save anyway?</source>
         <source>Welcome to Zarya</source>
         <translation>Добро пожаловать в Zarya</translation></message>
     <message>
-        <source>Zarya is a cross-platform proxy client.
-
-Recommended setup:
-1. Confirm Xray core (bundled in release builds, or install via Core Manager)
-2. Add a profile or subscription
-3. Choose routing/DNS behavior
-4. Start a profile</source>
-        <translation>Zarya — кроссплатформенный прокси-клиент.
-
-Рекомендуемая настройка:
-1. Проверьте ядро Xray (в релизах уже включено, либо установите через менеджер ядер)
-2. Добавьте профиль или подписку
-3. Выберите поведение маршрутизации/DNS
-4. Запустите профиль</translation></message>
-    <message>
         <source>Core setup</source>
         <translation>Настройка ядра</translation></message>
     <message>
-        <source>Xray is required for the default system-proxy mode.
-sing-box is only needed for experimental TUN mode.</source>
-        <translation>Xray необходим для режима системного прокси по умолчанию.
-sing-box нужен только для экспериментального режима TUN.</translation></message>
-    <message>
-        <source>Install Xray</source>
-        <translation>Установить Xray</translation></message>
-    <message>
-        <source>Update Xray…</source>
-        <translation>Обновить Xray…</translation></message>
-    <message>
         <source>Install sing-box (experimental TUN)</source>
         <translation>Установить sing-box (экспериментальный TUN)</translation></message>
-    <message>
-        <source>Choose existing Xray binary</source>
-        <translation>Выбрать существующий исполняемый файл Xray</translation></message>
     <message>
         <source>Choose existing sing-box binary</source>
         <translation>Выбрать существующий исполняемый файл sing-box</translation></message>
@@ -820,18 +1211,74 @@ sing-box: %3 (%4)</translation></message>
         <translation>Подписка</translation></message>
     <message>
         <source>Experimental mode</source>
-        <translation>Экспериментальный режим</translation></message>
+        <translation>Экспериментальный режим</translation>
+    </message>
     <message>
         <source>Confirm that you understand TUN mode is experimental.</source>
-        <translation>Подтвердите, что понимаете экспериментальный статус режима TUN.</translation></message>
-    <message><source>Back</source><translation>Назад</translation></message>
-    <message><source>Next</source><translation>Далее</translation></message>
-    <message><source>Configure Helper</source><translation>Настроить helper</translation></message>
-    <message><source>Continue without helper</source><translation>Продолжить без helper</translation></message>
-    <message><source>Core required</source><translation>Требуется ядро</translation></message>
-    <message><source>Install or choose an Xray binary before starting a profile.</source><translation>Перед запуском профиля установите или выберите исполняемый файл Xray.</translation></message>
-    <message><source>Profile required</source><translation>Требуется профиль</translation></message>
-    <message><source>Import or add at least one profile before starting.</source><translation>Перед запуском импортируйте или добавьте хотя бы один профиль.</translation></message>
+        <translation>Подтвердите, что понимаете экспериментальный статус режима TUN.</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation>Назад</translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation>Далее</translation>
+    </message>
+    <message>
+        <source>Configure Helper</source>
+        <translation>Настроить helper</translation>
+    </message>
+    <message>
+        <source>Continue without helper</source>
+        <translation>Продолжить без helper</translation>
+    </message>
+    <message>
+        <source>Core required</source>
+        <translation>Требуется ядро</translation>
+    </message>
+    <message>
+        <source>Profile required</source>
+        <translation>Требуется профиль</translation>
+    </message>
+    <message>
+        <source>Import or add at least one profile before starting.</source>
+        <translation>Перед запуском импортируйте или добавьте хотя бы один профиль.</translation>
+    </message>
+    <message>
+        <source>Zarya is a cross-platform proxy client.
+
+Recommended setup:
+1. Confirm the built-in Xray core is available
+2. Add a profile or subscription
+3. Choose routing/DNS behavior
+4. Start a profile</source>
+        <translation>Zarya — кроссплатформенный прокси-клиент.
+
+Рекомендуемая настройка:
+1. Убедитесь, что встроенное ядро Xray доступно
+2. Добавьте профиль или подписку
+3. Настройте маршрутизацию и DNS
+4. Запустите профиль</translation>
+    </message>
+    <message>
+        <source>Xray is built into Zarya for the default system-proxy mode.
+sing-box is only needed for experimental TUN mode.</source>
+        <translation>Xray встроен в Zarya и используется в режиме системного прокси по умолчанию.
+sing-box нужен только для экспериментального режима TUN.</translation>
+    </message>
+    <message>
+        <source>built in</source>
+        <translation>встроено</translation>
+    </message>
+    <message>
+        <source>unavailable</source>
+        <translation>недоступно</translation>
+    </message>
+    <message>
+        <source>Built-in Xray is unavailable. Repair or reinstall Zarya before starting a profile.</source>
+        <translation>Встроенный Xray недоступен. Восстановите или переустановите Zarya перед запуском профиля.</translation>
+    </message>
 </context>
 <context>
     <name>GeoDataManagerDialog</name>
@@ -840,10 +1287,12 @@ sing-box: %3 (%4)</translation></message>
         <translation>Менеджер геоданных</translation></message>
     <message>
         <source>Geo data files</source>
-        <translation>Файлы геоданных</translation></message>
+        <translation>Файлы геоданных</translation>
+    </message>
     <message>
         <source>Geo data log</source>
-        <translation>Журнал геоданных</translation></message>
+        <translation>Журнал геоданных</translation>
+    </message>
     <message>
         <source>File</source>
         <translation>Файл</translation></message>
@@ -927,7 +1376,8 @@ sing-box: %3 (%4)</translation></message>
         <translation>Импорт ссылок</translation></message>
     <message>
         <source>Share links</source>
-        <translation>Ссылки для импорта</translation></message>
+        <translation>Ссылки для импорта</translation>
+    </message>
     <message>
         <source>Paste one vless://, vmess://, trojan://, ss://, hysteria2://, or wireguard:// link per line…</source>
         <translation>Вставьте по одной ссылке vless://, vmess://, trojan://, ss://, hysteria2:// или wireguard:// в строке…</translation></message>
@@ -938,66 +1388,11 @@ sing-box: %3 (%4)</translation></message>
         <source>No links to import.</source>
         <translation>Нет ссылок для импорта.</translation></message>
     <message>
-        <source>Import failed</source>
-        <translation>Импорт не удался</translation></message>
-    <message>
         <source>Partial import</source>
         <translation>Частичный импорт</translation></message>
     <message>
         <source>Cancel</source>
         <translation>Отмена</translation></message>
-</context>
-<context>
-    <name>ProfileImportWidget</name>
-    <message>
-        <source>Share links</source>
-        <translation>Ссылки для импорта</translation></message>
-    <message>
-        <source>Paste vless://, vmess://, trojan://, ss://, hysteria2://, or wireguard:// links here.
-One link per line.</source>
-        <translation>Вставьте сюда ссылки vless://, vmess://, trojan://, ss://, hysteria2:// или wireguard://.
-Одна ссылка на строку.</translation></message>
-    <message>
-        <source>Paste links to see parse summary.</source>
-        <translation>Вставьте ссылки, чтобы увидеть сводку разбора.</translation></message>
-    <message>
-        <source>Parsed: VLESS %1, VMess %2, Trojan %3, Shadowsocks %4, Hysteria2 %5, WireGuard %6, Unsupported %7</source>
-        <translation>Разобрано: VLESS %1, VMess %2, Trojan %3, Shadowsocks %4, Hysteria2 %5, WireGuard %6, неподдерживаемых %7</translation></message>
-</context>
-<context>
-    <name>FirstRunChecklistWidget</name>
-    <message>
-        <source>Core: Xray installed (%1)</source>
-        <translation>Ядро: Xray установлен (%1)</translation></message>
-    <message>
-        <source>unknown version</source>
-        <translation>версия неизвестна</translation></message>
-    <message>
-        <source>Core: Xray missing</source>
-        <translation>Ядро: Xray отсутствует</translation></message>
-    <message>
-        <source>Profiles: %1 profile(s)</source>
-        <translation>Профили: %1</translation></message>
-    <message>
-        <source>Profiles: none</source>
-        <translation>Профили: нет</translation></message>
-    <message>
-        <source>Runtime: Experimental TUN via sing-box</source>
-        <translation>Режим: экспериментальный TUN через sing-box</translation></message>
-    <message>
-        <source>Runtime: System proxy via Xray</source>
-        <translation>Режим: системный прокси через Xray</translation></message>
-    <message>
-        <source>%1
-%2
-Routing: selected
-DNS: selected
-%3</source>
-        <translation>%1
-%2
-Маршрутизация: выбрана
-DNS: выбран
-%3</translation></message>
 </context>
 <context>
     <name>LanguageManager</name>
@@ -1090,16 +1485,20 @@ DNS: выбран
         <translation>Профили</translation></message>
     <message>
         <source>Log filter</source>
-        <translation>Фильтр журнала</translation></message>
+        <translation>Фильтр журнала</translation>
+    </message>
     <message>
         <source>Application log</source>
-        <translation>Журнал приложения</translation></message>
+        <translation>Журнал приложения</translation>
+    </message>
     <message>
         <source>Profile filter</source>
-        <translation>Фильтр профилей</translation></message>
+        <translation>Фильтр профилей</translation>
+    </message>
     <message>
         <source>More…</source>
-        <translation>Ещё…</translation></message>
+        <translation>Ещё…</translation>
+    </message>
     <message>
         <source>Continue</source>
         <translation>Продолжить</translation></message>
@@ -1108,10 +1507,11 @@ DNS: выбран
         <translation>Удалить</translation></message>
     <message>
         <source>Open</source>
-        <translation>Открыть</translation></message>
+        <translation>Открыть</translation>
+    </message>
     <message>
         <source>Import</source>
-        <translation>Импортировать</translation></message>
+        <translation>Импорт</translation></message>
     <message>
         <source>Ready</source>
         <translation>Готово</translation></message>
@@ -1233,14 +1633,8 @@ DNS: выбран
         <source>Create &amp;Diagnostics Bundle…</source>
         <translation>Создать &amp;пакет диагностики…</translation></message>
     <message>
-        <source>Desktop App UI &amp;spike…</source>
-        <translation>Desktop App UI &amp;spike…</translation></message>
-    <message>
         <source>&amp;About</source>
         <translation>&amp;О программе</translation></message>
-    <message>
-        <source>Main</source>
-        <translation>Главная</translation></message>
     <message>
         <source>Kill switch recovery</source>
         <translation>Восстановление kill switch</translation></message>
@@ -1421,79 +1815,174 @@ Open import dialog anyway?</source>
         <source>About Zarya</source>
         <translation>О Zarya</translation></message>
     <message>
-        <source>Zarya 0.7
-
-Native proxy profile manager with system tray, Xray multi-protocol support, Windows system proxy, subscriptions, and node testing.</source>
-        <translation>Zarya 0.7
-
-Нативный менеджер прокси-профилей с системным треем, поддержкой мультипротокольного Xray, системным прокси Windows, подписками и тестированием узлов.</translation></message>
-    <message>
         <source>%1
 
 Step %2 of %3</source>
         <translation>%1
 
-Шаг %2 из %3</translation></message>
-    <message><source>Start</source><translation>Запустить</translation></message>
-    <message><source>Cancel</source><translation>Отмена</translation></message>
-    <message><source>Running</source><translation>Работает</translation></message>
-    <message><source>Stopped</source><translation>Остановлено</translation></message>
-    <message><source>Unsupported</source><translation>Не поддерживается</translation></message>
-    <message><source>Off</source><translation>Выкл.</translation></message>
-    <message><source>On</source><translation>Вкл.</translation></message>
-    <message><source>On via %1</source><translation>Вкл. через %1</translation></message>
-    <message><source>Failed</source><translation>Ошибка</translation></message>
-    <message><source>Needs recovery</source><translation>Требуется восстановление</translation></message>
-    <message><source>Enabling</source><translation>Включение</translation></message>
-    <message><source>Disabling</source><translation>Отключение</translation></message>
-    <message><source>Available</source><translation>Доступен</translation></message>
-    <message><source>Unavailable</source><translation>Недоступен</translation></message>
-    <message><source>Testing: %1/%2 | Core: %3 | Runtime: %4 | Kill switch: %5 | System proxy: %6 | Routing: %7 | DNS: %8</source><translation>Тестирование: %1/%2 | Ядро: %3 | Режим: %4 | Kill switch: %5 | Системный прокси: %6 | Маршрутизация: %7 | DNS: %8</translation></message>
-    <message><source>Idle | Core: %1 | Runtime: %2 | Kill switch: %3 | System proxy: %4 | Routing: %5 | DNS: %6 | Tray: %7</source><translation>Ожидание | Ядро: %1 | Режим: %2 | Kill switch: %3 | Системный прокси: %4 | Маршрутизация: %5 | DNS: %6 | Трей: %7</translation></message>
-    <message><source> | Proxy 127.0.0.1:%1</source><translation> | Прокси 127.0.0.1:%1</translation></message>
-    <message><source>&amp;Known Limitations</source><translation>&amp;Известные ограничения</translation></message>
-    <message><source>&amp;Quick Start</source><translation>&amp;Краткое руководство</translation></message>
-    <message><source>&amp;Report Issue…</source><translation>&amp;Сообщить о проблеме…</translation></message>
-    <message><source>A proxy core is currently running. Import is disabled until the core is stopped.
+Шаг %2 из %3</translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation>Запуск</translation></message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation></message>
+    <message>
+        <source>Running</source>
+        <translation>Работает</translation></message>
+    <message>
+        <source>Stopped</source>
+        <translation>Остановлен</translation></message>
+    <message>
+        <source>Unsupported</source>
+        <translation>Не поддерживается</translation>
+    </message>
+    <message>
+        <source>Off</source>
+        <translation>Выкл.</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>Вкл.</translation>
+    </message>
+    <message>
+        <source>On via %1</source>
+        <translation>Вкл. через %1</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>Ошибка</translation>
+    </message>
+    <message>
+        <source>Needs recovery</source>
+        <translation>Требуется восстановление</translation>
+    </message>
+    <message>
+        <source>Enabling</source>
+        <translation>Включение</translation>
+    </message>
+    <message>
+        <source>Disabling</source>
+        <translation>Отключение</translation>
+    </message>
+    <message>
+        <source>Available</source>
+        <translation>Доступен</translation>
+    </message>
+    <message>
+        <source>Unavailable</source>
+        <translation>Недоступно</translation></message>
+    <message>
+        <source>Testing: %1/%2 | Core: %3 | Runtime: %4 | Kill switch: %5 | System proxy: %6 | Routing: %7 | DNS: %8</source>
+        <translation>Тестирование: %1/%2 | Ядро: %3 | Режим: %4 | Kill switch: %5 | Системный прокси: %6 | Маршрутизация: %7 | DNS: %8</translation>
+    </message>
+    <message>
+        <source>Idle | Core: %1 | Runtime: %2 | Kill switch: %3 | System proxy: %4 | Routing: %5 | DNS: %6 | Tray: %7</source>
+        <translation>Ожидание | Ядро: %1 | Режим: %2 | Kill switch: %3 | Системный прокси: %4 | Маршрутизация: %5 | DNS: %6 | Трей: %7</translation>
+    </message>
+    <message>
+        <source> | Proxy 127.0.0.1:%1</source>
+        <translation> | Прокси 127.0.0.1:%1</translation>
+    </message>
+    <message>
+        <source>&amp;Known Limitations</source>
+        <translation>&amp;Известные ограничения</translation>
+    </message>
+    <message>
+        <source>&amp;Quick Start</source>
+        <translation>&amp;Краткое руководство</translation>
+    </message>
+    <message>
+        <source>&amp;Report Issue…</source>
+        <translation>&amp;Сообщить о проблеме…</translation>
+    </message>
+    <message>
+        <source>A proxy core is currently running. Import is disabled until the core is stopped.
 
-Open import dialog anyway?</source><translation>Ядро прокси сейчас работает. Импорт отключён до остановки ядра.
+Open import dialog anyway?</source>
+        <translation>Ядро прокси сейчас работает. Импорт отключён до остановки ядра.
 
-Всё равно открыть окно импорта?</translation></message>
-    <message><source>Check for App &amp;Updates…</source><translation>Проверить &amp;обновления приложения…</translation></message>
-    <message><source>Copy &amp;Support Summary</source><translation>Копировать &amp;сводку поддержки</translation></message>
-    <message><source>Could not copy support summary to the clipboard.</source><translation>Не удалось скопировать сводку поддержки в буфер обмена.</translation></message>
-    <message><source>Experimental TUN mode is disabled in stable builds by default.
+Всё равно открыть окно импорта?</translation>
+    </message>
+    <message>
+        <source>Check for App &amp;Updates…</source>
+        <translation>Проверить &amp;обновления приложения…</translation>
+    </message>
+    <message>
+        <source>Copy &amp;Support Summary</source>
+        <translation>Копировать &amp;сводку поддержки</translation>
+    </message>
+    <message>
+        <source>Could not copy support summary to the clipboard.</source>
+        <translation>Не удалось скопировать сводку поддержки в буфер обмена.</translation>
+    </message>
+    <message>
+        <source>Experimental TUN mode is disabled in stable builds by default.
 Effective runtime: Xray system proxy.
 
-Enable experimental features in Settings → Release channel if you intend to use TUN.</source><translation>Экспериментальный режим TUN по умолчанию отключён в стабильных сборках.
+Enable experimental features in Settings → Release channel if you intend to use TUN.</source>
+        <translation>Экспериментальный режим TUN по умолчанию отключён в стабильных сборках.
 Фактический режим: системный прокси Xray.
 
-Если вы хотите использовать TUN, включите экспериментальные функции в «Настройки → Канал выпуска».</translation></message>
-    <message><source>Experimental runtime disabled</source><translation>Экспериментальный режим отключён</translation></message>
-    <message><source>Experimental runtime is disabled.
+Если вы хотите использовать TUN, включите экспериментальные функции в «Настройки → Канал выпуска».</translation>
+    </message>
+    <message>
+        <source>Experimental runtime disabled</source>
+        <translation>Экспериментальный режим отключён</translation>
+    </message>
+    <message>
+        <source>Experimental runtime is disabled.
 Effective runtime: Xray system proxy.
 
-Enable experimental features in Settings → Release channel if you intend to use TUN.</source><translation>Экспериментальный режим отключён.
+Enable experimental features in Settings → Release channel if you intend to use TUN.</source>
+        <translation>Экспериментальный режим отключён.
 Фактический режим: системный прокси Xray.
 
-Если вы хотите использовать TUN, включите экспериментальные функции в «Настройки → Канал выпуска».</translation></message>
-    <message><source>Have a portable Zarya folder with profiles or subscriptions?
+Если вы хотите использовать TUN, включите экспериментальные функции в «Настройки → Канал выпуска».</translation>
+    </message>
+    <message>
+        <source>Have a portable Zarya folder with profiles or subscriptions?
 
 You can import data from a portable Zarya folder without modifying the original folder.
 
-Import now?</source><translation>Есть переносимая папка Zarya с профилями или подписками?
+Import now?</source>
+        <translation>Есть переносимая папка Zarya с профилями или подписками?
 
 Можно импортировать данные из неё, не изменяя исходную папку.
 
-Импортировать сейчас?</translation></message>
-    <message><source>Help</source><translation>Справка</translation></message>
-    <message><source>Import from Portable Zarya &amp;Folder…</source><translation>Импортировать из &amp;переносимой папки Zarya…</translation></message>
-    <message><source>Import from Portable Zarya Folder</source><translation>Импорт из переносимой папки Zarya</translation></message>
-    <message><source>Issue reporting instructions are not bundled with this build.</source><translation>Инструкции по отправке отчёта о проблеме не включены в эту сборку.</translation></message>
-    <message><source>Known limitations doc is not bundled with this build.</source><translation>Документ с известными ограничениями не включён в эту сборку.</translation></message>
-    <message><source>Portable Import</source><translation>Переносимый импорт</translation></message>
-    <message><source>Portable Zarya data</source><translation>Переносимые данные Zarya</translation></message>
-    <message><source>Portable Zarya data found:
+Импортировать сейчас?</translation>
+    </message>
+    <message>
+        <source>Help</source>
+        <translation>Справка</translation>
+    </message>
+    <message>
+        <source>Import from Portable Zarya &amp;Folder…</source>
+        <translation>Импортировать из &amp;переносимой папки Zarya…</translation>
+    </message>
+    <message>
+        <source>Import from Portable Zarya Folder</source>
+        <translation>Импорт из переносимой папки Zarya</translation>
+    </message>
+    <message>
+        <source>Issue reporting instructions are not bundled with this build.</source>
+        <translation>Инструкции по отправке отчёта о проблеме не включены в эту сборку.</translation>
+    </message>
+    <message>
+        <source>Known limitations doc is not bundled with this build.</source>
+        <translation>Документ с известными ограничениями не включён в эту сборку.</translation>
+    </message>
+    <message>
+        <source>Portable Import</source>
+        <translation>Переносимый импорт</translation>
+    </message>
+    <message>
+        <source>Portable Zarya data</source>
+        <translation>Переносимые данные Zarya</translation>
+    </message>
+    <message>
+        <source>Portable Zarya data found:
 
 Profiles: %1
 Subscriptions: %2
@@ -1504,7 +1993,8 @@ Settings: %5
 A temporary backup archive will be created and opened in the import flow.
 The original portable folder will not be modified.
 
-Continue?</source><translation>Найдены переносимые данные Zarya:
+Continue?</source>
+        <translation>Найдены переносимые данные Zarya:
 
 Профили: %1
 Подписки: %2
@@ -1515,26 +2005,53 @@ DNS: %4
 Будет создан временный архив резервной копии и открыт в процессе импорта.
 Исходная переносимая папка не будет изменена.
 
-Продолжить?</translation></message>
-    <message><source>Public Beta &amp;Guide</source><translation>&amp;Руководство по публичной бета-версии</translation></message>
-    <message><source>Public beta guide is not bundled with this build.</source><translation>Руководство по публичной бета-версии не включено в эту сборку.</translation></message>
-    <message><source>Quick start guide is not bundled with this build.</source><translation>Краткое руководство не включено в эту сборку.</translation></message>
-    <message><source>Select Xray executable</source><translation>Выберите исполняемый файл Xray</translation></message>
-    <message><source>Select sing-box executable</source><translation>Выберите исполняемый файл sing-box</translation></message>
-    <message><source>Support Summary</source><translation>Сводка поддержки</translation></message>
-    <message><source>Support summary copied to the clipboard.
+Продолжить?</translation>
+    </message>
+    <message>
+        <source>Public Beta &amp;Guide</source>
+        <translation>&amp;Руководство по публичной бета-версии</translation>
+    </message>
+    <message>
+        <source>Public beta guide is not bundled with this build.</source>
+        <translation>Руководство по публичной бета-версии не включено в эту сборку.</translation>
+    </message>
+    <message>
+        <source>Quick start guide is not bundled with this build.</source>
+        <translation>Краткое руководство не включено в эту сборку.</translation>
+    </message>
+    <message>
+        <source>Select sing-box executable</source>
+        <translation>Выбрать исполняемый файл sing-box</translation></message>
+    <message>
+        <source>Support Summary</source>
+        <translation>Сводка поддержки</translation>
+    </message>
+    <message>
+        <source>Support summary copied to the clipboard.
 
-Review it before pasting into an issue. Do not include proxy links or passwords.</source><translation>Сводка поддержки скопирована в буфер обмена.
+Review it before pasting into an issue. Do not include proxy links or passwords.</source>
+        <translation>Сводка поддержки скопирована в буфер обмена.
 
-Проверьте её перед добавлением в отчёт. Не включайте ссылки прокси или пароли.</translation></message>
-    <message><source>The selected folder does not look like a portable Zarya install.
+Проверьте её перед добавлением в отчёт. Не включайте ссылки прокси или пароли.</translation>
+    </message>
+    <message>
+        <source>The selected folder does not look like a portable Zarya install.
 
-Expected portable.flag or a data/ folder with profiles, subscriptions, or settings.</source><translation>Выбранная папка не похожа на переносимую установку Zarya.
+Expected portable.flag or a data/ folder with profiles, subscriptions, or settings.</source>
+        <translation>Выбранная папка не похожа на переносимую установку Zarya.
 
-Ожидался файл portable.flag или папка data/ с профилями, подписками или настройками.</translation></message>
-    <message><source>Xray system proxy</source><translation>Системный прокси Xray</translation></message>
-    <message><source>no</source><translation>нет</translation></message>
-    <message><source>yes</source><translation>да</translation></message>
+Ожидался файл portable.flag или папка data/ с профилями, подписками или настройками.</translation>
+    </message>
+    <message>
+        <source>Xray system proxy</source>
+        <translation>Системный прокси Xray</translation>
+    </message>
+    <message>
+        <source>no</source>
+        <translation>нет</translation></message>
+    <message>
+        <source>yes</source>
+        <translation>да</translation></message>
 </context>
 <context>
     <name>ProfileDialog</name>
@@ -1647,14 +2164,33 @@ Expected portable.flag or a data/ folder with profiles, subscriptions, or settin
         <source>Advanced</source>
         <translation>Дополнительно</translation></message>
     <message>
-        <source>Validation</source>
-        <translation>Проверка</translation></message>
-    <message>
         <source>Save</source>
-        <translation>Сохранить</translation></message>
+        <translation>Сохранить</translation>
+    </message>
     <message>
         <source>Cancel</source>
         <translation>Отмена</translation></message>
+</context>
+<context>
+    <name>ProfileImportWidget</name>
+    <message>
+        <source>Share links</source>
+        <translation>Ссылки для импорта</translation>
+    </message>
+    <message>
+        <source>Paste vless://, vmess://, trojan://, ss://, hysteria2://, or wireguard:// links here.
+One link per line.</source>
+        <translation>Вставьте сюда ссылки vless://, vmess://, trojan://, ss://, hysteria2:// или wireguard://.
+Одна ссылка на строку.</translation>
+    </message>
+    <message>
+        <source>Paste links to see parse summary.</source>
+        <translation>Вставьте ссылки, чтобы увидеть сводку разбора.</translation>
+    </message>
+    <message>
+        <source>Parsed: VLESS %1, VMess %2, Trojan %3, Shadowsocks %4, Hysteria2 %5, WireGuard %6, Unsupported %7</source>
+        <translation>Разобрано: VLESS %1, VMess %2, Trojan %3, Shadowsocks %4, Hysteria2 %5, WireGuard %6, неподдерживаемых %7</translation>
+    </message>
 </context>
 <context>
     <name>ProfileTableModel</name>
@@ -1711,25 +2247,45 @@ Expected portable.flag or a data/ folder with profiles, subscriptions, or settin
         <translation>Включено</translation></message>
 </context>
 <context>
+    <name>QObject</name>
+    <message>
+        <source>A previous update attempt was not completed. The pending update plan for %1 is stale.</source>
+        <translation>Предыдущая попытка обновления не завершена. Ожидающий план обновления до %1 устарел.</translation>
+    </message>
+    <message>
+        <source>App Update</source>
+        <translation>Обновление приложения</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>ОК</translation>
+    </message>
+    <message>
+        <source>Open Update Folder</source>
+        <translation>Открыть папку обновления</translation>
+    </message>
+    <message>
+        <source>Show Log</source>
+        <translation>Показать журнал</translation>
+    </message>
+    <message>
+        <source>The app update failed and was rolled back.</source>
+        <translation>Обновление приложения завершилось ошибкой и было отменено.</translation>
+    </message>
+    <message>
+        <source>Zarya was updated successfully.</source>
+        <translation>Zarya успешно обновлена.</translation>
+    </message>
+    <message>
+        <source>Zarya was updated to %1.</source>
+        <translation>Zarya обновлена до версии %1.</translation>
+    </message>
+</context>
+<context>
     <name>ReadinessDialog</name>
     <message>
         <source>Zarya Setup</source>
         <translation>Настройка Zarya</translation></message>
-    <message>
-        <source>Zarya is not fully configured yet.
-
-Recommended next steps:
-1. Confirm Xray (bundled in release builds, or install via Core Manager)
-2. Import or add a profile
-3. Choose routing profile
-4. Start profile</source>
-        <translation>Zarya ещё не полностью настроена.
-
-Рекомендуемые следующие шаги:
-1. Проверьте Xray (в релизах уже включён, либо установите через менеджер ядер)
-2. Импортируйте или добавьте профиль
-3. Выберите профиль маршрутизации
-4. Запустите профиль</translation></message>
     <message>
         <source>Open Core Manager</source>
         <translation>Открыть менеджер ядер</translation></message>
@@ -1739,6 +2295,36 @@ Recommended next steps:
     <message>
         <source>Open Settings</source>
         <translation>Открыть настройки</translation></message>
+    <message>
+        <source>Close</source>
+        <translation>Закрыть</translation></message>
+    <message>
+        <source>Zarya is not fully configured yet.
+
+Recommended next steps:
+1. Confirm the built-in Xray core is available
+2. Import or add a profile
+3. Choose routing profile
+4. Start profile</source>
+        <translation>Zarya ещё не полностью настроена.
+
+Рекомендуемые следующие шаги:
+1. Убедитесь, что встроенное ядро Xray доступно
+2. Импортируйте или добавьте профиль
+3. Выберите профиль маршрутизации
+4. Запустите профиль</translation>
+    </message>
+</context>
+<context>
+    <name>RoutingJsonPreviewDialog</name>
+    <message>
+        <source>Generated routing JSON</source>
+        <translation>Сформированный JSON маршрутизации</translation>
+    </message>
+    <message>
+        <source>Xray Routing JSON Preview</source>
+        <translation>Предпросмотр JSON маршрутизации Xray</translation>
+    </message>
     <message>
         <source>Close</source>
         <translation>Закрыть</translation></message>
@@ -1819,7 +2405,8 @@ Recommended next steps:
         <translation>Удалить профиль маршрутизации «%1»?</translation></message>
     <message>
         <source>No routing profiles are available. Create one to get started.</source>
-        <translation>Нет доступных профилей маршрутизации. Создайте профиль, чтобы начать.</translation></message>
+        <translation>Нет доступных профилей маршрутизации. Создайте профиль, чтобы начать.</translation>
+    </message>
     <message>
         <source>Routing profile changed: %1</source>
         <translation>Профиль маршрутизации изменён: %1</translation></message>
@@ -1887,9 +2474,6 @@ Recommended next steps:
         <source>Domain strategy</source>
         <translation>Стратегия доменов</translation></message>
     <message>
-        <source>Profile</source>
-        <translation>Профиль</translation></message>
-    <message>
         <source>Name is required.</source>
         <translation>Имя обязательно.</translation></message>
     <message>
@@ -1909,10 +2493,12 @@ Recommended next steps:
         <translation>Предупреждений проверки нет.</translation></message>
     <message>
         <source>No routing rules yet. Add a rule to build a custom route.</source>
-        <translation>Правил маршрутизации пока нет. Добавьте правило для создания пользовательского маршрута.</translation></message>
+        <translation>Правил маршрутизации пока нет. Добавьте правило для создания пользовательского маршрута.</translation>
+    </message>
     <message>
         <source>Save</source>
-        <translation>Сохранить</translation></message>
+        <translation>Сохранить</translation>
+    </message>
     <message>
         <source>Cancel</source>
         <translation>Отмена</translation></message>
@@ -1948,29 +2534,15 @@ domain:example.com</translation></message>
         <source>Note</source>
         <translation>Примечание</translation></message>
     <message>
-        <source>Rule</source>
-        <translation>Правило</translation></message>
-    <message>
         <source>At least one value is required.</source>
         <translation>Требуется хотя бы одно значение.</translation></message>
     <message>
         <source>OK</source>
-        <translation>ОК</translation></message>
+        <translation>ОК</translation>
+    </message>
     <message>
         <source>Cancel</source>
         <translation>Отмена</translation></message>
-    <message>
-        <source>Close</source>
-        <translation>Закрыть</translation></message>
-</context>
-<context>
-    <name>RoutingJsonPreviewDialog</name>
-    <message>
-        <source>Generated routing JSON</source>
-        <translation>Сформированный JSON маршрутизации</translation></message>
-    <message>
-        <source>Xray Routing JSON Preview</source>
-        <translation>Предпросмотр JSON маршрутизации Xray</translation></message>
     <message>
         <source>Close</source>
         <translation>Закрыть</translation></message>
@@ -1982,10 +2554,12 @@ domain:example.com</translation></message>
         <translation>Наборы правил sing-box</translation></message>
     <message>
         <source>Required rule sets</source>
-        <translation>Требуемые наборы правил</translation></message>
+        <translation>Требуемые наборы правил</translation>
+    </message>
     <message>
         <source>Rule set log</source>
-        <translation>Журнал наборов правил</translation></message>
+        <translation>Журнал наборов правил</translation>
+    </message>
     <message>
         <source>Target directory: %1</source>
         <translation>Целевой каталог: %1</translation></message>
@@ -2036,10 +2610,12 @@ domain:example.com</translation></message>
         <translation>Все наборы правил</translation></message>
     <message>
         <source>No rule sets are required by the active TUN configuration.</source>
-        <translation>Активной конфигурации TUN не требуются наборы правил.</translation></message>
+        <translation>Активной конфигурации TUN не требуются наборы правил.</translation>
+    </message>
     <message>
         <source>No rule sets are available.</source>
-        <translation>Нет доступных наборов правил.</translation></message>
+        <translation>Нет доступных наборов правил.</translation>
+    </message>
     <message>
         <source>present</source>
         <translation>присутствует</translation></message>
@@ -2104,7 +2680,9 @@ What should happen?</source>
     <message>
         <source>Exit Safely</source>
         <translation>Безопасный выход</translation></message>
-    <message><source>Cancel</source><translation>Отмена</translation></message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation></message>
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -2178,9 +2756,6 @@ What should happen?</source>
         <source>Enable system proxy after auto-starting profile</source>
         <translation>Включать системный прокси после автозапуска профиля</translation></message>
     <message>
-        <source>Xray executable</source>
-        <translation>Исполняемый файл Xray</translation></message>
-    <message>
         <source>Local proxy port</source>
         <translation>Локальный порт прокси</translation></message>
     <message>
@@ -2218,13 +2793,16 @@ What should happen?</source>
         <translation>URL теста</translation></message>
     <message>
         <source>Test URL preset</source>
-        <translation>Предустановка URL теста</translation></message>
+        <translation>Предустановка URL теста</translation>
+    </message>
     <message>
         <source>TCP timeout (ms)</source>
-        <translation>Таймаут TCP (мс)</translation></message>
+        <translation>Таймаут TCP (мс)</translation>
+    </message>
     <message>
         <source>Real delay timeout (ms)</source>
-        <translation>Таймаут реальной задержки (мс)</translation></message>
+        <translation>Таймаут реальной задержки (мс)</translation>
+    </message>
     <message>
         <source>Max concurrent tests</source>
         <translation>Макс. параллельных тестов</translation></message>
@@ -2257,7 +2835,8 @@ What should happen?</source>
         <translation>Бэкенд автозапуска</translation></message>
     <message>
         <source>Auto-start delay (seconds)</source>
-        <translation>Задержка автозапуска (секунды)</translation></message>
+        <translation>Задержка автозапуска (секунды)</translation>
+    </message>
     <message>
         <source>Autostart notes</source>
         <translation>Примечания автозапуска</translation></message>
@@ -2298,17 +2877,11 @@ What should happen?</source>
         <source>Helper unavailable</source>
         <translation>Helper недоступен</translation></message>
     <message>
-        <source>Start Helper</source>
-        <translation>Запустить Helper</translation></message>
-    <message>
         <source>Connect</source>
         <translation>Подключить</translation></message>
     <message>
         <source>Check Status</source>
         <translation>Проверить статус</translation></message>
-    <message>
-        <source>TUN mode changes system routes and may require administrator/root permissions. zarya-helper is experimental and is not installed as a privileged service in this milestone.</source>
-        <translation>Режим TUN изменяет системные маршруты и может требовать прав администратора/root. zarya-helper экспериментальный и в этой версии не устанавливается как привилегированная служба.</translation></message>
     <message>
         <source>sing-box executable</source>
         <translation>Исполняемый файл sing-box</translation></message>
@@ -2319,17 +2892,11 @@ What should happen?</source>
         <source>TUN privilege mode</source>
         <translation>Режим привилегий TUN</translation></message>
     <message>
-        <source>Helper status</source>
-        <translation>Статус helper</translation></message>
-    <message>
         <source>Require local .srs rule sets before starting TUN</source>
         <translation>Требовать локальные наборы правил .srs перед запуском TUN</translation></message>
     <message>
         <source>Manage rule sets from Tools → sing-box Rule Sets. Xray geoip.dat/geosite.dat are separate from sing-box .srs files.</source>
         <translation>Управляйте наборами правил в Инструменты → Наборы правил sing-box. Xray geoip.dat/geosite.dat отделены от файлов sing-box .srs.</translation></message>
-    <message>
-        <source>Rule sets</source>
-        <translation>Наборы правил</translation></message>
     <message>
         <source>Rule-set directory</source>
         <translation>Каталог наборов правил</translation></message>
@@ -2350,7 +2917,8 @@ What should happen?</source>
         <translation>Хранение резервных копий</translation></message>
     <message>
         <source>GitHub API timeout (seconds)</source>
-        <translation>Таймаут GitHub API (секунды)</translation></message>
+        <translation>Таймаут GitHub API (секунды)</translation>
+    </message>
     <message>
         <source>Core updates</source>
         <translation>Обновления ядер</translation></message>
@@ -2394,9 +2962,6 @@ What should happen?</source>
         <source>Test Support</source>
         <translation>Проверить поддержку</translation></message>
     <message>
-        <source>Enable Now</source>
-        <translation>Включить сейчас</translation></message>
-    <message>
         <source>Disable Now</source>
         <translation>Отключить сейчас</translation></message>
     <message>
@@ -2411,23 +2976,6 @@ What should happen?</source>
     <message>
         <source>Experimental TUN mode</source>
         <translation>Экспериментальный режим TUN</translation></message>
-    <message>
-        <source>TUN mode is experimental. It may change network routes and DNS behavior.
-
-If it fails, Zarya will attempt to stop sing-box and restore state, but this mode is not production-ready yet.
-
-Kill switch is experimental and requires zarya-helper mode.</source>
-        <translation>Режим TUN экспериментальный. Он может изменить сетевые маршруты и поведение DNS.
-
-При сбое Zarya попытается остановить sing-box и восстановить состояние, но этот режим ещё не готов к продакшену.
-
-Kill switch экспериментальный и требует режим zarya-helper.</translation></message>
-    <message>
-        <source>Enable Experimental TUN</source>
-        <translation>Включить экспериментальный TUN</translation></message>
-    <message>
-        <source>Select Xray executable</source>
-        <translation>Выбрать исполняемый файл Xray</translation></message>
     <message>
         <source>Test URL must be a valid http or https URL.</source>
         <translation>URL теста должен быть действительным http или https URL.</translation></message>
@@ -2494,91 +3042,316 @@ Select a profile and press Start, or use a running TUN session.</source>
     <message>
         <source>running=%1, pid=%2</source>
         <translation>running=%1, pid=%2</translation></message>
-    <message><source> · Connected</source><translation> · Подключено</translation></message>
-    <message><source>Allow unsigned app update download (no checksum)</source><translation>Разрешить загрузку обновления приложения без подписи (без контрольной суммы)</translation></message>
-    <message><source>Also recover/remove Zarya kill switch rules on uninstall</source><translation>Также восстановить или удалить правила kill switch Zarya при удалении</translation></message>
-    <message><source>App updates</source><translation>Обновления приложения</translation></message>
-    <message><source>App updates update Zarya itself. Core updates (below) update Xray and sing-box.</source><translation>Обновления приложения обновляют саму Zarya. Обновления ядер (ниже) обновляют Xray и sing-box.</translation></message>
-    <message><source>Beta</source><translation>Бета</translation></message>
-    <message><source>Channel</source><translation>Канал</translation></message>
-    <message><source>Check app updates on startup</source><translation>Проверять обновления приложения при запуске</translation></message>
-    <message><source>Continue</source><translation>Продолжить</translation></message>
-    <message><source>Dev</source><translation>Разработка</translation></message>
-    <message><source>Enable</source><translation>Включить</translation></message>
-    <message><source>Experimental TUN, helper, and kill switch controls are hidden. Recovery actions remain available when needed.</source><translation>Элементы управления экспериментальными TUN, helper и kill switch скрыты. Действия восстановления остаются доступными при необходимости.</translation></message>
-    <message><source>Experimental features</source><translation>Экспериментальные функции</translation></message>
-    <message><source>Experimental features are disabled. Runtime will use Xray system-proxy mode.</source><translation>Экспериментальные функции отключены. Будет использоваться системный прокси Xray.</translation></message>
-    <message><source>Experimental features are hidden in release-candidate and stable builds.
-Xray system-proxy mode is the recommended stable path.</source><translation>Экспериментальные функции скрыты в релиз-кандидатах и стабильных сборках.
-Системный прокси Xray — рекомендуемый режим.</translation></message>
-    <message><source>Experimental features disabled</source><translation>Экспериментальные функции отключены</translation></message>
-    <message><source>Experimental features may break networking and are not part of stable support.</source><translation>Экспериментальные функции могут нарушить работу сети и не входят в стабильный объём поддержки.</translation></message>
-    <message><source>Experimental kill switch</source><translation>Экспериментальный kill switch</translation></message>
-    <message><source>Helper self-test</source><translation>Самопроверка helper</translation></message>
-    <message><source>Helper service is not installed. Optional — only needed for experimental TUN/kill switch.</source><translation>Служба helper не установлена. Она нужна только для экспериментальных TUN и kill switch.</translation></message>
-    <message><source>Helper service recovery</source><translation>Восстановление службы helper</translation></message>
-    <message><source>Helper service: %1</source><translation>Служба helper: %1</translation></message>
-    <message><source>How it works</source><translation>Как это работает</translation></message>
-    <message><source>IPC connection</source><translation>IPC-подключение</translation></message>
-    <message><source>Install</source><translation>Установить</translation></message>
-    <message><source>Install helper service</source><translation>Установить службу helper</translation></message>
-    <message><source>Installing Zarya Helper service requires Administrator privileges.</source><translation>Для установки службы Zarya Helper требуются права администратора.</translation></message>
-    <message><source>Installing the helper requires administrator/root privileges.
+    <message>
+        <source> · Connected</source>
+        <translation> · Подключено</translation>
+    </message>
+    <message>
+        <source>Allow unsigned app update download (no checksum)</source>
+        <translation>Разрешить загрузку обновления приложения без подписи (без контрольной суммы)</translation>
+    </message>
+    <message>
+        <source>Also recover/remove Zarya kill switch rules on uninstall</source>
+        <translation>Также восстановить или удалить правила kill switch Zarya при удалении</translation>
+    </message>
+    <message>
+        <source>App updates</source>
+        <translation>Обновления приложения</translation>
+    </message>
+    <message>
+        <source>Beta</source>
+        <translation>Бета</translation>
+    </message>
+    <message>
+        <source>Channel</source>
+        <translation>Канал</translation>
+    </message>
+    <message>
+        <source>Check app updates on startup</source>
+        <translation>Проверять обновления приложения при запуске</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>Продолжить</translation></message>
+    <message>
+        <source>Dev</source>
+        <translation>Разработка</translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation>Включить</translation>
+    </message>
+    <message>
+        <source>Experimental TUN, helper, and kill switch controls are hidden. Recovery actions remain available when needed.</source>
+        <translation>Элементы управления экспериментальными TUN, helper и kill switch скрыты. Действия восстановления остаются доступными при необходимости.</translation>
+    </message>
+    <message>
+        <source>Experimental features</source>
+        <translation>Экспериментальные функции</translation>
+    </message>
+    <message>
+        <source>Experimental features are disabled. Runtime will use Xray system-proxy mode.</source>
+        <translation>Экспериментальные функции отключены. Будет использоваться системный прокси Xray.</translation>
+    </message>
+    <message>
+        <source>Experimental features are hidden in release-candidate and stable builds.
+Xray system-proxy mode is the recommended stable path.</source>
+        <translation>Экспериментальные функции скрыты в релиз-кандидатах и стабильных сборках.
+Системный прокси Xray — рекомендуемый режим.</translation>
+    </message>
+    <message>
+        <source>Experimental features disabled</source>
+        <translation>Экспериментальные функции отключены</translation>
+    </message>
+    <message>
+        <source>Experimental features may break networking and are not part of stable support.</source>
+        <translation>Экспериментальные функции могут нарушить работу сети и не входят в стабильный объём поддержки.</translation>
+    </message>
+    <message>
+        <source>Experimental kill switch</source>
+        <translation>Экспериментальный kill switch</translation>
+    </message>
+    <message>
+        <source>Helper self-test</source>
+        <translation>Самопроверка helper</translation>
+    </message>
+    <message>
+        <source>Helper service is not installed. Optional — only needed for experimental TUN/kill switch.</source>
+        <translation>Служба helper не установлена. Она нужна только для экспериментальных TUN и kill switch.</translation>
+    </message>
+    <message>
+        <source>Helper service recovery</source>
+        <translation>Восстановление службы helper</translation>
+    </message>
+    <message>
+        <source>Helper service: %1</source>
+        <translation>Служба helper: %1</translation>
+    </message>
+    <message>
+        <source>How it works</source>
+        <translation>Как это работает</translation>
+    </message>
+    <message>
+        <source>IPC connection</source>
+        <translation>IPC-подключение</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>Установить</translation>
+    </message>
+    <message>
+        <source>Install helper service</source>
+        <translation>Установить службу helper</translation>
+    </message>
+    <message>
+        <source>Installing Zarya Helper service requires Administrator privileges.</source>
+        <translation>Для установки службы Zarya Helper требуются права администратора.</translation>
+    </message>
+    <message>
+        <source>Installing the helper requires administrator/root privileges.
 The helper can start TUN mode and manage kill switch rules.
-Only install it from a trusted Zarya build.</source><translation>Для установки helper требуются права администратора/root.
+Only install it from a trusted Zarya build.</source>
+        <translation>Для установки helper требуются права администратора/root.
 Helper может запускать режим TUN и управлять правилами kill switch.
-Устанавливайте его только из доверенной сборки Zarya.</translation></message>
-    <message><source>Kill switch is experimental and may block networking if it fails.</source><translation>Kill switch является экспериментальным и при сбое может заблокировать сеть.</translation></message>
-    <message><source>Leave empty to use Help → Check for App Updates with a local manifest</source><translation>Оставьте поле пустым, чтобы использовать «Справка → Проверить обновления приложения» с локальным манифестом</translation></message>
-    <message><source>Make sure you know the recovery procedure before enabling it.</source><translation>Перед включением убедитесь, что знаете процедуру восстановления.</translation></message>
-    <message><source>Manifest URL</source><translation>URL манифеста</translation></message>
-    <message><source>Manual helper</source><translation>Ручной helper</translation></message>
-    <message><source>Privileged helper backend</source><translation>Привилегированный backend helper</translation></message>
-    <message><source>Recommended for beta:
+Устанавливайте его только из доверенной сборки Zarya.</translation>
+    </message>
+    <message>
+        <source>Kill switch is experimental and may block networking if it fails.</source>
+        <translation>Kill switch является экспериментальным и при сбое может заблокировать сеть.</translation>
+    </message>
+    <message>
+        <source>Leave empty to use Help → Check for App Updates with a local manifest</source>
+        <translation>Оставьте поле пустым, чтобы использовать «Справка → Проверить обновления приложения» с локальным манифестом</translation>
+    </message>
+    <message>
+        <source>Make sure you know the recovery procedure before enabling it.</source>
+        <translation>Перед включением убедитесь, что знаете процедуру восстановления.</translation>
+    </message>
+    <message>
+        <source>Manifest URL</source>
+        <translation>URL манифеста</translation>
+    </message>
+    <message>
+        <source>Manual helper</source>
+        <translation>Ручной helper</translation>
+    </message>
+    <message>
+        <source>Privileged helper backend</source>
+        <translation>Привилегированный backend helper</translation>
+    </message>
+    <message>
+        <source>Recommended for beta:
 Xray system-proxy mode.
 
-Continue with experimental TUN?</source><translation>Рекомендуется для бета-версии:
+Continue with experimental TUN?</source>
+        <translation>Рекомендуется для бета-версии:
 системный прокси Xray.
 
-Продолжить с экспериментальным TUN?</translation></message>
-    <message><source>Release Candidate</source><translation>Релиз-кандидат</translation></message>
-    <message><source>Release channel</source><translation>Канал выпуска</translation></message>
-    <message><source>Restart Service</source><translation>Перезапустить службу</translation></message>
-    <message><source>Restart helper service</source><translation>Перезапустить службу helper</translation></message>
-    <message><source>Run Self-Test</source><translation>Запустить самопроверку</translation></message>
-    <message><source>Runtime mode</source><translation>Режим работы</translation></message>
-    <message><source>Service status</source><translation>Состояние службы</translation></message>
-    <message><source>Show Experimental Features…</source><translation>Показать экспериментальные функции…</translation></message>
-    <message><source>Show experimental features (TUN, helper, kill switch)</source><translation>Показывать экспериментальные функции (TUN, helper, kill switch)</translation></message>
-    <message><source>Stable</source><translation>Стабильный</translation></message>
-    <message><source>Stable scope</source><translation>Стабильный объём</translation></message>
-    <message><source>Start Manual Helper</source><translation>Запустить helper вручную</translation></message>
-    <message><source>Start Service</source><translation>Запустить службу</translation></message>
-    <message><source>Start helper service</source><translation>Запустить службу helper</translation></message>
-    <message><source>Stop Service</source><translation>Остановить службу</translation></message>
-    <message><source>Stop helper service</source><translation>Остановить службу helper</translation></message>
-    <message><source>Switch to Xray system proxy</source><translation>Переключиться на системный прокси Xray</translation></message>
-    <message><source>TUN mode is experimental and is not the recommended beta path.</source><translation>Режим TUN является экспериментальным и не рекомендуется для бета-версии.</translation></message>
-    <message><source>TUN mode requires sing-box and may require zarya-helper. System-proxy mode does not require the helper service.</source><translation>Для режима TUN требуется sing-box и может потребоваться zarya-helper. Для режима системного прокси служба helper не нужна.</translation></message>
-    <message><source>TUN, zarya-helper, and kill switch are experimental. Use Xray system-proxy mode for the recommended stable path.</source><translation>TUN, zarya-helper и kill switch являются экспериментальными. Для рекомендуемого стабильного режима используйте системный прокси Xray.</translation></message>
-    <message><source>This build is unsigned. Installing privileged helper from unsigned builds is not recommended for production use.</source><translation>Эта сборка не подписана. Установка привилегированного helper из неподписанной сборки не рекомендуется для рабочего использования.</translation></message>
-    <message><source>Uninstall</source><translation>Удалить</translation></message>
-    <message><source>Uninstall helper service</source><translation>Удалить службу helper</translation></message>
+Продолжить с экспериментальным TUN?</translation>
+    </message>
+    <message>
+        <source>Release Candidate</source>
+        <translation>Релиз-кандидат</translation>
+    </message>
+    <message>
+        <source>Release channel</source>
+        <translation>Канал выпуска</translation>
+    </message>
+    <message>
+        <source>Restart Service</source>
+        <translation>Перезапустить службу</translation>
+    </message>
+    <message>
+        <source>Restart helper service</source>
+        <translation>Перезапустить службу helper</translation>
+    </message>
+    <message>
+        <source>Run Self-Test</source>
+        <translation>Запустить самопроверку</translation>
+    </message>
+    <message>
+        <source>Runtime mode</source>
+        <translation>Режим runtime</translation></message>
+    <message>
+        <source>Service status</source>
+        <translation>Состояние службы</translation>
+    </message>
+    <message>
+        <source>Show Experimental Features…</source>
+        <translation>Показать экспериментальные функции…</translation>
+    </message>
+    <message>
+        <source>Show experimental features (TUN, helper, kill switch)</source>
+        <translation>Показывать экспериментальные функции (TUN, helper, kill switch)</translation>
+    </message>
+    <message>
+        <source>Stable</source>
+        <translation>Стабильный</translation>
+    </message>
+    <message>
+        <source>Stable scope</source>
+        <translation>Стабильный объём</translation>
+    </message>
+    <message>
+        <source>Start Manual Helper</source>
+        <translation>Запустить helper вручную</translation>
+    </message>
+    <message>
+        <source>Start Service</source>
+        <translation>Запустить службу</translation>
+    </message>
+    <message>
+        <source>Start helper service</source>
+        <translation>Запустить службу helper</translation>
+    </message>
+    <message>
+        <source>Stop Service</source>
+        <translation>Остановить службу</translation>
+    </message>
+    <message>
+        <source>Stop helper service</source>
+        <translation>Остановить службу helper</translation>
+    </message>
+    <message>
+        <source>Switch to Xray system proxy</source>
+        <translation>Переключиться на системный прокси Xray</translation></message>
+    <message>
+        <source>TUN mode is experimental and is not the recommended beta path.</source>
+        <translation>Режим TUN является экспериментальным и не рекомендуется для бета-версии.</translation>
+    </message>
+    <message>
+        <source>TUN mode requires sing-box and may require zarya-helper. System-proxy mode does not require the helper service.</source>
+        <translation>Для режима TUN требуется sing-box и может потребоваться zarya-helper. Для режима системного прокси служба helper не нужна.</translation>
+    </message>
+    <message>
+        <source>TUN, zarya-helper, and kill switch are experimental. Use Xray system-proxy mode for the recommended stable path.</source>
+        <translation>TUN, zarya-helper и kill switch являются экспериментальными. Для рекомендуемого стабильного режима используйте системный прокси Xray.</translation>
+    </message>
+    <message>
+        <source>This build is unsigned. Installing privileged helper from unsigned builds is not recommended for production use.</source>
+        <translation>Эта сборка не подписана. Установка привилегированного helper из неподписанной сборки не рекомендуется для рабочего использования.</translation>
+    </message>
+    <message>
+        <source>Uninstall</source>
+        <translation>Удалить</translation>
+    </message>
+    <message>
+        <source>Uninstall helper service</source>
+        <translation>Удалить службу helper</translation>
+    </message>
     <message>
         <source>Save</source>
-        <translation>Сохранить</translation></message>
+        <translation>Сохранить</translation>
+    </message>
     <message>
         <source>Cancel</source>
         <translation>Отмена</translation></message>
+    <message>
+        <source>App updates include Zarya and its built-in Xray. Core updates below apply to sing-box.</source>
+        <translation>Обновление приложения включает Zarya и встроенный Xray. Обновление ядра ниже относится к sing-box.</translation>
+    </message>
+</context>
+<context>
+    <name>SingBoxConfigPreviewDialog</name>
+    <message>
+        <source>sing-box TUN config preview</source>
+        <translation>Предпросмотр конфигурации sing-box TUN</translation>
+    </message>
+    <message>
+        <source>Warnings</source>
+        <translation>Предупреждения</translation></message>
+    <message>
+        <source>(none)</source>
+        <translation>(нет)</translation>
+    </message>
+    <message>
+        <source>Generated JSON</source>
+        <translation>Сформированный JSON</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Копировать</translation>
+    </message>
+    <message>
+        <source>Save As…</source>
+        <translation>Сохранить как…</translation>
+    </message>
+    <message>
+        <source>Run sing-box check</source>
+        <translation>Проверить через sing-box</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Закрыть</translation></message>
+    <message>
+        <source>Save sing-box config</source>
+        <translation>Сохранить конфигурацию sing-box</translation>
+    </message>
+    <message>
+        <source>JSON (*.json);;All files (*.*)</source>
+        <translation>JSON (*.json);;Все файлы (*.*)</translation>
+    </message>
+    <message>
+        <source>Save failed</source>
+        <translation>Ошибка сохранения</translation></message>
+    <message>
+        <source>sing-box check</source>
+        <translation>Проверка sing-box</translation>
+    </message>
+    <message>
+        <source>Core manager is not available.</source>
+        <translation>Менеджер ядер недоступен.</translation>
+    </message>
+    <message>
+        <source>sing-box check OK.</source>
+        <translation>Проверка sing-box пройдена.</translation>
+    </message>
 </context>
 <context>
     <name>StatusDashboardWidget</name>
     <message>
         <source>Zarya is not configured yet</source>
         <translation>Zarya ещё не настроена</translation></message>
-    <message>
-        <source>%1. Install Xray core</source>
-        <translation>%1. Установите ядро Xray</translation></message>
     <message>
         <source>%1. Add a profile or subscription</source>
         <translation>%1. Добавьте профиль или подписку</translation></message>
@@ -2607,26 +3380,20 @@ Continue with experimental TUN?</source><translation>Рекомендуется 
         <source>Stop</source>
         <translation>Остановка</translation></message>
     <message>
-        <source>Diagnostics</source>
-        <translation>Диагностика</translation></message>
-    <message>
-        <source>Logs</source>
-        <translation>Журналы</translation></message>
-    <message>
         <source>Test</source>
         <translation>Тест</translation></message>
     <message>
-        <source>Subscriptions</source>
-        <translation>Подписки</translation></message>
-    <message>
         <source>Runtime: Running — %1</source>
-        <translation>Runtime: работает — %1</translation></message>
+        <translation>Runtime: работает — %1</translation>
+    </message>
     <message>
         <source>Experimental runtime active</source>
-        <translation>Активен экспериментальный runtime</translation></message>
+        <translation>Активен экспериментальный runtime</translation>
+    </message>
     <message>
         <source>Recommended: %1</source>
-        <translation>Рекомендуется: %1</translation></message>
+        <translation>Рекомендуется: %1</translation>
+    </message>
     <message>
         <source>Running</source>
         <translation>Работает</translation></message>
@@ -2647,7 +3414,8 @@ Routing: %4</source>
         <translation>Создать диагностику</translation></message>
     <message>
         <source>Runtime: Stopped — %1</source>
-        <translation>Runtime: остановлен — %1</translation></message>
+        <translation>Runtime: остановлен — %1</translation>
+    </message>
     <message>
         <source>Stopped</source>
         <translation>Остановлен</translation></message>
@@ -2665,65 +3433,9 @@ DNS: %3
     <message>
         <source>Start</source>
         <translation>Запуск</translation></message>
-</context>
-<context>
-    <name>SingBoxConfigPreviewDialog</name>
     <message>
-        <source>sing-box TUN config preview</source>
-        <translation>Предпросмотр конфигурации sing-box TUN</translation>
-    </message>
-    <message>
-        <source>Warnings</source>
-        <translation>Предупреждения</translation>
-    </message>
-    <message>
-        <source>(none)</source>
-        <translation>(нет)</translation>
-    </message>
-    <message>
-        <source>Generated JSON</source>
-        <translation>Сформированный JSON</translation>
-    </message>
-    <message>
-        <source>Copy</source>
-        <translation>Копировать</translation>
-    </message>
-    <message>
-        <source>Save As…</source>
-        <translation>Сохранить как…</translation>
-    </message>
-    <message>
-        <source>Run sing-box check</source>
-        <translation>Проверить через sing-box</translation>
-    </message>
-    <message>
-        <source>Close</source>
-        <translation>Закрыть</translation>
-    </message>
-    <message>
-        <source>Save sing-box config</source>
-        <translation>Сохранить конфигурацию sing-box</translation>
-    </message>
-    <message>
-        <source>JSON (*.json);;All files (*.*)</source>
-        <translation>JSON (*.json);;Все файлы (*.*)</translation>
-    </message>
-    <message>
-        <source>Save failed</source>
-        <translation>Ошибка сохранения</translation>
-    </message>
-    <message>
-        <source>sing-box check</source>
-        <translation>Проверка sing-box</translation>
-    </message>
-    <message>
-        <source>Core manager is not available.</source>
-        <translation>Менеджер ядер недоступен.</translation>
-    </message>
-    <message>
-        <source>sing-box check OK.</source>
-        <translation>Проверка sing-box пройдена.</translation>
-    </message>
+        <source>%1. Repair or reinstall Zarya (embedded Xray is unavailable)</source>
+        <translation>%1. Восстановите или переустановите Zarya (встроенный Xray недоступен)</translation></message>
 </context>
 <context>
     <name>SubscriptionDialog</name>
@@ -2747,7 +3459,8 @@ DNS: %3
         <translation>Заметки</translation></message>
     <message>
         <source>OK</source>
-        <translation>ОК</translation></message>
+        <translation>ОК</translation>
+    </message>
     <message>
         <source>Cancel</source>
         <translation>Отмена</translation></message>
@@ -2796,7 +3509,8 @@ DNS: %3
 Choose whether to delete its imported profiles or keep them as manual profiles.</source>
         <translation>Удалить подписку «%1»?
 
-Выберите, удалить импортированные из неё профили или сохранить их как ручные.</translation></message>
+Выберите, удалить импортированные из неё профили или сохранить их как ручные.</translation>
+    </message>
     <message>
         <source>Save failed</source>
         <translation>Ошибка сохранения</translation></message>
@@ -2811,22 +3525,27 @@ Choose whether to delete its imported profiles or keep them as manual profiles.<
         <translation>Обновить все</translation></message>
     <message>
         <source>No subscriptions yet. Add one to import and update profiles.</source>
-        <translation>Подписок пока нет. Добавьте подписку, чтобы импортировать и обновлять профили.</translation></message>
+        <translation>Подписок пока нет. Добавьте подписку, чтобы импортировать и обновлять профили.</translation>
+    </message>
     <message>
         <source>Delete with profiles</source>
-        <translation>Удалить с профилями</translation></message>
+        <translation>Удалить с профилями</translation>
+    </message>
     <message>
         <source>Keep profiles</source>
-        <translation>Сохранить профили</translation></message>
+        <translation>Сохранить профили</translation>
+    </message>
     <message>
         <source>Cancel</source>
         <translation>Отмена</translation></message>
     <message>
         <source>Updating subscription…</source>
-        <translation>Обновление подписки…</translation></message>
+        <translation>Обновление подписки…</translation>
+    </message>
     <message>
         <source>Updating all subscriptions…</source>
-        <translation>Обновление всех подписок…</translation></message>
+        <translation>Обновление всех подписок…</translation>
+    </message>
 </context>
 <context>
     <name>SubscriptionTableModel</name>
@@ -2903,32 +3622,30 @@ Choose whether to delete its imported profiles or keep them as manual profiles.<
     </message>
     <message>
         <source>Error</source>
-        <translation>Ошибка</translation>
-    </message>
+        <translation>Ошибка</translation></message>
     <message>
         <source>Cancel</source>
-        <translation>Отмена</translation>
-    </message>
+        <translation>Отмена</translation></message>
     <message>
         <source>Continue</source>
-        <translation>Продолжить</translation>
-    </message>
+        <translation>Продолжить</translation></message>
     <message>
         <source>Close</source>
-        <translation>Закрыть</translation>
+        <translation>Закрыть</translation></message>
+</context>
+<context>
+    <name>ZaryaSplitView</name>
+    <message>
+        <source>Resize profiles and logs</source>
+        <translation>Изменить размер областей профилей и журнала</translation>
+    </message>
+    <message>
+        <source>Use Up and Down arrow keys to resize</source>
+        <translation>Используйте стрелки вверх и вниз для изменения размера</translation>
     </message>
 </context>
 <context>
     <name>ZaryaTr</name>
-    <message>
-        <source>Xray not found</source>
-        <translation>Xray не найден</translation></message>
-    <message>
-        <source>The Xray executable is missing or not configured.</source>
-        <translation>Исполняемый файл Xray отсутствует или не настроен.</translation></message>
-    <message>
-        <source>Open Core Manager and install Xray.</source>
-        <translation>Откройте менеджер ядер и установите Xray.</translation></message>
     <message>
         <source>Helper not connected</source>
         <translation>Helper не подключён</translation></message>
@@ -2983,12 +3700,6 @@ Choose whether to delete its imported profiles or keep them as manual profiles.<
     <message>
         <source>Zarya</source>
         <translation>Zarya</translation></message>
-    <message>
-        <source>Open Core Manager</source>
-        <translation>Открыть менеджер ядер</translation></message>
-    <message>
-        <source>Choose Existing Binary</source>
-        <translation>Выбрать существующий исполняемый файл</translation></message>
     <message>
         <source>Show Details</source>
         <translation>Показать подробности</translation></message>
@@ -3105,7 +3816,8 @@ Choose whether to delete its imported profiles or keep them as manual profiles.<
         <translation>Отмена</translation></message>
     <message>
         <source>OK</source>
-        <translation>ОК</translation></message>
+        <translation>ОК</translation>
+    </message>
     <message>
         <source>Kill switch</source>
         <translation>Kill switch</translation></message>
@@ -3115,27 +3827,32 @@ Choose whether to delete its imported profiles or keep them as manual profiles.<
 Direct traffic may remain blocked. Use Settings → Kill Switch → Disable Now or recovery instructions.</source>
         <translation>sing-box неожиданно завершил работу при активном kill switch.
 
-Прямой трафик может оставаться заблокированным. Откройте «Настройки → Kill Switch → Отключить сейчас» или воспользуйтесь инструкциями по восстановлению.</translation></message>
+Прямой трафик может оставаться заблокированным. Откройте «Настройки → Kill Switch → Отключить сейчас» или воспользуйтесь инструкциями по восстановлению.</translation>
+    </message>
     <message>
         <source>%1
 
 Enable kill switch without resolved proxy IPs?</source>
         <translation>%1
 
-Включить kill switch без разрешённых IP-адресов прокси?</translation></message>
+Включить kill switch без разрешённых IP-адресов прокси?</translation>
+    </message>
     <message>
         <source>Continue anyway</source>
-        <translation>Всё равно продолжить</translation></message>
+        <translation>Всё равно продолжить</translation>
+    </message>
     <message>
         <source>Zarya could not contact helper to disable kill switch. Networking may remain blocked.
 
 %1</source>
         <translation>Zarya не удалось связаться с helper, чтобы отключить kill switch. Сеть может оставаться заблокированной.
 
-%1</translation></message>
+%1</translation>
+    </message>
     <message>
         <source>Helper stop</source>
-        <translation>Остановка через helper</translation></message>
+        <translation>Остановка через helper</translation>
+    </message>
     <message>
         <source>Zarya could not contact helper to stop TUN.
 
@@ -3146,19 +3863,23 @@ Networking may remain affected.</source>
 
 %1
 
-Возможно влияние на работу сети.</translation></message>
+Возможно влияние на работу сети.</translation>
+    </message>
     <message>
         <source>Helper unavailable</source>
         <translation>Helper недоступен</translation></message>
     <message>
         <source>Zarya could not contact helper to stop TUN. Networking may remain affected.</source>
-        <translation>Zarya не удалось связаться с helper, чтобы остановить TUN. Возможно влияние на работу сети.</translation></message>
+        <translation>Zarya не удалось связаться с helper, чтобы остановить TUN. Возможно влияние на работу сети.</translation>
+    </message>
     <message>
         <source>Kill switch remains active after Stop. Network may stay restricted until you disable it in Settings.</source>
-        <translation>Kill switch остаётся активным после остановки. Сеть может быть ограничена, пока вы не отключите его в настройках.</translation></message>
+        <translation>Kill switch остаётся активным после остановки. Сеть может быть ограничена, пока вы не отключите его в настройках.</translation>
+    </message>
     <message>
         <source>TUN privileges</source>
-        <translation>Права TUN</translation></message>
+        <translation>Права TUN</translation>
+    </message>
     <message>
         <source>Experimental TUN mode may require elevated privileges.
 
@@ -3169,100 +3890,19 @@ Continue anyway?</source>
 
 %1
 
-Всё равно продолжить?</translation></message>
-</context>
-<context>
-    <name>AppController</name>
-    <message><source>Geo data missing</source><translation>Геоданные отсутствуют</translation></message>
-    <message><source>DNS profile uses geo rules but geo data files are missing (%1).
-
-Xray validation may fail.</source><translation>Профиль DNS использует геоправила, но файлы геоданных отсутствуют (%1).
-
-Проверка Xray может завершиться ошибкой.</translation></message>
-    <message><source>Open Geo Data Manager</source><translation>Открыть менеджер геоданных</translation></message>
-    <message><source>Continue</source><translation>Продолжить</translation></message>
-    <message><source>Cancel Start</source><translation>Отменить запуск</translation></message>
-    <message><source>DNS warnings</source><translation>Предупреждения DNS</translation></message>
-    <message><source>DNS profile has validation warnings:
-
-%1</source><translation>Профиль DNS содержит предупреждения проверки:
-
-%1</translation></message>
-    <message><source>Open DNS Profiles</source><translation>Открыть профили DNS</translation></message>
-    <message><source>The active routing profile uses geoip/geosite rules, but geo data files are missing (%1).
-
-Xray validation may fail.</source><translation>Активный профиль маршрутизации использует правила geoip/geosite, но файлы геоданных отсутствуют (%1).
-
-Проверка Xray может завершиться ошибкой.</translation></message>
-    <message><source>Change system proxy</source><translation>Изменение системного прокси</translation></message>
-    <message><source>Zarya will change Windows system proxy settings. Continue?</source><translation>Zarya изменит настройки системного прокси Windows. Продолжить?</translation></message>
-    <message><source>Cancel</source><translation>Отмена</translation></message>
-    <message><source>Profile running</source><translation>Профиль запущен</translation></message>
-    <message><source>A profile is already running. Stop and start the selected profile?</source><translation>Профиль уже запущен. Остановить его и запустить выбранный профиль?</translation></message>
-    <message><source>Stop and Start</source><translation>Остановить и запустить</translation></message>
-    <message><source>Missing sing-box rule sets</source><translation>Отсутствуют наборы правил sing-box</translation></message>
-    <message><source>The active TUN routing/DNS profiles require sing-box rule sets that are missing:
-
-%1</source><translation>Активным профилям маршрутизации и DNS для TUN требуются отсутствующие наборы правил sing-box:
-
-%1</translation></message>
-    <message><source>sing-box rule sets</source><translation>Наборы правил sing-box</translation></message>
-    <message><source>The active TUN routing/DNS profiles reference sing-box rule sets that are missing:
-
-%1
-
-Continue anyway? sing-box check is the final authority.</source><translation>Активные профили маршрутизации и DNS для TUN ссылаются на отсутствующие наборы правил sing-box:
-
-%1
-
-Всё равно продолжить? Окончательный результат определяется проверкой sing-box.</translation></message>
-    <message><source>Open Rule Set Manager</source><translation>Открыть менеджер наборов правил</translation></message>
-    <message><source>Cannot start TUN</source><translation>Не удалось запустить TUN</translation></message>
-    <message><source>Generated sing-box config has blocking issues:
-
-%1</source><translation>В созданной конфигурации sing-box есть блокирующие проблемы:
-
-%1</translation></message>
-    <message><source>sing-box config warnings</source><translation>Предупреждения конфигурации sing-box</translation></message>
-    <message><source>Generated sing-box config has warnings:
-
-%1
-
-Continue?</source><translation>В созданной конфигурации sing-box есть предупреждения:
-
-%1
-
-Продолжить?</translation></message>
-    <message><source>Preview Config</source><translation>Предпросмотр конфигурации</translation></message>
-    <message><source>Unsupported profile</source><translation>Неподдерживаемый профиль</translation></message>
-    <message><source>Config generation</source><translation>Создание конфигурации</translation></message>
-    <message><source>Routing warnings</source><translation>Предупреждения маршрутизации</translation></message>
-    <message><source>Routing profile has validation warnings:
-
-%1
-
-Continue?</source><translation>Профиль маршрутизации содержит предупреждения проверки:
-
-%1
-
-Продолжить?</translation></message>
-    <message><source>Config write</source><translation>Запись конфигурации</translation></message>
-    <message><source>Xray not found</source><translation>Xray не найден</translation></message>
-    <message><source>Config validation failed</source><translation>Ошибка проверки конфигурации</translation></message>
-    <message><source>System proxy</source><translation>Системный прокси</translation></message>
-    <message><source>Zarya could not restore previous system proxy settings. Retry restore or exit anyway?</source><translation>Zarya не удалось восстановить предыдущие настройки системного прокси. Повторить восстановление или всё равно выйти?</translation></message>
-    <message><source>Retry</source><translation>Повторить</translation></message>
-    <message><source>Exit Anyway</source><translation>Всё равно выйти</translation></message>
-</context>
-<context>
-    <name>QObject</name>
-    <message><source>A previous update attempt was not completed. The pending update plan for %1 is stale.</source><translation>Предыдущая попытка обновления не завершена. Ожидающий план обновления до %1 устарел.</translation></message>
-    <message><source>App Update</source><translation>Обновление приложения</translation></message>
-    <message><source>OK</source><translation>ОК</translation></message>
-    <message><source>Open Update Folder</source><translation>Открыть папку обновления</translation></message>
-    <message><source>Show Log</source><translation>Показать журнал</translation></message>
-    <message><source>The app update failed and was rolled back.</source><translation>Обновление приложения завершилось ошибкой и было отменено.</translation></message>
-    <message><source>Zarya was updated successfully.</source><translation>Zarya успешно обновлена.</translation></message>
-    <message><source>Zarya was updated to %1.</source><translation>Zarya обновлена до версии %1.</translation></message>
+Всё равно продолжить?</translation>
+    </message>
+    <message>
+        <source>Built-in Xray unavailable</source>
+        <translation>Встроенный Xray недоступен</translation>
+    </message>
+    <message>
+        <source>The embedded Xray library is missing, damaged, or incompatible.</source>
+        <translation>Встроенная библиотека Xray отсутствует, повреждена или несовместима.</translation>
+    </message>
+    <message>
+        <source>Repair or reinstall Zarya, then retry.</source>
+        <translation>Восстановите или переустановите Zarya, затем повторите попытку.</translation>
+    </message>
 </context>
 </TS>

@@ -63,6 +63,7 @@
 #include "updater/AppUpdatePlanner.h"
 #include "geodata/GeoDataFileStatus.h"
 #include "runtime/RuntimeBackendType.h"
+#include "runtime/embedded/xray/EmbeddedXrayRuntimeHost.h"
 #include "storage/GeoDataSettingsStore.h"
 #include "ui/SubscriptionManagerDialog.h"
 #include "ui/SingBoxConfigPreviewDialog.h"
@@ -181,6 +182,8 @@ MainWindow::MainWindow(QWidget* parent)
     setupConnections();
     setupTray();
     m_coreBinaryManager.setProcessCoreManager(&m_coreManager);
+    m_coreBinaryManager.setEmbeddedXrayRuntimeHost(
+        m_appController.embeddedXrayRuntimeHost());
     m_coreBinaryManager.setSingBoxRunningCallback([this]() {
         return m_appController.activeRuntimeMode() == RuntimeMode::TunSingBoxExperimental
                && m_appController.isCoreRunning();
@@ -206,7 +209,12 @@ MainWindow::MainWindow(QWidget* parent)
                   .arg(m_routingManager.activeProfile().name));
     checkGeoDataOnStartup();
     appendLog(QStringLiteral("Subscriptions: %1").arg(m_subscriptionStore.filePath()));
-    appendLog(QStringLiteral("Xray path: %1").arg(AppSettings::instance().resolvedXrayPath()));
+    if (const auto* embedded = m_appController.embeddedXrayRuntimeHost()) {
+        appendLog(QStringLiteral("Xray distribution: embedded; version=%1; ABI=%2; status=%3")
+                      .arg(embedded->version())
+                      .arg(embedded->abiVersion())
+                      .arg(embedded->loadStatus()));
+    }
     if (!m_systemProxy.isSupported()) {
         appendLog(tr("System proxy is not supported on this platform."));
     }
@@ -927,14 +935,8 @@ void MainWindow::runFirstRunWizard(bool force)
     Q_UNUSED(force);
     FirstRunWizard wizard(&m_coreBinaryManager, &m_routingManager, &m_dnsManager, this);
     connect(&wizard, &FirstRunWizard::openCoreManagerRequested, this, &MainWindow::onCoreManager);
-    connect(&wizard, &FirstRunWizard::chooseXrayBinaryRequested, this,
-            [this]() { chooseCoreBinary(CoreType::Xray); });
     connect(&wizard, &FirstRunWizard::chooseSingBoxBinaryRequested, this,
             [this]() { chooseCoreBinary(CoreType::SingBox); });
-    connect(&wizard, &FirstRunWizard::installXrayRequested, this, [this]() {
-        onCoreManager();
-        m_coreBinaryManager.updateCore(CoreType::Xray);
-    });
     connect(&wizard, &FirstRunWizard::installSingBoxRequested, this, [this]() {
         onCoreManager();
         m_coreBinaryManager.updateCore(CoreType::SingBox);
@@ -1113,7 +1115,7 @@ void MainWindow::handleErrorAction(ErrorAction action, const AppError& error)
         onCoreManager();
         break;
     case ErrorAction::ChooseExistingBinary:
-        chooseCoreBinary(CoreType::Xray);
+        onCoreManager();
         break;
     case ErrorAction::CreateDiagnostics:
         onCreateDiagnosticsBundle();
@@ -1924,8 +1926,7 @@ void MainWindow::onSettings()
     SettingsDialog dialog(m_routingManager, m_dnsManager, m_appController.helperProcessManager(),
                           m_helperServiceManager.get(), this);
     dialog.exec();
-    appendLog(QStringLiteral("Settings updated. Xray path: %1")
-                  .arg(AppSettings::instance().resolvedXrayPath()));
+    appendLog(QStringLiteral("Settings updated. Built-in Xray is managed by App Update."));
     updateStatusBar();
 }
 
@@ -2604,21 +2605,17 @@ void MainWindow::onAbout()
 
 bool MainWindow::chooseCoreBinary(CoreType coreType)
 {
-    const QString title = coreType == CoreType::SingBox ? tr("Select sing-box executable")
-                                                        : tr("Select Xray executable");
+    if (coreType == CoreType::Xray) {
+        return false;
+    }
     const QString path = QFileDialog::getOpenFileName(
-        this, title, {},
+        this, tr("Select sing-box executable"), {},
         QStringLiteral("Executables (*.exe);;All files (*.*)"));
     if (path.isEmpty()) {
         return false;
     }
 
-    AppSettings& settings = AppSettings::instance();
-    if (coreType == CoreType::SingBox) {
-        settings.setSingBoxExecutablePath(path);
-    } else {
-        settings.setXrayExecutablePath(path);
-    }
+    AppSettings::instance().setSingBoxExecutablePath(path);
     m_coreBinaryManager.refreshLocalState();
     updateStatusDashboard();
     return true;

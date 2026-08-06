@@ -181,6 +181,10 @@ set(ZARYA_RULESET_SOURCES
 
 set(ZARYA_RUNTIME_SOURCES
     src/runtime/ConfigWarning.cpp
+    src/runtime/core/ICoreRuntimeHost.cpp
+    src/runtime/core/CoreRuntimeCoordinator.cpp
+    src/runtime/core/ProcessCoreRuntimeHost.cpp
+    src/runtime/embedded/xray/EmbeddedXrayRuntimeHost.cpp
     src/runtime/IRuntimeBackend.cpp
     src/runtime/RuntimeBackendType.cpp
     src/runtime/RuntimeBackendFactory.cpp
@@ -314,7 +318,7 @@ set(ZARYA_TESTING_SOURCES
     src/testing/TestStatus.cpp
     src/testing/PortAllocator.cpp
     src/testing/TcpPingTester.cpp
-    src/testing/RealDelayTester.cpp
+    src/testing/RealDelayTesterWorker.cpp
     src/testing/TestManager.cpp
 )
 
@@ -490,6 +494,11 @@ set(ZARYA_HEADERS
     src/core/XrayConfigTestHelpers.h
     src/core/SingBoxAdapter.h
     src/core/CoreManager.h
+    src/runtime/core/CoreRuntimeTypes.h
+    src/runtime/core/ICoreRuntimeHost.h
+    src/runtime/core/CoreRuntimeCoordinator.h
+    src/runtime/core/ProcessCoreRuntimeHost.h
+    src/runtime/embedded/xray/EmbeddedXrayRuntimeHost.h
     src/storage/ProfileStore.h
     src/storage/SubscriptionStore.h
     src/storage/AppSettings.h
@@ -534,6 +543,9 @@ target_link_libraries(zarya PRIVATE ${ZARYA_DESKTOP_APP_UI_LIBS})
 
 zarya_link_qt_widgets_app(zarya)
 target_link_libraries(zarya PRIVATE Qt6::Network)
+
+include(ZaryaEmbeddedXray)
+zarya_configure_embedded_xray(zarya)
 
 if(WIN32)
     set_target_properties(zarya PROPERTIES WIN32_EXECUTABLE TRUE)
@@ -648,7 +660,51 @@ add_custom_command(TARGET zarya POST_BUILD
     COMMENT "Copy zarya-updater next to zarya"
 )
 
+set(ZARYA_CORE_TEST_WORKER_SOURCES
+    src/testing/worker/main.cpp
+    src/runtime/core/ICoreRuntimeHost.cpp
+    src/runtime/core/CoreRuntimeCoordinator.cpp
+    src/runtime/embedded/xray/EmbeddedXrayRuntimeHost.cpp
+    src/diagnostics/DiagnosticsRedactor.cpp
+    src/domain/CoreType.cpp
+    src/domain/ProtocolType.cpp
+    src/domain/ProfileSourceType.cpp
+)
+
+add_executable(zarya-core-test-worker ${ZARYA_CORE_TEST_WORKER_SOURCES})
+zarya_add_windows_version_resource(
+    zarya-core-test-worker "Zarya embedded core test worker" "zarya-core-test-worker.exe")
+target_include_directories(zarya-core-test-worker PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src ${ZARYA_GENERATED_DIR})
+zarya_link_qt_core(zarya-core-test-worker)
+target_link_libraries(zarya-core-test-worker PRIVATE Qt6::Network)
+zarya_configure_embedded_xray(zarya-core-test-worker)
+add_dependencies(zarya zarya-core-test-worker)
+
+add_custom_command(TARGET zarya POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:zarya-core-test-worker>
+        $<TARGET_FILE_DIR:zarya>/
+    COMMENT "Copy zarya-core-test-worker next to zarya"
+)
+
 enable_testing()
+
+add_executable(zarya_embedded_xray_runtime_test
+    tests/embedded_xray_runtime_test.cpp
+    src/runtime/core/ICoreRuntimeHost.cpp
+    src/runtime/core/CoreRuntimeCoordinator.cpp
+    src/runtime/embedded/xray/EmbeddedXrayRuntimeHost.cpp
+    src/diagnostics/DiagnosticsRedactor.cpp
+    src/domain/CoreType.cpp
+    src/domain/ProtocolType.cpp
+    src/domain/ProfileSourceType.cpp
+)
+target_include_directories(zarya_embedded_xray_runtime_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src ${ZARYA_GENERATED_DIR})
+zarya_link_qt_core(zarya_embedded_xray_runtime_test)
+zarya_configure_embedded_xray(zarya_embedded_xray_runtime_test)
+add_test(NAME embedded_xray_runtime COMMAND zarya_embedded_xray_runtime_test)
 
 # Config generation checks (unit-like; uses shared or static Qt Core)
 add_executable(zarya_xray_config_test
@@ -993,6 +1049,7 @@ zarya_link_qt_core(zarya_stable_hardening_test)
 add_test(NAME stable_hardening COMMAND zarya_stable_hardening_test)
 
 set(ZARYA_TEST_TARGETS
+    zarya_embedded_xray_runtime_test
     zarya_xray_config_test
     zarya_singbox_config_test
     zarya_subscription_test

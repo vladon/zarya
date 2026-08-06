@@ -120,6 +120,15 @@ def main() -> int:
             errors.append("zarya-helper executable not found")
         if updater is None:
             errors.append("zarya-updater executable not found")
+        worker_names = ("zarya-core-test-worker.exe", "zarya-core-test-worker")
+        if not any(staging.rglob(name) for name in worker_names):
+            errors.append("zarya-core-test-worker executable not found")
+        if "macos" not in artifact.name.lower():
+            bridge_names = ("zarya-xray.dll", "libzarya-xray.so")
+            if not any(staging.rglob(name) for name in bridge_names):
+                errors.append("embedded Xray bridge not found")
+        if any(staging.rglob("xray.exe")):
+            errors.append("embedded Xray package unexpectedly contains xray.exe")
 
         if gui is not None:
             ok, output = run_version_check(gui, gui=True)

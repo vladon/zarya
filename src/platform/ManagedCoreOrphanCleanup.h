@@ -10,8 +10,8 @@ struct ManagedCoreOrphanCleanupResult {
     QStringList details;
 };
 
-// Terminates leftover xray/sing-box processes that match Zarya-managed executable
-// paths (resolved settings paths). Safe to call when CoreManager is not running.
+// Terminates leftover sing-box and core-test-worker processes that match app-owned
+// paths. Embedded Xray never has a process to clean up.
 ManagedCoreOrphanCleanupResult terminateOrphanedManagedCores();
 
 // True if any process currently matches a managed core executable path.

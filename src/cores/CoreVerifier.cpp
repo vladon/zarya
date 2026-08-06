@@ -9,10 +9,13 @@ namespace zarya {
 
 QString CoreVerifier::executableFileName(CoreType type)
 {
+    if (type == CoreType::Xray) {
+        return {};
+    }
 #ifdef Q_OS_WIN
-    return type == CoreType::Xray ? QStringLiteral("xray.exe") : QStringLiteral("sing-box.exe");
+    return QStringLiteral("sing-box.exe");
 #else
-    return type == CoreType::Xray ? QStringLiteral("xray") : QStringLiteral("sing-box");
+    return QStringLiteral("sing-box");
 #endif
 }
 
@@ -36,6 +39,12 @@ QString CoreVerifier::findExecutableInTree(const QString& rootDir, CoreType type
 bool CoreVerifier::verifyStaged(const QString& executablePath, CoreType type,
                                 const QString& expectedVersion, QString* errorMessage)
 {
+    if (type == CoreType::Xray) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("Xray is embedded and cannot be verified as an executable.");
+        }
+        return false;
+    }
     if (executablePath.isEmpty() || !QFileInfo::exists(executablePath)) {
         if (errorMessage) {
             *errorMessage = QStringLiteral("Staged executable not found.");

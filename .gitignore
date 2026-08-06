@@ -26,6 +26,7 @@
 
 # Fortran module files
 *.mod
+!/src/runtime/embedded/xray/bridge/go.mod
 *.smod
 
 # Compiled Static libraries

@@ -24,7 +24,7 @@
 
 The official tag workflow submits only GitHub-hosted build artifacts to SignPath,
 requires origin verification and manual approval, then validates all three returned
-executables before publication. The SignPath private key is never available to
+executables and the embedded Xray DLL before publication. The SignPath private key is never available to
 GitHub Actions.
 
 ## Example

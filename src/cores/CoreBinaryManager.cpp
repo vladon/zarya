@@ -13,6 +13,7 @@
 #include "cores/CoreVersionDetector.h"
 #include "cores/GitHubReleaseProvider.h"
 #include "packaging/PackagingInfo.h"
+#include "runtime/embedded/xray/EmbeddedXrayRuntimeHost.h"
 #include "storage/AppSettings.h"
 
 #include <QDir>
@@ -30,7 +31,9 @@ CoreInfo makeBaseInfo(CoreType type)
     info.type = type;
     info.name = type == CoreType::Xray ? QStringLiteral("Xray") : QStringLiteral("sing-box");
     info.installDir = CorePaths::managedInstallDir(type);
-    info.executablePath = CorePaths::managedExecutablePath(type);
+    if (type == CoreType::SingBox) {
+        info.executablePath = CorePaths::managedExecutablePath(type);
+    }
     return info;
 }
 
@@ -51,6 +54,12 @@ CoreBinaryManager::CoreBinaryManager(QObject* parent)
 void CoreBinaryManager::setProcessCoreManager(CoreManager* coreManager)
 {
     m_processCoreManager = coreManager;
+}
+
+void CoreBinaryManager::setEmbeddedXrayRuntimeHost(EmbeddedXrayRuntimeHost* host)
+{
+    m_embeddedXrayRuntimeHost = host;
+    refreshLocalState();
 }
 
 void CoreBinaryManager::setSingBoxRunningCallback(const std::function<bool()>& callback)
@@ -81,12 +90,45 @@ void CoreBinaryManager::emitChanged()
 void CoreBinaryManager::refreshLocalState()
 {
     for (CoreInfo& info : m_infos) {
+        if (info.type == CoreType::Xray && m_embeddedXrayRuntimeHost) {
+            const QDateTime lastCheckedAt = info.lastCheckedAt;
+            const QDateTime lastUpdatedAt = info.lastUpdatedAt;
+            info = makeBaseInfo(CoreType::Xray);
+            info.distributionKind = CoreDistributionKind::Embedded;
+            info.capabilities = CoreRuntimeCapability::Validation;
+            info.executablePath.clear();
+            info.libraryPath = m_embeddedXrayRuntimeHost->libraryPath();
+            info.installDir = QFileInfo(m_embeddedXrayRuntimeHost->libraryPath()).absolutePath();
+            info.exists = m_embeddedXrayRuntimeHost->isAvailable();
+            info.managed = true;
+            info.running = m_embeddedXrayRuntimeHost->state() == CoreRuntimeState::Running;
+            info.installedVersion = m_embeddedXrayRuntimeHost->version();
+            info.abiVersion = m_embeddedXrayRuntimeHost->abiVersion();
+            info.loadStatus = m_embeddedXrayRuntimeHost->loadStatus();
+            info.status = info.running ? CoreInstallStatus::Running
+                                       : (info.exists ? CoreInstallStatus::Installed
+                                                      : CoreInstallStatus::Missing);
+            if (!info.exists) {
+                info.lastError = info.loadStatus;
+            }
+            info.lastCheckedAt = lastCheckedAt;
+            info.lastUpdatedAt = lastUpdatedAt;
+            continue;
+        }
+        if (info.type == CoreType::Xray) {
+            info = makeBaseInfo(CoreType::Xray);
+            info.distributionKind = CoreDistributionKind::Embedded;
+            info.capabilities = CoreRuntimeCapability::Validation;
+            info.managed = true;
+            info.status = CoreInstallStatus::Missing;
+            info.loadStatus = QStringLiteral("Embedded Xray runtime host is unavailable.");
+            info.lastError = info.loadStatus;
+            continue;
+        }
         info.executablePath = CorePaths::managedExecutablePath(info.type);
         info.installDir = QFileInfo(info.executablePath).absolutePath();
         info.exists = QFile::exists(info.executablePath);
-        const QString configuredPath = info.type == CoreType::Xray
-                                           ? AppSettings::instance().xrayExecutablePath().trimmed()
-                                           : AppSettings::instance().singBoxExecutablePath().trimmed();
+        const QString configuredPath = AppSettings::instance().singBoxExecutablePath().trimmed();
         const bool pathIsManaged = CorePaths::isManagedExecutablePath(info.executablePath, info.type);
         if (!configuredPath.isEmpty() && !pathIsManaged
             && !AppSettings::instance().allowManageExternalCorePaths()) {
@@ -132,6 +174,10 @@ void CoreBinaryManager::refreshLocalState()
 
 bool CoreBinaryManager::isCoreRunning(CoreType type) const
 {
+    if (type == CoreType::Xray) {
+        return m_embeddedXrayRuntimeHost
+               && m_embeddedXrayRuntimeHost->state() == CoreRuntimeState::Running;
+    }
     if (!m_processCoreManager || !m_processCoreManager->isRunning()) {
         if (type == CoreType::SingBox && m_singBoxRunningCallback) {
             return m_singBoxRunningCallback();
@@ -139,9 +185,6 @@ bool CoreBinaryManager::isCoreRunning(CoreType type) const
         return false;
     }
     const QString runningName = m_processCoreManager->runningCoreName();
-    if (type == CoreType::Xray) {
-        return runningName.compare(QStringLiteral("Xray"), Qt::CaseInsensitive) == 0;
-    }
     if (runningName.compare(QStringLiteral("sing-box"), Qt::CaseInsensitive) == 0) {
         return true;
     }
@@ -151,6 +194,12 @@ bool CoreBinaryManager::isCoreRunning(CoreType type) const
 bool CoreBinaryManager::canManage(CoreType type, QString* reason) const
 {
     const CoreInfo info = infoFor(type);
+    if (type == CoreType::Xray || info.distributionKind == CoreDistributionKind::Embedded) {
+        if (reason) {
+            *reason = QStringLiteral("Built-in Xray is updated together with the Zarya app.");
+        }
+        return false;
+    }
     if (isCoreRunning(type)) {
         if (reason) {
             *reason = QStringLiteral("Cannot update %1 while it is running. Stop the core first.")
@@ -172,6 +221,9 @@ bool CoreBinaryManager::canManage(CoreType type, QString* reason) const
 bool CoreBinaryManager::coreNeedsInstallOrUpdate(CoreType type) const
 {
     const CoreInfo info = infoFor(type);
+    if (info.distributionKind == CoreDistributionKind::Embedded) {
+        return false;
+    }
     if (!info.managed || info.status == CoreInstallStatus::External) {
         return false;
     }
@@ -213,46 +265,13 @@ void CoreBinaryManager::finishVersionChecks()
 
 void CoreBinaryManager::checkLatestVersions()
 {
-    m_pendingChecks = 2;
+    m_pendingChecks = 1;
     const int timeoutMs = AppSettings::instance().githubApiTimeoutSeconds() * 1000;
     const QDateTime now = QDateTime::currentDateTimeUtc();
     for (CoreInfo& info : m_infos) {
         info.lastReleaseCheckAt = now;
         info.lastReleaseCheckError.clear();
     }
-
-    auto* xrayProvider = new GitHubReleaseProvider(CoreType::Xray, QStringLiteral("XTLS/Xray-core"), this);
-    connect(xrayProvider, &CoreReleaseProvider::latestReleaseReady, this,
-            [this, xrayProvider](const CoreRelease& release) {
-                m_latestReleases.insert(CoreType::Xray, release);
-                for (CoreInfo& info : m_infos) {
-                    if (info.type == CoreType::Xray) {
-                        info.lastReleaseCheckAt = QDateTime::currentDateTimeUtc();
-                        info.lastReleaseCheckError.clear();
-                    }
-                }
-                emit logLine(QStringLiteral("Fetching latest Xray release: %1").arg(release.version));
-                --m_pendingChecks;
-                if (m_pendingChecks <= 0) {
-                    finishVersionChecks();
-                }
-                xrayProvider->deleteLater();
-            });
-    connect(xrayProvider, &CoreReleaseProvider::error, this, [this, xrayProvider](const QString& message) {
-        for (CoreInfo& info : m_infos) {
-            if (info.type == CoreType::Xray) {
-                info.lastReleaseCheckError = message;
-            }
-        }
-        emit logLine(QStringLiteral("Xray release check failed: %1").arg(message));
-        --m_pendingChecks;
-        if (m_pendingChecks <= 0) {
-            finishVersionChecks();
-        }
-        xrayProvider->deleteLater();
-    });
-    emit logLine(QStringLiteral("Checking Xray version"));
-    xrayProvider->fetchLatestRelease(timeoutMs);
 
     auto* singBoxProvider =
         new GitHubReleaseProvider(CoreType::SingBox, QStringLiteral("SagerNet/sing-box"), this);
@@ -324,7 +343,7 @@ void CoreBinaryManager::updateAll(bool allowMissingChecksum)
     refreshLocalState();
 
     QVector<CoreType> toUpdate;
-    for (const CoreType type : {CoreType::Xray, CoreType::SingBox}) {
+    for (const CoreType type : {CoreType::SingBox}) {
         const CoreInfo info = infoFor(type);
         if (!coreNeedsInstallOrUpdate(type)) {
             if (info.managed && info.exists && !info.installedVersion.isEmpty()
@@ -541,11 +560,7 @@ void CoreBinaryManager::finishInstall(CoreType type, const CoreRelease& release,
         }
     }
 
-    if (type == CoreType::Xray) {
-        AppSettings::instance().setXrayExecutablePath({});
-    } else {
-        AppSettings::instance().setSingBoxExecutablePath({});
-    }
+    AppSettings::instance().setSingBoxExecutablePath({});
 
     refreshLocalState();
     emit operationFinished(true, QStringLiteral("Core update completed."));
@@ -588,12 +603,10 @@ void CoreBinaryManager::cancelDownload()
 
 bool CoreBinaryManager::setManagedExecutablePath(CoreType type)
 {
-    const QString path = CorePaths::managedExecutablePath(type);
     if (type == CoreType::Xray) {
-        AppSettings::instance().setXrayExecutablePath(path);
-    } else {
-        AppSettings::instance().setSingBoxExecutablePath(path);
+        return false;
     }
+    AppSettings::instance().setSingBoxExecutablePath(CorePaths::managedExecutablePath(type));
     refreshLocalState();
     return true;
 }
@@ -601,10 +614,9 @@ bool CoreBinaryManager::setManagedExecutablePath(CoreType type)
 void CoreBinaryManager::resetToManagedPath(CoreType type)
 {
     if (type == CoreType::Xray) {
-        AppSettings::instance().setXrayExecutablePath({});
-    } else {
-        AppSettings::instance().setSingBoxExecutablePath({});
+        return;
     }
+    AppSettings::instance().setSingBoxExecutablePath({});
     refreshLocalState();
 }
 
