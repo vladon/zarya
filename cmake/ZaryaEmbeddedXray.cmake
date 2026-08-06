@@ -61,7 +61,7 @@ function(zarya_configure_embedded_xray target)
         # LLVM targets the MSVC CRT and rejects that MinGW-only flag, so use a
         # generated wrapper that removes only that argument before invoking the
         # Visual Studio clang executable.
-        set(_zarya_xray_cgo_wrapper "${CMAKE_CURRENT_BINARY_DIR}/zarya-cgo-clang-msvc.cmd")
+        set(_zarya_xray_cgo_wrapper "${CMAKE_CURRENT_BINARY_DIR}/${target}-cgo-clang-msvc.cmd")
         file(GENERATE OUTPUT "${_zarya_xray_cgo_wrapper}" CONTENT
             "@echo off\nsetlocal EnableExtensions\nset \"args=%*\"\nset \"args=%args:-mthreads=%\"\n\"${_zarya_xray_clang}\" %args%\n")
         list(APPEND _zarya_go_env "CC=${_zarya_xray_cgo_wrapper}")
