@@ -90,8 +90,15 @@ function(zarya_configure_embedded_xray target)
         ZARYA_EMBEDDED_XRAY_LIBRARY_NAME="${_zarya_bridge_file}")
 
     if(APPLE)
+        find_library(_zarya_corefoundation_framework CoreFoundation REQUIRED)
+        find_library(_zarya_security_framework Security REQUIRED)
+        find_library(_zarya_resolv_library resolv REQUIRED)
         target_compile_definitions(${target} PRIVATE ZARYA_EMBEDDED_XRAY_STATIC_ABI=1)
-        target_link_libraries(${target} PRIVATE "${_zarya_bridge_output}")
+        target_link_libraries(${target} PRIVATE
+            "${_zarya_bridge_output}"
+            "${_zarya_corefoundation_framework}"
+            "${_zarya_security_framework}"
+            "${_zarya_resolv_library}")
     else()
         add_custom_command(TARGET ${target} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
