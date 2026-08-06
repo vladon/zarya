@@ -30,20 +30,15 @@ function(zarya_configure_embedded_xray target)
     endif()
 
     if(WIN32)
-        find_program(_zarya_xray_gcc NAMES gcc)
-        if(NOT _zarya_xray_gcc)
+        file(GLOB _zarya_vs_clang_candidates
+            "${CMAKE_GENERATOR_INSTANCE}/VC/Tools/Llvm/x64/bin/clang.exe"
+            "$ENV{VSINSTALLDIR}/VC/Tools/Llvm/x64/bin/clang.exe"
+            "$ENV{ProgramFiles}/Microsoft Visual Studio/*/*/VC/Tools/Llvm/x64/bin/clang.exe")
+        if(NOT _zarya_vs_clang_candidates)
             message(FATAL_ERROR
-                "Embedded Xray requires MinGW/GCC 13 or newer with DWARF 5 support. Install MinGW or add its bin directory to PATH.")
+                "Embedded Xray requires Visual Studio LLVM clang.exe. Install the Visual Studio C++ Clang tools component.")
         endif()
-        execute_process(
-            COMMAND "${_zarya_xray_gcc}" -dumpversion
-            OUTPUT_VARIABLE _zarya_gcc_version
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-            COMMAND_ERROR_IS_FATAL ANY)
-        if(_zarya_gcc_version VERSION_LESS 13)
-            message(FATAL_ERROR
-                "Embedded Xray requires MinGW/GCC 13 or newer with DWARF 5 support; found ${_zarya_gcc_version}")
-        endif()
+        list(GET _zarya_vs_clang_candidates 0 _zarya_xray_clang)
     endif()
 
     set(_zarya_bridge_source "${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/embedded/xray/bridge")
@@ -62,7 +57,7 @@ function(zarya_configure_embedded_xray target)
 
     set(_zarya_go_env ${CMAKE_COMMAND} -E env "CGO_ENABLED=1")
     if(WIN32)
-        list(APPEND _zarya_go_env "CC=${_zarya_xray_gcc}")
+        list(APPEND _zarya_go_env "CC=${_zarya_xray_clang}")
     endif()
 
     file(GLOB_RECURSE _zarya_bridge_inputs CONFIGURE_DEPENDS

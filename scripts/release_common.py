@@ -67,6 +67,18 @@ def git_commit_short() -> str:
         return "unknown"
 
 
+def download_url(url: str, destination: Path) -> None:
+    """Download a release asset atomically (used for pinned geo data only)."""
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    partial = destination.with_suffix(destination.suffix + ".partial")
+    try:
+        with urllib.request.urlopen(url, timeout=120) as response, partial.open("wb") as handle:
+            shutil.copyfileobj(response, handle)
+        partial.replace(destination)
+    except (urllib.error.URLError, OSError) as exc:
+        partial.unlink(missing_ok=True)
+        raise RuntimeError(f"Failed to download {url}: {exc}") from exc
+
 def copy_top_level_legal_files(staging: Path) -> None:
     for name in ("README.md", "LICENSE", "LICENSE.MIT", "LICENSE.GPL-3.0", "COPYING", "THIRD_PARTY_NOTICES.md", "RELEASE_NOTES.md"):
         src = ROOT / name

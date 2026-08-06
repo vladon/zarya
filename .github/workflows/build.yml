@@ -102,7 +102,7 @@ jobs:
         shell: pwsh
         run: .\scripts\setup-msvc-actions.ps1
       - name: Install Ninja
-        run: choco install ninja mingw -y --no-progress
+        run: choco install ninja -y --no-progress
       - name: Verify vendored Xray bridge
         working-directory: src/runtime/embedded/xray/bridge
         run: go mod verify && go test ./...
