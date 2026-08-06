@@ -57,7 +57,14 @@ function(zarya_configure_embedded_xray target)
 
     set(_zarya_go_env ${CMAKE_COMMAND} -E env "CGO_ENABLED=1")
     if(WIN32)
-        list(APPEND _zarya_go_env "CC=${_zarya_xray_clang}")
+        # Go's Windows CGO driver unconditionally adds -mthreads. Visual Studio
+        # LLVM targets the MSVC CRT and rejects that MinGW-only flag, so use a
+        # generated wrapper that removes only that argument before invoking the
+        # Visual Studio clang executable.
+        set(_zarya_xray_cgo_wrapper "${CMAKE_CURRENT_BINARY_DIR}/zarya-cgo-clang-msvc.cmd")
+        file(GENERATE OUTPUT "${_zarya_xray_cgo_wrapper}" CONTENT
+            "@echo off\nsetlocal EnableExtensions\nset \"args=%*\"\nset \"args=%args:-mthreads=%\"\n\"${_zarya_xray_clang}\" %args%\n")
+        list(APPEND _zarya_go_env "CC=${_zarya_xray_cgo_wrapper}")
     endif()
 
     file(GLOB_RECURSE _zarya_bridge_inputs CONFIGURE_DEPENDS
