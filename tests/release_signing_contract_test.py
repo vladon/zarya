@@ -35,6 +35,8 @@ class ReleaseSigningContractTest(unittest.TestCase):
             "gui": "Zarya.exe",
             "helper": "zarya-helper.exe",
             "updater": "zarya-updater.exe",
+            "coreTestWorker": "zarya-core-test-worker.exe",
+            "xrayBridge": "zarya-xray.dll",
         }
         for name in artifacts.values():
             (root / name).write_bytes(name.encode("ascii"))
@@ -50,7 +52,7 @@ class ReleaseSigningContractTest(unittest.TestCase):
             ) as run:
                 valid, details = VERIFIER.verify_windows_signatures(root, manifest)
             self.assertTrue(valid, details)
-            self.assertEqual(run.call_count, 3)
+            self.assertEqual(run.call_count, 5)
             for call in run.call_args_list:
                 self.assertIn("/all", call.args[0])
                 self.assertIn("/tw", call.args[0])
@@ -116,7 +118,7 @@ class ReleaseSigningContractTest(unittest.TestCase):
         files = tree.findall(".//s:pe-file", namespace)
         self.assertEqual(
             {item.attrib["path"] for item in files},
-            {"Zarya.exe", "zarya-helper.exe", "zarya-updater.exe"},
+            {"Zarya.exe", "zarya-helper.exe", "zarya-updater.exe", "zarya-core-test-worker.exe", "zarya-xray.dll"},
         )
         for item in files:
             self.assertEqual(item.attrib["product-name"], "Zarya")
