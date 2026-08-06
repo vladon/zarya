@@ -72,20 +72,19 @@ function(zarya_configure_embedded_xray target)
         "${CMAKE_CURRENT_SOURCE_DIR}/third_party/xray-core/*.go"
         "${CMAKE_CURRENT_SOURCE_DIR}/third_party/xray-core/go.mod"
         "${CMAKE_CURRENT_SOURCE_DIR}/third_party/xray-core/go.sum")
-    add_custom_command(
-        OUTPUT "${_zarya_bridge_output}"
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${_zarya_bridge_output_dir}"
-        COMMAND ${_zarya_go_env} "${ZARYA_XRAY_GO_EXECUTABLE}" mod verify
-        COMMAND ${_zarya_go_env} "${ZARYA_XRAY_GO_EXECUTABLE}" build
-            -trimpath -buildmode=${_zarya_build_mode} -o "${_zarya_bridge_output}" .
-        WORKING_DIRECTORY "${_zarya_bridge_source}"
-        DEPENDS ${_zarya_bridge_inputs}
-        VERBATIM
-        COMMENT "Building embedded Xray bridge with ${_zarya_go_version}")
     if(NOT TARGET zarya-xray-bridge)
+        add_custom_command(
+            OUTPUT "${_zarya_bridge_output}"
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${_zarya_bridge_output_dir}"
+            COMMAND ${_zarya_go_env} "${ZARYA_XRAY_GO_EXECUTABLE}" mod verify
+            COMMAND ${_zarya_go_env} "${ZARYA_XRAY_GO_EXECUTABLE}" build
+                -trimpath -buildmode=${_zarya_build_mode} -o "${_zarya_bridge_output}" .
+            WORKING_DIRECTORY "${_zarya_bridge_source}"
+            DEPENDS ${_zarya_bridge_inputs}
+            VERBATIM
+            COMMENT "Building embedded Xray bridge with ${_zarya_go_version}")
         add_custom_target(zarya-xray-bridge DEPENDS "${_zarya_bridge_output}")
-    endif()
-    add_dependencies(${target} zarya-xray-bridge)
+    endif()    add_dependencies(${target} zarya-xray-bridge)
     target_include_directories(${target} PRIVATE "${_zarya_bridge_source}")
     target_compile_definitions(${target} PRIVATE
         ZARYA_EMBEDDED_XRAY_ABI_VERSION=1
