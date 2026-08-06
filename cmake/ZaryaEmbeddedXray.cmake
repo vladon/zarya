@@ -84,7 +84,8 @@ function(zarya_configure_embedded_xray target)
             VERBATIM
             COMMENT "Building embedded Xray bridge with ${_zarya_go_version}")
         add_custom_target(zarya-xray-bridge DEPENDS "${_zarya_bridge_output}")
-    endif()    add_dependencies(${target} zarya-xray-bridge)
+    endif()
+    add_dependencies(${target} zarya-xray-bridge)
     target_include_directories(${target} PRIVATE "${_zarya_bridge_source}")
     target_compile_definitions(${target} PRIVATE
         ZARYA_EMBEDDED_XRAY_ABI_VERSION=1
