@@ -7,9 +7,19 @@ function(zarya_configure_embedded_xray target)
         return()
     endif()
 
-    if(NOT ZARYA_XRAY_GO_EXECUTABLE)
-        find_program(ZARYA_XRAY_GO_EXECUTABLE NAMES go REQUIRED)
+    # A blank cache entry must not suppress discovery. This occurs when a
+    # developer first configures without an explicit Go path.
+    set(_zarya_xray_go "${ZARYA_XRAY_GO_EXECUTABLE}")
+    if(NOT _zarya_xray_go)
+        unset(_zarya_xray_go)
+        find_program(_zarya_xray_go NAMES go)
     endif()
+    if(NOT _zarya_xray_go)
+        message(FATAL_ERROR
+            "Embedded Xray requires Go 1.26.x. Install Go or set ZARYA_XRAY_GO_EXECUTABLE.")
+    endif()
+    set(ZARYA_XRAY_GO_EXECUTABLE "${_zarya_xray_go}" CACHE FILEPATH
+        "Path to the pinned Go 1.26 executable" FORCE)
     execute_process(
         COMMAND "${ZARYA_XRAY_GO_EXECUTABLE}" env GOVERSION
         OUTPUT_VARIABLE _zarya_go_version
@@ -20,7 +30,11 @@ function(zarya_configure_embedded_xray target)
     endif()
 
     if(WIN32)
-        find_program(_zarya_xray_gcc NAMES gcc REQUIRED)
+        find_program(_zarya_xray_gcc NAMES gcc)
+        if(NOT _zarya_xray_gcc)
+            message(FATAL_ERROR
+                "Embedded Xray requires MinGW/GCC 13 or newer with DWARF 5 support. Install MinGW or add its bin directory to PATH.")
+        endif()
         execute_process(
             COMMAND "${_zarya_xray_gcc}" -dumpversion
             OUTPUT_VARIABLE _zarya_gcc_version
