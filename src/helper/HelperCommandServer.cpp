@@ -12,10 +12,30 @@
 
 namespace zarya {
 
+namespace {
+
+constexpr qsizetype kMaxEmbeddedConfigBytes = 4 * 1024 * 1024;
+
+bool configFromPayload(const QJsonObject& payload, QByteArray* config, QString* error)
+{
+    const QByteArray value = payload.value(QStringLiteral("configJson")).toString().toUtf8();
+    if (value.isEmpty()) {
+        if (error) *error = QStringLiteral("Embedded sing-box config is empty.");
+        return false;
+    }
+    if (value.size() > kMaxEmbeddedConfigBytes) {
+        if (error) *error = QStringLiteral("Embedded sing-box config exceeds the IPC limit.");
+        return false;
+    }
+    if (config) *config = value;
+    return true;
+}
+
+} // namespace
+
 HelperCommandServer::HelperCommandServer(QObject* parent)
     : QObject(parent)
 {
-    m_runtime.setPathPolicy(&m_pathPolicy);
     connect(&m_runtime, &HelperRuntimeManager::logLine, this, &HelperCommandServer::logLine);
     connect(&m_runtime, &HelperRuntimeManager::logLine, this, &HelperCommandServer::broadcastLog);
     connect(&m_runtime, &HelperRuntimeManager::runtimeExited, this, [this](int exitCode) {
@@ -90,13 +110,17 @@ void HelperCommandServer::handleRequest(const IpcEnvelope& request, QLocalSocket
 
     if (request.command == ipcCommandHello()) {
         const PrivilegeCheckResult privileges = PlatformPrivilege::currentProcessPrivileges();
-        const TunSupportResult support = SingBoxTunSupportChecker::check(QString());
+        const TunSupportResult support = SingBoxTunSupportChecker::check();
         QJsonArray warnings;
         for (const QString& warning : support.warnings) {
             warnings.append(warning);
         }
         sendOk(client, request,
                QJsonObject{{QStringLiteral("helperVersion"), PackagingInfo::versionString()},
+                           {QStringLiteral("singBoxVersion"), m_runtime.version()},
+                           {QStringLiteral("singBoxAbiVersion"), m_runtime.abiVersion()},
+                           {QStringLiteral("singBoxDistribution"), QStringLiteral("embedded")},
+                           {QStringLiteral("singBoxLoadStatus"), m_runtime.loadStatus()},
                            {QStringLiteral("platform"), support.platform},
                            {QStringLiteral("privileged"), privileges.elevated},
                            {QStringLiteral("tunSupported"), support.supported},
@@ -107,9 +131,11 @@ void HelperCommandServer::handleRequest(const IpcEnvelope& request, QLocalSocket
     if (request.command == ipcCommandStatus()) {
         sendOk(client, request,
                QJsonObject{{QStringLiteral("running"), m_runtime.isRunning()},
-                           {QStringLiteral("runtime"), QStringLiteral("sing-box-tun")},
-                           {QStringLiteral("pid"), m_runtime.isRunning() ? m_runtime.processId() : 0},
-                           {QStringLiteral("configPath"), m_runtime.configPath()},
+                           {QStringLiteral("runtime"), QStringLiteral("embedded-sing-box-tun")},
+                           {QStringLiteral("distribution"), QStringLiteral("embedded")},
+                           {QStringLiteral("version"), m_runtime.version()},
+                           {QStringLiteral("abiVersion"), m_runtime.abiVersion()},
+                           {QStringLiteral("loadStatus"), m_runtime.loadStatus()},
                            {QStringLiteral("startedAt"),
                             m_runtime.startedAt().toString(Qt::ISODate)},
                            {QStringLiteral("killSwitch"),
@@ -173,8 +199,7 @@ void HelperCommandServer::handleRequest(const IpcEnvelope& request, QLocalSocket
     if (request.command == ipcCommandCheckSupport()) {
         const PrivilegeCheckResult privileges = PlatformPrivilege::currentProcessPrivileges();
         const TunSupportResult support =
-            SingBoxTunSupportChecker::check(request.payload.value(QStringLiteral("singBoxPath"))
-                                                .toString());
+            SingBoxTunSupportChecker::check();
         QJsonArray warnings;
         for (const QString& warning : support.warnings) {
             warnings.append(warning);
@@ -187,28 +212,30 @@ void HelperCommandServer::handleRequest(const IpcEnvelope& request, QLocalSocket
     }
 
     if (request.command == ipcCommandValidateConfig()) {
-        const QString singBoxPath = request.payload.value(QStringLiteral("singBoxPath")).toString();
-        const QString configPath = request.payload.value(QStringLiteral("configPath")).toString();
-        QString output;
+        QByteArray configJson;
         QString error;
-        if (!m_runtime.validateConfig(singBoxPath, configPath, &output, &error)) {
+        if (!configFromPayload(request.payload, &configJson, &error)) {
+            sendError(client, request, error);
+            return;
+        }
+        QString output;
+        if (!m_runtime.validateConfig(configJson, &output, &error)) {
             sendError(client, request, error);
             return;
         }
         sendOk(client, request, QJsonObject{{QStringLiteral("output"), output}});
         return;
     }
-
     if (request.command == ipcCommandStartTun()) {
-        const QString singBoxPath = request.payload.value(QStringLiteral("singBoxPath")).toString();
-        const QString configPath = request.payload.value(QStringLiteral("configPath")).toString();
-        const QString workingDirectory =
-            request.payload.value(QStringLiteral("workingDirectory")).toString();
+        QByteArray configJson;
+        QString error;
+        if (!configFromPayload(request.payload, &configJson, &error)) {
+            sendError(client, request, error);
+            return;
+        }
         const bool checkBeforeStart =
             request.payload.value(QStringLiteral("checkBeforeStart")).toBool(true);
-        QString error;
-        if (!m_runtime.startTun(singBoxPath, configPath, workingDirectory, checkBeforeStart,
-                                &error)) {
+        if (!m_runtime.startTun(configJson, checkBeforeStart, &error)) {
             const bool autoDisableKillSwitch =
                 request.payload.value(QStringLiteral("autoDisableKillSwitchOnFailure")).toBool(true);
             if (autoDisableKillSwitch) {
@@ -217,10 +244,9 @@ void HelperCommandServer::handleRequest(const IpcEnvelope& request, QLocalSocket
             sendError(client, request, error);
             return;
         }
-        sendOk(client, request, QJsonObject{{QStringLiteral("pid"), m_runtime.processId()}});
+        sendOk(client, request, QJsonObject{});
         return;
     }
-
     if (request.command == ipcCommandStopTun()) {
         QString error;
         if (!m_runtime.stopTun(&error)) {

@@ -31,7 +31,7 @@ If no checksum is available:
 5. Extract to `runtime/core-updates/extract/`
 6. Verify staged executable (`version` command)
 7. Backup current core to `cores/.backup/`
-8. Copy the new sing-box executable
+8. Embedded sing-box is updated only through the Zarya app update; no core executable is downloaded.
 9. Write `VERSION` and `.zarya-core.json`
 10. Final verification; rollback backup on failure
 

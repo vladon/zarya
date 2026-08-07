@@ -21,7 +21,9 @@ jobs:
         with:
           go-version: "1.26.5"
           cache: true
-          cache-dependency-path: src/runtime/embedded/xray/bridge/go.sum
+          cache-dependency-path: |
+            src/runtime/embedded/xray/bridge/go.sum
+            src/runtime/embedded/singbox/bridge/go.sum
       - name: Read version
         id: ver
         shell: bash
@@ -86,17 +88,26 @@ jobs:
         run: .\scripts\setup-msvc-actions.ps1
       - name: Install Ninja
         run: choco install ninja mingw -y --no-progress
-      - name: Verify vendored Xray bridge
+      - name: Verify vendored Go bridges
         working-directory: src/runtime/embedded/xray/bridge
         shell: pwsh
         run: |
-          $gcc = Get-ChildItem 'C:\ProgramData\chocolatey\lib\mingw\tools\install' -Recurse -Filter x86_64-w64-mingw32-gcc.exe | Select-Object -First 1 -ExpandProperty FullName
+          $gcc = Get-Command x86_64-w64-mingw32-gcc.exe -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty Source
+          if (-not $gcc -and (Test-Path 'C:\mingw64\bin\gcc.exe')) { $gcc = 'C:\mingw64\bin\gcc.exe' }
           if (-not $gcc) { throw 'MinGW-w64 GCC was not installed for the embedded Xray Go bridge.' }
           $env:CC = $gcc
+          "ZARYA_XRAY_CGO_COMPILER=$gcc" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "ZARYA_SINGBOX_CGO_COMPILER=$gcc" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           go mod verify
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           go test ./...
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Push-Location ../../singbox/bridge
+          go mod verify
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go test ./...
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Pop-Location
       - name: Configure
         shell: pwsh
         run: |
@@ -206,7 +217,9 @@ jobs:
         with:
           go-version: "1.26.5"
           cache: true
-          cache-dependency-path: src/runtime/embedded/xray/bridge/go.sum
+          cache-dependency-path: |
+            src/runtime/embedded/xray/bridge/go.sum
+            src/runtime/embedded/singbox/bridge/go.sum
       - name: Read version
         id: ver
         run: |
@@ -231,9 +244,12 @@ jobs:
           arch: linux_gcc_64
       - name: Check translations
         run: python3 scripts/check-translations.py
-      - name: Verify vendored Xray bridge
+      - name: Verify vendored Go bridges
         working-directory: src/runtime/embedded/xray/bridge
-        run: go mod verify && go test ./...
+        run: |
+          go mod verify && go test ./...
+          cd ../../singbox/bridge
+          go mod verify && go test ./...
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
       - name: Build
@@ -265,7 +281,9 @@ jobs:
         with:
           go-version: "1.26.5"
           cache: true
-          cache-dependency-path: src/runtime/embedded/xray/bridge/go.sum
+          cache-dependency-path: |
+            src/runtime/embedded/xray/bridge/go.sum
+            src/runtime/embedded/singbox/bridge/go.sum
       - name: Read version
         id: ver
         run: |
@@ -282,9 +300,12 @@ jobs:
           arch: clang_64
       - name: Check translations
         run: python3 scripts/check-translations.py
-      - name: Verify vendored Xray bridge
+      - name: Verify vendored Go bridges
         working-directory: src/runtime/embedded/xray/bridge
-        run: go mod verify && go test ./...
+        run: |
+          go mod verify && go test ./...
+          cd ../../singbox/bridge
+          go mod verify && go test ./...
       - name: Configure
         run: |
           cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \

@@ -14,6 +14,7 @@
 #include "cores/GitHubReleaseProvider.h"
 #include "packaging/PackagingInfo.h"
 #include "runtime/embedded/xray/EmbeddedXrayRuntimeHost.h"
+#include "runtime/embedded/singbox/EmbeddedSingBoxBuildInfo.h"
 #include "storage/AppSettings.h"
 
 #include <QDir>
@@ -125,49 +126,24 @@ void CoreBinaryManager::refreshLocalState()
             info.lastError = info.loadStatus;
             continue;
         }
-        info.executablePath = CorePaths::managedExecutablePath(info.type);
-        info.installDir = QFileInfo(info.executablePath).absolutePath();
-        info.exists = QFile::exists(info.executablePath);
-        const QString configuredPath = AppSettings::instance().singBoxExecutablePath().trimmed();
-        const bool pathIsManaged = CorePaths::isManagedExecutablePath(info.executablePath, info.type);
-        if (!configuredPath.isEmpty() && !pathIsManaged
-            && !AppSettings::instance().allowManageExternalCorePaths()) {
-            info.managed = false;
-            info.status = CoreInstallStatus::External;
-        } else {
+        if (info.type == CoreType::SingBox) {
+            const QDateTime lastCheckedAt = info.lastCheckedAt;
+            const QDateTime lastUpdatedAt = info.lastUpdatedAt;
+            info = makeBaseInfo(CoreType::SingBox);
+            info.distributionKind = CoreDistributionKind::Embedded;
+            info.capabilities = CoreRuntimeCapability::Validation;
+            info.exists = true;
             info.managed = true;
+            info.running = m_singBoxRunningCallback && m_singBoxRunningCallback();
+            info.installedVersion = QString::fromLatin1(EmbeddedSingBoxBuildInfo::version);
+            info.abiVersion = EmbeddedSingBoxBuildInfo::abiVersion;
+            info.loadStatus = QStringLiteral("Loaded by zarya-helper when TUN is enabled.");
+            info.status = info.running ? CoreInstallStatus::Running : CoreInstallStatus::Installed;
+            info.lastCheckedAt = lastCheckedAt;
+            info.lastUpdatedAt = lastUpdatedAt;
+            continue;
         }
 
-        if (isCoreRunning(info.type)) {
-            info.running = true;
-            info.status = CoreInstallStatus::Running;
-        } else if (!info.exists) {
-            info.status = CoreInstallStatus::Missing;
-            info.installedVersion.clear();
-        } else {
-            info.running = false;
-            const DetectedVersion detected =
-                CoreVersionDetector::detect(info.executablePath, info.type);
-            if (detected.ok) {
-                info.installedVersion = detected.version;
-                if (info.status != CoreInstallStatus::External) {
-                    info.status = CoreInstallStatus::Installed;
-                }
-            } else {
-                info.status = CoreInstallStatus::Unknown;
-                info.lastError = detected.error;
-            }
-        }
-
-        const CoreRelease latest = m_latestReleases.value(info.type);
-        if (!latest.version.isEmpty()) {
-            info.latestVersion = CoreVersionDetector::normalizeVersion(latest.version);
-            if (info.exists && !info.running && info.managed && info.status != CoreInstallStatus::External
-                && !info.installedVersion.isEmpty()
-                && info.installedVersion != info.latestVersion) {
-                info.status = CoreInstallStatus::UpdateAvailable;
-            }
-        }
     }
     emitChanged();
 }
@@ -194,9 +170,9 @@ bool CoreBinaryManager::isCoreRunning(CoreType type) const
 bool CoreBinaryManager::canManage(CoreType type, QString* reason) const
 {
     const CoreInfo info = infoFor(type);
-    if (type == CoreType::Xray || info.distributionKind == CoreDistributionKind::Embedded) {
+    if (type == CoreType::Xray || type == CoreType::SingBox || info.distributionKind == CoreDistributionKind::Embedded) {
         if (reason) {
-            *reason = QStringLiteral("Built-in Xray is updated together with the Zarya app.");
+            *reason = QStringLiteral("Built-in %1 is updated together with the Zarya app.").arg(info.name);
         }
         return false;
     }
@@ -265,52 +241,13 @@ void CoreBinaryManager::finishVersionChecks()
 
 void CoreBinaryManager::checkLatestVersions()
 {
-    m_pendingChecks = 1;
-    const int timeoutMs = AppSettings::instance().githubApiTimeoutSeconds() * 1000;
-    const QDateTime now = QDateTime::currentDateTimeUtc();
     for (CoreInfo& info : m_infos) {
-        info.lastReleaseCheckAt = now;
+        info.lastReleaseCheckAt = QDateTime::currentDateTimeUtc();
         info.lastReleaseCheckError.clear();
     }
-
-    auto* singBoxProvider =
-        new GitHubReleaseProvider(CoreType::SingBox, QStringLiteral("SagerNet/sing-box"), this);
-    connect(singBoxProvider, &CoreReleaseProvider::latestReleaseReady, this,
-            [this, singBoxProvider](const CoreRelease& release) {
-                m_latestReleases.insert(CoreType::SingBox, release);
-                for (CoreInfo& info : m_infos) {
-                    if (info.type == CoreType::SingBox) {
-                        info.lastReleaseCheckAt = QDateTime::currentDateTimeUtc();
-                        info.lastReleaseCheckError.clear();
-                    }
-                }
-                emit logLine(QStringLiteral("Fetching latest sing-box release: %1").arg(release.version));
-                --m_pendingChecks;
-                if (m_pendingChecks <= 0) {
-                    finishVersionChecks();
-                }
-                singBoxProvider->deleteLater();
-            });
-    connect(singBoxProvider, &CoreReleaseProvider::error, this,
-            [this, singBoxProvider](const QString& message) {
-                for (CoreInfo& info : m_infos) {
-                    if (info.type == CoreType::SingBox) {
-                        info.lastReleaseCheckError = message;
-                    }
-                }
-                emit logLine(QStringLiteral("sing-box release check failed: %1").arg(message));
-                --m_pendingChecks;
-                if (m_pendingChecks <= 0) {
-                    finishVersionChecks();
-                }
-                singBoxProvider->deleteLater();
-            });
-    emit logLine(QStringLiteral("Checking sing-box version"));
-    singBoxProvider->fetchLatestRelease(timeoutMs);
-
     refreshLocalState();
+    emit operationFinished(true, QStringLiteral("Embedded cores are updated with Zarya."));
 }
-
 void CoreBinaryManager::updateCore(CoreType type, bool allowMissingChecksum)
 {
     QString reason;

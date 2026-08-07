@@ -1,5 +1,12 @@
-# Zarya 1.5.0
+# Zarya 1.5.1
 
+Zarya 1.5.1 embeds both proxy cores: Xray runs in-process in the GUI and sing-box runs in-process only inside the privileged `zarya-helper` for experimental TUN. No external core executable is included in the release artifact.
+
+See [docs/release-notes/1.5.1.md](docs/release-notes/1.5.1.md) for details.
+
+---
+
+# Zarya 1.5.0
 ## Stable release
 
 1.5.0 adds full KDE Plasma system-proxy integration and strengthens proxy

@@ -60,13 +60,12 @@ the **Mozilla Public License 2.0**. The exact tag, commit, Go toolchain and upda
 procedure are recorded in `third_party/xray-core.zarya.json`; the corresponding
 upstream source and license are retained in `third_party/xray-core/`.
 
-## Downloaded core
+## sing-box
 
-**sing-box** is not included in the default Zarya release artifact. Zarya can
-download it from upstream through **Core Manager**; its upstream license applies:
-
-- [sing-box](https://github.com/SagerNet/sing-box)
-
+Zarya vendors and links [SagerNet/sing-box](https://github.com/SagerNet/sing-box)
+inside `zarya-helper` under the **GNU General Public License v3.0**. The exact tag,
+commit and bridge toolchain are recorded in `third_party/sing-box.zarya.json`; the
+corresponding upstream source and license are retained in `third_party/sing-box/`.
 Geo data files (`geoip.dat`, `geosite.dat`) ship as a pinned **runetfreedom** seed in release packages (next to Xray) and can also be updated via **Geo Data Manager**. sing-box rule sets are downloaded separately via rule-set tools. Built-in geo sources include:
 
 - [Loyalsoldier/v2ray-rules-dat](https://github.com/Loyalsoldier/v2ray-rules-dat)

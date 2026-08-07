@@ -78,6 +78,9 @@ def verify_source_tree(source_root: Path) -> list[str]:
         "third_party/xray-core.zarya.json",
         "third_party/xray-core/LICENSE",
         "third_party/xray-core/go.mod",
+        "third_party/sing-box.zarya.json",
+        "third_party/sing-box/LICENSE",
+        "third_party/sing-box/go.mod",
         "packaging/cores/README.md",
         "packaging/geodata/runetfreedom-pin.json",
         "packaging/geodata/README.md",
@@ -104,6 +107,17 @@ def verify_source_tree(source_root: Path) -> list[str]:
             errors.append("vendored Xray go.mod does not match the pinned module/toolchain")
     except (OSError, ValueError, KeyError, json.JSONDecodeError) as exc:
         errors.append(f"invalid third_party/xray-core.zarya.json: {exc}")
+    try:
+        source = json.loads((source_root / "third_party/sing-box.zarya.json").read_text(encoding="utf-8"))
+        expected = {"tag": "v1.13.12", "commit": "1086ab2563320e0da0c23b3a491d8dfa0939dff4", "bridgeGoVersion": "1.26.5", "license": "GPL-3.0-only"}
+        for key, value in expected.items():
+            if source.get(key) != value:
+                errors.append(f"sing-box source manifest {key}: expected {value}, found {source.get(key)}")
+        go_mod = (source_root / "third_party/sing-box/go.mod").read_text(encoding="utf-8")
+        if "module github.com/sagernet/sing-box" not in go_mod:
+            errors.append("vendored sing-box go.mod does not match the pinned module")
+    except (OSError, ValueError, KeyError, json.JSONDecodeError) as exc:
+        errors.append(f"invalid third_party/sing-box.zarya.json: {exc}")
 
     try:
         geo_pin = load_geodata_pin()

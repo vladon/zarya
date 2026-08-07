@@ -136,7 +136,7 @@ void CoreManagerDialog::refreshDetails()
         details += tr("Distribution: Built into Zarya") + QLatin1Char('\n');
         details += tr("ABI version: %1").arg(info.abiVersion) + QLatin1Char('\n');
         details += tr("Load status: %1").arg(info.loadStatus) + QLatin1Char('\n');
-        details += tr("Xray is updated together with Zarya.") + QLatin1Char('\n');
+        details += tr("This core is updated together with Zarya.") + QLatin1Char('\n');
     }
     if (!info.selectedAssetName.isEmpty()) {
         details += tr("Selected asset: %1").arg(info.selectedAssetName) + QLatin1Char('\n');
@@ -164,6 +164,7 @@ void CoreManagerDialog::refreshDetails()
                    + QLatin1Char('\n');
     }
     m_updateButton->setEnabled(!embedded);
+    m_updateAllButton->setEnabled(!embedded);
     m_rollbackButton->setEnabled(!embedded);
     m_openFolderButton->setEnabled(!embedded);
     m_resetPathButton->setEnabled(!embedded);
@@ -185,7 +186,7 @@ void CoreManagerDialog::setBusy(bool busy)
         m_manager.infoFor(selectedCoreType()).distributionKind == CoreDistributionKind::Embedded;
     m_checkButton->setEnabled(!busy);
     m_updateButton->setEnabled(!busy && !embedded);
-    m_updateAllButton->setEnabled(!busy);
+    m_updateAllButton->setEnabled(!busy && !embedded);
     m_rollbackButton->setEnabled(!busy && !embedded);
     m_openFolderButton->setEnabled(!busy && !embedded);
     m_resetPathButton->setEnabled(!busy && !embedded);

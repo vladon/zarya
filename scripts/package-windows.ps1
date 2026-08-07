@@ -69,6 +69,9 @@ if (-not (Test-Path $CoreTestWorker)) {
     throw "zarya-core-test-worker.exe not found under $BuildOutput"
 }
 
+$SingBoxBridge = Join-Path $BuildOutput "zarya-singbox.dll"
+if (-not (Test-Path $SingBoxBridge)) { throw "zarya-singbox.dll not found under $BuildOutput" }
+
 $XrayBridge = Join-Path $BuildOutput "zarya-xray.dll"
 if (-not (Test-Path $XrayBridge)) {
     throw "zarya-xray.dll not found under $BuildOutput"
@@ -81,6 +84,7 @@ Copy-Item $GuiExe (Join-Path $Staging "Zarya.exe")
 Copy-Item $HelperExe (Join-Path $Staging "zarya-helper.exe")
 Copy-Item $UpdaterExe (Join-Path $Staging "zarya-updater.exe")
 Copy-Item $XrayBridge (Join-Path $Staging "zarya-xray.dll")
+Copy-Item $SingBoxBridge (Join-Path $Staging "zarya-singbox.dll")
 Copy-Item $CoreTestWorker (Join-Path $Staging "zarya-core-test-worker.exe")
 New-Item -ItemType File -Path (Join-Path $Staging "portable.flag") | Out-Null
 
@@ -127,6 +131,7 @@ write_release_manifest(
     helper_artifact='zarya-helper.exe',
     updater_artifact='zarya-updater.exe',
     embedded_xray_artifact='zarya-xray.dll',
+    embedded_singbox_artifact='zarya-singbox.dll',
     core_test_worker_artifact='zarya-core-test-worker.exe',
     bundle_geodata=$(if ($SkipBundleGeodata.IsPresent) { 'False' } else { 'None' }),
 )
@@ -157,6 +162,7 @@ if ($DoSign) {
     & $SignScript -File (Join-Path $Staging "zarya-helper.exe") -CertificateThumbprint $Thumb -TimestampUrl $TimestampUrl -Verify
     & $SignScript -File (Join-Path $Staging "zarya-updater.exe") -CertificateThumbprint $Thumb -TimestampUrl $TimestampUrl -Verify
     & $SignScript -File (Join-Path $Staging "zarya-xray.dll") -CertificateThumbprint $Thumb -TimestampUrl $TimestampUrl -Verify
+    & $SignScript -File (Join-Path $Staging "zarya-singbox.dll") -CertificateThumbprint $Thumb -TimestampUrl $TimestampUrl -Verify
     & $SignScript -File (Join-Path $Staging "zarya-core-test-worker.exe") -CertificateThumbprint $Thumb -TimestampUrl $TimestampUrl -Verify
     $env:ZARYA_PACKAGE_SIGNED = "windows-authenticode"
 } else {

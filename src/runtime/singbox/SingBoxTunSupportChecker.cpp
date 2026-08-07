@@ -9,7 +9,7 @@
 
 namespace zarya {
 
-TunSupportResult SingBoxTunSupportChecker::check(const QString& singBoxExecutablePath)
+TunSupportResult SingBoxTunSupportChecker::check()
 {
     TunSupportResult result;
 #if defined(Q_OS_WIN)
@@ -21,12 +21,6 @@ TunSupportResult SingBoxTunSupportChecker::check(const QString& singBoxExecutabl
 #else
     result.platform = QStringLiteral("unknown");
 #endif
-
-    const QString executable = singBoxExecutablePath.trimmed();
-    if (executable.isEmpty() || !QFileInfo::exists(executable)) {
-        result.reason = QStringLiteral("sing-box executable path is not configured.");
-        return result;
-    }
 
     result.supported = true;
 

@@ -167,12 +167,8 @@ QJsonObject collectPaths(const DiagnosticsOptions& options, const DiagnosticsCon
     QJsonObject object;
     object.insert(QStringLiteral("dataDir"), pathField(AppPaths::dataDir()));
     object.insert(QStringLiteral("runtimeDir"), pathField(AppPaths::runtimeDir()));
-    object.insert(QStringLiteral("coresDir"), pathField(AppPaths::coresDir()));
-    object.insert(QStringLiteral("singBoxPath"),
-                  pathField(AppSettings::instance().resolvedSingBoxPath()));
-
-    const QString singBoxPath = AppSettings::instance().resolvedSingBoxPath();
-    object.insert(QStringLiteral("singBoxPathExists"), QFile::exists(singBoxPath));
+    object.insert(QStringLiteral("coresDir"), pathField(AppPaths::coresDir()));    object.insert(QStringLiteral("singBoxDistribution"), QStringLiteral("embedded-helper"));
+    object.insert(QStringLiteral("singBoxExecutablePath"), QStringLiteral("<not applicable>"));
     object.insert(QStringLiteral("ruleSetDirExists"), QDir(AppPaths::singBoxRuleSetDir()).exists());
 
     QString writableError;

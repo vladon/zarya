@@ -666,8 +666,8 @@ Pre-import backup:
         <translation>Состояние загрузки: %1</translation>
     </message>
     <message>
-        <source>Xray is updated together with Zarya.</source>
-        <translation>Xray обновляется вместе с Zarya.</translation>
+        <source>This core is updated together with Zarya.</source>
+        <translation>Это ядро обновляется вместе с Zarya.</translation>
     </message>
 </context>
 <context>
@@ -3824,7 +3824,7 @@ Choose whether to delete its imported profiles or keep them as manual profiles.<
     <message>
         <source>sing-box exited unexpectedly while kill switch is active.
 
-Direct traffic may remain blocked. Use Settings → Kill Switch → Disable Now or recovery instructions.</source>
+Direct traffic may remain blocked. Use Settings → Kill Switch → Disable Now.</source>
         <translation>sing-box неожиданно завершил работу при активном kill switch.
 
 Прямой трафик может оставаться заблокированным. Откройте «Настройки → Kill Switch → Отключить сейчас» или воспользуйтесь инструкциями по восстановлению.</translation>

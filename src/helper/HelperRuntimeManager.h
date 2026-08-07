@@ -1,11 +1,10 @@
 #pragma once
 
-#include "helper/HelperPathPolicy.h"
-#include "platform/KillOnCloseProcessJob.h"
+#include "runtime/core/CoreRuntimeCoordinator.h"
+#include "runtime/embedded/singbox/EmbeddedSingBoxRuntimeHost.h"
 
 #include <QDateTime>
 #include <QObject>
-#include <QProcess>
 
 namespace zarya {
 
@@ -15,17 +14,15 @@ class HelperRuntimeManager : public QObject {
 public:
     explicit HelperRuntimeManager(QObject* parent = nullptr);
 
-    void setPathPolicy(const HelperPathPolicy* policy);
-
     bool isRunning() const;
-    qint64 processId() const;
-    QString configPath() const;
+    QString version() const;
+    int abiVersion() const;
+    QString loadStatus() const;
     QDateTime startedAt() const;
 
-    bool validateConfig(const QString& singBoxPath, const QString& configPath,
-                        QString* output = nullptr, QString* errorMessage = nullptr);
-    bool startTun(const QString& singBoxPath, const QString& configPath,
-                  const QString& workingDirectory, bool checkBeforeStart,
+    bool validateConfig(const QByteArray& configJson, QString* output = nullptr,
+                        QString* errorMessage = nullptr);
+    bool startTun(const QByteArray& configJson, bool checkBeforeStart,
                   QString* errorMessage = nullptr);
     bool stopTun(QString* errorMessage = nullptr);
 
@@ -34,13 +31,10 @@ signals:
     void runtimeExited(int exitCode);
 
 private:
-    QString runProcess(const QString& executable, const QStringList& arguments, int timeoutMs,
-                       int* exitCode) const;
+    CoreLaunchRequest makeRequest(const QByteArray& configJson) const;
 
-    const HelperPathPolicy* m_pathPolicy = nullptr;
-    QProcess m_process;
-    KillOnCloseProcessJob m_killOnCloseJob;
-    QString m_configPath;
+    CoreRuntimeCoordinator m_coordinator;
+    EmbeddedSingBoxRuntimeHost m_runtimeHost;
     QDateTime m_startedAt;
 };
 

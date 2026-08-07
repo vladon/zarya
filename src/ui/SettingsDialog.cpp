@@ -308,17 +308,6 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
         static_cast<int>(RuntimeMode::TunSingBoxExperimental),
         tr("TUN via sing-box (experimental)"));
 
-    m_singBoxPathEdit = new ZaryaTextField(tr("sing-box executable"), this);
-    m_singBoxPathEdit->setText(settings.singBoxExecutablePath());
-    auto* browseSingBoxButton = new ZaryaActionButton(tr("Browse…"), this);
-    connect(browseSingBoxButton, &ZaryaActionButton::clicked,
-            this, &SettingsDialog::onBrowseSingBox);
-    auto* singBoxRow = new QWidget(this);
-    auto* singBoxLayout = new QHBoxLayout(singBoxRow);
-    singBoxLayout->setContentsMargins(0, 0, 0, 0);
-    singBoxLayout->addWidget(m_singBoxPathEdit, 1);
-    singBoxLayout->addWidget(browseSingBoxButton);
-
     m_tunUseActiveRoutingCheck = new ZaryaCheckBox(
         tr("Use active RoutingProfile for TUN"), this,
         settings.tunUseActiveRoutingProfile());
@@ -443,8 +432,6 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     m_experimentalGroup->addWidget(m_enableExperimentalTunCheck);
     m_experimentalGroup->addWidget(
         new ZaryaFormRow(tr("Runtime mode"), m_runtimeModeGroup, m_experimentalGroup));
-    m_experimentalGroup->addWidget(
-        new ZaryaFormRow(tr("sing-box executable"), singBoxRow, m_experimentalGroup));
     m_experimentalGroup->addWidget(m_tunUseActiveRoutingCheck);
     m_experimentalGroup->addWidget(m_tunUseActiveDnsCheck);
     m_experimentalGroup->addWidget(m_tunEnableDnsHijackCheck);
@@ -678,7 +665,6 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     const auto updateRuntimeControls = [this]() {
         const bool enabled = m_enableExperimentalTunCheck->isChecked();
         m_runtimeModeGroup->setEnabled(enabled);
-        m_singBoxPathEdit->setEnabled(enabled);
         m_tunUseActiveRoutingCheck->setEnabled(enabled);
         m_tunUseActiveDnsCheck->setEnabled(enabled);
         m_tunEnableDnsHijackCheck->setEnabled(enabled);
@@ -761,15 +747,6 @@ SettingsDialog::SettingsDialog(RoutingManager& routingManager, DnsManager& dnsMa
     setMaximumHeight(available.height() - 24);
 }
 
-void SettingsDialog::onBrowseSingBox()
-{
-    const QString path =
-        QFileDialog::getOpenFileName(this, tr("Select sing-box executable"), {},
-                                   QStringLiteral("Executables (*.exe);;All files (*.*)"));
-    if (!path.isEmpty()) {
-        m_singBoxPathEdit->setText(path);
-    }
-}
 
 bool SettingsDialog::confirmTunWarningIfNeeded()
 {
@@ -971,7 +948,6 @@ bool SettingsDialog::validateAndSave()
 
     settings.setEnableExperimentalTun(wantExperimentalTun);
     settings.setRuntimeMode(selectedMode);
-    settings.setSingBoxExecutablePath(m_singBoxPathEdit->text());
     settings.setTunUseActiveRoutingProfile(m_tunUseActiveRoutingCheck->isChecked());
     settings.setTunUseActiveDnsProfile(m_tunUseActiveDnsCheck->isChecked());
     settings.setTunEnableDnsHijack(m_tunEnableDnsHijackCheck->isChecked());

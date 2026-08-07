@@ -62,9 +62,7 @@ Messages are newline-delimited JSON envelopes (`version`, `id`, `type`, `command
 
 Helper accepts only:
 
-- `configPath` under `--allowed-runtime-dir`
-- `singBoxPath` under `--allowed-core-dir` (when set)
-- `workingDirectory` under runtime dir or sing-box parent directory
+- embedded sing-box configuration is delivered as an authenticated in-memory JSON payload; executable and config paths are never accepted.
 
 Arbitrary paths are rejected.
 

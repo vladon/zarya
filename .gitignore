@@ -28,6 +28,8 @@
 *.mod
 !/src/runtime/embedded/xray/bridge/go.mod
 !/third_party/xray-core/go.mod
+!/src/runtime/embedded/singbox/bridge/go.mod
+!/third_party/sing-box/go.mod
 *.smod
 
 # Compiled Static libraries

@@ -31,9 +31,12 @@ function(zarya_configure_embedded_xray target)
 
     if(WIN32)
         set(_zarya_xray_cgo "${ZARYA_XRAY_CGO_COMPILER}")
+        if(NOT _zarya_xray_cgo AND DEFINED ENV{ZARYA_XRAY_CGO_COMPILER})
+            set(_zarya_xray_cgo "$ENV{ZARYA_XRAY_CGO_COMPILER}")
+        endif()
         if(NOT _zarya_xray_cgo)
             find_program(_zarya_xray_cgo NAMES x86_64-w64-mingw32-gcc gcc
-                HINTS "C:/mingw64/bin" "C:/ProgramData/chocolatey/lib/mingw/tools/install/mingw64/bin" "$ENV{MINGW_ROOT}/bin")
+                HINTS "C:/mingw64/bin" "C:/ProgramData/mingw64/mingw64/bin" "C:/ProgramData/chocolatey/lib/mingw/tools/install/mingw64/bin" "$ENV{MINGW_ROOT}/bin")
         endif()
         if(NOT _zarya_xray_cgo)
             message(FATAL_ERROR

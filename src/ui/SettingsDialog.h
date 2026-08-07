@@ -32,7 +32,6 @@ public:
                             QWidget* parent = nullptr);
 
 private Q_SLOTS:
-    void onBrowseSingBox();
     void onStartHelper();
     void onConnectHelper();
     void onCheckHelperStatus();
@@ -91,7 +90,6 @@ private:
 
     ZaryaCheckBox* m_enableExperimentalTunCheck = nullptr;
     ZaryaRadioGroup* m_runtimeModeGroup = nullptr;
-    ZaryaTextField* m_singBoxPathEdit = nullptr;
     ZaryaCheckBox* m_tunUseActiveRoutingCheck = nullptr;
     ZaryaCheckBox* m_tunUseActiveDnsCheck = nullptr;
     ZaryaCheckBox* m_tunEnableDnsHijackCheck = nullptr;

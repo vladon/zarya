@@ -545,6 +545,7 @@ zarya_link_qt_widgets_app(zarya)
 target_link_libraries(zarya PRIVATE Qt6::Network)
 
 include(ZaryaEmbeddedXray)
+include(ZaryaEmbeddedSingBox)
 zarya_configure_embedded_xray(zarya)
 
 if(WIN32)
@@ -590,6 +591,11 @@ set(ZARYA_HELPER_SOURCES
     src/helper/HelperRuntimeManager.cpp
     src/helper/HelperAuth.cpp
     src/helper/HelperPathPolicy.cpp
+    src/runtime/core/ICoreRuntimeHost.cpp
+    src/runtime/core/CoreRuntimeCoordinator.cpp
+    src/runtime/embedded/singbox/EmbeddedSingBoxRuntimeHost.cpp
+    src/diagnostics/DiagnosticsRedactor.cpp
+    src/domain/CoreType.cpp
     src/platform/KillOnCloseProcessJob.cpp
     ${ZARYA_IPC_SOURCES}
     src/runtime/singbox/SingBoxTunSupportChecker.cpp
@@ -616,6 +622,7 @@ target_include_directories(zarya-helper PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src 
 target_compile_definitions(zarya-helper PRIVATE ZARYA_VERSION_STRING="${ZARYA_VERSION_STRING}")
 zarya_link_qt_core(zarya-helper)
 target_link_libraries(zarya-helper PRIVATE Qt6::Network)
+zarya_configure_embedded_singbox(zarya-helper)
 if(WIN32)
     target_link_libraries(zarya-helper PRIVATE Fwpuclnt Ws2_32 iphlpapi)
 endif()
@@ -626,6 +633,14 @@ add_custom_command(TARGET zarya POST_BUILD
         $<TARGET_FILE_DIR:zarya>/
     COMMENT "Copy zarya-helper next to zarya"
 )
+if(WIN32)
+    add_custom_command(TARGET zarya POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_BINARY_DIR}/embedded-singbox/zarya-singbox.dll"
+            $<TARGET_FILE_DIR:zarya>/
+        COMMENT "Copy embedded sing-box bridge next to zarya"
+    )
+endif()
 
 set(ZARYA_UPDATER_SOURCES
     src/updater/runner/main.cpp
