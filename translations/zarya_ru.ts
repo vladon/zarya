@@ -666,8 +666,8 @@ Pre-import backup:
         <translation>Состояние загрузки: %1</translation>
     </message>
     <message>
-        <source>Xray is updated together with Zarya.</source>
-        <translation>Xray обновляется вместе с Zarya.</translation>
+        <source>This core is updated together with Zarya.</source>
+        <translation>Это ядро обновляется вместе с Zarya.</translation>
     </message>
 </context>
 <context>

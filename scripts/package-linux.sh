@@ -66,6 +66,8 @@ CORE_TEST_WORKER="$(dirname "$BIN")/zarya-core-test-worker"
 [[ -x "$CORE_TEST_WORKER" ]] || { echo "zarya-core-test-worker is missing" >&2; exit 1; }
 XRAY_BRIDGE="$(dirname "$BIN")/libzarya-xray.so"
 [[ -f "$XRAY_BRIDGE" ]] || { echo "libzarya-xray.so is missing" >&2; exit 1; }
+SINGBOX_BRIDGE="$(dirname "$BIN")/libzarya-singbox.so"
+[[ -f "$SINGBOX_BRIDGE" ]] || { echo "libzarya-singbox.so is missing" >&2; exit 1; }
 
 rm -rf "$STAGING"
 mkdir -p "$STAGING"
@@ -77,6 +79,7 @@ chmod +x "$STAGING/zarya-helper"
 cp "$UPDATER_BIN" "$STAGING/zarya-updater"
 chmod +x "$STAGING/zarya-updater"
 cp "$XRAY_BRIDGE" "$STAGING/libzarya-xray.so"
+cp "$SINGBOX_BRIDGE" "$STAGING/libzarya-singbox.so"
 cp "$CORE_TEST_WORKER" "$STAGING/zarya-core-test-worker"
 chmod +x "$STAGING/zarya-core-test-worker"
 touch "$STAGING/portable.flag"
@@ -127,6 +130,7 @@ write_release_manifest(
     helper_artifact="zarya-helper",
     updater_artifact="zarya-updater",
     embedded_xray_artifact="libzarya-xray.so",
+    embedded_singbox_artifact="libzarya-singbox.so",
     core_test_worker_artifact="zarya-core-test-worker",
     bundle_geodata=False if $SKIP_BUNDLE_GEODATA else None,
 )

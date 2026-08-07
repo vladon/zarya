@@ -703,8 +703,8 @@ Pre-import backup:
         <translation>Load status: %1</translation>
     </message>
     <message>
-        <source>Xray is updated together with Zarya.</source>
-        <translation>Xray is updated together with Zarya.</translation>
+        <source>This core is updated together with Zarya.</source>
+        <translation>This core is updated together with Zarya.</translation>
     </message>
 </context>
 <context>

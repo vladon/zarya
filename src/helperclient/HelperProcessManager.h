@@ -41,9 +41,8 @@ public:
 
     bool hello(QJsonObject* payload = nullptr, QString* errorMessage = nullptr);
     bool status(QJsonObject* payload = nullptr, QString* errorMessage = nullptr);
-    bool validateConfig(const QString& singBoxPath, const QString& configPath,
-                        QString* errorMessage = nullptr);
-    bool startTun(const QString& singBoxPath, const QString& configPath,
+    bool validateConfig(const QByteArray& configJson, QString* errorMessage = nullptr);
+    bool startTun(const QByteArray& configJson,
                   bool autoDisableKillSwitchOnFailure = true, QString* errorMessage = nullptr);
     bool stopTun(bool autoDisableKillSwitch = true, QString* errorMessage = nullptr);
 

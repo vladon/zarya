@@ -1,7 +1,2 @@
-Place the sing-box executable here, or use Tools → Core Manager to install it.
-
-Expected executable:
-- Windows: sing-box.exe
-- macOS/Linux: sing-box
-
-sing-box is required only for experimental TUN mode.
+Embedded sing-box is built into zarya-helper. Do not place a sing-box executable here.
+Rule-set data may still be stored under this directory.

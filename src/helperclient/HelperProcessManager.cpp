@@ -172,23 +172,12 @@ QString HelperProcessManager::helperExecutablePath() const
 QStringList HelperProcessManager::helperArguments() const
 {
     AppPaths::initialize(AppPaths::isPortableMode());
-    QString allowedCoreDir = AppPaths::singBoxCoreDir();
-    const QString configured = AppSettings::instance().singBoxExecutablePath().trimmed();
-    if (!configured.isEmpty()) {
-        const QFileInfo info(configured);
-        if (info.exists()) {
-            allowedCoreDir = info.absolutePath();
-        }
-    }
     return {QStringLiteral("--dev"),
             QStringLiteral("--token-file"),
             HelperSession::tokenFilePath(),
             QStringLiteral("--allowed-runtime-dir"),
-            AppPaths::runtimeDir(),
-            QStringLiteral("--allowed-core-dir"),
-            allowedCoreDir};
+            AppPaths::runtimeDir()};
 }
-
 bool HelperProcessManager::startHelperDevMode(QString* errorMessage)
 {
     if (!ensureToken(errorMessage)) {
@@ -319,33 +308,28 @@ bool HelperProcessManager::status(QJsonObject* payload, QString* errorMessage)
     return true;
 }
 
-bool HelperProcessManager::validateConfig(const QString& singBoxPath, const QString& configPath,
-                                          QString* errorMessage)
+bool HelperProcessManager::validateConfig(const QByteArray& configJson, QString* errorMessage)
 {
     IpcEnvelope request;
     request.command = ipcCommandValidateConfig();
-    request.payload =
-        QJsonObject{{QStringLiteral("singBoxPath"), singBoxPath},
-                    {QStringLiteral("configPath"), configPath}};
+    request.payload = QJsonObject{{QStringLiteral("configJson"), QString::fromUtf8(configJson)}};
     IpcEnvelope response;
     return m_client.sendRequest(request, &response, errorMessage);
 }
 
-bool HelperProcessManager::startTun(const QString& singBoxPath, const QString& configPath,
-                                    bool autoDisableKillSwitchOnFailure, QString* errorMessage)
+bool HelperProcessManager::startTun(const QByteArray& configJson,
+                                    bool autoDisableKillSwitchOnFailure,
+                                    QString* errorMessage)
 {
     IpcEnvelope request;
     request.command = ipcCommandStartTun();
     request.payload = QJsonObject{
-        {QStringLiteral("singBoxPath"), singBoxPath},
-        {QStringLiteral("configPath"), configPath},
-        {QStringLiteral("workingDirectory"), QFileInfo(singBoxPath).absolutePath()},
+        {QStringLiteral("configJson"), QString::fromUtf8(configJson)},
         {QStringLiteral("checkBeforeStart"), true},
         {QStringLiteral("autoDisableKillSwitchOnFailure"), autoDisableKillSwitchOnFailure}};
     IpcEnvelope response;
     return m_client.sendRequest(request, &response, errorMessage, 120000);
 }
-
 bool HelperProcessManager::stopTun(bool autoDisableKillSwitch, QString* errorMessage)
 {
     IpcEnvelope request;

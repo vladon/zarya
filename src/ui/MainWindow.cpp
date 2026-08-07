@@ -935,12 +935,6 @@ void MainWindow::runFirstRunWizard(bool force)
     Q_UNUSED(force);
     FirstRunWizard wizard(&m_coreBinaryManager, &m_routingManager, &m_dnsManager, this);
     connect(&wizard, &FirstRunWizard::openCoreManagerRequested, this, &MainWindow::onCoreManager);
-    connect(&wizard, &FirstRunWizard::chooseSingBoxBinaryRequested, this,
-            [this]() { chooseCoreBinary(CoreType::SingBox); });
-    connect(&wizard, &FirstRunWizard::installSingBoxRequested, this, [this]() {
-        onCoreManager();
-        m_coreBinaryManager.updateCore(CoreType::SingBox);
-    });
     connect(&wizard, &FirstRunWizard::openRoutingProfilesRequested, this,
             &MainWindow::onRoutingProfiles);
     connect(&wizard, &FirstRunWizard::openDnsProfilesRequested, this, &MainWindow::onDnsProfiles);
@@ -2605,20 +2599,8 @@ void MainWindow::onAbout()
 
 bool MainWindow::chooseCoreBinary(CoreType coreType)
 {
-    if (coreType == CoreType::Xray) {
-        return false;
-    }
-    const QString path = QFileDialog::getOpenFileName(
-        this, tr("Select sing-box executable"), {},
-        QStringLiteral("Executables (*.exe);;All files (*.*)"));
-    if (path.isEmpty()) {
-        return false;
-    }
-
-    AppSettings::instance().setSingBoxExecutablePath(path);
-    m_coreBinaryManager.refreshLocalState();
-    updateStatusDashboard();
-    return true;
+    Q_UNUSED(coreType);
+    return false;
 }
 
 } // namespace zarya

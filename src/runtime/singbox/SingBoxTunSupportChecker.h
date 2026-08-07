@@ -15,7 +15,7 @@ struct TunSupportResult {
 
 class SingBoxTunSupportChecker {
 public:
-    static TunSupportResult check(const QString& singBoxExecutablePath);
+    static TunSupportResult check();
 };
 
 } // namespace zarya

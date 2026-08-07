@@ -603,6 +603,7 @@ def write_release_manifest(
     helper_service: dict[str, Any] | None = None,
     bundle_geodata: bool | None = None,
     embedded_xray_artifact: str | None = None,
+    embedded_singbox_artifact: str | None = None,
     core_test_worker_artifact: str | None = None,
     cores_parent: Path | None = None,
 ) -> Path:
@@ -638,6 +639,13 @@ def write_release_manifest(
     included["xrayDistribution"] = "embedded"
     included["xrayCommit"] = source.get("commit") or ""
     included["xrayAbiVersion"] = 1
+    singbox_source = json.loads((ROOT / "third_party" / "sing-box.zarya.json").read_text(encoding="utf-8"))
+    included["singBox"] = True
+    included["singBoxVersion"] = singbox_source.get("tag") or ""
+    included["singBoxSource"] = "vendored"
+    included["singBoxDistribution"] = "embedded-helper"
+    included["singBoxCommit"] = singbox_source.get("commit") or ""
+    included["singBoxAbiVersion"] = 1
     if bundled_geo is not None:
         included["geoData"] = True
         included["geoDataSource"] = bundled_geo.get("sourceId") or "runetfreedom"
@@ -649,6 +657,12 @@ def write_release_manifest(
         if not bridge_path.is_file():
             raise FileNotFoundError(f"embedded Xray artifact is missing: {bridge_path}")
         checksums[embedded_xray_artifact] = f"sha256:{sha256_file(bridge_path)}"
+
+    if embedded_singbox_artifact:
+        bridge_path = staging / embedded_singbox_artifact
+        if not bridge_path.is_file():
+            raise FileNotFoundError(f"embedded sing-box artifact is missing: {bridge_path}")
+        checksums[embedded_singbox_artifact] = f"sha256:{sha256_file(bridge_path)}"
 
     if bundled_geo is not None:
         for key in ("geoip", "geosite"):
@@ -685,6 +699,8 @@ def write_release_manifest(
         manifest["artifacts"]["updater"] = updater_artifact
     if embedded_xray_artifact:
         manifest["artifacts"]["xrayBridge"] = embedded_xray_artifact
+    if embedded_singbox_artifact:
+        manifest["artifacts"]["singBoxBridge"] = embedded_singbox_artifact
     if core_test_worker_artifact:
         manifest["artifacts"]["coreTestWorker"] = core_test_worker_artifact
 

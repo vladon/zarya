@@ -25,7 +25,7 @@ if ((Split-Path -Leaf $Staging) -ne $ArtifactBase) {
     throw "Signed staging directory must be named $ArtifactBase"
 }
 
-$RequiredExecutables = @("Zarya.exe", "zarya-helper.exe", "zarya-updater.exe", "zarya-core-test-worker.exe", "zarya-xray.dll")
+$RequiredExecutables = @("Zarya.exe", "zarya-helper.exe", "zarya-updater.exe", "zarya-core-test-worker.exe", "zarya-xray.dll", "zarya-singbox.dll")
 $Signtool = Get-Command signtool -ErrorAction SilentlyContinue
 if (-not $Signtool) {
     $SdkSigntool = @(

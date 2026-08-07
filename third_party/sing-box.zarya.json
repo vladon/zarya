@@ -1,0 +1,11 @@
+{
+  "name": "sing-box",
+  "repository": "https://github.com/SagerNet/sing-box.git",
+  "tag": "v1.13.12",
+  "commit": "1086ab2563320e0da0c23b3a491d8dfa0939dff4",
+  "upstreamGoVersion": "1.24.7",
+  "bridgeGoVersion": "1.26.5",
+  "license": "GPL-3.0-only",
+  "sourceDirectory": "third_party/sing-box",
+  "updateCommand": ".\\scripts\\update-vendored-singbox.ps1 -Tag v1.13.12 -ExpectedCommit 1086ab2563320e0da0c23b3a491d8dfa0939dff4"
+}

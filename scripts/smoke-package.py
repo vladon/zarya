@@ -127,8 +127,13 @@ def main() -> int:
             bridge_names = ("zarya-xray.dll", "libzarya-xray.so")
             if not any(staging.rglob(name) for name in bridge_names):
                 errors.append("embedded Xray bridge not found")
+            singbox_bridge_names = ("zarya-singbox.dll", "libzarya-singbox.so")
+            if not any(staging.rglob(name) for name in singbox_bridge_names):
+                errors.append("embedded sing-box bridge not found")
         if any(staging.rglob("xray.exe")):
             errors.append("embedded Xray package unexpectedly contains xray.exe")
+        if any(path.is_file() for path in staging.rglob("sing-box.exe")) or any(path.is_file() for path in staging.rglob("sing-box")):
+            errors.append("embedded sing-box package unexpectedly contains external sing-box executable")
 
         if gui is not None:
             ok, output = run_version_check(gui, gui=True)

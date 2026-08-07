@@ -1,55 +1,42 @@
 #include "helper/HelperRuntimeManager.h"
 
-#include <QProcess>
-
-#if defined(Q_OS_LINUX)
-#include <signal.h>
-#include <sys/prctl.h>
-#endif
-
 namespace zarya {
 
 HelperRuntimeManager::HelperRuntimeManager(QObject* parent)
     : QObject(parent)
+    , m_runtimeHost(&m_coordinator, this)
 {
-    connect(&m_process, &QProcess::readyReadStandardOutput, this, [this]() {
-        emit logLine(QString::fromUtf8(m_process.readAllStandardOutput()).trimmed());
-    });
-    connect(&m_process, &QProcess::readyReadStandardError, this, [this]() {
-        emit logLine(QString::fromUtf8(m_process.readAllStandardError()).trimmed());
-    });
-    connect(&m_process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this,
-            [this](int exitCode, QProcess::ExitStatus status) {
-                Q_UNUSED(status);
-                m_killOnCloseJob.reset();
-                m_configPath.clear();
-                emit runtimeExited(exitCode);
+    connect(&m_runtimeHost, &ICoreRuntimeHost::logLine, this, &HelperRuntimeManager::logLine);
+    connect(&m_runtimeHost, &ICoreRuntimeHost::errorOccurred, this,
+            [this](const QString& code, const QString& message) {
+                emit logLine(QStringLiteral("helper embedded sing-box %1: %2").arg(code, message));
             });
-#if defined(Q_OS_LINUX)
-    m_process.setChildProcessModifier([]() {
-        ::prctl(PR_SET_PDEATHSIG, SIGTERM);
-    });
-#endif
-}
-
-void HelperRuntimeManager::setPathPolicy(const HelperPathPolicy* policy)
-{
-    m_pathPolicy = policy;
+    connect(&m_runtimeHost, &ICoreRuntimeHost::stateChanged, this,
+            [this](CoreRuntimeState state) {
+                if (state == CoreRuntimeState::Failed) {
+                    emit runtimeExited(-1);
+                }
+            });
 }
 
 bool HelperRuntimeManager::isRunning() const
 {
-    return m_process.state() != QProcess::NotRunning;
+    return m_runtimeHost.state() == CoreRuntimeState::Running;
 }
 
-qint64 HelperRuntimeManager::processId() const
+QString HelperRuntimeManager::version() const
 {
-    return m_process.processId();
+    return m_runtimeHost.version();
 }
 
-QString HelperRuntimeManager::configPath() const
+int HelperRuntimeManager::abiVersion() const
 {
-    return m_configPath;
+    return m_runtimeHost.abiVersion();
+}
+
+QString HelperRuntimeManager::loadStatus() const
+{
+    return m_runtimeHost.loadStatus();
 }
 
 QDateTime HelperRuntimeManager::startedAt() const
@@ -57,145 +44,70 @@ QDateTime HelperRuntimeManager::startedAt() const
     return m_startedAt;
 }
 
-QString HelperRuntimeManager::runProcess(const QString& executable, const QStringList& arguments,
-                                         int timeoutMs, int* exitCode) const
+CoreLaunchRequest HelperRuntimeManager::makeRequest(const QByteArray& configJson) const
 {
-    QProcess process;
-    process.setProgram(executable);
-    process.setArguments(arguments);
-    process.start();
-    if (!process.waitForStarted(5000)) {
-        if (exitCode) {
-            *exitCode = -1;
-        }
-        return process.errorString();
-    }
-    if (!process.waitForFinished(timeoutMs)) {
-        process.kill();
-        process.waitForFinished(1000);
-        if (exitCode) {
-            *exitCode = -1;
-        }
-        return QStringLiteral("Process timed out.");
-    }
-    if (exitCode) {
-        *exitCode = process.exitCode();
-    }
-    return QString::fromUtf8(process.readAllStandardOutput() + process.readAllStandardError())
-        .trimmed();
+    CoreLaunchRequest request;
+    request.coreType = CoreType::SingBox;
+    request.configJson = configJson;
+    return request;
 }
 
-bool HelperRuntimeManager::validateConfig(const QString& singBoxPath, const QString& configPath,
-                                          QString* output, QString* errorMessage)
+bool HelperRuntimeManager::validateConfig(const QByteArray& configJson, QString* output,
+                                          QString* errorMessage)
 {
-    if (m_pathPolicy) {
-        QString reason;
-        if (!m_pathPolicy->isAllowedSingBoxPath(singBoxPath, &reason)
-            || !m_pathPolicy->isAllowedConfigPath(configPath, &reason)) {
-            if (errorMessage) {
-                *errorMessage = reason;
-            }
-            return false;
-        }
+    const CoreOperationResult result = m_runtimeHost.validate(makeRequest(configJson));
+    if (output) {
+        *output = result.success ? QStringLiteral("Embedded sing-box config validation OK")
+                                 : result.message;
     }
-
-    const QList<QStringList> argumentSets = {
-        {QStringLiteral("check"), QStringLiteral("-c"), configPath},
-        {QStringLiteral("run"), QStringLiteral("-test"), QStringLiteral("-c"), configPath},
-    };
-
-    for (const QStringList& arguments : argumentSets) {
-        int exitCode = -1;
-        const QString processOutput = runProcess(singBoxPath, arguments, 30000, &exitCode);
-        if (output) {
-            *output = processOutput;
-        }
-        if (exitCode == 0) {
-            return true;
-        }
+    if (!result.success && errorMessage) {
+        *errorMessage = result.message;
     }
-
-    if (errorMessage) {
-        *errorMessage = QStringLiteral("sing-box config validation failed.");
-    }
-    return false;
+    return result.success;
 }
 
-bool HelperRuntimeManager::startTun(const QString& singBoxPath, const QString& configPath,
-                                    const QString& workingDirectory, bool checkBeforeStart,
+bool HelperRuntimeManager::startTun(const QByteArray& configJson, bool checkBeforeStart,
                                     QString* errorMessage)
 {
     if (isRunning()) {
         if (errorMessage) {
-            *errorMessage = QStringLiteral("sing-box is already running.");
+            *errorMessage = QStringLiteral("Embedded sing-box is already running.");
         }
         return false;
     }
-
-    if (m_pathPolicy) {
-        QString reason;
-        if (!m_pathPolicy->isAllowedSingBoxPath(singBoxPath, &reason)
-            || !m_pathPolicy->isAllowedConfigPath(configPath, &reason)
-            || !m_pathPolicy->isAllowedWorkingDirectory(workingDirectory, singBoxPath, &reason)) {
-            if (errorMessage) {
-                *errorMessage = reason;
-            }
-            return false;
-        }
-    }
-
-    if (checkBeforeStart) {
-        emit logLine(QStringLiteral("helper: running sing-box check"));
-        if (!validateConfig(singBoxPath, configPath, nullptr, errorMessage)) {
-            return false;
-        }
-        emit logLine(QStringLiteral("helper: validation OK"));
-    }
-
-    if (!workingDirectory.trimmed().isEmpty()) {
-        m_process.setWorkingDirectory(workingDirectory);
-    }
-
-    m_killOnCloseJob.reset();
-    m_process.setProgram(singBoxPath);
-    m_process.setArguments({QStringLiteral("run"), QStringLiteral("-c"), configPath});
-    emit logLine(QStringLiteral("helper: starting sing-box"));
-    m_process.start();
-    if (!m_process.waitForStarted(5000)) {
+    if (!m_runtimeHost.isAvailable()) {
         if (errorMessage) {
-            *errorMessage = m_process.errorString();
+            *errorMessage = m_runtimeHost.loadStatus();
         }
         return false;
     }
-
-    if (!m_killOnCloseJob.attach(m_process.processId())) {
-        emit logLine(QStringLiteral(
-            "helper: warning: could not attach sing-box to kill-on-close job"));
+    if (checkBeforeStart && !validateConfig(configJson, nullptr, errorMessage)) {
+        return false;
     }
-
-    m_configPath = configPath;
+    emit logLine(QStringLiteral("helper: starting embedded sing-box"));
+    const CoreOperationResult result = m_runtimeHost.start(makeRequest(configJson));
+    if (!result.success) {
+        if (errorMessage) {
+            *errorMessage = result.message;
+        }
+        return false;
+    }
     m_startedAt = QDateTime::currentDateTimeUtc();
     return true;
 }
 
 bool HelperRuntimeManager::stopTun(QString* errorMessage)
 {
-    if (!isRunning()) {
-        m_killOnCloseJob.reset();
-        return true;
+    emit logLine(QStringLiteral("helper: stopping embedded sing-box"));
+    const CoreOperationResult result = m_runtimeHost.stop();
+    if (!result.success && errorMessage) {
+        *errorMessage = result.message;
     }
-
-    emit logLine(QStringLiteral("helper: stopping sing-box"));
-    m_process.terminate();
-    if (!m_process.waitForFinished(5000)) {
-        m_process.kill();
-        m_process.waitForFinished(1000);
+    if (result.success) {
+        m_startedAt = {};
+        emit logLine(QStringLiteral("helper: embedded sing-box stopped"));
     }
-    m_killOnCloseJob.reset();
-    m_configPath.clear();
-    emit logLine(QStringLiteral("helper: sing-box stopped"));
-    Q_UNUSED(errorMessage);
-    return true;
+    return result.success;
 }
 
 } // namespace zarya
