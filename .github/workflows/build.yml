@@ -110,14 +110,15 @@ jobs:
         working-directory: src/runtime/embedded/xray/bridge
         shell: pwsh
         run: |
-          $gcc = Get-ChildItem 'C:\ProgramData\chocolatey\lib\mingw\tools\install' -Recurse -Filter x86_64-w64-mingw32-gcc.exe | Select-Object -First 1 -ExpandProperty FullName
+          $gcc = Get-Command x86_64-w64-mingw32-gcc.exe -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty Source
+          if (-not $gcc -and (Test-Path 'C:\mingw64\bin\gcc.exe')) { $gcc = 'C:\mingw64\bin\gcc.exe' }
           if (-not $gcc) { throw 'MinGW-w64 GCC was not installed for the embedded Xray Go bridge.' }
           $env:CC = $gcc
           go mod verify
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           go test ./...
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          Push-Location src/runtime/embedded/singbox/bridge
+          Push-Location ../../singbox/bridge
           go mod verify
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           go test ./...

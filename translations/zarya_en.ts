@@ -4468,7 +4468,7 @@ Choose whether to delete its imported profiles or keep them as manual profiles.<
     <message>
         <source>sing-box exited unexpectedly while kill switch is active.
 
-Direct traffic may remain blocked. Use Settings → Kill Switch → Disable Now or recovery instructions.</source>
+Direct traffic may remain blocked. Use Settings → Kill Switch → Disable Now.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
