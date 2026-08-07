@@ -96,6 +96,8 @@ jobs:
           if (-not $gcc -and (Test-Path 'C:\mingw64\bin\gcc.exe')) { $gcc = 'C:\mingw64\bin\gcc.exe' }
           if (-not $gcc) { throw 'MinGW-w64 GCC was not installed for the embedded Xray Go bridge.' }
           $env:CC = $gcc
+          "ZARYA_XRAY_CGO_COMPILER=$gcc" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "ZARYA_SINGBOX_CGO_COMPILER=$gcc" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           go mod verify
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           go test ./...
