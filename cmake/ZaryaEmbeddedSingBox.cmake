@@ -36,7 +36,7 @@ function(zarya_configure_embedded_singbox target)
         endif()
         if(NOT _zarya_singbox_cgo)
             find_program(_zarya_singbox_cgo NAMES x86_64-w64-mingw32-gcc gcc
-                HINTS "${CMAKE_BINARY_DIR}/tools/winlibs/mingw64/bin" "C:/mingw64/bin" "C:/ProgramData/chocolatey/lib/mingw/tools/install/mingw64/bin" "$ENV{MINGW_ROOT}/bin")
+                HINTS "${CMAKE_BINARY_DIR}/tools/winlibs/mingw64/bin" "C:/mingw64/bin" "C:/ProgramData/mingw64/mingw64/bin" "C:/ProgramData/chocolatey/lib/mingw/tools/install/mingw64/bin" "$ENV{MINGW_ROOT}/bin")
         endif()
         if(NOT _zarya_singbox_cgo)
             message(FATAL_ERROR
