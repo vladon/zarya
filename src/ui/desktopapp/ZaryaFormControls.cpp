@@ -77,6 +77,7 @@ ZaryaActionButton::ZaryaActionButton(
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSizeConstraint(QLayout::SetMinimumSize);
     layout->addWidget(button.release());
+    m_button->show();
     setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     setMinimumHeight(std::max(m_button->sizeHint().height(), 1));
 }
@@ -107,6 +108,7 @@ ZaryaTextField::ZaryaTextField(
             rpl::single(placeholder),
             TextWithTags()));
     m_field = field;
+    field->show();
     setFocusProxy(field);
     setMinimumHeight(field->sizeHint().height());
     if (password) {
@@ -198,6 +200,7 @@ ZaryaTextArea::ZaryaTextArea(
         TextWithTags());
     field->setMinHeight(minimumHeight);
     m_field = field;
+    field->show();
     setFocusProxy(field);
     setMinimumHeight(minimumHeight);
     field->changes() | rpl::on_next(
@@ -247,6 +250,7 @@ ZaryaBodyText::ZaryaBodyText(const QString& text, QWidget* parent)
     auto* layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(label);
+    label->show();
 }
 
 void ZaryaBodyText::setText(const QString& text)
@@ -267,6 +271,7 @@ ZaryaFormSection::ZaryaFormSection(const QString& title, QWidget* parent)
     m_layout->setContentsMargins(16, 16, 16, 16);
     m_layout->setSpacing(10);
     m_layout->addWidget(label);
+    label->show();
 }
 
 void ZaryaFormSection::addWidget(QWidget* widget)
@@ -296,6 +301,7 @@ ZaryaNumberField::ZaryaNumberField(
         QString(),
         digits);
     m_field = field;
+    field->show();
     setFocusProxy(field);
     setMinimumHeight(field->sizeHint().height());
     connect(field, &Ui::NumberInput::changed, this, [this] {
@@ -358,6 +364,7 @@ ZaryaCheckBox::ZaryaCheckBox(const QString& text, QWidget* parent, bool checked)
     auto* layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(checkbox);
+    checkbox->show();
     layout->addStretch();
     checkbox->checkedChanges() | rpl::on_next(
         [this](bool value) { Q_EMIT toggled(value); },
@@ -400,6 +407,7 @@ void ZaryaRadioGroup::addOption(int value, const QString& text)
     m_options.push_back({button, text});
     updateAccessibleNames();
     m_layout->addWidget(button);
+    button->show();
 }
 
 int ZaryaRadioGroup::value() const
@@ -438,6 +446,7 @@ ZaryaFormRow::ZaryaFormRow(const QString& label, QWidget* field, QWidget* parent
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(12);
     layout->addWidget(text, 0, Qt::AlignVCenter);
+    text->show();
     layout->addWidget(field, 1);
     m_accessibleControl = dynamic_cast<ZaryaAccessibleFormControl*>(field);
     if (m_accessibleControl) {
@@ -466,6 +475,7 @@ ZaryaValidationMessage::ZaryaValidationMessage(QWidget* parent)
     auto* layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(label);
+    label->show();
     connect(
         &ThemeManager::instance(),
         &ThemeManager::themeChanged,
@@ -535,6 +545,8 @@ ZaryaDialogActionRow::ZaryaDialogActionRow(
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(8);
     layout->addStretch();
+    cancel->show();
+    accept->show();
     layout->addWidget(cancel.release());
     layout->addWidget(accept.release());
 }

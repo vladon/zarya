@@ -26,6 +26,7 @@ ZaryaSelector::ZaryaSelector(QWidget* parent)
     auto* layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(button.release());
+    m_button->show();
 
     auto* menu = new Ui::DropdownMenu(window());
     menu->setAutoHiding(false);
