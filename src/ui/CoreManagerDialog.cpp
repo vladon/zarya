@@ -46,7 +46,6 @@ CoreManagerDialog::CoreManagerDialog(CoreBinaryManager& manager,
     m_updateAllButton = new ZaryaActionButton(tr("Update All"), this);
     m_rollbackButton = new ZaryaActionButton(tr("Rollback"), this);
     m_openFolderButton = new ZaryaActionButton(tr("Open Core Folder"), this);
-    m_resetPathButton = new ZaryaActionButton(tr("Reset to Managed Path"), this);
     m_cancelButton = new ZaryaActionButton(tr("Cancel Download"), this);
 
     connect(m_checkButton, &ZaryaActionButton::clicked,
@@ -59,8 +58,6 @@ CoreManagerDialog::CoreManagerDialog(CoreBinaryManager& manager,
             this, &CoreManagerDialog::onRollback);
     connect(m_openFolderButton, &ZaryaActionButton::clicked,
             this, &CoreManagerDialog::onOpenFolder);
-    connect(m_resetPathButton, &ZaryaActionButton::clicked,
-            this, &CoreManagerDialog::onResetManagedPath);
     connect(m_cancelButton, &ZaryaActionButton::clicked,
             this, &CoreManagerDialog::onCancelDownload);
 
@@ -70,7 +67,6 @@ CoreManagerDialog::CoreManagerDialog(CoreBinaryManager& manager,
     buttons->addWidget(m_updateAllButton);
     buttons->addWidget(m_rollbackButton);
     buttons->addWidget(m_openFolderButton);
-    buttons->addWidget(m_resetPathButton);
     buttons->addWidget(m_cancelButton);
     buttons->addStretch();
 
@@ -101,7 +97,6 @@ CoreManagerDialog::CoreManagerDialog(CoreBinaryManager& manager,
          m_updateAllButton,
          m_rollbackButton,
          m_openFolderButton,
-         m_resetPathButton,
          m_cancelButton},
         tr("Installed cores"),
         tr("Core manager log"));
@@ -167,7 +162,6 @@ void CoreManagerDialog::refreshDetails()
     m_updateAllButton->setEnabled(!embedded);
     m_rollbackButton->setEnabled(!embedded);
     m_openFolderButton->setEnabled(!embedded);
-    m_resetPathButton->setEnabled(!embedded);
     m_detailsLabel->setText(details);
 }
 
@@ -189,7 +183,6 @@ void CoreManagerDialog::setBusy(bool busy)
     m_updateAllButton->setEnabled(!busy && !embedded);
     m_rollbackButton->setEnabled(!busy && !embedded);
     m_openFolderButton->setEnabled(!busy && !embedded);
-    m_resetPathButton->setEnabled(!busy && !embedded);
     m_cancelButton->setEnabled(busy);
 }
 
@@ -232,11 +225,6 @@ void CoreManagerDialog::onOpenFolder()
     QDesktopServices::openUrl(QUrl::fromLocalFile(info.installDir));
 }
 
-void CoreManagerDialog::onResetManagedPath()
-{
-    m_manager.resetToManagedPath(selectedCoreType());
-    refreshDetails();
-}
 
 void CoreManagerDialog::onCancelDownload()
 {

@@ -171,7 +171,6 @@ set(ZARYA_RULESET_SOURCES
     src/rulesets/RuleSetNormalizer.cpp
     src/rulesets/RuleSetCatalog.cpp
     src/rulesets/RuleSetVerifier.cpp
-    src/rulesets/RuleSetCompiler.cpp
     src/rulesets/RuleSetDownloader.cpp
     src/rulesets/RequiredRuleSetDetector.cpp
     src/rulesets/RuleSetManager.cpp

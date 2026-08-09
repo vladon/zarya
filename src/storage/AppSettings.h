@@ -19,9 +19,6 @@ public:
     int mixedPort() const;
     void setMixedPort(int port);
 
-    QString singBoxExecutablePath() const;
-    void setSingBoxExecutablePath(const QString& path);
-    QString resolvedSingBoxPath() const;
 
     bool enableExperimentalTun() const;
     void setEnableExperimentalTun(bool enabled);

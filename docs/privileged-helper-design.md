@@ -25,10 +25,10 @@ Experimental TUN mode requires route changes and often elevated privileges. Runn
 ## Architecture
 
 ```
-Zarya GUI (user)  --QLocalSocket/JSON-->  zarya-helper  --QProcess-->  sing-box TUN
+Zarya GUI (user)  --QLocalSocket/JSON-->  zarya-helper  --embedded Go ABI-->  sing-box TUN
 ```
 
-The GUI still generates `runtime/sing-box-tun.json` from Profile + RoutingProfile + DnsProfile (0.14). The helper validates paths, runs `sing-box check`, then `sing-box run`.
+The GUI serializes the generated TUN configuration as authenticated in-memory JSON. The helper validates and starts the embedded sing-box ABI; it never accepts an executable path or writes runtime credentials to a config file.
 
 Xray system-proxy mode remains in the GUI process only.
 
@@ -49,11 +49,11 @@ Xray system-proxy mode remains in the GUI process only.
 | Command | Purpose |
 |---------|---------|
 | `hello` | Version, platform, privilege, TUN support |
-| `status` | sing-box running, pid, config path |
-| `checkSupport` | Privilege + TUN support for a sing-box path |
-| `validateConfig` | Run sing-box check on config path |
-| `startTun` | Validate (optional) and start sing-box |
-| `stopTun` | Stop sing-box |
+| `status` | embedded sing-box state, version, ABI and load status |
+| `checkSupport` | Privilege + embedded TUN support |
+| `validateConfig` | Validate an in-memory embedded configuration |
+| `compileRuleSet` | Compile JSON rule-set to app-owned `.srs` through embedded ABI |
+| `startTun` / `stopTun` | Start or stop embedded sing-box |
 | `shutdownHelper` | Exit helper |
 
 Messages are newline-delimited JSON envelopes (`version`, `id`, `type`, `command`, `token`, `payload`).

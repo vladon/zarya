@@ -5,8 +5,11 @@
 #include "packaging/PackagingInfo.h"
 #include "platform/PlatformPrivilege.h"
 #include "runtime/singbox/SingBoxTunSupportChecker.h"
+#include "storage/AppPaths.h"
 
 #include <QCoreApplication>
+#include <QDir>
+#include <QFileInfo>
 #include <QJsonArray>
 #include <QLocalSocket>
 
@@ -211,6 +214,28 @@ void HelperCommandServer::handleRequest(const IpcEnvelope& request, QLocalSocket
         return;
     }
 
+    if (request.command == ipcCommandCompileRuleSet()) {
+        QByteArray ruleSetJson;
+        QString error;
+        if (!configFromPayload(request.payload, &ruleSetJson, &error)) {
+            sendError(client, request, error);
+            return;
+        }
+        const QString outputPath = request.payload.value(QStringLiteral("outputPath")).toString();
+        const QString allowedDir = QDir::cleanPath(AppPaths::singBoxRuleSetDir());
+        const QFileInfo outputInfo(outputPath);
+        if (!outputInfo.isAbsolute() || QDir::cleanPath(outputInfo.absolutePath()) != allowedDir
+            || outputInfo.suffix() != QStringLiteral("srs")) {
+            sendError(client, request, QStringLiteral("Rule-set output path is not app-owned."));
+            return;
+        }
+        if (!m_runtime.compileRuleSet(ruleSetJson, outputInfo.absoluteFilePath(), &error)) {
+            sendError(client, request, error);
+            return;
+        }
+        sendOk(client, request, QJsonObject{});
+        return;
+    }
     if (request.command == ipcCommandValidateConfig()) {
         QByteArray configJson;
         QString error;

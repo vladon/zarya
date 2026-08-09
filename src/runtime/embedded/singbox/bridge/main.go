@@ -8,14 +8,18 @@ import "C"
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"sync"
 	"unsafe"
 
 	box "github.com/sagernet/sing-box"
+	"github.com/sagernet/sing-box/common/srs"
 	constant "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
+	"github.com/sagernet/sing-box/route/rule"
+	sjson "github.com/sagernet/sing/common/json"
 )
 
 const (
@@ -241,6 +245,48 @@ func ZaryaSingBoxFree(value unsafe.Pointer) {
 	}
 }
 
+func compileRuleSet(content []byte, outputPath string) error {
+	ruleSet, err := sjson.UnmarshalExtended[option.PlainRuleSetCompat](content)
+	if err != nil {
+		return err
+	}
+	file, err := os.Create(outputPath)
+	if err != nil {
+		return err
+	}
+	version := ruleSet.Version
+	if version == constant.RuleSetVersion4 && !rule.HasHeadlessRule(ruleSet.Options.Rules, func(item option.DefaultHeadlessRule) bool {
+		return item.NetworkInterfaceAddress != nil && item.NetworkInterfaceAddress.Size() > 0 || len(item.DefaultInterfaceAddress) > 0
+	}) {
+		version = constant.RuleSetVersion3
+	}
+	if version == constant.RuleSetVersion3 && !rule.HasHeadlessRule(ruleSet.Options.Rules, func(item option.DefaultHeadlessRule) bool {
+		return len(item.NetworkType) > 0 || item.NetworkIsExpensive || item.NetworkIsConstrained
+	}) {
+		version = constant.RuleSetVersion2
+	}
+	if err := srs.Write(file, ruleSet.Options, version); err != nil {
+		file.Close()
+		os.Remove(outputPath)
+		return err
+	}
+	return file.Close()
+}
+
+//export ZaryaSingBoxCompileRuleSet
+func ZaryaSingBoxCompileRuleSet(ruleSetJSON *C.char, ruleSetSize C.size_t, outputPath *C.char, outputPathSize C.size_t) *C.char {
+	return safeCall(func() error {
+		content, err := cBytes(ruleSetJSON, ruleSetSize)
+		if err != nil {
+			return err
+		}
+		path, err := cBytes(outputPath, outputPathSize)
+		if err != nil {
+			return err
+		}
+		return compileRuleSet(content, string(path))
+	})
+}
 func init() { constant.Version = "1.13.12" }
 
 func main() {}

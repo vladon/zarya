@@ -19,6 +19,8 @@ char* ZaryaSingBoxVersion(void);
 char* ZaryaSingBoxValidate(const char* config_json, size_t config_size);
 char* ZaryaSingBoxStart(const char* config_json, size_t config_size);
 char* ZaryaSingBoxStop(void);
+char* ZaryaSingBoxCompileRuleSet(const char* rule_set_json, size_t rule_set_size,
+                                      const char* output_path, size_t output_path_size);
 int ZaryaSingBoxState(void);
 char* ZaryaSingBoxDrainLogs(void);
 void ZaryaSingBoxFree(void* value);

@@ -95,6 +95,7 @@ void EmbeddedSingBoxRuntimeHost::loadBridge()
     m_versionFunction = &ZaryaSingBoxVersion;
     m_validateFunction = &ZaryaSingBoxValidate;
     m_startFunction = &ZaryaSingBoxStart;
+    m_compileRuleSetFunction = &ZaryaSingBoxCompileRuleSet;
     m_stopFunction = &ZaryaSingBoxStop;
     m_stateFunction = &ZaryaSingBoxState;
     m_drainLogsFunction = &ZaryaSingBoxDrainLogs;
@@ -127,6 +128,7 @@ void EmbeddedSingBoxRuntimeHost::loadBridge()
     m_versionFunction = reinterpret_cast<StringFunction>(m_library.resolve("ZaryaSingBoxVersion"));
     m_validateFunction = reinterpret_cast<ConfigFunction>(m_library.resolve("ZaryaSingBoxValidate"));
     m_startFunction = reinterpret_cast<ConfigFunction>(m_library.resolve("ZaryaSingBoxStart"));
+    m_compileRuleSetFunction = reinterpret_cast<RuleSetFunction>(m_library.resolve("ZaryaSingBoxCompileRuleSet"));
     m_stopFunction = reinterpret_cast<StringFunction>(m_library.resolve("ZaryaSingBoxStop"));
     m_stateFunction = reinterpret_cast<StateFunction>(m_library.resolve("ZaryaSingBoxState"));
     m_drainLogsFunction = reinterpret_cast<StringFunction>(m_library.resolve("ZaryaSingBoxDrainLogs"));
@@ -134,7 +136,7 @@ void EmbeddedSingBoxRuntimeHost::loadBridge()
 #endif
 
     if (!m_abiVersionFunction || !m_versionFunction || !m_validateFunction || !m_startFunction
-        || !m_stopFunction || !m_stateFunction || !m_drainLogsFunction || !m_freeFunction) {
+        || !m_compileRuleSetFunction || !m_stopFunction || !m_stateFunction || !m_drainLogsFunction || !m_freeFunction) {
         m_loadStatus = QStringLiteral("Embedded sing-box ABI is incomplete; repair or reinstall Zarya.");
         return;
     }
@@ -194,6 +196,23 @@ CoreOperationResult EmbeddedSingBoxRuntimeHost::start(const CoreLaunchRequest& r
     return result;
 }
 
+CoreOperationResult EmbeddedSingBoxRuntimeHost::compileRuleSet(const QByteArray& ruleSetJson,
+                                                               const QString& outputPath)
+{
+    if (!m_available || !m_compileRuleSetFunction) {
+        return CoreOperationResult::failure(QStringLiteral("singbox.embedded.unavailable"),
+                                            m_loadStatus);
+    }
+    const QByteArray path = outputPath.toUtf8();
+    if (ruleSetJson.isEmpty() || path.isEmpty()) {
+        return CoreOperationResult::failure(QStringLiteral("singbox.ruleset.invalid"),
+                                            QStringLiteral("Rule-set input or output path is empty."));
+    }
+    return takeResult(m_compileRuleSetFunction(ruleSetJson.constData(),
+                                                static_cast<std::size_t>(ruleSetJson.size()),
+                                                path.constData(), static_cast<std::size_t>(path.size())),
+                      QStringLiteral("singbox.ruleset.compile_failed"));
+}
 CoreOperationResult EmbeddedSingBoxRuntimeHost::stop()
 {
     if (!m_available) {

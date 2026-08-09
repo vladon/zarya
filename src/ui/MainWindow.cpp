@@ -174,6 +174,7 @@ MainWindow::MainWindow(QWidget* parent)
                       &m_routingManager, &m_geoDataManager, &m_dnsManager, &m_ruleSetManager,
                       this)
 {
+    m_ruleSetManager.setHelperProcessManager(m_appController.helperProcessManager());
     LogBuffer::instance().setAppStartedAt(QDateTime::currentDateTimeUtc());
     setupUi();
     setupMenuBar();

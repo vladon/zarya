@@ -33,8 +33,6 @@ public:
     void rollback(CoreType type);
     void cancelDownload();
 
-    bool setManagedExecutablePath(CoreType type);
-    void resetToManagedPath(CoreType type);
 
 signals:
     void logLine(const QString& line);

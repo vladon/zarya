@@ -12,12 +12,15 @@
 
 namespace zarya {
 
+class HelperProcessManager;
+
 class RuleSetManager : public QObject {
     Q_OBJECT
 
 public:
     explicit RuleSetManager(QObject* parent = nullptr);
 
+    void setHelperProcessManager(HelperProcessManager* helperManager);
     QString targetDirectory() const;
     bool reload(QString* errorMessage = nullptr);
     QVector<RuleSetItem> items() const;
@@ -52,6 +55,7 @@ private:
 
     QVector<RuleSetItem> m_items;
     RuleSetStore m_store;
+    HelperProcessManager* m_helperManager = nullptr;
 };
 
 } // namespace zarya

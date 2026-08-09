@@ -50,6 +50,7 @@ QString ipcCommandHello() { return QStringLiteral("hello"); }
 QString ipcCommandStatus() { return QStringLiteral("status"); }
 QString ipcCommandCheckSupport() { return QStringLiteral("checkSupport"); }
 QString ipcCommandValidateConfig() { return QStringLiteral("validateConfig"); }
+QString ipcCommandCompileRuleSet() { return QStringLiteral("compileRuleSet"); }
 QString ipcCommandStartTun() { return QStringLiteral("startTun"); }
 QString ipcCommandStopTun() { return QStringLiteral("stopTun"); }
 QString ipcCommandGetLogs() { return QStringLiteral("getLogs"); }

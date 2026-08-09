@@ -2968,8 +2968,8 @@ domain:example.com</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>sing-box executable: %1</source>
-        <translation type="unfinished"></translation>
+        <source>sing-box is built into Zarya helper.</source>
+        <translation>sing-box is built into Zarya helper.</translation>
     </message>
     <message>
         <source>Tag</source>
@@ -3875,6 +3875,10 @@ Continue with experimental TUN?</source>
     <message>
         <source>sing-box check OK.</source>
         <translation>sing-box check OK.</translation>
+    </message>
+    <message>
+        <source>Embedded validation is performed when the TUN runtime starts.</source>
+        <translation>Embedded validation is performed when the TUN runtime starts.</translation>
     </message>
 </context>
 <context>

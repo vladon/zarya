@@ -30,11 +30,13 @@ public:
     CoreOperationResult validate(const CoreLaunchRequest& request) override;
     CoreOperationResult start(const CoreLaunchRequest& request) override;
     CoreOperationResult stop() override;
+    CoreOperationResult compileRuleSet(const QByteArray& ruleSetJson, const QString& outputPath);
 
 private:
     using AbiVersionFunction = int (*)();
     using StringFunction = char* (*)();
     using ConfigFunction = char* (*)(const char*, std::size_t);
+    using RuleSetFunction = char* (*)(const char*, std::size_t, const char*, std::size_t);
     using StateFunction = int (*)();
     using FreeFunction = void (*)(void*);
 
@@ -64,6 +66,7 @@ private:
     StringFunction m_versionFunction = nullptr;
     ConfigFunction m_validateFunction = nullptr;
     ConfigFunction m_startFunction = nullptr;
+    RuleSetFunction m_compileRuleSetFunction = nullptr;
     StringFunction m_stopFunction = nullptr;
     StateFunction m_stateFunction = nullptr;
     StringFunction m_drainLogsFunction = nullptr;

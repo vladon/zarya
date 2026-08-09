@@ -96,6 +96,16 @@ bool HelperRuntimeManager::startTun(const QByteArray& configJson, bool checkBefo
     return true;
 }
 
+bool HelperRuntimeManager::compileRuleSet(const QByteArray& ruleSetJson,
+                                          const QString& outputPath,
+                                          QString* errorMessage)
+{
+    const CoreOperationResult result = m_runtimeHost.compileRuleSet(ruleSetJson, outputPath);
+    if (!result.success && errorMessage) {
+        *errorMessage = result.message;
+    }
+    return result.success;
+}
 bool HelperRuntimeManager::stopTun(QString* errorMessage)
 {
     emit logLine(QStringLiteral("helper: stopping embedded sing-box"));

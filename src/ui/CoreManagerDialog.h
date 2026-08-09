@@ -27,7 +27,6 @@ private Q_SLOTS:
     void onUpdateAll();
     void onRollback();
     void onOpenFolder();
-    void onResetManagedPath();
     void onCancelDownload();
     void onCoresChanged(const QVector<CoreInfo>& infos);
     void onLogLine(const QString& line);
@@ -51,7 +50,6 @@ private:
     ZaryaActionButton* m_updateAllButton = nullptr;
     ZaryaActionButton* m_rollbackButton = nullptr;
     ZaryaActionButton* m_openFolderButton = nullptr;
-    ZaryaActionButton* m_resetPathButton = nullptr;
     ZaryaActionButton* m_cancelButton = nullptr;
 };
 

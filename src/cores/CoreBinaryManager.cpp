@@ -497,7 +497,6 @@ void CoreBinaryManager::finishInstall(CoreType type, const CoreRelease& release,
         }
     }
 
-    AppSettings::instance().setSingBoxExecutablePath({});
 
     refreshLocalState();
     emit operationFinished(true, QStringLiteral("Core update completed."));
@@ -538,23 +537,5 @@ void CoreBinaryManager::cancelDownload()
     }
 }
 
-bool CoreBinaryManager::setManagedExecutablePath(CoreType type)
-{
-    if (type == CoreType::Xray) {
-        return false;
-    }
-    AppSettings::instance().setSingBoxExecutablePath(CorePaths::managedExecutablePath(type));
-    refreshLocalState();
-    return true;
-}
-
-void CoreBinaryManager::resetToManagedPath(CoreType type)
-{
-    if (type == CoreType::Xray) {
-        return;
-    }
-    AppSettings::instance().setSingBoxExecutablePath({});
-    refreshLocalState();
-}
 
 } // namespace zarya

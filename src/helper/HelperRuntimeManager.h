@@ -25,6 +25,8 @@ public:
     bool startTun(const QByteArray& configJson, bool checkBeforeStart,
                   QString* errorMessage = nullptr);
     bool stopTun(QString* errorMessage = nullptr);
+    bool compileRuleSet(const QByteArray& ruleSetJson, const QString& outputPath,
+                        QString* errorMessage = nullptr);
 
 signals:
     void logLine(const QString& line);

@@ -2564,8 +2564,8 @@ domain:example.com</translation></message>
         <source>Target directory: %1</source>
         <translation>Целевой каталог: %1</translation></message>
     <message>
-        <source>sing-box executable: %1</source>
-        <translation>Исполняемый файл sing-box: %1</translation></message>
+        <source>sing-box is built into Zarya helper.</source>
+        <translation>sing-box встроен в helper Zarya.</translation></message>
     <message>
         <source>Tag</source>
         <translation>Тег</translation></message>
@@ -3345,6 +3345,10 @@ Continue with experimental TUN?</source>
     <message>
         <source>sing-box check OK.</source>
         <translation>Проверка sing-box пройдена.</translation>
+    </message>
+    <message>
+        <source>Embedded validation is performed when the TUN runtime starts.</source>
+        <translation>Встроенная проверка выполняется при запуске TUN.</translation>
     </message>
 </context>
 <context>

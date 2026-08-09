@@ -2,7 +2,7 @@
 
 #include "packaging/PackagingInfo.h"
 #include "rulesets/RuleSetCatalog.h"
-#include "rulesets/RuleSetCompiler.h"
+#include "helperclient/HelperProcessManager.h"
 #include "rulesets/RuleSetDownloader.h"
 #include "rulesets/RuleSetVerifier.h"
 #include "storage/AppPaths.h"
@@ -18,6 +18,11 @@ RuleSetManager::RuleSetManager(QObject* parent)
     : QObject(parent)
 {
     reload(nullptr);
+}
+
+void RuleSetManager::setHelperProcessManager(HelperProcessManager* helperManager)
+{
+    m_helperManager = helperManager;
 }
 
 QString RuleSetManager::targetDirectory() const
@@ -196,20 +201,24 @@ bool RuleSetManager::compileTag(const QString& tag, QString* errorMessage)
         }
         return false;
     }
-    RuleSetCompiler compiler;
-    const RuleSetCompileResult result = compiler.compileJsonToSrs(
-        AppSettings::instance().resolvedSingBoxPath(), jsonPath,
-        AppPaths::localRuleSetSrsPath(tag));
-    if (!result.output.trimmed().isEmpty()) {
-        emit logLine(result.output.trimmed());
+    if (!m_helperManager) {
+        if (errorMessage) *errorMessage = QStringLiteral("Embedded helper is unavailable.");
+        return false;
     }
-    if (!result.success) {
+    QFile jsonFile(jsonPath);
+    if (!jsonFile.open(QIODevice::ReadOnly)) {
+        if (errorMessage) *errorMessage = jsonFile.errorString();
+        return false;
+    }
+    QString compileError;
+    const bool compiled = m_helperManager->compileRuleSet(jsonFile.readAll(), AppPaths::localRuleSetSrsPath(tag), &compileError);
+    if (!compiled) {
         if (errorMessage) {
-            *errorMessage = result.errorMessage;
+            *errorMessage = compileError;
         }
         if (RuleSetItem* item = findItem(tag)) {
             item->status = RuleSetStatus::CompileFailed;
-            item->lastError = result.errorMessage;
+            item->lastError = compileError;
         }
         return false;
     }

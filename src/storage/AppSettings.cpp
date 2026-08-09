@@ -5,7 +5,6 @@
 #include "features/FeatureId.h"
 #include "features/FeaturePolicy.h"
 #include "app/StartupOptions.h"
-#include "platform/Platform.h"
 #include "storage/AppPaths.h"
 #include "storage/DefaultSettings.h"
 
@@ -56,25 +55,6 @@ void AppSettings::setMixedPort(int port)
     s.setValue(QStringLiteral("proxy/mixedPort"), port);
     s.remove(QStringLiteral("proxy/socksPort"));
     s.remove(QStringLiteral("proxy/httpPort"));
-}
-
-QString AppSettings::singBoxExecutablePath() const
-{
-    return settings().value(QStringLiteral("cores/singBoxPath")).toString();
-}
-
-void AppSettings::setSingBoxExecutablePath(const QString& path)
-{
-    settings().setValue(QStringLiteral("cores/singBoxPath"), path.trimmed());
-}
-
-QString AppSettings::resolvedSingBoxPath() const
-{
-    const QString configured = singBoxExecutablePath().trimmed();
-    if (!configured.isEmpty()) {
-        return configured;
-    }
-    return Platform::defaultSingBoxExecutablePath();
 }
 
 bool AppSettings::enableExperimentalTun() const
