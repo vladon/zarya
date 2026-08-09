@@ -37,9 +37,7 @@ RuleSetManagerDialog::RuleSetManagerDialog(RuleSetManager& manager, RoutingManag
         tr("Target directory: %1").arg(m_manager.targetDirectory()), this);
 
     auto* singBoxLabel = new ZaryaBodyText(
-        tr("sing-box executable: %1")
-            .arg(AppSettings::instance().resolvedSingBoxPath()),
-        this);
+        tr("sing-box is built into Zarya helper."), this);
 
     m_requiredTable = new QTableWidget(this);
     m_requiredTable->setColumnCount(4);

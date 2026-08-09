@@ -317,6 +317,16 @@ bool HelperProcessManager::validateConfig(const QByteArray& configJson, QString*
     return m_client.sendRequest(request, &response, errorMessage);
 }
 
+bool HelperProcessManager::compileRuleSet(const QByteArray& ruleSetJson, const QString& outputPath,
+                                          QString* errorMessage)
+{
+    IpcEnvelope request;
+    request.command = ipcCommandCompileRuleSet();
+    request.payload = QJsonObject{{QStringLiteral("configJson"), QString::fromUtf8(ruleSetJson)},
+                                  {QStringLiteral("outputPath"), outputPath}};
+    IpcEnvelope response;
+    return m_client.sendRequest(request, &response, errorMessage, 120000);
+}
 bool HelperProcessManager::startTun(const QByteArray& configJson,
                                     bool autoDisableKillSwitchOnFailure,
                                     QString* errorMessage)

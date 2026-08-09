@@ -1,62 +1,20 @@
-# Zarya Core Update Manager
+# Zarya Core Runtime Manager
 
 ## Runtime distributions
 
-- **Xray** — embedded system-proxy runtime. Core Manager shows **Built into Zarya**,
-  the Xray/ABI versions and load status. Download, update, rollback, folder and path
-  actions are disabled; Xray is updated with the app.
-- **sing-box** — external managed executable for experimental TUN. Existing download,
-  checksum, install and rollback behavior remains unchanged.
+- **Xray** — embedded system-proxy runtime in the GUI.
+- **sing-box** — embedded experimental TUN runtime in the privileged `zarya-helper`.
 
-`cores/xray/` stores geo assets only. Managed executable paths and the update flow below
-apply exclusively to sing-box. Existing `cores/xrayPath` values are inert and ignored.
+Core Manager shows **Built into Zarya**, the core and ABI versions, and runtime load status for both cores. Download, update, rollback, folder and executable-path actions are unavailable: core updates are delivered only through the Zarya app update.
 
-## Checksum policy
-
-When a companion checksum asset is found (`.sha256`, `.dgst`, `SHA256SUMS`, etc.), the downloaded archive is verified before install.
-
-If no sidecar exists, Zarya uses the GitHub Releases API `digest` field (`sha256:…`) when present (sing-box and most modern GitHub assets).
-
-If no checksum is available:
-
-- Default: install is **blocked**
-- Optional setting: allow install with explicit warning
-
-## Install flow
-
-1. Refuse if the relevant core is running
-2. Select platform/arch asset from release
-3. Download archive to `runtime/core-updates/downloads/`
-4. Verify checksum (if available)
-5. Extract to `runtime/core-updates/extract/`
-6. Verify staged executable (`version` command)
-7. Backup current core to `cores/.backup/`
-8. Embedded sing-box is updated only through the Zarya app update; no core executable is downloaded.
-9. Write `VERSION` and `.zarya-core.json`
-10. Final verification; rollback backup on failure
-
-**Update Selected / Update All** only download when the core is missing or the installed version differs from the latest checked release. Already up-to-date cores are skipped.
-
-## Rollback
-
-**Tools → Core Manager → Rollback** restores the latest sing-box backup when it is not running.
-
-Backup retention is configurable in Settings → Core updates (default: 2).
-
-## Portable mode
-
-Managed cores live under `./cores/` next to the portable Zarya executable.
+`cores/xray/` contains geo assets and matcher cache. sing-box rule-set artifacts are compiled by the helper from in-memory configuration; no runtime configuration containing credentials is written to disk.
 
 ## Troubleshooting
 
-- **Cannot update while running** — stop the profile / TUN session first
-- **Checksum unavailable** — enable optional setting or install manually
-- **GitHub rate limit** — wait and use Check Versions again
-- **Extraction failed** — ensure `tar` is available on PATH (Windows 10+ includes tar)
+- **Embedded bridge unavailable** — repair or reinstall Zarya. Do not install a standalone core executable.
+- **TUN cannot start** — inspect the helper diagnostics, then verify required privileges and driver state.
+- **Geo assets are missing** — restore the packaged geo data or repair the application.
 
-## Non-goals (0.19)
+## Portable mode
 
-- Zarya self-update
-- Helper / Wintun driver update
-- OS package managers (winget, homebrew, apt)
-- Code signing / notarization validation
+Portable mode keeps application data under `./data` and geo assets under `./cores/`; both cores still come from the application package.

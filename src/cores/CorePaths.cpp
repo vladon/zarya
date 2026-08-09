@@ -2,7 +2,6 @@
 
 #include "cores/CoreVerifier.h"
 #include "storage/AppPaths.h"
-#include "storage/AppSettings.h"
 
 #include <QDir>
 #include <QFileInfo>
@@ -18,10 +17,6 @@ QString CorePaths::managedExecutablePath(CoreType type)
 {
     if (type == CoreType::Xray) {
         return {};
-    }
-    const QString configured = AppSettings::instance().singBoxExecutablePath().trimmed();
-    if (!configured.isEmpty()) {
-        return configured;
     }
     return QDir(managedInstallDir(type)).filePath(CoreVerifier::executableFileName(type));
 }

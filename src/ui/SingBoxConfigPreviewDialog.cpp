@@ -94,33 +94,8 @@ void SingBoxConfigPreviewDialog::onSaveAs()
 
 void SingBoxConfigPreviewDialog::onRunCheck()
 {
-    if (!m_coreManager) {
-        UiMessagePresenter::warning(this, tr("sing-box check"),
-                                    tr("Core manager is not available."));
-        return;
-    }
-
-    const QString configPath = AppPaths::singBoxTunConfigPath();
-    QFile configFile(configPath);
-    if (!configFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        UiMessagePresenter::error(this, tr("sing-box check"), configFile.errorString());
-        return;
-    }
-    configFile.write(m_jsonText.toUtf8());
-    configFile.close();
-
-    const CoreValidationResult validation = m_coreManager->validateSingBoxConfig(
-        AppSettings::instance().resolvedSingBoxPath(), configPath);
-    QString message = validation.success ? tr("sing-box check OK.")
-                                         : validation.errorMessage;
-    if (!validation.output.isEmpty()) {
-        message += QStringLiteral("\n\n") + validation.output;
-    }
-    if (validation.success) {
-        UiMessagePresenter::information(this, tr("sing-box check"), message);
-    } else {
-        UiMessagePresenter::warning(this, tr("sing-box check"), message);
-    }
+    UiMessagePresenter::information(this, tr("sing-box check"),
+                                    tr("Embedded validation is performed when the TUN runtime starts."));
 }
 
 } // namespace zarya

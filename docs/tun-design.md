@@ -20,7 +20,7 @@ Add optional transparent proxy (TUN) mode to Zarya without breaking the existing
 | Mode | Backend | OS proxy | Status |
 |------|---------|----------|--------|
 | System proxy via Xray | `xray run` + local mixed SOCKS/HTTP inbound | WinINet / networksetup / gsettings | Default, production path |
-| TUN via sing-box (experimental) | `sing-box run` + `tun` inbound | Not used | Opt-in, PoC |
+| TUN via sing-box (experimental) | embedded sing-box ABI in `zarya-helper` + `tun` inbound | Not used | Opt-in |
 
 ## Why sing-box for the first TUN backend
 
@@ -60,7 +60,7 @@ Add optional transparent proxy (TUN) mode to Zarya without breaking the existing
 - Built-ins: Proxy All (`final: proxy`), Bypass LAN (`ip_is_private` + `geosite:private`), Bypass RU (`geosite`/`geoip`), Custom rules (domain/IP/port/protocol mapping).
 - Rule order: Block → Direct → Proxy → `final: proxy` (aligned with Xray generator ordering).
 - `geoip:private` maps to `ip_is_private: true` (does not depend on geo rule data).
-- Port ranges and some protocol rules may warn and be skipped; **sing-box check** is final authority.
+- Port ranges and some protocol rules may warn and be skipped; embedded helper validation is final authority.
 
 ## DNS behavior (0.14)
 
@@ -80,13 +80,13 @@ Add optional transparent proxy (TUN) mode to Zarya without breaking the existing
 
 1. Generate sing-box TUN config from profile + active routing + active DNS.
 2. Show warnings (blocking issues prevent start).
-3. Write `runtime/sing-box-tun.json`.
-4. Run `sing-box check -c …` before `sing-box run`.
-5. On failure: show stderr/stdout; offer preview.
+3. Send compact JSON to `zarya-helper` through authenticated local IPC.
+4. Helper validates and starts the embedded sing-box ABI in memory.
+5. On failure: show redacted embedded diagnostics; offer preview.
 
 ## Safe shutdown
 
-- Normal exit: stop sing-box process, wait, kill if needed; do not touch system proxy in TUN mode.
+- Normal exit: stop the embedded sing-box instance in helper; do not touch system proxy in TUN mode.
 - Route cleanup is delegated to sing-box process teardown in 0.13 (no separate route restore layer).
 
 ## Crash recovery

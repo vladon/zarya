@@ -1,8 +1,8 @@
-# Zarya 1.5.1
+# Zarya 1.5.2
 
-Zarya 1.5.1 embeds both proxy cores: Xray runs in-process in the GUI and sing-box runs in-process only inside the privileged `zarya-helper` for experimental TUN. No external core executable is included in the release artifact.
+Zarya 1.5.2 completes the sing-box hard cut: experimental TUN runs only through the embedded bridge inside the privileged `zarya-helper`. Release artifacts contain no external sing-box executable, and rule sets are compiled in the helper from in-memory configuration.
 
-See [docs/release-notes/1.5.1.md](docs/release-notes/1.5.1.md) for details.
+See [docs/release-notes/1.5.2.md](docs/release-notes/1.5.2.md) for details.
 
 ---
 

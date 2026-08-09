@@ -174,6 +174,10 @@ MainWindow::MainWindow(QWidget* parent)
                       &m_routingManager, &m_geoDataManager, &m_dnsManager, &m_ruleSetManager,
                       this)
 {
+    m_ruleSetManager.setRuleSetCompiler([this](const QByteArray& ruleSetJson, const QString& outputPath, QString* error) {
+        HelperProcessManager* helper = m_appController.helperProcessManager();
+        return helper && helper->compileRuleSet(ruleSetJson, outputPath, error);
+    });
     LogBuffer::instance().setAppStartedAt(QDateTime::currentDateTimeUtc());
     setupUi();
     setupMenuBar();

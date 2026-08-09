@@ -75,47 +75,4 @@ bool HelperPathPolicy::isAllowedConfigPath(const QString& configPath, QString* r
     return true;
 }
 
-bool HelperPathPolicy::isAllowedSingBoxPath(const QString& singBoxPath, QString* reason) const
-{
-    const QFileInfo info(singBoxPath);
-    if (!info.exists() || !info.isFile()) {
-        if (reason) {
-            *reason = QStringLiteral("sing-box executable does not exist.");
-        }
-        return false;
-    }
-    if (!m_allowedCoreDir.isEmpty() && !isUnderDir(singBoxPath, m_allowedCoreDir)) {
-        if (reason) {
-            *reason = QStringLiteral("sing-box path is outside allowed core directory.");
-        }
-        return false;
-    }
-    return true;
-}
-
-bool HelperPathPolicy::isAllowedWorkingDirectory(const QString& workingDirectory,
-                                                 const QString& singBoxPath,
-                                                 QString* reason) const
-{
-    if (workingDirectory.trimmed().isEmpty()) {
-        return true;
-    }
-    const QFileInfo workInfo(workingDirectory);
-    if (!workInfo.exists() || !workInfo.isDir()) {
-        if (reason) {
-            *reason = QStringLiteral("Working directory does not exist.");
-        }
-        return false;
-    }
-    const QString parent = QFileInfo(singBoxPath).absolutePath();
-    if (isUnderDir(workingDirectory, m_allowedRuntimeDir)
-        || (!parent.isEmpty() && QDir(workingDirectory).absolutePath() == QDir(parent).absolutePath())) {
-        return true;
-    }
-    if (reason) {
-        *reason = QStringLiteral("Working directory is not allowed.");
-    }
-    return false;
-}
-
 } // namespace zarya

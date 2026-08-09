@@ -4,12 +4,12 @@
 
 If Zarya was killed while a profile was running, the next startup **automatically** runs recovery actions and logs them in the UI. A short progress dialog shows each step so startup does not look hung:
 
-- Terminate leftover managed `sing-box` and `zarya-core-test-worker` processes; embedded Xray has no child process
+- Terminate leftover `zarya-core-test-worker` processes; embedded Xray and sing-box have no child core process
 - Restore system proxy (when Zarya-owned proxy restore on exit is enabled)
 - Recover kill switch (when marker is present)
-- Clean runtime temp config files (`config-xray.json`, `config-singbox.json`, `sing-box-tun.json`)
+- Clean only legacy runtime temp config files when present; embedded sing-box configuration is never written to disk
 
-On Windows, GUI-owned and helper-owned core processes are also attached to a kill-on-close Job Object, so force-killing `zarya` / `zarya-helper` normally tears down the child core as well. Startup orphan cleanup remains as a safety net for older sessions and edge cases.
+On Windows, the test worker is attached to a kill-on-close Job Object. Embedded cores are stopped with their owning process.
 
 Zarya persists the **pre-enable system proxy snapshot** to `data/proxy-previous-state.json` when it first enables system proxy. After a crash, startup recovery can restore that snapshot or clear a Zarya-owned `127.0.0.1:<mixed-port>` proxy if no snapshot exists.
 

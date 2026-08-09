@@ -168,7 +168,7 @@ QJsonObject collectPaths(const DiagnosticsOptions& options, const DiagnosticsCon
     object.insert(QStringLiteral("dataDir"), pathField(AppPaths::dataDir()));
     object.insert(QStringLiteral("runtimeDir"), pathField(AppPaths::runtimeDir()));
     object.insert(QStringLiteral("coresDir"), pathField(AppPaths::coresDir()));    object.insert(QStringLiteral("singBoxDistribution"), QStringLiteral("embedded-helper"));
-    object.insert(QStringLiteral("singBoxExecutablePath"), QStringLiteral("<not applicable>"));
+    object.insert(QStringLiteral("singBoxDistribution"), QStringLiteral("embedded-helper"));
     object.insert(QStringLiteral("ruleSetDirExists"), QDir(AppPaths::singBoxRuleSetDir()).exists());
 
     QString writableError;
@@ -506,27 +506,18 @@ QJsonObject collectValidation(const DiagnosticsOptions& options, const Diagnosti
                                                                  options.redactionMode));
         warn(snapshot, QStringLiteral("sing-box config generation failed"));
     } else {
-        const QString configPath =
-            QDir(AppPaths::testRuntimeDir())
-                .filePath(QStringLiteral("diagnostics-singbox-config.json"));
-        QFile file(configPath);
-        if (file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-            file.write(QJsonDocument(singBoxConfig.config).toJson(QJsonDocument::Compact));
-        }
-        const CoreValidationResult result = context.coreManager->validateSingBoxConfig(
-            AppSettings::instance().resolvedSingBoxPath(), configPath);
-        singBoxValidation.insert(QStringLiteral("attempted"), true);
-        singBoxValidation.insert(QStringLiteral("exitCode"), result.exitCode);
-        singBoxValidation.insert(QStringLiteral("success"), result.success);
-        singBoxValidation.insert(QStringLiteral("stdoutRedacted"),
-                                 DiagnosticsRedactor::redactText(result.output, options.redactionMode));
+        QString validationError;
+        HelperProcessManager* helper = context.appController->helperProcessManager();
+        const bool valid = helper && helper->validateConfig(
+            QJsonDocument(singBoxConfig.config).toJson(QJsonDocument::Compact), &validationError);
+        singBoxValidation.insert(QStringLiteral("attempted"), helper != nullptr);
+        singBoxValidation.insert(QStringLiteral("success"), valid);
         singBoxValidation.insert(QStringLiteral("stderrRedacted"),
-                                 DiagnosticsRedactor::redactText(result.errorMessage,
+                                 DiagnosticsRedactor::redactText(validationError,
                                                                  options.redactionMode));
-        if (!result.success) {
-            warn(snapshot, QStringLiteral("sing-box config validation failed"));
-        }
-    }
+        if (!valid) {
+            warn(snapshot, QStringLiteral("embedded sing-box config validation failed"));
+        }    }
     root.insert(QStringLiteral("singBoxConfigValidation"), singBoxValidation);
     return root;
 }

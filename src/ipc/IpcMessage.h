@@ -23,6 +23,7 @@ QString ipcCommandHello();
 QString ipcCommandStatus();
 QString ipcCommandCheckSupport();
 QString ipcCommandValidateConfig();
+QString ipcCommandCompileRuleSet();
 QString ipcCommandStartTun();
 QString ipcCommandStopTun();
 QString ipcCommandGetLogs();
