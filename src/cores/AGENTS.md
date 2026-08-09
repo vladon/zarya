@@ -1,18 +1,18 @@
 # AGENTS.md — `src/cores/`
 
-**Core binary update manager** (download / verify / install / rollback of external sing-box; embedded Xray metadata is read-only). Not the Xray config adapter (`src/core/`).
+**Core runtime metadata** for the embedded Xray and sing-box distributions. This is not the Xray config adapter (`src/core/`).
 
 ## Owns
 
-- Fetch sing-box release assets, checksum verification, install into `cores/`, rollback on failure
-- UI/dialog wiring may live under `ui/`; keep download/verify logic here
+- Read-only core metadata displayed by Core Manager
+- Version, ABI and load-status reporting for embedded runtimes
 
 ## Rules
 
 - Never treat this as Zarya **app** self-update — that is `src/updater/`.
-- Verify checksums before install; fail closed on mismatch.
-- Do not vendor core binaries in git; `cores/xray/` stores geo assets and `cores/sing-box/` stores the managed sing-box executable.
-- Xray is embedded from `third_party/xray-core` and updated only with the Zarya app; never offer binary update/rollback/path actions for it.
-- Respect network/error surfacing to the UI; no silent partial installs.
+- Do not vendor core binaries in git. `cores/xray/` stores geo assets; sing-box rule sets are helper-generated cache artifacts.
+- Both Xray and sing-box are embedded and updated only through the Zarya app; never offer binary download, update, rollback or executable-path actions for either core.
+- Keep GUI unprivileged: sing-box TUN runtime work belongs to `zarya-helper`.
+- Respect network/error surfacing to the UI; never expose secrets in diagnostics.
 
 Docs: `docs/core-update-manager.md`, `docs/release-packaging.md`.
