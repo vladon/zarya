@@ -7,12 +7,10 @@
 #include "runtime/singbox/SingBoxRuleSetContext.h"
 #include "storage/RuleSetStore.h"
 
-#include <QObject>
+#include <QObject>`r`n#include <functional>
 #include <QVector>
 
 namespace zarya {
-
-class HelperProcessManager;
 
 class RuleSetManager : public QObject {
     Q_OBJECT
@@ -20,7 +18,7 @@ class RuleSetManager : public QObject {
 public:
     explicit RuleSetManager(QObject* parent = nullptr);
 
-    void setHelperProcessManager(HelperProcessManager* helperManager);
+    void setRuleSetCompiler(std::function<bool(const QByteArray&, const QString&, QString*)> compiler);
     QString targetDirectory() const;
     bool reload(QString* errorMessage = nullptr);
     QVector<RuleSetItem> items() const;
@@ -55,7 +53,7 @@ private:
 
     QVector<RuleSetItem> m_items;
     RuleSetStore m_store;
-    HelperProcessManager* m_helperManager = nullptr;
+    std::function<bool(const QByteArray&, const QString&, QString*)> m_compiler;
 };
 
 } // namespace zarya

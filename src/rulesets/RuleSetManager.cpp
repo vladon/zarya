@@ -2,7 +2,7 @@
 
 #include "packaging/PackagingInfo.h"
 #include "rulesets/RuleSetCatalog.h"
-#include "helperclient/HelperProcessManager.h"
+
 #include "rulesets/RuleSetDownloader.h"
 #include "rulesets/RuleSetVerifier.h"
 #include "storage/AppPaths.h"
@@ -20,9 +20,9 @@ RuleSetManager::RuleSetManager(QObject* parent)
     reload(nullptr);
 }
 
-void RuleSetManager::setHelperProcessManager(HelperProcessManager* helperManager)
+void RuleSetManager::setRuleSetCompiler(std::function<bool(const QByteArray&, const QString&, QString*)> compiler)
 {
-    m_helperManager = helperManager;
+    m_compiler = std::move(compiler);
 }
 
 QString RuleSetManager::targetDirectory() const
@@ -201,7 +201,7 @@ bool RuleSetManager::compileTag(const QString& tag, QString* errorMessage)
         }
         return false;
     }
-    if (!m_helperManager) {
+    if (!m_compiler) {
         if (errorMessage) *errorMessage = QStringLiteral("Embedded helper is unavailable.");
         return false;
     }
@@ -211,7 +211,7 @@ bool RuleSetManager::compileTag(const QString& tag, QString* errorMessage)
         return false;
     }
     QString compileError;
-    const bool compiled = m_helperManager->compileRuleSet(jsonFile.readAll(), AppPaths::localRuleSetSrsPath(tag), &compileError);
+    const bool compiled = m_compiler(jsonFile.readAll(), AppPaths::localRuleSetSrsPath(tag), &compileError);
     if (!compiled) {
         if (errorMessage) {
             *errorMessage = compileError;
