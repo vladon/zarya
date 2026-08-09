@@ -7,7 +7,8 @@
 #include "runtime/singbox/SingBoxRuleSetContext.h"
 #include "storage/RuleSetStore.h"
 
-#include <QObject>`r`n#include <functional>
+#include <QObject>
+#include <functional>
 #include <QVector>
 
 namespace zarya {
