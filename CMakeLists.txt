@@ -2,6 +2,14 @@ cmake_minimum_required(VERSION 3.21)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ZaryaVersion.cmake)
 
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/third_party/xray-core.zarya.json" _zarya_xray_manifest)
+string(JSON ZARYA_EMBEDDED_XRAY_VERSION GET "${_zarya_xray_manifest}" tag)
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/third_party/sing-box.zarya.json" _zarya_singbox_manifest)
+string(JSON ZARYA_EMBEDDED_SINGBOX_VERSION GET "${_zarya_singbox_manifest}" tag)
+
+add_compile_definitions(
+    ZARYA_EMBEDDED_XRAY_VERSION="${ZARYA_EMBEDDED_XRAY_VERSION}"
+    ZARYA_EMBEDDED_SINGBOX_VERSION="${ZARYA_EMBEDDED_SINGBOX_VERSION}")
 project(zarya VERSION ${ZARYA_VERSION_MAJOR}.${ZARYA_VERSION_MINOR}.${ZARYA_VERSION_PATCH} LANGUAGES CXX)
 
 if(WIN32)
