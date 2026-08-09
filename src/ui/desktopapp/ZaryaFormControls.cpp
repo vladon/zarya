@@ -49,9 +49,21 @@ public:
     }
 };
 
-void fitField(QWidget* field, int width)
+int rpWidgetHeight(QWidget* widget)
 {
-    field->resize(std::max(width, 0), field->sizeHint().height());
+    return std::max({widget->height(), widget->minimumHeight(), 1});
+}
+
+void preserveRpWidgetSize(QWidget* widget)
+{
+    widget->setMinimumSize(
+        std::max(widget->width(), widget->minimumWidth()),
+        rpWidgetHeight(widget));
+}
+
+void fitRpWidget(QWidget* widget, int width)
+{
+    static_cast<Ui::RpWidget*>(widget)->resizeToWidth(std::max(width, 0));
 }
 
 } // namespace
@@ -73,13 +85,14 @@ ZaryaActionButton::ZaryaActionButton(
     static_cast<Ui::RoundButton*>(m_button)->setClickedCallback([this] {
         QMetaObject::invokeMethod(this, [this] { Q_EMIT clicked(); }, Qt::QueuedConnection);
     });
+    preserveRpWidgetSize(m_button);
     auto* layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSizeConstraint(QLayout::SetMinimumSize);
     layout->addWidget(button.release());
     m_button->show();
     setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
-    setMinimumHeight(std::max(m_button->sizeHint().height(), 1));
+    setMinimumSize(m_button->minimumSize());
 }
 
 void ZaryaActionButton::setText(const QString& text)
@@ -87,6 +100,8 @@ void ZaryaActionButton::setText(const QString& text)
     auto* button = static_cast<Ui::RoundButton*>(m_button);
     button->setText(rpl::single(text));
     button->setAccessibleName(text);
+    preserveRpWidgetSize(button);
+    setMinimumSize(button->minimumSize());
 }
 
 ZaryaTextField::ZaryaTextField(
@@ -110,7 +125,7 @@ ZaryaTextField::ZaryaTextField(
     m_field = field;
     field->show();
     setFocusProxy(field);
-    setMinimumHeight(field->sizeHint().height());
+    setMinimumHeight(rpWidgetHeight(field));
     if (password) {
         auto* input = static_cast<Ui::PasswordInput*>(field);
         connect(input, &Ui::PasswordInput::changed, this, [this, input] {
@@ -183,7 +198,7 @@ void ZaryaTextField::setAccessibleLabel(const QString& label)
 void ZaryaTextField::resizeEvent(QResizeEvent* event)
 {
     QWidget::resizeEvent(event);
-    fitField(m_field, event->size().width());
+    fitRpWidget(m_field, event->size().width());
 }
 
 ZaryaTextArea::ZaryaTextArea(
@@ -247,6 +262,8 @@ ZaryaBodyText::ZaryaBodyText(const QString& text, QWidget* parent)
     auto* label = Ui::CreateChild<Ui::FlatLabel>(this, text, st::defaultFlatLabel);
     label->setAccessibleName(text);
     m_label = label;
+    setMinimumHeight(rpWidgetHeight(label));
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     auto* layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(label);
@@ -258,6 +275,15 @@ void ZaryaBodyText::setText(const QString& text)
     auto* label = static_cast<Ui::FlatLabel*>(m_label);
     label->setText(text);
     label->setAccessibleName(text);
+    fitRpWidget(label, width());
+    setMinimumHeight(rpWidgetHeight(label));
+}
+
+void ZaryaBodyText::resizeEvent(QResizeEvent* event)
+{
+    QWidget::resizeEvent(event);
+    fitRpWidget(m_label, event->size().width());
+    setMinimumHeight(rpWidgetHeight(m_label));
 }
 
 ZaryaFormSection::ZaryaFormSection(const QString& title, QWidget* parent)
@@ -266,12 +292,14 @@ ZaryaFormSection::ZaryaFormSection(const QString& title, QWidget* parent)
     auto* label = Ui::CreateChild<Ui::FlatLabel>(this, title, st::boxTitle);
     label->setAccessibleName(title);
     m_title = label;
+    preserveRpWidgetSize(label);
 
     m_layout = new QVBoxLayout(this);
     m_layout->setContentsMargins(16, 16, 16, 16);
     m_layout->setSpacing(10);
     m_layout->addWidget(label);
     label->show();
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 }
 
 void ZaryaFormSection::addWidget(QWidget* widget)
@@ -303,7 +331,7 @@ ZaryaNumberField::ZaryaNumberField(
     m_field = field;
     field->show();
     setFocusProxy(field);
-    setMinimumHeight(field->sizeHint().height());
+    setMinimumHeight(rpWidgetHeight(field));
     connect(field, &Ui::NumberInput::changed, this, [this] {
         Q_EMIT valueChanged(value());
     });
@@ -352,7 +380,7 @@ void ZaryaNumberField::setAccessibleLabel(const QString& label)
 void ZaryaNumberField::resizeEvent(QResizeEvent* event)
 {
     QWidget::resizeEvent(event);
-    fitField(m_field, event->size().width());
+    fitRpWidget(m_field, event->size().width());
 }
 
 ZaryaCheckBox::ZaryaCheckBox(const QString& text, QWidget* parent, bool checked)
@@ -361,6 +389,9 @@ ZaryaCheckBox::ZaryaCheckBox(const QString& text, QWidget* parent, bool checked)
     auto* checkbox = Ui::CreateChild<Ui::Checkbox>(this, text, checked);
     m_checkbox = checkbox;
     setFocusProxy(checkbox);
+    preserveRpWidgetSize(checkbox);
+    setMinimumHeight(checkbox->minimumHeight());
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     auto* layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(checkbox);
@@ -383,7 +414,17 @@ void ZaryaCheckBox::setChecked(bool checked)
 
 void ZaryaCheckBox::setText(const QString& text)
 {
-    static_cast<Ui::Checkbox*>(m_checkbox)->setText(text);
+    auto* checkbox = static_cast<Ui::Checkbox*>(m_checkbox);
+    checkbox->setText(text);
+    preserveRpWidgetSize(checkbox);
+    setMinimumHeight(checkbox->minimumHeight());
+}
+
+void ZaryaCheckBox::resizeEvent(QResizeEvent* event)
+{
+    QWidget::resizeEvent(event);
+    fitRpWidget(m_checkbox, event->size().width());
+    setMinimumHeight(rpWidgetHeight(m_checkbox));
 }
 
 ZaryaRadioGroup::ZaryaRadioGroup(int value, QWidget* parent)
@@ -405,6 +446,7 @@ void ZaryaRadioGroup::addOption(int value, const QString& text)
         setFocusProxy(button);
     }
     m_options.push_back({button, text});
+    preserveRpWidgetSize(button);
     updateAccessibleNames();
     m_layout->addWidget(button);
     button->show();
@@ -442,6 +484,7 @@ ZaryaFormRow::ZaryaFormRow(const QString& label, QWidget* field, QWidget* parent
     m_label = text;
     text->setAccessibleName(label);
     text->setFixedWidth(172);
+    text->setMinimumHeight(rpWidgetHeight(text));
     auto* layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(12);
@@ -472,6 +515,7 @@ ZaryaValidationMessage::ZaryaValidationMessage(QWidget* parent)
 {
     auto* label = Ui::CreateChild<Ui::FlatLabel>(this, QString(), st::boxLabel);
     m_label = label;
+    label->setMinimumHeight(rpWidgetHeight(label));
     auto* layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(label);
@@ -533,6 +577,11 @@ ZaryaDialogActionRow::ZaryaDialogActionRow(
 {
     auto cancel = makeZaryaButton(this, cancelText, ZaryaButtonRole::Secondary);
     auto accept = makeZaryaButton(this, acceptText, acceptRole);
+    preserveRpWidgetSize(cancel.data());
+    preserveRpWidgetSize(accept.data());
+    const int buttonHeight = std::max(
+        cancel->minimumHeight(),
+        accept->minimumHeight());
     m_accept = accept.data();
     static_cast<Ui::RoundButton*>(cancel.data())->setClickedCallback([this] {
         QMetaObject::invokeMethod(this, [this] { Q_EMIT rejected(); }, Qt::QueuedConnection);
@@ -549,6 +598,8 @@ ZaryaDialogActionRow::ZaryaDialogActionRow(
     accept->show();
     layout->addWidget(cancel.release());
     layout->addWidget(accept.release());
+    setMinimumHeight(buttonHeight);
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 }
 
 void ZaryaDialogActionRow::focusAccept()

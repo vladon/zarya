@@ -1,8 +1,8 @@
-# Zarya 1.5.2
+# Zarya 1.5.3
 
-Zarya 1.5.2 completes the sing-box hard cut: experimental TUN runs only through the embedded bridge inside the privileged `zarya-helper`. Release artifacts contain no external sing-box executable, and rule sets are compiled in the helper from in-memory configuration.
+Zarya 1.5.3 restores the `lib_ui` form controls in Qt-hosted dialogs, including Core Manager and Geo Data Manager actions, selectors, labels, and options.
 
-See [docs/release-notes/1.5.2.md](docs/release-notes/1.5.2.md) for details.
+See [docs/release-notes/1.5.3.md](docs/release-notes/1.5.3.md) for details.
 
 ---
 

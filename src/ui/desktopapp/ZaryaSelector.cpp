@@ -21,6 +21,11 @@ ZaryaSelector::ZaryaSelector(QWidget* parent)
     auto* selectorButton = static_cast<Ui::RoundButton*>(m_button);
     selectorButton->setIsMenuButton(true);
     selectorButton->setClickedCallback([this] { toggleMenu(); });
+    m_button->setMinimumSize(
+        std::max(m_button->width(), m_button->minimumWidth()),
+        std::max({m_button->height(), m_button->minimumHeight(), 1}));
+    setMinimumHeight(m_button->minimumHeight());
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     setFocusProxy(m_button);
 
     auto* layout = new QHBoxLayout(this);
@@ -118,6 +123,8 @@ void ZaryaSelector::applyCurrentItem()
     button->setAccessibleName(m_accessibleLabel.isEmpty()
             ? text
             : QStringLiteral("%1: %2").arg(m_accessibleLabel, text));
+    button->setMinimumHeight(std::max(button->height(), 1));
+    setMinimumHeight(button->minimumHeight());
 }
 
 void ZaryaSelector::toggleMenu()

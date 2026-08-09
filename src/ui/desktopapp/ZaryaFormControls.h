@@ -94,6 +94,9 @@ public:
 
     void setText(const QString& text);
 
+protected:
+    void resizeEvent(QResizeEvent* event) override;
+
 private:
     QWidget* m_label = nullptr; // Ui::FlatLabel*
 };
@@ -156,6 +159,9 @@ public:
 
 Q_SIGNALS:
     void toggled(bool checked);
+
+protected:
+    void resizeEvent(QResizeEvent* event) override;
 
 private:
     QWidget* m_checkbox = nullptr; // Ui::Checkbox*
