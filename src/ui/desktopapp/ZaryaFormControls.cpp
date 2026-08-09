@@ -75,7 +75,10 @@ ZaryaActionButton::ZaryaActionButton(
     });
     auto* layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSizeConstraint(QLayout::SetMinimumSize);
     layout->addWidget(button.release());
+    setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+    setMinimumHeight(std::max(m_button->sizeHint().height(), 1));
 }
 
 void ZaryaActionButton::setText(const QString& text)
