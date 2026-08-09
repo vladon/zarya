@@ -183,6 +183,9 @@ QString BuildInfo::aboutText()
                          "  Installer: %8\n"
                          "Built: %5\n"
                          "Qt %6\n\n"
+                         "Embedded cores:\n"
+                         "  Xray-core: %9\n"
+                         "  sing-box: %10 (zarya-helper)\n\n"
                          "Cross-platform proxy profile manager with Xray system proxy, "
                          "subscriptions, routing, DNS, backup, and diagnostics.")
                          .arg(appVersion(),
@@ -192,7 +195,9 @@ QString BuildInfo::aboutText()
                               buildDateUtc(),
                               qtVersion(),
                               InstallationInfo::currentModeString(),
-                              installerSummaryLine());
+                              installerSummaryLine(),
+                              QStringLiteral(ZARYA_EMBEDDED_XRAY_VERSION),
+                              QStringLiteral(ZARYA_EMBEDDED_SINGBOX_VERSION));
 
     const QString note = integrityNote();
     if (!note.isEmpty()) {
