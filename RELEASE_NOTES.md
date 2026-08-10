@@ -1,8 +1,8 @@
-# Zarya 1.5.3
+# Zarya 1.5.4
 
-Zarya 1.5.3 restores the `lib_ui` form controls in Qt-hosted dialogs, including Core Manager and Geo Data Manager actions, selectors, labels, and options.
+Zarya 1.5.4 replaces obsolete binary-management actions in Core Manager with working embedded-core status actions.
 
-See [docs/release-notes/1.5.3.md](docs/release-notes/1.5.3.md) for details.
+See [docs/release-notes/1.5.4.md](docs/release-notes/1.5.4.md) for details.
 
 ---
 

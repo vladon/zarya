@@ -583,6 +583,18 @@ Pre-import backup:
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Refresh Status</source>
+        <translation>Refresh Status</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Close</translation>
+    </message>
+    <message>
+        <source>Embedded core status refreshed.</source>
+        <translation>Embedded core status refreshed.</translation>
+    </message>
+    <message>
         <source>Installed cores</source>
         <translation>Installed cores</translation>
     </message>
