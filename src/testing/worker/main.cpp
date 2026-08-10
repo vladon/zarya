@@ -1,5 +1,6 @@
 #include "runtime/core/CoreRuntimeCoordinator.h"
 #include "runtime/embedded/xray/EmbeddedXrayRuntimeHost.h"
+#include "testing/CoreTestWorkerProtocol.h"
 
 #include <QCoreApplication>
 #include <QElapsedTimer>
@@ -85,7 +86,9 @@ int main(int argc, char* argv[])
 
     zarya::CoreLaunchRequest request;
     request.coreType = zarya::CoreType::Xray;
-    request.configJson = QJsonDocument(configValue.toObject()).toJson(QJsonDocument::Compact);
+    request.configJson = QJsonDocument(
+        zarya::prepareIsolatedXrayTestConfig(configValue.toObject()))
+                             .toJson(QJsonDocument::Compact);
     request.assetDir = object.value(QStringLiteral("assetDir")).toString();
     request.dataDir = object.value(QStringLiteral("dataDir")).toString();
 

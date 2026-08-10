@@ -4,6 +4,7 @@
 #include "domain/RoutingProfile.h"
 #include "platform/KillOnCloseProcessJob.h"
 #include "storage/AppPaths.h"
+#include "testing/CoreTestWorkerProtocol.h"
 #include "testing/PortAllocator.h"
 
 #include <QCoreApplication>
@@ -132,17 +133,16 @@ TestResult RealDelayTester::run(const Profile& profile, int timeoutMs, const QSt
     }
     killJob.reset();
 
-    const QByteArray output = worker.readAllStandardOutput().trimmed();
-    QJsonParseError parseError;
-    const QJsonDocument response = QJsonDocument::fromJson(output, &parseError);
-    if (!response.isObject()) {
+    const QByteArray output = worker.readAllStandardOutput();
+    QJsonObject object;
+    QString responseError;
+    if (!parseCoreTestWorkerResponse(output, &object, &responseError)) {
         result.status = TestStatus::Failed;
         result.errorMessage = QStringLiteral("Invalid core test worker response: %1")
-                                  .arg(parseError.errorString());
+                                  .arg(responseError);
         return result;
     }
 
-    const QJsonObject object = response.object();
     const bool success = object.value(QStringLiteral("success")).toBool();
     if (!success) {
         const QString errorCode = object.value(QStringLiteral("errorCode")).toString();

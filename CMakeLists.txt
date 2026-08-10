@@ -323,6 +323,7 @@ set(ZARYA_GEODATA_SOURCES
 
 set(ZARYA_TESTING_SOURCES
     src/testing/TestStatus.cpp
+    src/testing/CoreTestWorkerProtocol.cpp
     src/testing/PortAllocator.cpp
     src/testing/TcpPingTester.cpp
     src/testing/RealDelayTesterWorker.cpp
@@ -684,6 +685,7 @@ add_custom_command(TARGET zarya POST_BUILD
 
 set(ZARYA_CORE_TEST_WORKER_SOURCES
     src/testing/worker/main.cpp
+    src/testing/CoreTestWorkerProtocol.cpp
     src/runtime/core/ICoreRuntimeHost.cpp
     src/runtime/core/CoreRuntimeCoordinator.cpp
     src/runtime/embedded/xray/EmbeddedXrayRuntimeHost.cpp
@@ -711,6 +713,20 @@ add_custom_command(TARGET zarya POST_BUILD
 )
 
 enable_testing()
+
+add_executable(zarya_core_test_worker_protocol_test
+    tests/core_test_worker_protocol_test.cpp
+)
+target_include_directories(zarya_core_test_worker_protocol_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+zarya_link_qt_core(zarya_core_test_worker_protocol_test)
+target_link_libraries(zarya_core_test_worker_protocol_test PRIVATE Qt6::Network)
+add_dependencies(zarya_core_test_worker_protocol_test zarya-core-test-worker)
+add_test(
+    NAME core_test_worker_protocol
+    COMMAND zarya_core_test_worker_protocol_test $<TARGET_FILE:zarya-core-test-worker>
+)
 
 add_executable(zarya_embedded_xray_runtime_test
     tests/embedded_xray_runtime_test.cpp
@@ -1071,6 +1087,7 @@ zarya_link_qt_core(zarya_stable_hardening_test)
 add_test(NAME stable_hardening COMMAND zarya_stable_hardening_test)
 
 set(ZARYA_TEST_TARGETS
+    zarya_core_test_worker_protocol_test
     zarya_embedded_xray_runtime_test
     zarya_xray_config_test
     zarya_singbox_config_test

@@ -1,8 +1,8 @@
-# Zarya 1.5.4
+# Zarya 1.5.5
 
-Zarya 1.5.4 replaces obsolete binary-management actions in Core Manager with working embedded-core status actions.
+Zarya 1.5.5 fixes isolated embedded Xray delay tests by keeping worker stdout JSON-only and tolerating non-protocol diagnostic prefixes.
 
-See [docs/release-notes/1.5.4.md](docs/release-notes/1.5.4.md) for details.
+See [docs/release-notes/1.5.5.md](docs/release-notes/1.5.5.md) for details.
 
 ---
 
