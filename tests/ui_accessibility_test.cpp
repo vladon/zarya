@@ -932,6 +932,11 @@ int main(int argc, char** argv)
         QStringLiteral("Installed cores"),
         QStringLiteral("Core manager log"));
     openDialogAndProcessDeferredFocus(&coreManagerHost);
+    ok &= expect(
+        checkVersions->height() > 0
+            && checkVersions->focusProxy()->width() > 0
+            && checkVersions->focusProxy()->height() > 0,
+        "Core Manager lib_ui actions should receive non-zero layout geometry");
     ok &= expectAccessible(
         coreTable,
         QAccessible::Table,
@@ -970,6 +975,12 @@ int main(int argc, char** argv)
         {{QStringLiteral("official"), QStringLiteral("Official")}},
         QStringLiteral("official"));
     geoSource->setAccessibleLabel(QStringLiteral("Source"));
+    auto* geoDescription = new zarya::ZaryaBodyText(
+        QStringLiteral("Official geo data source"), &geoDataManagerHost);
+    auto* geoSourceSection = new zarya::ZaryaFormSection(
+        QStringLiteral("Source"), &geoDataManagerHost);
+    geoSourceSection->addWidget(geoSource);
+    geoSourceSection->addWidget(geoDescription);
     auto* geoTable = new QTableWidget(1, 1, &geoDataManagerHost);
     auto* autoCheck = new zarya::ZaryaCheckBox(
         QStringLiteral("Check on startup"), &geoDataManagerHost);
@@ -982,7 +993,7 @@ int main(int argc, char** argv)
     auto* closeGeoManager = new zarya::ZaryaActionButton(
         QStringLiteral("Close"), &geoDataManagerHost);
     auto* geoDataManagerLayout = new QVBoxLayout(&geoDataManagerHost);
-    geoDataManagerLayout->addWidget(geoSource);
+    geoDataManagerLayout->addWidget(geoSourceSection);
     geoDataManagerLayout->addWidget(geoTable);
     geoDataManagerLayout->addWidget(autoCheck);
     geoDataManagerLayout->addWidget(warnMissing);
@@ -998,6 +1009,16 @@ int main(int argc, char** argv)
         QStringLiteral("Geo data files"),
         QStringLiteral("Geo data log"));
     openDialogAndProcessDeferredFocus(&geoDataManagerHost);
+    ok &= expect(
+        geoSource->height() > 0
+            && geoSource->focusProxy()->height() > 0
+            && geoSourceSection->height() > 0
+            && geoDescription->height() > 0
+            && autoCheck->height() > 0
+            && autoCheck->focusProxy()->height() > 0
+            && checkGeoStatus->height() > 0
+            && checkGeoStatus->focusProxy()->height() > 0,
+        "Geo Data Manager lib_ui controls should receive non-zero layout geometry");
     ok &= expectAccessible(
         geoTable,
         QAccessible::Table,
