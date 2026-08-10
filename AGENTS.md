@@ -1,6 +1,6 @@
 # AGENTS.md — Zarya
 
-Zarya is a cross-platform **Qt 6 / C++20** desktop client for proxy profiles and external cores (**Xray**, **sing-box**). Current version: **1.5.3** (`stable` channel).
+Zarya is a cross-platform **Qt 6 / C++20** desktop client for proxy profiles and external cores (**Xray**, **sing-box**). Current version: **1.5.4** (`stable` channel).
 
 **License:** dual **MIT | GPLv3+** for Zarya-authored source (see `LICENSE`). **Official binaries always link** Desktop App Toolkit (`lib_ui`) and are distributed under **GPLv3+**.
 

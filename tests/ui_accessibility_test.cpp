@@ -914,29 +914,48 @@ int main(int argc, char** argv)
 
     QDialog coreManagerHost;
     auto* coreTable = new QTableWidget(1, 1, &coreManagerHost);
-    auto* checkVersions = new zarya::ZaryaActionButton(
-        QStringLiteral("Check Versions"), &coreManagerHost);
-    auto* updateSelected = new zarya::ZaryaActionButton(
-        QStringLiteral("Update Selected"), &coreManagerHost);
+    auto* refreshCoreStatus = new zarya::ZaryaActionButton(
+        QStringLiteral("Refresh Status"), &coreManagerHost);
+    auto* closeCoreManager = new zarya::ZaryaActionButton(
+        QStringLiteral("Close"), &coreManagerHost);
+    bool coreStatusRefreshed = false;
+    QObject::connect(
+        refreshCoreStatus,
+        &zarya::ZaryaActionButton::clicked,
+        [&coreStatusRefreshed] { coreStatusRefreshed = true; });
     auto* coreLog = new QPlainTextEdit(&coreManagerHost);
     coreLog->setReadOnly(true);
     auto* coreManagerLayout = new QVBoxLayout(&coreManagerHost);
     coreManagerLayout->addWidget(coreTable);
-    coreManagerLayout->addWidget(checkVersions);
-    coreManagerLayout->addWidget(updateSelected);
+    coreManagerLayout->addWidget(refreshCoreStatus);
+    coreManagerLayout->addWidget(closeCoreManager);
     coreManagerLayout->addWidget(coreLog);
     zarya::configureCoreManagerAccessibility(
         coreTable,
         coreLog,
-        {checkVersions, updateSelected},
+        {refreshCoreStatus, closeCoreManager},
         QStringLiteral("Installed cores"),
         QStringLiteral("Core manager log"));
     openDialogAndProcessDeferredFocus(&coreManagerHost);
     ok &= expect(
-        checkVersions->height() > 0
-            && checkVersions->focusProxy()->width() > 0
-            && checkVersions->focusProxy()->height() > 0,
+        refreshCoreStatus->height() > 0
+            && refreshCoreStatus->focusProxy()->width() > 0
+            && refreshCoreStatus->focusProxy()->height() > 0,
         "Core Manager lib_ui actions should receive non-zero layout geometry");
+    QAccessibleInterface* refreshCoreStatusInterface =
+        accessibleInterface(refreshCoreStatus->focusProxy());
+    QAccessibleActionInterface* refreshCoreStatusActions = refreshCoreStatusInterface
+        ? refreshCoreStatusInterface->actionInterface()
+        : nullptr;
+    ok &= expect(
+        refreshCoreStatusActions,
+        "Core Manager Refresh Status should expose an accessibility action");
+    if (refreshCoreStatusActions) {
+        refreshCoreStatusActions->doAction(QAccessibleActionInterface::pressAction());
+        QCoreApplication::processEvents();
+        QCoreApplication::processEvents();
+        ok &= expect(coreStatusRefreshed, "Core Manager Refresh Status should activate");
+    }
     ok &= expectAccessible(
         coreTable,
         QAccessible::Table,
@@ -955,18 +974,18 @@ int main(int argc, char** argv)
         QApplication::focusWidget() == coreTable,
         "Core Manager should initially focus its inventory table");
     const QVector<QWidget*> coreManagerOrder = {
-        checkVersions->focusProxy(),
-        updateSelected->focusProxy(),
+        refreshCoreStatus->focusProxy(),
+        closeCoreManager->focusProxy(),
         coreLog};
     ok &= expect(
-        nextOrderedWidget(coreTable, coreManagerOrder) == checkVersions->focusProxy(),
+        nextOrderedWidget(coreTable, coreManagerOrder) == refreshCoreStatus->focusProxy(),
         "Core Manager focus order should place actions after the inventory table");
     ok &= expect(
-        nextOrderedWidget(checkVersions->focusProxy(), coreManagerOrder)
-            == updateSelected->focusProxy(),
+        nextOrderedWidget(refreshCoreStatus->focusProxy(), coreManagerOrder)
+            == closeCoreManager->focusProxy(),
         "Core Manager actions should retain their visual order");
     ok &= expect(
-        nextOrderedWidget(updateSelected->focusProxy(), coreManagerOrder) == coreLog,
+        nextOrderedWidget(closeCoreManager->focusProxy(), coreManagerOrder) == coreLog,
         "Core Manager focus order should place the log after its actions");
 
     QDialog geoDataManagerHost;

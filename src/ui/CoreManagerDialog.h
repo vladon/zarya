@@ -22,21 +22,13 @@ public:
                       QWidget* parent = nullptr);
 
 private Q_SLOTS:
-    void onCheckVersions();
-    void onUpdateSelected();
-    void onUpdateAll();
-    void onRollback();
-    void onOpenFolder();
-    void onCancelDownload();
+    void onRefreshStatus();
     void onCoresChanged(const QVector<CoreInfo>& infos);
     void onLogLine(const QString& line);
-    void onOperationFinished(bool ok, const QString& message);
-    void onDownloadProgress(CoreType type, qint64 received, qint64 total);
 
 private:
     void refreshTable(const QVector<CoreInfo>& infos);
     void refreshDetails();
-    void setBusy(bool busy);
     CoreType selectedCoreType() const;
 
     CoreBinaryManager& m_manager;
@@ -45,12 +37,8 @@ private:
     QTableWidget* m_table = nullptr;
     ZaryaBodyText* m_detailsLabel = nullptr;
     QPlainTextEdit* m_logView = nullptr;
-    ZaryaActionButton* m_checkButton = nullptr;
-    ZaryaActionButton* m_updateButton = nullptr;
-    ZaryaActionButton* m_updateAllButton = nullptr;
-    ZaryaActionButton* m_rollbackButton = nullptr;
-    ZaryaActionButton* m_openFolderButton = nullptr;
-    ZaryaActionButton* m_cancelButton = nullptr;
+    ZaryaActionButton* m_refreshButton = nullptr;
+    ZaryaActionButton* m_closeButton = nullptr;
 };
 
 } // namespace zarya

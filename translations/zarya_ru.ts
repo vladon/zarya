@@ -560,6 +560,18 @@ Pre-import backup:
         <source>Core Manager</source>
         <translation>Менеджер ядер</translation></message>
     <message>
+        <source>Refresh Status</source>
+        <translation>Обновить статус</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
+    <message>
+        <source>Embedded core status refreshed.</source>
+        <translation>Статус встроенных ядер обновлён.</translation>
+    </message>
+    <message>
         <source>Installed cores</source>
         <translation>Установленные ядра</translation>
     </message>
