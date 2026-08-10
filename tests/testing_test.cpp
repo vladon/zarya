@@ -1,10 +1,13 @@
 #include "domain/Profile.h"
+#include "testing/CoreTestWorkerProtocol.h"
 #include "testing/PortAllocator.h"
 #include "testing/TcpPingTester.h"
 #include "testing/TestResult.h"
 #include "testing/TestStatus.h"
 
 #include <QCoreApplication>
+#include <QJsonArray>
+#include <QJsonObject>
 
 #include <cstdio>
 
@@ -46,6 +49,49 @@ int runAll()
         return fail("allocate inbound ports");
     }
     pass("allocate inbound ports");
+
+    const QJsonObject isolatedConfig = prepareIsolatedXrayTestConfig({
+        {QStringLiteral("log"), QJsonObject{
+             {QStringLiteral("loglevel"), QStringLiteral("warning")},
+             {QStringLiteral("access"), QStringLiteral("stdout")},
+         }},
+        {QStringLiteral("inbounds"), QJsonArray{}},
+    });
+    const QJsonObject isolatedLog = isolatedConfig.value(QStringLiteral("log")).toObject();
+    if (isolatedLog.value(QStringLiteral("loglevel")).toString()
+            != QStringLiteral("none")
+        || isolatedLog.contains(QStringLiteral("access"))) {
+        return fail("isolated worker disables Xray console logging");
+    }
+    pass("isolated worker disables Xray console logging");
+
+    QJsonObject workerResponse;
+    QString workerResponseError;
+    const QByteArray prefixedResponse =
+        "2026/08/10 [Warning] core: Xray started\n"
+        "{\"delayMs\":123,\"success\":true}\n";
+    if (!parseCoreTestWorkerResponse(
+            prefixedResponse, &workerResponse, &workerResponseError)
+        || !workerResponse.value(QStringLiteral("success")).toBool()
+        || workerResponse.value(QStringLiteral("delayMs")).toInt() != 123) {
+        return fail("worker response parser ignores non-protocol log prefix");
+    }
+    pass("worker response parser ignores non-protocol log prefix");
+
+    if (parseCoreTestWorkerResponse(
+            QByteArrayLiteral("{\"diagnostic\":true}\n"),
+            &workerResponse,
+            &workerResponseError)) {
+        return fail("worker response parser requires success field");
+    }
+    pass("worker response parser requires success field");
+
+    if (parseCoreTestWorkerResponse(
+            QByteArrayLiteral("not json\n"), &workerResponse, &workerResponseError)
+        || workerResponseError.isEmpty()) {
+        return fail("worker response parser rejects missing JSON object");
+    }
+    pass("worker response parser rejects missing JSON object");
 
     Profile invalid = Profile::createVlessRealityDefault();
     invalid.address.clear();
