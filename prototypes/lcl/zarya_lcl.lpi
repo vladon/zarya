@@ -10,7 +10,7 @@
         <MainUnitHasTitleStatement Value="False"/>
       </Flags>
       <SessionStorage Value="InProjectDir"/>
-      <Title Value="Zarya LCL Prototype"/>
+      <Title Value="Zarya"/>
       <UseAppBundle Value="False"/>
       <ResourceType Value="res"/>
     </General>
@@ -25,7 +25,7 @@
         <PackageName Value="LCL"/>
       </Item1>
     </RequiredPackages>
-    <Units Count="4">
+    <Units Count="42">
       <Unit0>
         <Filename Value="zarya_lcl.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -45,28 +45,220 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="ZaryaThemes"/>
       </Unit3>
+      <Unit4>
+        <Filename Value="ZaryaProfile.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaProfile"/>
+      </Unit4>
+      <Unit5>
+        <Filename Value="FpcProfileStore.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="FpcProfileStore"/>
+      </Unit5>
+      <Unit6>
+        <Filename Value="ProfileForm.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ProfileForm"/>
+      </Unit6>
+      <Unit7>
+        <Filename Value="ZaryaProfileStore.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaProfileStore"/>
+      </Unit7>
+      <Unit8>
+        <Filename Value="ZaryaVlessUri.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaVlessUri"/>
+      </Unit8>
+      <Unit9>
+        <Filename Value="ZaryaXrayConfig.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaXrayConfig"/>
+      </Unit9>
+      <Unit10>
+        <Filename Value="ImportVlessForm.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ImportVlessForm"/>
+      </Unit10>
+      <Unit11>
+        <Filename Value="XrayConfigForm.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="XrayConfigForm"/>
+      </Unit11>
+      <Unit12>
+        <Filename Value="ZaryaAppSettings.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaAppSettings"/>
+      </Unit12>
+      <Unit13>
+        <Filename Value="ZaryaEmbeddedXray.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaEmbeddedXray"/>
+      </Unit13>
+      <Unit14>
+        <Filename Value="ZaryaTcpProbe.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaTcpProbe"/>
+      </Unit14>
+      <Unit15>
+        <Filename Value="ZaryaSystemProxy.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaSystemProxy"/>
+      </Unit15>
+      <Unit16>
+        <Filename Value="WindowsSystemProxy.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="WindowsSystemProxy"/>
+      </Unit16>
+      <Unit17>
+        <Filename Value="CoreManagerForm.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="CoreManagerForm"/>
+      </Unit17>
+      <Unit18>
+        <Filename Value="CustomProviderForm.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="CustomProviderForm"/>
+      </Unit18>
+      <Unit19>
+        <Filename Value="FpcCoreProviderStore.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="FpcCoreProviderStore"/>
+      </Unit19>
+      <Unit20>
+        <Filename Value="FpcSubscriptionStore.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="FpcSubscriptionStore"/>
+      </Unit20>
+      <Unit21>
+        <Filename Value="ProviderChoiceForm.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ProviderChoiceForm"/>
+      </Unit21>
+      <Unit22>
+        <Filename Value="SubscriptionEditForm.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="SubscriptionEditForm"/>
+      </Unit22>
+      <Unit23>
+        <Filename Value="SubscriptionManagerForm.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="SubscriptionManagerForm"/>
+      </Unit23>
+      <Unit24>
+        <Filename Value="VlessProfileForm.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="VlessProfileForm"/>
+      </Unit24>
+      <Unit25>
+        <Filename Value="WindowsSubscriptionDownloader.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="WindowsSubscriptionDownloader"/>
+      </Unit25>
+      <Unit26>
+        <Filename Value="ZaryaConfigAdapters.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaConfigAdapters"/>
+      </Unit26>
+      <Unit27>
+        <Filename Value="ZaryaCoreProvider.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaCoreProvider"/>
+      </Unit27>
+      <Unit28>
+        <Filename Value="ZaryaCoreProviderRegistry.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaCoreProviderRegistry"/>
+      </Unit28>
+      <Unit29>
+        <Filename Value="ZaryaCoreProviderStore.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaCoreProviderStore"/>
+      </Unit29>
+      <Unit30>
+        <Filename Value="ZaryaDataMigration.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaDataMigration"/>
+      </Unit30>
+      <Unit31>
+        <Filename Value="ZaryaFileIntegrity.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaFileIntegrity"/>
+      </Unit31>
+      <Unit32>
+        <Filename Value="ZaryaRuntimeConfigFile.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaRuntimeConfigFile"/>
+      </Unit32>
+      <Unit33>
+        <Filename Value="ZaryaRuntimeContracts.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaRuntimeContracts"/>
+      </Unit33>
+      <Unit34>
+        <Filename Value="ZaryaRuntimeProcess.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaRuntimeProcess"/>
+      </Unit34>
+      <Unit35>
+        <Filename Value="ZaryaShareLink.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaShareLink"/>
+      </Unit35>
+      <Unit36>
+        <Filename Value="ZaryaSubscription.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaSubscription"/>
+      </Unit36>
+      <Unit37>
+        <Filename Value="ZaryaSubscriptionParser.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaSubscriptionParser"/>
+      </Unit37>
+      <Unit38>
+        <Filename Value="ZaryaSubscriptionService.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaSubscriptionService"/>
+      </Unit38>
+      <Unit39>
+        <Filename Value="ZaryaTcpLatency.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaTcpLatency"/>
+      </Unit39>
+      <Unit40>
+        <Filename Value="ZaryaBackup.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaBackup"/>
+      </Unit40>
+      <Unit41>
+        <Filename Value="ZaryaDiagnostics.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaDiagnostics"/>
+      </Unit41>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
     <Version Value="11"/>
     <PathDelim Value="\"/>
     <Target>
-      <Filename Value="bin\zarya-lcl-prototype"/>
+      <Filename Value="bin\Zarya"/>
     </Target>
     <SearchPaths>
       <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <CodeGeneration>
-      <SmartLinkUnit Value="True"/>
+      <SmartLinkUnit Value="False"/>
       <Optimizations>
         <OptimizationLevel Value="2"/>
       </Optimizations>
     </CodeGeneration>
     <Linking>
       <Debugging>
-        <DebugInfoType Value="dsDwarf3"/>
-        <UseHeaptrc Value="True"/>
+        <GenerateDebugInfo Value="False"/>
+        <UseLineInfoUnit Value="False"/>
+        <StripSymbols Value="True"/>
       </Debugging>
+      <LinkSmart Value="False"/>
       <Options>
         <Win32>
           <GraphicApplication Value="True"/>

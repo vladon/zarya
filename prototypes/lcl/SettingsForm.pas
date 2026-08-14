@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ExtCtrls, StdCtrls,
-  ComCtrls, ZaryaThemes;
+  ComCtrls, ButtonPanel, ZaryaThemes;
 
 type
   TSettingsDialog = class(TForm)
@@ -18,19 +18,25 @@ type
     FRestoreProxyCheck: TCheckBox;
     FMinimizeToTrayCheck: TCheckBox;
     procedure BuildInterface;
+    procedure AcceptClick(Sender: TObject);
     procedure AddLabel(AParent: TWinControl; const ACaption: string;
       const ALeft, ATop, AWidth: Integer);
   public
     constructor Create(AOwner: TComponent; const ADarkTheme,
-      AMinimizeToTray: Boolean); reintroduce;
+      AMinimizeToTray: Boolean; const AMixedPort: Integer;
+      const AAutoEnableSystemProxy, ARestoreSystemProxy: Boolean); reintroduce;
     function DarkThemeSelected: Boolean;
     function MinimizeToTraySelected: Boolean;
+    function MixedPortSelected: Integer;
+    function AutoEnableSystemProxySelected: Boolean;
+    function RestoreSystemProxySelected: Boolean;
   end;
 
 implementation
 
 constructor TSettingsDialog.Create(AOwner: TComponent; const ADarkTheme,
-  AMinimizeToTray: Boolean);
+  AMinimizeToTray: Boolean; const AMixedPort: Integer;
+  const AAutoEnableSystemProxy, ARestoreSystemProxy: Boolean);
 var
   Theme: TZaryaTheme;
 begin
@@ -45,6 +51,9 @@ begin
   BuildInterface;
   FThemeCombo.ItemIndex := Ord(ADarkTheme);
   FMinimizeToTrayCheck.Checked := AMinimizeToTray;
+  FPortEdit.Text := IntToStr(AMixedPort);
+  FAutoProxyCheck.Checked := AAutoEnableSystemProxy;
+  FRestoreProxyCheck.Checked := ARestoreSystemProxy;
   if ADarkTheme then
     Theme := ZaryaThemes.DarkTheme
   else
@@ -70,29 +79,18 @@ var
   Pages: TPageControl;
   GeneralTab: TTabSheet;
   ProxyTab: TTabSheet;
-  BottomPanel: TPanel;
-  OkButton: TButton;
-  CancelButton: TButton;
+  Buttons: TButtonPanel;
   HintLabel: TLabel;
 begin
-  BottomPanel := TPanel.Create(Self);
-  BottomPanel.Parent := Self;
-  BottomPanel.Align := alBottom;
-  BottomPanel.Height := 58;
-  BottomPanel.BevelOuter := bvNone;
-
-  CancelButton := TButton.Create(Self);
-  CancelButton.Parent := BottomPanel;
-  CancelButton.Caption := 'Отмена';
-  CancelButton.ModalResult := mrCancel;
-  CancelButton.SetBounds(340, 13, 88, 32);
-
-  OkButton := TButton.Create(Self);
-  OkButton.Parent := BottomPanel;
-  OkButton.Caption := 'Применить';
-  OkButton.ModalResult := mrOk;
-  OkButton.Default := True;
-  OkButton.SetBounds(434, 13, 92, 32);
+  Buttons := TButtonPanel.Create(Self);
+  Buttons.Parent := Self;
+  Buttons.Align := alBottom;
+  Buttons.ShowButtons := [pbOK, pbCancel];
+  Buttons.ShowGlyphs := [];
+  Buttons.OKButton.Caption := 'Применить';
+  Buttons.OKButton.ModalResult := mrNone;
+  Buttons.OKButton.OnClick := @AcceptClick;
+  Buttons.CancelButton.Caption := 'Отмена';
 
   Pages := TPageControl.Create(Self);
   Pages.Parent := Self;
@@ -168,6 +166,20 @@ begin
   HintLabel.SetBounds(24, 174, 450, 45);
 end;
 
+procedure TSettingsDialog.AcceptClick(Sender: TObject);
+var
+  Port: Integer;
+begin
+  Port := MixedPortSelected;
+  if (Port < 1) or (Port > 65535) then
+  begin
+    MessageDlg('Настройки', 'Mixed-порт должен быть в диапазоне от 1 до 65535.',
+      mtWarning, [mbOK], 0);
+    Exit;
+  end;
+  ModalResult := mrOk;
+end;
+
 function TSettingsDialog.DarkThemeSelected: Boolean;
 begin
   Result := FThemeCombo.ItemIndex = 1;
@@ -176,6 +188,21 @@ end;
 function TSettingsDialog.MinimizeToTraySelected: Boolean;
 begin
   Result := FMinimizeToTrayCheck.Checked;
+end;
+
+function TSettingsDialog.MixedPortSelected: Integer;
+begin
+  Result := StrToIntDef(FPortEdit.Text, 0);
+end;
+
+function TSettingsDialog.AutoEnableSystemProxySelected: Boolean;
+begin
+  Result := FAutoProxyCheck.Checked;
+end;
+
+function TSettingsDialog.RestoreSystemProxySelected: Boolean;
+begin
+  Result := FRestoreProxyCheck.Checked;
 end;
 
 end.
