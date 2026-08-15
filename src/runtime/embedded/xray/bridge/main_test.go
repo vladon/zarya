@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"unsafe"
@@ -22,6 +24,52 @@ func TestLogQueueIsBounded(t *testing.T) {
 	if got := len(logBuffer.lines); got != maxLogLines {
 		t.Fatalf("log queue length = %d, want %d", got, maxLogLines)
 	}
+}
+
+func TestHTTPProxyProbe(t *testing.T) {
+	proxyServer := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter,
+		request *http.Request) {
+		if request.URL.String() != "http://probe.invalid/generate_204" {
+			t.Errorf("proxy request URL = %q", request.URL.String())
+		}
+		writer.WriteHeader(http.StatusNoContent)
+	}))
+	defer proxyServer.Close()
+
+	proxyURL := strings.TrimPrefix(proxyServer.URL, "http://")
+	host, port, found := strings.Cut(proxyURL, ":")
+	if !found {
+		t.Fatalf("unexpected proxy URL %q", proxyServer.URL)
+	}
+	delay, err := probeURL("http://probe.invalid/generate_204", "mixed", host,
+		mustAtoi(t, port), 3000)
+	if err != nil {
+		t.Fatalf("HTTP proxy probe failed: %v", err)
+	}
+	if delay < 0 {
+		t.Fatalf("HTTP proxy delay = %d", delay)
+	}
+}
+
+func TestProbeRejectsUnsafeInput(t *testing.T) {
+	if _, err := probeURL("file:///secret", "mixed", "127.0.0.1", 1080, 1000); err == nil {
+		t.Fatal("file URL was accepted")
+	}
+	if _, err := probeURL("https://example.com", "direct", "127.0.0.1", 1080, 1000); err == nil {
+		t.Fatal("unsupported proxy kind was accepted")
+	}
+}
+
+func mustAtoi(t *testing.T, value string) int {
+	t.Helper()
+	result := 0
+	for _, char := range value {
+		if char < '0' || char > '9' {
+			t.Fatalf("invalid integer %q", value)
+		}
+		result = result*10 + int(char-'0')
+	}
+	return result
 }
 
 func TestStopIsIdempotent(t *testing.T) {

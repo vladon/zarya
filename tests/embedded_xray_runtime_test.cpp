@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
         std::cerr << host.loadStatus().toStdString() << '\n';
         return fail("embedded host unavailable");
     }
-    if (host.abiVersion() != 1 || host.version().isEmpty()) {
+    if (host.abiVersion() != 2 || host.version().isEmpty()) {
         return fail("embedded host version contract failed");
     }
 #if !defined(ZARYA_EMBEDDED_XRAY_STATIC_ABI)

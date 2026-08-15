@@ -21,6 +21,9 @@ char* ZaryaXrayStart(const char* config_json, size_t config_size, const char* as
 char* ZaryaXrayStop(void);
 int ZaryaXrayState(void);
 char* ZaryaXrayDrainLogs(void);
+char* ZaryaXrayProbeURL(const char* target_url, const char* proxy_kind,
+    const char* proxy_host, int proxy_port, int timeout_ms,
+    long long* delay_ms);
 void ZaryaXrayFree(void* value);
 
 #ifdef __cplusplus

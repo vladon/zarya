@@ -1,3 +1,13 @@
+# Zarya 1.5.6
+
+Zarya 1.5.6 introduces the isolated LCL runtime worker foundation, Xray ABI v2,
+dynamic test ports, and bounded Real delay execution without changing the
+stable Qt client path.
+
+See [docs/release-notes/1.5.6.md](docs/release-notes/1.5.6.md) for details.
+
+---
+
 # Zarya 1.5.5
 
 Zarya 1.5.5 fixes isolated embedded Xray delay tests by keeping worker stdout JSON-only and tolerating non-protocol diagnostic prefixes.
