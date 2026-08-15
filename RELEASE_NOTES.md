@@ -1,3 +1,12 @@
+# Zarya 1.5.7
+
+Zarya 1.5.7 adds the versioned LCL routing and DNS model, capability-checked
+provider mappings, native policy editors, and atomic user geodata management.
+
+See [docs/release-notes/1.5.7.md](docs/release-notes/1.5.7.md) for details.
+
+---
+
 # Zarya 1.5.6
 
 Zarya 1.5.6 introduces the isolated LCL runtime worker foundation, Xray ABI v2,

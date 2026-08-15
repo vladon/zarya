@@ -25,6 +25,12 @@ function DownloadSubscriptionWinHttp(const AUrl, AUserAgent: string;
   const ATimeoutMs: Integer; const AProgress: TZaryaSubscriptionDownloadProgress;
   const ACancelCheck: TZaryaSubscriptionCancelCheck):
   TZaryaSubscriptionDownloadResult;
+function DownloadFileWinHttp(const AUrl, AUserAgent, ADestination: string;
+  const ATimeoutMs: Integer; const AMaxBytes: Int64;
+  const AProgress: TZaryaSubscriptionDownloadProgress;
+  const ACancelCheck: TZaryaSubscriptionCancelCheck;
+  out ACancelled: Boolean; out AHttpStatusCode: Integer;
+  out AError: string): Boolean;
 
 implementation
 
@@ -265,6 +271,139 @@ begin
     Stream.Free;
   end;
 end;
+
+function DownloadFileWinHttp(const AUrl, AUserAgent, ADestination: string;
+  const ATimeoutMs: Integer; const AMaxBytes: Int64;
+  const AProgress: TZaryaSubscriptionDownloadProgress;
+  const ACancelCheck: TZaryaSubscriptionCancelCheck;
+  out ACancelled: Boolean; out AHttpStatusCode: Integer;
+  out AError: string): Boolean;
+var
+  UrlText, UserAgentText, Verb, Host, ObjectName, Extra: UnicodeString;
+  Components: URL_COMPONENTS;
+  Session, Connection, Request: HINTERNET;
+  Flags, RedirectPolicy, StatusCode, ContentLength, HeaderSize: DWORD;
+  Available, ReadCount: DWORD;
+  Buffer: array of Byte;
+  Stream: TFileStream;
+  Timeout: Integer;
+begin
+  Result := False;
+  ACancelled := False;
+  AHttpStatusCode := 0;
+  AError := '';
+  UrlText := UnicodeString(Trim(AUrl));
+  UserAgentText := UnicodeString(Trim(AUserAgent));
+  if UserAgentText = '' then UserAgentText := 'Zarya-LCL/1.0';
+  FillChar(Components, SizeOf(Components), 0);
+  Components.dwStructSize := SizeOf(Components);
+  Components.dwSchemeLength := DWORD(-1);
+  Components.dwHostNameLength := DWORD(-1);
+  Components.dwUrlPathLength := DWORD(-1);
+  Components.dwExtraInfoLength := DWORD(-1);
+  if (UrlText = '') or not WinHttpCrackUrl(PWideChar(UrlText),
+    Length(UrlText), 0, @Components) then
+  begin
+    AError := 'Некорректный URL загрузки.';
+    Exit;
+  end;
+  if (Components.nScheme <> INTERNET_SCHEME_HTTP) and
+    (Components.nScheme <> INTERNET_SCHEME_HTTPS) then
+  begin
+    AError := 'Поддерживаются только HTTPS и HTTP URL.';
+    Exit;
+  end;
+  SetString(Host, Components.lpszHostName, Components.dwHostNameLength);
+  SetString(ObjectName, Components.lpszUrlPath, Components.dwUrlPathLength);
+  SetString(Extra, Components.lpszExtraInfo, Components.dwExtraInfoLength);
+  ObjectName := ObjectName + Extra;
+  if ObjectName = '' then ObjectName := '/';
+  Session := nil;
+  Connection := nil;
+  Request := nil;
+  Stream := nil;
+  if FileExists(ADestination) then SysUtils.DeleteFile(ADestination);
+  try
+    if CancelRequested(ACancelCheck) then
+    begin
+      ACancelled := True;
+      AError := 'Загрузка отменена.';
+      Exit;
+    end;
+    Session := WinHttpOpen(PWideChar(UserAgentText),
+      WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME,
+      WINHTTP_NO_PROXY_BYPASS, 0);
+    if Session = nil then begin AError := WinHttpError('WinHttpOpen'); Exit; end;
+    Timeout := ATimeoutMs;
+    if Timeout < 1000 then Timeout := 1000;
+    if not ZaryaWinHttpSetTimeouts(Session, Timeout, Timeout, Timeout, Timeout) then
+    begin AError := WinHttpError('WinHttpSetTimeouts'); Exit; end;
+    Connection := WinHttpConnect(Session, PWideChar(Host), Components.nPort, 0);
+    if Connection = nil then begin AError := WinHttpError('WinHttpConnect'); Exit; end;
+    Flags := 0;
+    if Components.nScheme = INTERNET_SCHEME_HTTPS then Flags := WINHTTP_FLAG_SECURE;
+    Verb := 'GET';
+    Request := WinHttpOpenRequest(Connection, PWideChar(Verb),
+      PWideChar(ObjectName), nil, WINHTTP_NO_REFERER,
+      WINHTTP_DEFAULT_ACCEPT_TYPES, Flags);
+    if Request = nil then begin AError := WinHttpError('WinHttpOpenRequest'); Exit; end;
+    RedirectPolicy := WINHTTP_OPTION_REDIRECT_POLICY_DISALLOW_HTTPS_TO_HTTP;
+    if not WinHttpSetOption(Request, WINHTTP_OPTION_REDIRECT_POLICY,
+      @RedirectPolicy, SizeOf(RedirectPolicy)) then
+    begin AError := WinHttpError('WinHttpSetOption redirect policy'); Exit; end;
+    if not WinHttpSendRequest(Request, WINHTTP_NO_ADDITIONAL_HEADERS, 0,
+      nil, 0, 0, 0) then
+    begin AError := WinHttpError('WinHttpSendRequest'); Exit; end;
+    if not WinHttpReceiveResponse(Request, nil) then
+    begin AError := WinHttpError('WinHttpReceiveResponse'); Exit; end;
+    StatusCode := 0;
+    HeaderSize := SizeOf(StatusCode);
+    if not WinHttpQueryHeaders(Request, WINHTTP_QUERY_STATUS_CODE or
+      WINHTTP_QUERY_FLAG_NUMBER, nil, @StatusCode, @HeaderSize, nil) then
+    begin AError := WinHttpError('WinHttpQueryHeaders status'); Exit; end;
+    AHttpStatusCode := StatusCode;
+    if (StatusCode < 200) or (StatusCode >= 300) then
+    begin AError := 'HTTP error ' + IntToStr(StatusCode) + '.'; Exit; end;
+    ContentLength := 0;
+    HeaderSize := SizeOf(ContentLength);
+    if not WinHttpQueryHeaders(Request, WINHTTP_QUERY_CONTENT_LENGTH or
+      WINHTTP_QUERY_FLAG_NUMBER, nil, @ContentLength, @HeaderSize, nil) then
+      ContentLength := 0;
+    if (AMaxBytes > 0) and (ContentLength > AMaxBytes) then
+    begin AError := 'Downloaded file exceeds the configured size limit.'; Exit; end;
+    Stream := TFileStream.Create(ADestination, fmCreate or fmShareExclusive);
+    ReportProgress(AProgress, 0, ContentLength);
+    repeat
+      if CancelRequested(ACancelCheck) then
+      begin
+        ACancelled := True;
+        AError := 'Загрузка отменена.';
+        Exit;
+      end;
+      Available := 0;
+      if not WinHttpQueryDataAvailable(Request, @Available) then
+      begin AError := WinHttpError('WinHttpQueryDataAvailable'); Exit; end;
+      if Available = 0 then Break;
+      if (AMaxBytes > 0) and (Stream.Size + Available > AMaxBytes) then
+      begin AError := 'Downloaded file exceeds the configured size limit.'; Exit; end;
+      SetLength(Buffer, Available);
+      ReadCount := 0;
+      if not WinHttpReadData(Request, @Buffer[0], Available, @ReadCount) then
+      begin AError := WinHttpError('WinHttpReadData'); Exit; end;
+      if ReadCount > 0 then Stream.WriteBuffer(Buffer[0], ReadCount);
+      ReportProgress(AProgress, Stream.Size, ContentLength);
+    until False;
+    if Stream.Size = 0 then begin AError := 'Загруженный файл пуст.'; Exit; end;
+    Result := True;
+  finally
+    Stream.Free;
+    if Request <> nil then WinHttpCloseHandle(Request);
+    if Connection <> nil then WinHttpCloseHandle(Connection);
+    if Session <> nil then WinHttpCloseHandle(Session);
+    if not Result and FileExists(ADestination) then
+      SysUtils.DeleteFile(ADestination);
+  end;
+end;
 {$ELSE}
 function DownloadSubscriptionWinHttp(const AUrl, AUserAgent: string;
   const ATimeoutMs: Integer; const AProgress: TZaryaSubscriptionDownloadProgress;
@@ -273,6 +412,19 @@ function DownloadSubscriptionWinHttp(const AUrl, AUserAgent: string;
 begin
   Result := Default(TZaryaSubscriptionDownloadResult);
   Result.ErrorMessage := 'WinHTTP доступен только в Windows-сборке.';
+end;
+
+function DownloadFileWinHttp(const AUrl, AUserAgent, ADestination: string;
+  const ATimeoutMs: Integer; const AMaxBytes: Int64;
+  const AProgress: TZaryaSubscriptionDownloadProgress;
+  const ACancelCheck: TZaryaSubscriptionCancelCheck;
+  out ACancelled: Boolean; out AHttpStatusCode: Integer;
+  out AError: string): Boolean;
+begin
+  ACancelled := False;
+  AHttpStatusCode := 0;
+  AError := 'WinHTTP доступен только в Windows-сборке.';
+  Result := False;
 end;
 {$ENDIF}
 

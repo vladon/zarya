@@ -14,7 +14,7 @@ function ProviderCanGenerateConfig(const AProvider: TZaryaCoreProvider;
 implementation
 
 uses
-  ZaryaXrayConfig;
+  ZaryaXrayConfig, ZaryaRouting, ZaryaDns, ZaryaPolicyGenerators;
 
 type
   TZaryaKnownConfigAdapter = class(TInterfacedObject, IConfigAdapter)
@@ -43,6 +43,8 @@ type
     function Generate(const AProfile: TZaryaProfile;
       const AContext: TZaryaConfigContext; out AConfig,
       AError: string): Boolean;
+    function GenerateRequest(const ARequest: TZaryaRuntimeRequest;
+      out AConfig, AError: string): Boolean;
   end;
 
 function JsonQuote(const AValue: string): string;
@@ -757,6 +759,71 @@ begin
     Exit(GenerateHysteria2(AProfile, AContext, AConfig, AError));
   AError := 'Для adapter ' + FAdapterId + ' нет генератора.';
   Result := False;
+end;
+
+function TZaryaKnownConfigAdapter.GenerateRequest(
+  const ARequest: TZaryaRuntimeRequest; out AConfig,
+  AError: string): Boolean;
+var
+  Context: TZaryaConfigContext;
+  Generated: string;
+begin
+  AConfig := '';
+  AError := '';
+  if Trim(ARequest.Profile.RawConfig) <> '' then
+  begin
+    if (ARequest.UseRouting and
+      not IsDefaultRouting(ARequest.RoutingProfile)) or
+      (ARequest.UseDns and not IsDefaultDns(ARequest.DnsProfile)) then
+    begin
+      AError := 'Raw config owns routing and DNS. Select Proxy All and System DNS.';
+      Exit(False);
+    end;
+    AConfig := ARequest.Profile.RawConfig;
+    Exit(True);
+  end;
+  if ARequest.UseRouting and not IsDefaultRouting(ARequest.RoutingProfile) and
+    not ARequest.Provider.SupportsRouting then
+  begin
+    AError := 'Provider ' + ARequest.Provider.ProviderId +
+      ' does not support the selected routing profile.';
+    Exit(False);
+  end;
+  if ARequest.UseDns and not IsDefaultDns(ARequest.DnsProfile) and
+    not ARequest.Provider.SupportsDns then
+  begin
+    AError := 'Provider ' + ARequest.Provider.ProviderId +
+      ' does not support the selected DNS profile.';
+    Exit(False);
+  end;
+  Context.MixedPort := ARequest.MixedPort;
+  Context.HttpPort := ARequest.HttpPort;
+  Context.SocksPort := ARequest.SocksPort;
+  if not Generate(ARequest.Profile, Context, Generated, AError) then
+    Exit(False);
+  if (FAdapterId = 'xray') or (FAdapterId = 'v2ray') then
+    Result := ApplyXrayPolicies(Generated, ARequest.RoutingProfile,
+      ARequest.DnsProfile, ARequest.UseRouting, ARequest.UseDns,
+      AConfig, AError)
+  else if (FAdapterId = 'sing-box') or (FAdapterId = 'nekobox-core') then
+    Result := ApplySingBoxPolicies(Generated, ARequest.RoutingProfile,
+      ARequest.DnsProfile, ARequest.UseRouting, ARequest.UseDns,
+      AConfig, AError)
+  else if FAdapterId = 'mihomo' then
+    Result := ApplyMihomoPolicies(Generated, ARequest.RoutingProfile,
+      ARequest.DnsProfile, ARequest.UseRouting, ARequest.UseDns,
+      AConfig, AError)
+  else if FAdapterId = 'hysteria2' then
+  begin
+    Result := ValidateStandalonePolicies(ARequest.RoutingProfile,
+      ARequest.DnsProfile, ARequest.UseRouting, ARequest.UseDns, AError);
+    if Result then AConfig := Generated;
+  end
+  else
+  begin
+    AError := 'Runtime request is unsupported for adapter ' + FAdapterId + '.';
+    Result := False;
+  end;
 end;
 
 function CreateConfigAdapter(const AProvider: TZaryaCoreProvider): IConfigAdapter;

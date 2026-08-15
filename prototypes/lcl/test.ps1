@@ -95,6 +95,8 @@ try {
         'RuntimeFoundationTest',
         'NodeTestWorkerTest',
         'RealDelayBatchTest',
+        'RoutingDnsTest',
+        'GeoDataTest',
         'TcpLatencyTest',
         'CoreProviderTest',
         'ConfigAdapterTest',

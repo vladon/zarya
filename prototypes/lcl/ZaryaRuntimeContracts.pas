@@ -6,7 +6,7 @@ interface
 
 uses
   ZaryaProfile, ZaryaCoreProvider, ZaryaCoreProviderStore,
-  ZaryaRuntimeProcess;
+  ZaryaRuntimeProcess, ZaryaRouting, ZaryaDns;
 
 type
   IRuntimeProcess = IZaryaRuntimeProcess;
@@ -27,6 +27,10 @@ type
     DataDirectory: string;
     AssetDirectory: string;
     LogLevel: string;
+    RoutingProfile: TZaryaRoutingProfile;
+    DnsProfile: TZaryaDnsProfile;
+    UseRouting: Boolean;
+    UseDns: Boolean;
     RawConfig: string;
     RawConfigFormat: string;
     RawReadinessHost: string;
@@ -63,6 +67,8 @@ type
     function Generate(const AProfile: TZaryaProfile;
       const AContext: TZaryaConfigContext; out AConfig,
       AError: string): Boolean;
+    function GenerateRequest(const ARequest: TZaryaRuntimeRequest;
+      out AConfig, AError: string): Boolean;
   end;
 
   IReadinessProbe = interface
@@ -104,6 +110,10 @@ begin
   Result.HttpPort := AContext.HttpPort;
   Result.SocksPort := AContext.SocksPort;
   Result.LogLevel := 'warning';
+  Result.RoutingProfile := BuiltInProxyAllRouting;
+  Result.DnsProfile := BuiltInSystemDns;
+  Result.UseRouting := True;
+  Result.UseDns := True;
   Result.RawConfig := AProfile.RawConfig;
   Result.RawConfigFormat := AProfile.RawConfigFormat;
   Result.RawReadinessHost := AProfile.ReadinessHost;
