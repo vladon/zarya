@@ -14,7 +14,7 @@ namespace zarya {
 
 namespace {
 
-constexpr int kExpectedAbiVersion = 1;
+constexpr int kExpectedAbiVersion = 2;
 
 CoreRuntimeState fromAbiState(int state)
 {
