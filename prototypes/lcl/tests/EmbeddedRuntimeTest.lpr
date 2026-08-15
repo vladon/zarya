@@ -11,20 +11,6 @@ begin
     raise Exception.Create(AMessage);
 end;
 
-function FindCandidatePort: Integer;
-var
-  Attempt: Integer;
-  Port: Integer;
-begin
-  for Attempt := 1 to 100 do
-  begin
-    Port := 20000 + Random(30000);
-    if not CanConnectLocalhost(Port) then
-      Exit(Port);
-  end;
-  Result := 0;
-end;
-
 var
   BridgePath: string;
   AssetDirectory: string;
@@ -46,8 +32,8 @@ begin
   AssetDirectory := IncludeTrailingPathDelimiter(GetTempDir(False)) +
     'zarya-lcl-xray-assets';
   Check(ForceDirectories(AssetDirectory), 'Could not create Xray asset directory.');
-  MixedPort := FindCandidatePort;
-  Check(MixedPort <> 0, 'Could not select a candidate mixed port.');
+  Check(AllocateLocalTcpUdpPort(MixedPort, ErrorMessage),
+    'Could not allocate a mixed port: ' + ErrorMessage);
 
   Profile := CreateEmptyProfile;
   Profile.Name := 'Embedded runtime smoke';

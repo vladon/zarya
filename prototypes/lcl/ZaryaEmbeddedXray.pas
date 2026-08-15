@@ -18,6 +18,8 @@ type
   TZaryaConfigFunction = function(AConfig: PAnsiChar;
     AConfigSize: NativeUInt; AAssetDirectory: PAnsiChar): PAnsiChar; cdecl;
   TZaryaStateFunction = function: Integer; cdecl;
+  TZaryaProbeUrlFunction = function(AUrl, AProxyKind, AProxyHost: PAnsiChar;
+    AProxyPort, ATimeoutMs: Integer; ADelayMs: PInt64): PAnsiChar; cdecl;
   TZaryaFreeFunction = procedure(AValue: Pointer); cdecl;
 
   TZaryaEmbeddedXray = class
@@ -34,6 +36,7 @@ type
     FStopFunction: TZaryaStringFunction;
     FStateFunction: TZaryaStateFunction;
     FDrainLogsFunction: TZaryaStringFunction;
+    FProbeUrlFunction: TZaryaProbeUrlFunction;
     FFreeFunction: TZaryaFreeFunction;
     function TakeString(AValue: PAnsiChar): string;
     function CallConfig(const AFunction: TZaryaConfigFunction; const AConfig,
@@ -48,6 +51,9 @@ type
     function Stop(out AError: string): Boolean;
     function State: TZaryaXrayRuntimeState;
     function DrainLogs: string;
+    function ProbeUrl(const AUrl, AProxyKind, AProxyHost: string;
+      const AProxyPort, ATimeoutMs: Integer; out ADelayMs: Int64;
+      out AError: string): Boolean;
     property LibraryPath: string read FLibraryPath;
     property LoadStatus: string read FLoadStatus;
     property Version: string read FVersion;
@@ -65,7 +71,7 @@ uses
 {$ENDIF}
 
 const
-  ExpectedAbiVersion = 1;
+  ExpectedAbiVersion = 2;
 
 {$IFDEF ZARYA_STATIC_XRAY}
 function ZaryaXrayAbiVersion: LongInt; cdecl; external;
@@ -77,6 +83,8 @@ function ZaryaXrayStart(AConfig: PAnsiChar; AConfigSize: NativeUInt;
 function ZaryaXrayStop: PAnsiChar; cdecl; external;
 function ZaryaXrayState: Integer; cdecl; external;
 function ZaryaXrayDrainLogs: PAnsiChar; cdecl; external;
+function ZaryaXrayProbeURL(AUrl, AProxyKind, AProxyHost: PAnsiChar;
+  AProxyPort, ATimeoutMs: Integer; ADelayMs: PInt64): PAnsiChar; cdecl; external;
 procedure ZaryaXrayFree(AValue: Pointer); cdecl; external;
 procedure ZaryaXrayRuntimeInit; cdecl;
   external name '_rt0_amd64_windows_lib';
@@ -123,6 +131,7 @@ begin
   FStopFunction := @ZaryaXrayStop;
   FStateFunction := @ZaryaXrayState;
   FDrainLogsFunction := @ZaryaXrayDrainLogs;
+  FProbeUrlFunction := @ZaryaXrayProbeURL;
   FFreeFunction := @ZaryaXrayFree;
   {$ELSE}
   FLibraryPath := ExpandFileName(ALibraryPath);
@@ -153,13 +162,16 @@ begin
     'ZaryaXrayState'));
   FDrainLogsFunction := TZaryaStringFunction(ResolveSymbol(FLibraryHandle,
     'ZaryaXrayDrainLogs'));
+  FProbeUrlFunction := TZaryaProbeUrlFunction(ResolveSymbol(FLibraryHandle,
+    'ZaryaXrayProbeURL'));
   FFreeFunction := TZaryaFreeFunction(ResolveSymbol(FLibraryHandle,
     'ZaryaXrayFree'));
   {$ENDIF}
   if not Assigned(FAbiVersionFunction) or not Assigned(FVersionFunction) or
     not Assigned(FValidateFunction) or not Assigned(FStartFunction) or
     not Assigned(FStopFunction) or not Assigned(FStateFunction) or
-    not Assigned(FDrainLogsFunction) or not Assigned(FFreeFunction) then
+    not Assigned(FDrainLogsFunction) or not Assigned(FProbeUrlFunction) or
+    not Assigned(FFreeFunction) then
   begin
     FLoadStatus := 'ABI встроенного Xray неполон.';
     Exit;
@@ -264,6 +276,29 @@ begin
   if not Available then
     Exit('');
   Result := TakeString(FDrainLogsFunction());
+end;
+
+function TZaryaEmbeddedXray.ProbeUrl(const AUrl, AProxyKind,
+  AProxyHost: string; const AProxyPort, ATimeoutMs: Integer;
+  out ADelayMs: Int64; out AError: string): Boolean;
+var
+  UrlValue, KindValue, HostValue: UTF8String;
+  Returned: PAnsiChar;
+begin
+  ADelayMs := -1;
+  AError := '';
+  if not Available then
+  begin
+    AError := FLoadStatus;
+    Exit(False);
+  end;
+  UrlValue := UTF8String(AUrl);
+  KindValue := UTF8String(AProxyKind);
+  HostValue := UTF8String(AProxyHost);
+  Returned := FProbeUrlFunction(PAnsiChar(UrlValue), PAnsiChar(KindValue),
+    PAnsiChar(HostValue), AProxyPort, ATimeoutMs, @ADelayMs);
+  AError := TakeString(Returned);
+  Result := AError = '';
 end;
 
 end.

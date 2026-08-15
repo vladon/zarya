@@ -7,19 +7,26 @@ import "C"
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"io"
+	"net"
+	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
+	"time"
 	"unsafe"
 
 	xraylog "github.com/xtls/xray-core/common/log"
 	"github.com/xtls/xray-core/core"
 	_ "github.com/xtls/xray-core/main/distro/all"
+	xproxy "golang.org/x/net/proxy"
 )
 
 const (
-	abiVersion  = 1
+	abiVersion  = 2
 	maxLogLines = 512
 
 	stateStopped  = 0
@@ -111,6 +118,63 @@ func safeError(operation func() error) (err error) {
 
 func safeCall(operation func() error) *C.char {
 	return resultString(safeError(operation))
+}
+
+func probeURL(targetURL, proxyKind, proxyHost string, proxyPort, timeoutMs int) (int64, error) {
+	if timeoutMs < 1 || timeoutMs > 60000 {
+		return -1, fmt.Errorf("probe timeout must be between 1 and 60000 ms")
+	}
+	parsedTarget, err := url.Parse(targetURL)
+	if err != nil || parsedTarget.Host == "" ||
+		(parsedTarget.Scheme != "http" && parsedTarget.Scheme != "https") {
+		return -1, fmt.Errorf("probe URL must be an absolute HTTP or HTTPS URL")
+	}
+	if proxyHost == "" || proxyPort < 1 || proxyPort > 65535 {
+		return -1, fmt.Errorf("probe proxy endpoint is invalid")
+	}
+
+	timeout := time.Duration(timeoutMs) * time.Millisecond
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.DisableKeepAlives = true
+	transport.Proxy = nil
+	proxyAddress := net.JoinHostPort(proxyHost, fmt.Sprintf("%d", proxyPort))
+	switch strings.ToLower(strings.TrimSpace(proxyKind)) {
+	case "http", "mixed":
+		transport.Proxy = http.ProxyURL(&url.URL{Scheme: "http", Host: proxyAddress})
+	case "socks", "socks5":
+		dialer, dialErr := xproxy.SOCKS5("tcp", proxyAddress, nil,
+			&net.Dialer{Timeout: timeout})
+		if dialErr != nil {
+			return -1, fmt.Errorf("create SOCKS probe dialer: %w", dialErr)
+		}
+		transport.DialContext = func(ctx context.Context, network, address string) (net.Conn, error) {
+			if contextDialer, ok := dialer.(xproxy.ContextDialer); ok {
+				return contextDialer.DialContext(ctx, network, address)
+			}
+			return dialer.Dial(network, address)
+		}
+	default:
+		return -1, fmt.Errorf("unsupported probe proxy kind %q", proxyKind)
+	}
+
+	client := &http.Client{Transport: transport, Timeout: timeout}
+	request, err := http.NewRequest(http.MethodGet, targetURL, nil)
+	if err != nil {
+		return -1, fmt.Errorf("create probe request: %w", err)
+	}
+	request.Header.Set("User-Agent", "Zarya/RealDelay")
+	started := time.Now()
+	response, err := client.Do(request)
+	if err != nil {
+		return -1, fmt.Errorf("URL probe failed: %w", err)
+	}
+	defer response.Body.Close()
+	_, _ = io.CopyN(io.Discard, response.Body, 1)
+	delayMs := time.Since(started).Milliseconds()
+	if response.StatusCode < 200 || response.StatusCode >= 400 {
+		return -1, fmt.Errorf("URL probe returned HTTP %d", response.StatusCode)
+	}
+	return delayMs, nil
 }
 
 func validateConfig(config []byte, assetDir string) error {
@@ -275,6 +339,24 @@ func ZaryaXrayDrainLogs() (result *C.char) {
 	joined := strings.Join(logBuffer.lines, "\n")
 	logBuffer.lines = nil
 	return C.CString(joined)
+}
+
+//export ZaryaXrayProbeURL
+func ZaryaXrayProbeURL(targetURL *C.char, proxyKind *C.char, proxyHost *C.char,
+	proxyPort C.int, timeoutMs C.int, delayMs *C.longlong) *C.char {
+	return safeCall(func() error {
+		if targetURL == nil || proxyKind == nil || proxyHost == nil || delayMs == nil {
+			return fmt.Errorf("URL probe received a null argument")
+		}
+		*delayMs = -1
+		delay, err := probeURL(C.GoString(targetURL), C.GoString(proxyKind),
+			C.GoString(proxyHost), int(proxyPort), int(timeoutMs))
+		if err != nil {
+			return err
+		}
+		*delayMs = C.longlong(delay)
+		return nil
+	})
 }
 
 //export ZaryaXrayFree

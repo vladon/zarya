@@ -18,6 +18,42 @@ type
     SocksPort: Integer;
   end;
 
+  TZaryaRuntimeRequest = record
+    Profile: TZaryaProfile;
+    Provider: TZaryaCoreProvider;
+    MixedPort: Integer;
+    HttpPort: Integer;
+    SocksPort: Integer;
+    DataDirectory: string;
+    AssetDirectory: string;
+    LogLevel: string;
+    RawConfig: string;
+    RawConfigFormat: string;
+    RawReadinessHost: string;
+    RawReadinessPort: Integer;
+    RawProxyKind: string;
+  end;
+
+  TZaryaNodeTestRequest = record
+    SchemaVersion: Integer;
+    Provider: TZaryaCoreProvider;
+    Config: string;
+    DataDirectory: string;
+    AssetDirectory: string;
+    ReadinessHost: string;
+    ReadinessPort: Integer;
+    ProxyKind: string;
+    TestUrl: string;
+    TimeoutMs: Integer;
+  end;
+
+  TZaryaNodeTestResult = record
+    Success: Boolean;
+    ErrorCode: string;
+    MessageText: string;
+    DelayMs: Int64;
+  end;
+
   IConfigAdapter = interface
     ['{817CB3C5-BD0A-4685-9B21-799E75EC67D2}']
     function AdapterId: string;
@@ -44,6 +80,35 @@ type
     function DrainLogs: string;
   end;
 
+  INodeTestWorker = interface
+    ['{6632E206-325A-4F55-88DC-8D5FD4B47D7D}']
+    function Run(const ARequest: TZaryaNodeTestRequest;
+      out AResult: TZaryaNodeTestResult; out AWorkerLog: string): Boolean;
+    procedure Cancel;
+  end;
+
+function CreateRuntimeRequest(const AProfile: TZaryaProfile;
+  const AProvider: TZaryaCoreProvider; const AContext: TZaryaConfigContext):
+  TZaryaRuntimeRequest;
+
 implementation
+
+function CreateRuntimeRequest(const AProfile: TZaryaProfile;
+  const AProvider: TZaryaCoreProvider; const AContext: TZaryaConfigContext):
+  TZaryaRuntimeRequest;
+begin
+  Result := Default(TZaryaRuntimeRequest);
+  Result.Profile := AProfile;
+  Result.Provider := AProvider;
+  Result.MixedPort := AContext.MixedPort;
+  Result.HttpPort := AContext.HttpPort;
+  Result.SocksPort := AContext.SocksPort;
+  Result.LogLevel := 'warning';
+  Result.RawConfig := AProfile.RawConfig;
+  Result.RawConfigFormat := AProfile.RawConfigFormat;
+  Result.RawReadinessHost := AProfile.ReadinessHost;
+  Result.RawReadinessPort := AProfile.ReadinessPort;
+  Result.RawProxyKind := AProfile.SystemProxyKind;
+end;
 
 end.

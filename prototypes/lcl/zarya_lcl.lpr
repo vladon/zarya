@@ -12,7 +12,8 @@ uses
   FpcProfileStore,
   ZaryaDataMigration,
   ZaryaEmbeddedXray,
-  ZaryaTcpProbe;
+  ZaryaTcpProbe,
+  ZaryaNodeTestWorker;
 
 var
   Window: TMainForm;
@@ -202,6 +203,8 @@ begin
 end;
 
 begin
+  if RunCoreTestWorkerMode(WorkerExitCode) then
+    Halt(WorkerExitCode);
   if RunWorkerMode(WorkerExitCode) then
     Halt(WorkerExitCode);
   RequireDerivedFormResource := False;
