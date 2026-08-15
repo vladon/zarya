@@ -292,6 +292,64 @@ begin
   Result := DestinationStore.Save(Providers, AError);
 end;
 
+function SanitizeProfileFile(const ASource, ADestination: string;
+  out AError: string): Boolean;
+var
+  SourceStore: IZaryaProfileStore;
+  DestinationStore: IZaryaProfileStore;
+  Profiles: TZaryaProfiles;
+  I: Integer;
+begin
+  SourceStore := TFpcProfileStore.Create(ASource);
+  if not SourceStore.Load(Profiles, AError) then Exit(False);
+  for I := 0 to High(Profiles) do
+  begin
+    Profiles[I].Uuid := '';
+    Profiles[I].Password := '';
+    Profiles[I].ObfsPassword := '';
+    Profiles[I].PreSharedKey := '';
+    Profiles[I].RawConfig := '';
+    Profiles[I].SourceKey := '';
+    Profiles[I].LastTestError := '';
+    Profiles[I].Enabled := False;
+    Profiles[I].UnsupportedReason :=
+      'credentials omitted from portable backup';
+  end;
+  DestinationStore := TFpcProfileStore.Create(ADestination);
+  Result := DestinationStore.Save(Profiles, AError);
+end;
+
+function SanitizeSubscriptionFile(const ASource, ADestination: string;
+  out AError: string): Boolean;
+var
+  SourceStore: TFpcSubscriptionStore;
+  DestinationStore: TFpcSubscriptionStore;
+  Subscriptions: TZaryaSubscriptions;
+  I: Integer;
+begin
+  SourceStore := TFpcSubscriptionStore.Create(ASource);
+  try
+    if not SourceStore.Load(Subscriptions, AError) then Exit(False);
+  finally
+    SourceStore.Free;
+  end;
+  for I := 0 to High(Subscriptions) do
+  begin
+    Subscriptions[I].Url := '';
+    Subscriptions[I].UserAgent := '';
+    Subscriptions[I].Remarks := '';
+    Subscriptions[I].LastError := '';
+    Subscriptions[I].Enabled := False;
+    Subscriptions[I].LastStatus := ssDisabled;
+  end;
+  DestinationStore := TFpcSubscriptionStore.Create(ADestination);
+  try
+    Result := DestinationStore.Save(Subscriptions, AError);
+  finally
+    DestinationStore.Free;
+  end;
+end;
+
 function ValidateSubscriptionRelations(const AStagingDirectory: string;
   out AError: string): Boolean;
 var
@@ -396,6 +454,10 @@ begin
       Manifest.Add('backupVersion', BackupVersion);
       Manifest.Add('createdAt', FormatDateTime('yyyy-mm-dd"T"hh:nn:ss', Now));
       Manifest.Add('source', 'lcl');
+      Manifest.Add('containsRawConfigs', False);
+      Manifest.Add('containsCredentials', False);
+      Manifest.Add('containsExternalExecutables', False);
+      Manifest.Add('secretsOmitted', True);
       Files := TJSONArray.Create;
       Manifest.Add('files', Files);
       for I := Low(BackupDataFiles) to High(BackupDataFiles) do
@@ -406,7 +468,17 @@ begin
           Continue;
         SnapshotFile := IncludeTrailingPathDelimiter(SnapshotDirectory) +
           BackupDataFiles[I];
-        if SameText(BackupDataFiles[I], 'providers.json') then
+        if SameText(BackupDataFiles[I], 'profiles.json') then
+        begin
+          if not SanitizeProfileFile(SourceFile, SnapshotFile, AError) then
+            raise Exception.Create(AError);
+        end
+        else if SameText(BackupDataFiles[I], 'subscriptions.json') then
+        begin
+          if not SanitizeSubscriptionFile(SourceFile, SnapshotFile,
+            AError) then raise Exception.Create(AError);
+        end
+        else if SameText(BackupDataFiles[I], 'providers.json') then
         begin
           if not SanitizeProviderFile(SourceFile, SnapshotFile, AError) then
             raise Exception.Create(AError);

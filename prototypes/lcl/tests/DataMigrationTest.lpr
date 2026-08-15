@@ -37,6 +37,19 @@ begin
   end;
 end;
 
+function ReadText(const AFileName: string): string;
+var
+  Lines: TStringList;
+begin
+  Lines := TStringList.Create;
+  try
+    Lines.LoadFromFile(AFileName);
+    Result := Lines.Text;
+  finally
+    Lines.Free;
+  end;
+end;
+
 procedure RemoveTree(const ADirectory: string);
 var
   Search: TSearchRec;
@@ -65,6 +78,10 @@ var
   BadLegacy: string;
   BadTarget: string;
   ConflictTarget: string;
+  DuplicateLegacy: string;
+  DuplicateTarget: string;
+  CorruptPolicyLegacy: string;
+  CorruptPolicyTarget: string;
   ProfileFile: string;
   OriginalHash: string;
   CurrentHash: string;
@@ -107,6 +124,9 @@ begin
   Check(FileHasContent(BackupFile), 'Pre-migration backup is empty.');
   Check(FileExists(IncludeTrailingPathDelimiter(Target) + 'migration.json'),
     'Migration marker is missing.');
+  Check(Pos('"schemaVersion" : 2', ReadText(
+    IncludeTrailingPathDelimiter(Target) + 'migration.json')) > 0,
+    'Migration journal is not schema v2.');
   Check(Sha256File(ProfileFile, CurrentHash, ErrorMessage),
     'Could not re-hash legacy profile fixture.');
   Check(CurrentHash = OriginalHash, 'Legacy profiles.json was modified.');
@@ -163,6 +183,38 @@ begin
     mrFailed, 'Existing non-LCL target directory was overwritten.');
   Check(FileExists(IncludeTrailingPathDelimiter(ConflictTarget) +
     'unrelated.txt'), 'Target conflict file was modified.');
+
+  DuplicateLegacy := IncludeTrailingPathDelimiter(Root) + 'qt-duplicate';
+  DuplicateTarget := IncludeTrailingPathDelimiter(Root) + 'lcl-duplicate';
+  Check(ForceDirectories(DuplicateLegacy),
+    'Could not create duplicate migration fixture.');
+  WriteText(IncludeTrailingPathDelimiter(DuplicateLegacy) + 'profiles.json',
+    '{"version":4,"profiles":[' +
+    '{"id":"same","name":"One","protocol":"SOCKS","address":"127.0.0.1","port":1080},' +
+    '{"id":"same","name":"Two","protocol":"SOCKS","address":"127.0.0.1","port":1081}]}');
+  WriteText(IncludeTrailingPathDelimiter(DuplicateLegacy) +
+    'subscriptions.json', '{"version":1,"subscriptions":[]}');
+  Check(MigrateQtData(DuplicateLegacy, DuplicateTarget, BackupFile,
+    ErrorMessage) = mrFailed, 'Duplicate profile ids were accepted.');
+  Check(not DirectoryExists(DuplicateTarget),
+    'Duplicate-id migration installed partial data.');
+
+  CorruptPolicyLegacy := IncludeTrailingPathDelimiter(Root) +
+    'qt-corrupt-policy';
+  CorruptPolicyTarget := IncludeTrailingPathDelimiter(Root) +
+    'lcl-corrupt-policy';
+  Check(ForceDirectories(CorruptPolicyLegacy),
+    'Could not create corrupt policy fixture.');
+  WriteText(IncludeTrailingPathDelimiter(CorruptPolicyLegacy) +
+    'profiles.json', '{"version":4,"profiles":[]}');
+  WriteText(IncludeTrailingPathDelimiter(CorruptPolicyLegacy) +
+    'subscriptions.json', '{"version":1,"subscriptions":[]}');
+  WriteText(IncludeTrailingPathDelimiter(CorruptPolicyLegacy) +
+    'routing.json', '{not-json');
+  Check(MigrateQtData(CorruptPolicyLegacy, CorruptPolicyTarget, BackupFile,
+    ErrorMessage) = mrFailed, 'Corrupt routing data was accepted.');
+  Check(not DirectoryExists(CorruptPolicyTarget),
+    'Corrupt-policy migration installed partial data.');
   Store := nil;
   RemoveTree(Root);
   WriteLn('Qt to LCL staging migration: PASS');

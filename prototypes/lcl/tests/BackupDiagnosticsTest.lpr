@@ -202,9 +202,24 @@ begin
     Check(ProfileStore.Load(LoadedProfiles, ErrorMessage),
       'Restored profiles did not load: ' + ErrorMessage);
     Check((Length(LoadedProfiles) = 1) and
-      (LoadedProfiles[0].Password = 'credential-secret-token') and
-      (LoadedProfiles[0].RawConfig = '{"private":"raw-secret-token"}'),
-      'Backup lost private profile data.');
+      (LoadedProfiles[0].Password = '') and
+      (LoadedProfiles[0].Uuid = '') and
+      (LoadedProfiles[0].RawConfig = '') and
+      (not LoadedProfiles[0].Enabled),
+      'Backup retained credentials, raw config, or an enabled profile.');
+    Check(Pos('credentials omitted', LoadedProfiles[0].UnsupportedReason) > 0,
+      'Sanitized profile does not explain why it is disabled.');
+    SubscriptionStore := TFpcSubscriptionStore.Create(
+      IncludeTrailingPathDelimiter(TargetDirectory) + 'subscriptions.json');
+    try
+      Check(SubscriptionStore.Load(Subscriptions, ErrorMessage),
+        'Restored subscriptions did not load: ' + ErrorMessage);
+    finally
+      SubscriptionStore.Free;
+    end;
+    Check((Length(Subscriptions) = 1) and (Subscriptions[0].Url = '') and
+      (Subscriptions[0].UserAgent = '') and (not Subscriptions[0].Enabled),
+      'Backup retained a subscription URL or request metadata.');
     ProviderStore := TFpcCoreProviderStore.Create(
       IncludeTrailingPathDelimiter(TargetDirectory) + 'providers.json');
     Check(ProviderStore.Load(LoadedProviders, ErrorMessage),
