@@ -45,7 +45,7 @@ type
 implementation
 
 uses
-  ZaryaFileIntegrity, ZaryaRuntimeProcess;
+  ZaryaFileIntegrity, ZaryaRuntimeProcess, ZaryaFeatureGate;
 
 function FirstNonEmptyLine(const AText: string): string;
 var
@@ -90,6 +90,8 @@ var
   I: Integer;
 begin
   Embedded := CreateEmbeddedProviders;
+  if not TZaryaFeatureGate.EmbeddedSingBoxVisible then
+    SetLength(Embedded, 1);
   if not FStore.Load(ExternalProviders, AError) then
     Exit(False);
   SetLength(FProviders, Length(Embedded) + Length(ExternalProviders));

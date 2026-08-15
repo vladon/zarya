@@ -43,7 +43,7 @@ type
 implementation
 
 uses
-  ZaryaRuntimeProcess;
+  ZaryaRuntimeProcess, ZaryaTr;
 
 procedure AddLabel(AOwner: TComponent; AParent: TWinControl;
   const ACaption: string; const ALeft, ATop, AWidth: Integer);
@@ -81,10 +81,10 @@ begin
   Buttons.Align := alBottom;
   Buttons.ShowButtons := [pbOK, pbCancel];
   Buttons.ShowGlyphs := [];
-  Buttons.OKButton.Caption := 'Сохранить';
+  Buttons.OKButton.Caption := TZaryaTr.Tr('Сохранить');
   Buttons.OKButton.ModalResult := mrNone;
   Buttons.OKButton.OnClick := @AcceptClick;
-  Buttons.CancelButton.Caption := 'Отмена';
+  Buttons.CancelButton.Caption := TZaryaTr.Tr('Отмена');
 
   Pages := TPageControl.Create(Self);
   Pages.Parent := Self;
@@ -93,8 +93,8 @@ begin
 
   GeneralTab := TTabSheet.Create(Self);
   GeneralTab.PageControl := Pages;
-  GeneralTab.Caption := 'Основное';
-  AddLabel(Self, GeneralTab, 'Название', 20, 24, 190);
+  GeneralTab.Caption := TZaryaTr.Tr('Основное', 'General');
+  AddLabel(Self, GeneralTab, TZaryaTr.Tr('Название', 'Name'), 20, 24, 190);
   FNameEdit := TEdit.Create(Self);
   FNameEdit.Parent := GeneralTab;
   FNameEdit.SetBounds(220, 20, 450, 30);
@@ -109,7 +109,8 @@ begin
   FAdapterCombo.Items.Add('hysteria2');
   FAdapterCombo.Items.Add('raw');
   FAdapterCombo.SetBounds(220, 64, 220, 30);
-  AddLabel(Self, GeneralTab, 'Формат config', 20, 112, 190);
+  AddLabel(Self, GeneralTab, TZaryaTr.Tr('Формат config', 'Config format'),
+    20, 112, 190);
   FFormatCombo := TComboBox.Create(Self);
   FFormatCombo.Parent := GeneralTab;
   FFormatCombo.Style := csDropDownList;
@@ -120,11 +121,13 @@ begin
   FFormatCombo.Items.Add('hysteria-yaml');
   FFormatCombo.Items.Add('raw');
   FFormatCombo.SetBounds(220, 108, 220, 30);
-  AddLabel(Self, GeneralTab, 'Протоколы CSV / *', 20, 156, 190);
+  AddLabel(Self, GeneralTab, TZaryaTr.Tr('Протоколы CSV / *',
+    'Protocols CSV / *'), 20, 156, 190);
   FProtocolsEdit := TEdit.Create(Self);
   FProtocolsEdit.Parent := GeneralTab;
   FProtocolsEdit.SetBounds(220, 152, 450, 30);
-  AddLabel(Self, GeneralTab, 'Каталог ресурсов', 20, 200, 190);
+  AddLabel(Self, GeneralTab, TZaryaTr.Tr('Каталог ресурсов',
+    'Asset directory'), 20, 200, 190);
   FAssetEdit := TEdit.Create(Self);
   FAssetEdit.Parent := GeneralTab;
   FAssetEdit.SetBounds(220, 196, 450, 30);
@@ -156,13 +159,17 @@ begin
 
   CommandsTab := TTabSheet.Create(Self);
   CommandsTab.PageControl := Pages;
-  CommandsTab.Caption := 'Аргументы';
+  CommandsTab.Caption := TZaryaTr.Tr('Аргументы', 'Arguments');
   HintLabel := TLabel.Create(Self);
   HintLabel.Parent := CommandsTab;
   HintLabel.WordWrap := True;
-  HintLabel.Caption := 'Одна строка — один аргумент. Shell не используется. ' +
+  HintLabel.Caption := TZaryaTr.Tr(
+    'Одна строка — один аргумент. Shell не используется. ' +
     'Разрешены placeholders: {config}, {dataDir}, {assetDir}, {mixedPort}, ' +
-    '{httpPort}, {socksPort}, {logLevel}.';
+    '{httpPort}, {socksPort}, {logLevel}.',
+    'One line per argument. No shell is used. Allowed placeholders: ' +
+    '{config}, {dataDir}, {assetDir}, {mixedPort}, {httpPort}, {socksPort}, ' +
+    '{logLevel}.');
   HintLabel.SetBounds(16, 12, 690, 44);
   AddLabel(Self, CommandsTab, 'Version / help', 16, 66, 150);
   FVersionMemo := TMemo.Create(Self);
@@ -267,18 +274,21 @@ begin
   StoreProvider;
   if FProvider.DisplayName = '' then
   begin
-    MessageDlg('Custom provider', 'Введите название.', mtWarning, [mbOK], 0);
+    MessageDlg('Custom provider', TZaryaTr.Tr('Введите название.',
+      'Enter a name.'), mtWarning, [mbOK], 0);
     Exit;
   end;
   if FProvider.SupportedProtocols = '' then
   begin
-    MessageDlg('Custom provider', 'Укажите протоколы или *.', mtWarning,
+    MessageDlg('Custom provider', TZaryaTr.Tr('Укажите протоколы или *.',
+      'Specify protocols or *.'), mtWarning,
       [mbOK], 0);
     Exit;
   end;
   if Length(FProvider.RunArguments) = 0 then
   begin
-    MessageDlg('Custom provider', 'Команда Run не может быть пустой.',
+    MessageDlg('Custom provider', TZaryaTr.Tr(
+      'Команда Run не может быть пустой.', 'The Run command cannot be empty.'),
       mtWarning, [mbOK], 0);
     Exit;
   end;

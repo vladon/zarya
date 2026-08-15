@@ -41,6 +41,9 @@ function SubscriptionStatusDisplayName(const AStatus: TZaryaSubscriptionStatus):
 
 implementation
 
+uses
+  ZaryaTr;
+
 function NewSubscriptionId: string;
 var
   Value: TGuid;
@@ -92,12 +95,12 @@ function SubscriptionStatusDisplayName(
   const AStatus: TZaryaSubscriptionStatus): string;
 begin
   case AStatus of
-    ssUpdating: Result := 'Обновляется';
-    ssSuccess: Result := 'Успешно';
-    ssFailed: Result := 'Ошибка';
-    ssDisabled: Result := 'Отключена';
+    ssUpdating: Result := TZaryaTr.Tr('Обновляется', 'Updating');
+    ssSuccess: Result := TZaryaTr.Tr('Успешно', 'Success');
+    ssFailed: Result := TZaryaTr.Tr('Ошибка');
+    ssDisabled: Result := TZaryaTr.Tr('Отключена', 'Disabled');
   else
-    Result := 'Не обновлялась';
+    Result := TZaryaTr.Tr('Не обновлялась', 'Never updated');
   end;
 end;
 

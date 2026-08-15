@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, Forms, Controls, StdCtrls, ExtCtrls, Grids, Dialogs,
   ZaryaProfile, ZaryaProfileStore, ZaryaSubscription,
-  FpcSubscriptionStore, WindowsSubscriptionDownloader;
+  FpcSubscriptionStore, WindowsSubscriptionDownloader, ZaryaTr;
 
 type
   TSubscriptionDownloadThread = class(TThread)
@@ -162,7 +162,7 @@ var
   ErrorMessage: string;
 begin
   inherited CreateNew(AOwner, 1);
-  Caption := 'Подписки';
+  Caption := TZaryaTr.Tr('Подписки');
   Position := poOwnerFormCenter;
   ClientWidth := 920;
   ClientHeight := 520;
@@ -176,7 +176,9 @@ begin
   FSubscriptionStore := TFpcSubscriptionStore.Create(
     IncludeTrailingPathDelimiter(ADataDirectory) + 'subscriptions.json');
   if not FSubscriptionStore.Load(FSubscriptions, ErrorMessage) then
-    MessageDlg('Подписки', 'Не удалось прочитать subscriptions.json:' +
+    MessageDlg(TZaryaTr.Tr('Подписки'), TZaryaTr.Tr(
+      'Не удалось прочитать subscriptions.json:',
+      'Could not read subscriptions.json:') +
       LineEnding + ErrorMessage, mtError, [mbOK], 0);
 
   FGrid := TStringGrid.Create(Self);
@@ -188,11 +190,11 @@ begin
   FGrid.ColCount := 5;
   FGrid.RowCount := 2;
   FGrid.Options := FGrid.Options + [goRowSelect];
-  FGrid.Cells[0, 0] := 'Название';
-  FGrid.Cells[1, 0] := 'Состояние';
-  FGrid.Cells[2, 0] := 'Профили';
-  FGrid.Cells[3, 0] := 'Обновлена';
-  FGrid.Cells[4, 0] := 'Включена';
+  FGrid.Cells[0, 0] := TZaryaTr.Tr('Название', 'Name');
+  FGrid.Cells[1, 0] := TZaryaTr.Tr('Состояние', 'State');
+  FGrid.Cells[2, 0] := TZaryaTr.Tr('Профили');
+  FGrid.Cells[3, 0] := TZaryaTr.Tr('Обновлена', 'Updated');
+  FGrid.Cells[4, 0] := TZaryaTr.Tr('Включена', 'Enabled');
   FGrid.ColWidths[0] := 270;
   FGrid.ColWidths[1] := 130;
   FGrid.ColWidths[2] := 80;
@@ -208,37 +210,37 @@ begin
 
   FAddButton := TButton.Create(Self);
   FAddButton.Parent := Self;
-  FAddButton.Caption := 'Добавить';
+  FAddButton.Caption := TZaryaTr.Tr('Добавить');
   FAddButton.OnClick := @AddClick;
   FAddButton.SetBounds(20, 430, 100, 32);
   FEditButton := TButton.Create(Self);
   FEditButton.Parent := Self;
-  FEditButton.Caption := 'Изменить';
+  FEditButton.Caption := TZaryaTr.Tr('Изменить');
   FEditButton.OnClick := @EditClick;
   FEditButton.SetBounds(130, 430, 100, 32);
   FDeleteButton := TButton.Create(Self);
   FDeleteButton.Parent := Self;
-  FDeleteButton.Caption := 'Удалить';
+  FDeleteButton.Caption := TZaryaTr.Tr('Удалить');
   FDeleteButton.OnClick := @DeleteClick;
   FDeleteButton.SetBounds(240, 430, 100, 32);
   FUpdateButton := TButton.Create(Self);
   FUpdateButton.Parent := Self;
-  FUpdateButton.Caption := 'Обновить';
+  FUpdateButton.Caption := TZaryaTr.Tr('Обновить', 'Update');
   FUpdateButton.OnClick := @UpdateClick;
   FUpdateButton.SetBounds(420, 430, 100, 32);
   FUpdateAllButton := TButton.Create(Self);
   FUpdateAllButton.Parent := Self;
-  FUpdateAllButton.Caption := 'Обновить все';
+  FUpdateAllButton.Caption := TZaryaTr.Tr('Обновить все', 'Update all');
   FUpdateAllButton.OnClick := @UpdateAllClick;
   FUpdateAllButton.SetBounds(530, 430, 110, 32);
   FCancelButton := TButton.Create(Self);
   FCancelButton.Parent := Self;
-  FCancelButton.Caption := 'Отменить';
+  FCancelButton.Caption := TZaryaTr.Tr('Отменить', 'Cancel');
   FCancelButton.OnClick := @CancelClick;
   FCancelButton.SetBounds(650, 430, 100, 32);
   FCloseButton := TButton.Create(Self);
   FCloseButton.Parent := Self;
-  FCloseButton.Caption := 'Закрыть';
+  FCloseButton.Caption := TZaryaTr.Tr('Закрыть');
   FCloseButton.Cancel := True;
   FCloseButton.OnClick := @CloseClick;
   FCloseButton.SetBounds(800, 430, 100, 32);
@@ -295,11 +297,13 @@ begin
     FGrid.Cells[2, I] := IntToStr(FSubscriptions[I - 1].ProfileCount);
     FGrid.Cells[3, I] := FSubscriptions[I - 1].LastUpdatedAt;
     if FSubscriptions[I - 1].Enabled then
-      FGrid.Cells[4, I] := 'Да'
+      FGrid.Cells[4, I] := TZaryaTr.Tr('Да', 'Yes')
     else
-      FGrid.Cells[4, I] := 'Нет';
+      FGrid.Cells[4, I] := TZaryaTr.Tr('Нет', 'No');
   end;
-  FSummary.Caption := Format('Подписок: %d. URL не показываются в таблице и журнале.',
+  FSummary.Caption := Format(TZaryaTr.Tr(
+    'Подписок: %d. URL не показываются в таблице и журнале.',
+    'Subscriptions: %d. URLs are hidden from the table and log.'),
     [Length(FSubscriptions)]);
   SelectIndex := ASelectIndex;
   if SelectIndex < 0 then SelectIndex := SelectedIndex;
@@ -327,7 +331,9 @@ var
 begin
   Result := FSubscriptionStore.Save(FSubscriptions, ErrorMessage);
   if not Result then
-    MessageDlg('Подписки', 'Не удалось сохранить subscriptions.json:' +
+    MessageDlg(TZaryaTr.Tr('Подписки'), TZaryaTr.Tr(
+      'Не удалось сохранить subscriptions.json:',
+      'Could not save subscriptions.json:') +
       LineEnding + ErrorMessage, mtError, [mbOK], 0);
 end;
 
@@ -367,7 +373,8 @@ begin
   Index := SelectedIndex;
   if Index < 0 then
   begin
-    MessageDlg('Подписки', 'Сначала выберите подписку.', mtInformation,
+    MessageDlg(TZaryaTr.Tr('Подписки'), TZaryaTr.Tr(
+      'Сначала выберите подписку.', 'Select a subscription first.'), mtInformation,
       [mbOK], 0);
     Exit;
   end;
@@ -391,14 +398,17 @@ begin
   Index := SelectedIndex;
   if Index < 0 then
   begin
-    MessageDlg('Подписки', 'Сначала выберите подписку.', mtInformation,
+    MessageDlg(TZaryaTr.Tr('Подписки'), TZaryaTr.Tr(
+      'Сначала выберите подписку.', 'Select a subscription first.'), mtInformation,
       [mbOK], 0);
     Exit;
   end;
   Subscription := FSubscriptions[Index];
-  Answer := MessageDlg('Удалить подписку',
-    'Удалить подписку «' + Subscription.Name + '»?' + LineEnding +
-    'Да — вместе с профилями; Нет — оставить профили как ручные.',
+  Answer := MessageDlg(TZaryaTr.Tr('Удалить подписку', 'Delete subscription'),
+    TZaryaTr.Tr('Удалить подписку «', 'Delete subscription “') +
+    Subscription.Name + TZaryaTr.Tr('»?', '”?') + LineEnding +
+    TZaryaTr.Tr('Да — вместе с профилями; Нет — оставить профили как ручные.',
+      'Yes — delete its profiles; No — keep profiles as manual.'),
     mtConfirmation, [mbYes, mbNo, mbCancel], 0);
   if Answer = mrCancel then Exit;
   CandidateProfiles := CloneProfiles(FProfiles);
@@ -434,8 +444,9 @@ begin
   if not SaveTransaction(CandidateSubscriptions, CandidateProfiles,
     ErrorMessage) then
   begin
-    MessageDlg('Подписки', 'Не удалось сохранить удаление:' + LineEnding +
-      ErrorMessage, mtError, [mbOK], 0);
+    MessageDlg(TZaryaTr.Tr('Подписки'), TZaryaTr.Tr(
+      'Не удалось сохранить удаление:', 'Could not save deletion:') +
+      LineEnding + ErrorMessage, mtError, [mbOK], 0);
     Exit;
   end;
   FSubscriptions := CandidateSubscriptions;
@@ -451,7 +462,8 @@ begin
   Index := SelectedIndex;
   if Index < 0 then
   begin
-    MessageDlg('Подписки', 'Сначала выберите подписку.', mtInformation,
+    MessageDlg(TZaryaTr.Tr('Подписки'), TZaryaTr.Tr(
+      'Сначала выберите подписку.', 'Select a subscription first.'), mtInformation,
       [mbOK], 0);
     Exit;
   end;
@@ -479,7 +491,8 @@ begin
   SetLength(FQueue, Count);
   if Count = 0 then
   begin
-    MessageDlg('Подписки', 'Нет включённых подписок.', mtInformation,
+    MessageDlg(TZaryaTr.Tr('Подписки'), TZaryaTr.Tr(
+      'Нет включённых подписок.', 'There are no enabled subscriptions.'), mtInformation,
       [mbOK], 0);
     Exit;
   end;
@@ -494,7 +507,8 @@ begin
   if FQueuePosition > High(FQueue) then
   begin
     SetLength(FQueue, 0);
-    FProgress.Caption := 'Обновление подписок завершено.';
+    FProgress.Caption := TZaryaTr.Tr('Обновление подписок завершено.',
+      'Subscription updates completed.');
     UpdateControls;
     Exit;
   end;
@@ -511,7 +525,8 @@ begin
   FSubscriptions[FCurrentIndex].LastStatus := ssUpdating;
   FSubscriptions[FCurrentIndex].LastError := '';
   RefreshGrid(FCurrentIndex);
-  FProgress.Caption := 'Загрузка «' + FSubscriptions[FCurrentIndex].Name + '»…';
+  FProgress.Caption := TZaryaTr.Tr('Загрузка «', 'Downloading “') +
+    FSubscriptions[FCurrentIndex].Name + TZaryaTr.Tr('»…', '”…');
   WriteLog('Subscription update started: ' +
     FSubscriptions[FCurrentIndex].Name);
   FWorker := TSubscriptionDownloadThread.Create(
@@ -540,7 +555,8 @@ begin
     FSubscriptions[Index].LastStatus := ssFailed;
     FSubscriptions[Index].LastError := Download.ErrorMessage;
     SaveSubscriptions;
-    FProgress.Caption := 'Ошибка «' + FSubscriptions[Index].Name + '»: ' +
+    FProgress.Caption := TZaryaTr.Tr('Ошибка «', 'Error “') +
+      FSubscriptions[Index].Name + TZaryaTr.Tr('»: ', '”: ') +
       Download.ErrorMessage;
     WriteLog('Subscription update failed: ' + Download.ErrorMessage);
     RefreshGrid(Index);
@@ -553,7 +569,8 @@ begin
     FSubscriptions[Index].LastStatus := ssFailed;
     FSubscriptions[Index].LastError := Parsed.ErrorMessage;
     SaveSubscriptions;
-    FProgress.Caption := 'Ошибка «' + FSubscriptions[Index].Name + '»: ' +
+    FProgress.Caption := TZaryaTr.Tr('Ошибка «', 'Error “') +
+      FSubscriptions[Index].Name + TZaryaTr.Tr('»: ', '”: ') +
       Parsed.ErrorMessage;
     WriteLog('Subscription parse failed: ' + Parsed.ErrorMessage);
     RefreshGrid(Index);
@@ -568,7 +585,8 @@ begin
     FSubscriptions[Index].LastStatus := ssFailed;
     FSubscriptions[Index].LastError := ErrorMessage;
     SaveSubscriptions;
-    FProgress.Caption := 'Ошибка merge: ' + ErrorMessage;
+    FProgress.Caption := TZaryaTr.Tr('Ошибка merge: ', 'Merge error: ') +
+      ErrorMessage;
     WriteLog('Subscription merge failed: ' + ErrorMessage);
     RefreshGrid(Index);
     StartNextDownload;
@@ -581,7 +599,8 @@ begin
     FSubscriptions[Index].LastStatus := ssFailed;
     FSubscriptions[Index].LastError := ErrorMessage;
     SaveSubscriptions;
-    FProgress.Caption := 'Ошибка сохранения: ' + ErrorMessage;
+    FProgress.Caption := TZaryaTr.Tr('Ошибка сохранения: ', 'Save error: ') +
+      ErrorMessage;
     WriteLog('Subscription save failed: ' + ErrorMessage);
     RefreshGrid(Index);
     StartNextDownload;
@@ -590,8 +609,9 @@ begin
   FSubscriptions := CandidateSubscriptions;
   FProfiles := CandidateProfiles;
   FProfilesChanged := True;
-  FProgress.Caption := Format(
+  FProgress.Caption := Format(TZaryaTr.Tr(
     '«%s»: добавлено %d, обновлено %d, отсутствует %d, пропущено %d.',
+    '“%s”: added %d, updated %d, missing %d, skipped %d.'),
     [FSubscriptions[Index].Name, Stats.AddedProfiles,
      Stats.UpdatedProfiles, Stats.MarkedMissingProfiles,
      Stats.SkippedLines]);
@@ -616,7 +636,8 @@ begin
     TotalText := ' / ' + IntToStr(FWorker.Total)
   else
     TotalText := '';
-  FProgress.Caption := Format('Загрузка «%s»: %d%s байт',
+  FProgress.Caption := Format(TZaryaTr.Tr('Загрузка «%s»: %d%s байт',
+    'Downloading “%s”: %d%s bytes'),
     [FSubscriptions[FCurrentIndex].Name, FWorker.Downloaded, TotalText]);
 end;
 
@@ -627,7 +648,8 @@ begin
   if Assigned(FWorker) then
   begin
     FWorker.RequestCancel;
-    FProgress.Caption := 'Отмена текущей загрузки…';
+    FProgress.Caption := TZaryaTr.Tr('Отмена текущей загрузки…',
+      'Canceling the current download…');
   end;
 end;
 
@@ -641,7 +663,9 @@ procedure TSubscriptionManagerDialog.FormCloseQuery(Sender: TObject;
 begin
   CanClose := not Assigned(FWorker);
   if not CanClose then
-    MessageDlg('Подписки', 'Сначала отмените или дождитесь текущего обновления.',
+    MessageDlg(TZaryaTr.Tr('Подписки'), TZaryaTr.Tr(
+      'Сначала отмените или дождитесь текущего обновления.',
+      'Cancel or wait for the current update first.'),
       mtInformation, [mbOK], 0);
 end;
 

@@ -33,6 +33,9 @@ type
 
 implementation
 
+uses
+  ZaryaTr;
+
 constructor TProviderChoiceDialog.Create(AOwner: TComponent;
   const ARegistry: TZaryaCoreProviderRegistry;
   const AProviderIds: TZaryaStringArray; const APreferredProviderId: string;
@@ -50,7 +53,7 @@ begin
   inherited CreateNew(AOwner, 1);
   FRegistry := ARegistry;
   FProviderIds := Copy(AProviderIds);
-  Caption := 'Выбор runtime provider';
+  Caption := TZaryaTr.Tr('Выбор runtime provider', 'Choose runtime provider');
   Position := poOwnerFormCenter;
   BorderStyle := bsDialog;
   ClientWidth := 660;
@@ -59,9 +62,10 @@ begin
   Info := TLabel.Create(Self);
   Info.Parent := Self;
   Info.WordWrap := True;
-  Info.Caption := 'Предпочтительный provider «' + APreferredProviderId +
-    '» недоступен или несовместим. Автоматическое переключение запрещено; ' +
-    'выберите явное действие.';
+  Info.Caption := TZaryaTr.Tr('Предпочтительный provider «',
+    'The preferred provider “') + APreferredProviderId +
+    TZaryaTr.Tr('» недоступен или несовместим. Автоматическое переключение запрещено; выберите явное действие.',
+      '” is unavailable or incompatible. Automatic switching is disabled; choose an explicit action.');
   Info.SetBounds(16, 14, 628, 52);
 
   FList := TListBox.Create(Self);
@@ -80,17 +84,18 @@ begin
   Buttons.BevelOuter := bvNone;
   OneTimeButton := TButton.Create(Self);
   OneTimeButton.Parent := Buttons;
-  OneTimeButton.Caption := 'Использовать один раз';
+  OneTimeButton.Caption := TZaryaTr.Tr('Использовать один раз', 'Use once');
   OneTimeButton.SetBounds(16, 16, 176, 32);
   OneTimeButton.OnClick := @OneTimeClick;
   SaveButton := TButton.Create(Self);
   SaveButton.Parent := Buttons;
-  SaveButton.Caption := 'Сменить provider профиля';
+  SaveButton.Caption := TZaryaTr.Tr('Сменить provider профиля',
+    'Change profile provider');
   SaveButton.SetBounds(202, 16, 194, 32);
   SaveButton.OnClick := @SaveClick;
   CancelButton := TButton.Create(Self);
   CancelButton.Parent := Buttons;
-  CancelButton.Caption := 'Отмена';
+  CancelButton.Caption := TZaryaTr.Tr('Отмена');
   CancelButton.ModalResult := mrCancel;
   CancelButton.SetBounds(532, 16, 112, 32);
 
@@ -105,7 +110,8 @@ begin
     (FList.ItemIndex <= High(FProviderIds));
   if not Result then
   begin
-    MessageDlg('Runtime provider', 'Выберите provider.', mtInformation,
+    MessageDlg('Runtime provider', TZaryaTr.Tr('Выберите provider.',
+      'Select a provider.'), mtInformation,
       [mbOK], 0);
     Exit;
   end;

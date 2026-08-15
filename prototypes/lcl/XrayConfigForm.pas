@@ -23,6 +23,9 @@ type
 
 implementation
 
+uses
+  ZaryaTr;
+
 constructor TXrayConfigDialog.Create(AOwner: TComponent;
   const AProfileName, AConfig, AFormatName, AExtension: string;
   const ADarkTheme: Boolean);
@@ -46,15 +49,15 @@ begin
   Buttons.Align := alBottom;
   Buttons.ShowButtons := [pbOK, pbClose];
   Buttons.ShowGlyphs := [];
-  Buttons.OKButton.Caption := 'Сохранить…';
+  Buttons.OKButton.Caption := TZaryaTr.Tr('Сохранить') + '…';
   Buttons.OKButton.ModalResult := mrNone;
   Buttons.OKButton.OnClick := @SaveClick;
-  Buttons.CloseButton.Caption := 'Закрыть';
+  Buttons.CloseButton.Caption := TZaryaTr.Tr('Закрыть');
 
   IntroLabel := TLabel.Create(Self);
   IntroLabel.Parent := Self;
-  IntroLabel.Caption :=
-    'Формат: ' + AFormatName + '. Core не запускается.';
+  IntroLabel.Caption := TZaryaTr.Tr('Формат: ', 'Format: ') + AFormatName +
+    TZaryaTr.Tr('. Core не запускается.', '. The core is not started.');
   IntroLabel.SetBounds(16, 14, 780, 24);
 
   FJsonMemo := TMemo.Create(Self);
@@ -83,11 +86,13 @@ var
 begin
   SaveDialog := TSaveDialog.Create(Self);
   try
-  SaveDialog.Title := 'Сохранить runtime config';
-  SaveDialog.Filter := 'Конфигурация (*' + FConfigExtension + ')|*' +
-    FConfigExtension + '|Все файлы (*.*)|*.*';
-  SaveDialog.DefaultExt := Copy(FConfigExtension, 2, MaxInt);
-  SaveDialog.FileName := 'config' + FConfigExtension;
+    SaveDialog.Title := TZaryaTr.Tr('Сохранить runtime config',
+      'Save runtime config');
+    SaveDialog.Filter := TZaryaTr.Tr('Конфигурация (*', 'Configuration (*') +
+      FConfigExtension + ')|*' + FConfigExtension +
+      TZaryaTr.Tr('|Все файлы (*.*)|*.*', '|All files (*.*)|*.*');
+    SaveDialog.DefaultExt := Copy(FConfigExtension, 2, MaxInt);
+    SaveDialog.FileName := 'config' + FConfigExtension;
     if not SaveDialog.Execute then
       Exit;
     try
@@ -99,11 +104,14 @@ begin
       finally
         Stream.Free;
       end;
-      MessageDlg('Runtime config', 'Конфигурация сохранена.', mtInformation,
+      MessageDlg('Runtime config', TZaryaTr.Tr('Конфигурация сохранена.',
+        'Configuration saved.'), mtInformation,
         [mbOK], 0);
     except
       on E: Exception do
-        MessageDlg('Runtime config', 'Не удалось сохранить конфигурацию:' +
+        MessageDlg('Runtime config', TZaryaTr.Tr(
+          'Не удалось сохранить конфигурацию:',
+          'Could not save the configuration:') +
           LineEnding + E.Message, mtError, [mbOK], 0);
     end;
   finally

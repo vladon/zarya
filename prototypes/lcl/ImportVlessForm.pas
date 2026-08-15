@@ -20,6 +20,9 @@ type
 
 implementation
 
+uses
+  ZaryaTr;
+
 constructor TImportVlessDialog.Create(AOwner: TComponent;
   const ADarkTheme: Boolean);
 var
@@ -29,7 +32,7 @@ var
   Theme: TZaryaTheme;
 begin
   inherited CreateNew(AOwner, 1);
-  Caption := 'Импорт share links';
+  Caption := TZaryaTr.Tr('Импорт share links', 'Import share links');
   BorderStyle := bsSizeable;
   Position := poOwnerFormCenter;
   ClientWidth := 680;
@@ -42,19 +45,21 @@ begin
   Buttons.Align := alBottom;
   Buttons.ShowButtons := [pbOK, pbCancel];
   Buttons.ShowGlyphs := [];
-  Buttons.OKButton.Caption := 'Импортировать';
-  Buttons.CancelButton.Caption := 'Отмена';
+  Buttons.OKButton.Caption := TZaryaTr.Tr('Импортировать', 'Import');
+  Buttons.CancelButton.Caption := TZaryaTr.Tr('Отмена');
 
   IntroLabel := TLabel.Create(Self);
   IntroLabel.Parent := Self;
-  IntroLabel.Caption :=
-    'Вставьте share links — по одной в строке (VLESS, VMess, Trojan, SS, SOCKS, Hysteria2, WireGuard).';
+  IntroLabel.Caption := TZaryaTr.Tr(
+    'Вставьте share links — по одной в строке (VLESS, VMess, Trojan, SS, SOCKS, Hysteria2, WireGuard).',
+    'Paste share links, one per line (VLESS, VMess, Trojan, SS, SOCKS, Hysteria2, WireGuard).');
   IntroLabel.SetBounds(18, 16, 640, 24);
 
   HintLabel := TLabel.Create(Self);
   HintLabel.Parent := Self;
-  HintLabel.Caption :=
-    'Разбор и сохранение выполняются локально; ссылка не попадает в журнал.';
+  HintLabel.Caption := TZaryaTr.Tr(
+    'Разбор и сохранение выполняются локально; ссылка не попадает в журнал.',
+    'Parsing and storage are local; links are never written to the log.');
   HintLabel.SetBounds(18, 42, 640, 22);
 
   FLinksMemo := TMemo.Create(Self);

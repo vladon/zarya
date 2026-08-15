@@ -99,6 +99,7 @@ try {
         'GeoDataTest',
         'TcpLatencyTest',
         'AutostartTest',
+        'TranslationTest',
         'CoreProviderTest',
         'ConfigAdapterTest',
         'ExternalProcessTest'

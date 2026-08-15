@@ -13,39 +13,13 @@ uses
   ZaryaCoreProvider, ZaryaCoreProviderRegistry, FpcCoreProviderStore,
   CoreManagerForm, ZaryaRuntimeProcess, ZaryaRuntimeConfigFile,
   ProviderChoiceForm, ZaryaFileIntegrity, ZaryaRuntimeContracts,
-  ZaryaConfigAdapters, SubscriptionManagerForm, ZaryaTcpLatency,
+  ZaryaConfigAdapters, SubscriptionManagerForm, ZaryaProfileTesting,
   ZaryaBackup, ZaryaDiagnostics, ZaryaRouting, ZaryaDns, ZaryaPolicyStore,
   FpcPolicyStore, PolicyManagerForm, ZaryaGeoData, GeoDataManagerForm,
-  WindowsAutostart;
+  WindowsAutostart, ZaryaRealDelay, ZaryaTr;
 
 type
   TRuntimeState = (rsStopped, rsConnecting, rsRunning);
-
-  TZaryaTcpTestResult = record
-    Tested: Boolean;
-    Success: Boolean;
-    LatencyMs: Integer;
-    ErrorMessage: string;
-  end;
-
-  TZaryaTcpTestResults = array of TZaryaTcpTestResult;
-
-  TProfileTcpTestThread = class(TThread)
-  private
-    FProfiles: TZaryaProfiles;
-    FResults: TZaryaTcpTestResults;
-    FCancelFlag: LongInt;
-    FDoneFlag: LongInt;
-    FCurrentIndex: Integer;
-  protected
-    procedure Execute; override;
-  public
-    constructor Create(const AProfiles: TZaryaProfiles);
-    procedure RequestCancel;
-    function IsDone: Boolean;
-    property CurrentIndex: Integer read FCurrentIndex;
-    property Results: TZaryaTcpTestResults read FResults;
-  end;
 
   TMainForm = class(TForm)
   private
@@ -95,6 +69,9 @@ type
     FAutoStartTimer: TTimer;
     FTestThread: TProfileTcpTestThread;
     FTestButton: TButton;
+    FRealDelayThread: TZaryaRealDelayBatchThread;
+    FRealDelayButton: TButton;
+    FRealDelayTimer: TTimer;
     FTrayIcon: TTrayIcon;
     FTrayMenu: TPopupMenu;
     FStartMenuItem: TMenuItem;
@@ -102,6 +79,7 @@ type
     procedure BuildMenus;
     procedure BuildInterface;
     procedure BuildTray;
+    procedure LayoutToolbar;
     procedure LoadAppSettings;
     procedure SaveAppSettings;
     procedure ConfigureStartup;
@@ -141,6 +119,10 @@ type
     procedure ReadyTimerTimer(Sender: TObject);
     procedure TestTimerTimer(Sender: TObject);
     procedure TestClick(Sender: TObject);
+    procedure RealDelayClick(Sender: TObject);
+    procedure RealDelayTimerTimer(Sender: TObject);
+    function BuildRealDelayItems(out AItems: TZaryaRealDelayWorkItems;
+      out AError: string): Boolean;
     procedure PreviewConfigClick(Sender: TObject);
     procedure AddClick(Sender: TObject);
     procedure EditClick(Sender: TObject);
@@ -167,51 +149,6 @@ type
   end;
 
 implementation
-
-constructor TProfileTcpTestThread.Create(const AProfiles: TZaryaProfiles);
-var
-  I: Integer;
-begin
-  inherited Create(True);
-  FreeOnTerminate := False;
-  SetLength(FProfiles, Length(AProfiles));
-  for I := 0 to High(AProfiles) do FProfiles[I] := AProfiles[I];
-  SetLength(FResults, Length(AProfiles));
-  FCurrentIndex := -1;
-  Start;
-end;
-
-procedure TProfileTcpTestThread.Execute;
-var
-  I: Integer;
-begin
-  try
-    for I := 0 to High(FProfiles) do
-    begin
-      if InterlockedCompareExchange(FCancelFlag, 0, 0) <> 0 then Break;
-      FCurrentIndex := I;
-      if not FProfiles[I].Enabled or FProfiles[I].DeletedBySubscriptionUpdate then
-        Continue;
-      FResults[I].Tested := True;
-      FResults[I].Success := MeasureTcpLatency(FProfiles[I].Host,
-        FProfiles[I].Port, 3000, FResults[I].LatencyMs,
-        FResults[I].ErrorMessage);
-    end;
-  finally
-    FCurrentIndex := -1;
-    InterlockedExchange(FDoneFlag, 1);
-  end;
-end;
-
-procedure TProfileTcpTestThread.RequestCancel;
-begin
-  InterlockedExchange(FCancelFlag, 1);
-end;
-
-function TProfileTcpTestThread.IsDone: Boolean;
-begin
-  Result := InterlockedCompareExchange(FDoneFlag, 0, 0) <> 0;
-end;
 
 function NewMenuItem(AOwner: TComponent; const ACaption: string;
   AHandler: TNotifyEvent): TMenuItem;
@@ -246,7 +183,9 @@ begin
     IncludeTrailingPathDelimiter(ExtractFileDir(FProfileStore.FileName)) +
     'providers.json'));
   if not FCoreRegistry.Load(ErrorMessage) then
-    MessageDlg('Ядра', 'Не удалось прочитать providers.json:' + LineEnding +
+    MessageDlg(TZaryaTr.Tr('Ядра'), TZaryaTr.Tr(
+      'Не удалось прочитать providers.json:',
+      'Could not read providers.json:') + LineEnding +
       ErrorMessage, mtWarning, [mbOK], 0);
   FSettingsStore := TZaryaAppSettingsStore.Create(
     IncludeTrailingPathDelimiter(ExtractFileDir(FProfileStore.FileName)) +
@@ -290,7 +229,8 @@ begin
     else
     begin
       AppendLog('System proxy recovery failed: ' + ErrorMessage);
-      MessageDlg('Восстановление системного прокси', ErrorMessage, mtWarning,
+      MessageDlg(TZaryaTr.Tr('Восстановление системного прокси',
+        'System proxy recovery'), ErrorMessage, mtWarning,
         [mbOK], 0);
     end;
   end;
@@ -304,7 +244,8 @@ begin
   if not FSettingsStore.Load(FAppSettings, ErrorMessage) then
   begin
     FAppSettings := DefaultAppSettings;
-    MessageDlg('Настройки', 'Не удалось прочитать settings.ini:' +
+    MessageDlg(TZaryaTr.Tr('Настройки'), TZaryaTr.Tr(
+      'Не удалось прочитать settings.ini:', 'Could not read settings.ini:') +
       LineEnding + ErrorMessage, mtWarning, [mbOK], 0);
   end;
   FDarkTheme := FAppSettings.DarkTheme;
@@ -316,7 +257,8 @@ var
   ErrorMessage: string;
 begin
   if not FSettingsStore.Save(FAppSettings, ErrorMessage) then
-    MessageDlg('Настройки', 'Не удалось сохранить settings.ini:' +
+    MessageDlg(TZaryaTr.Tr('Настройки'), TZaryaTr.Tr(
+      'Не удалось сохранить settings.ini:', 'Could not save settings.ini:') +
       LineEnding + ErrorMessage, mtError, [mbOK], 0);
 end;
 
@@ -330,8 +272,7 @@ begin
     if SameText(ParamStr(I), '--no-autostart-profile') then
       DisableProfileAutostart := True;
   if DisableProfileAutostart or not FAppSettings.AutoStartLastProfile or
-    (Trim(FAppSettings.LastStartedProfileId) = '') then
-    Exit;
+    (Trim(FAppSettings.LastStartedProfileId) = '') then Exit;
   for I := 0 to High(FProfiles) do
     if SameText(FProfiles[I].Id, FAppSettings.LastStartedProfileId) and
       FProfiles[I].Enabled and not FProfiles[I].DeletedBySubscriptionUpdate then
@@ -340,8 +281,7 @@ begin
       FAutoStartTimer := TTimer.Create(Self);
       FAutoStartTimer.Enabled := False;
       FAutoStartTimer.Interval := FAppSettings.AutoStartDelaySeconds * 1000;
-      if FAutoStartTimer.Interval < 1 then
-        FAutoStartTimer.Interval := 1;
+      if FAutoStartTimer.Interval < 1 then FAutoStartTimer.Interval := 1;
       FAutoStartTimer.OnTimer := @AutoStartTimerTick;
       FAutoStartTimer.Enabled := True;
       AppendLog(Format('Auto-start of profile scheduled in %d second(s).',
@@ -356,8 +296,7 @@ begin
   FAutoStartTimer.Enabled := False;
   FAutoStarting := True;
   StartClick(Sender);
-  if FRuntimeState = rsStopped then
-    FAutoStarting := False;
+  if FRuntimeState = rsStopped then FAutoStarting := False;
 end;
 
 function TMainForm.AutoProxyEnabledForCurrentStart: Boolean;
@@ -372,20 +311,21 @@ procedure TMainForm.LoadPolicies;
 var
   ErrorMessage: string;
   I: Integer;
-  FoundRouting: Boolean;
-  FoundDns: Boolean;
+  FoundRouting, FoundDns: Boolean;
 begin
   if not FRoutingStore.Load(FRoutingProfiles, ErrorMessage) then
   begin
     FRoutingProfiles := CreateBuiltInRoutingProfiles;
-    MessageDlg('Routing', 'Не удалось прочитать routing.json:' +
-      LineEnding + ErrorMessage, mtWarning, [mbOK], 0);
+    MessageDlg('Routing', TZaryaTr.Tr('Не удалось прочитать routing.json:',
+      'Could not read routing.json:') + LineEnding +
+      ErrorMessage, mtWarning, [mbOK], 0);
   end;
   if not FDnsStore.Load(FDnsProfiles, ErrorMessage) then
   begin
     FDnsProfiles := CreateBuiltInDnsProfiles;
-    MessageDlg('DNS', 'Не удалось прочитать dns.json:' +
-      LineEnding + ErrorMessage, mtWarning, [mbOK], 0);
+    MessageDlg('DNS', TZaryaTr.Tr('Не удалось прочитать dns.json:',
+      'Could not read dns.json:') + LineEnding +
+      ErrorMessage, mtWarning, [mbOK], 0);
   end;
   FoundRouting := False;
   for I := 0 to High(FRoutingProfiles) do
@@ -398,8 +338,7 @@ begin
   for I := 0 to High(FDnsProfiles) do
     if SameText(FDnsProfiles[I].Id, FAppSettings.SelectedDnsProfileId) then
       FoundDns := True;
-  if not FoundDns then
-    FAppSettings.SelectedDnsProfileId := DnsSystemId;
+  if not FoundDns then FAppSettings.SelectedDnsProfileId := DnsSystemId;
 end;
 
 function TMainForm.SavePolicies: Boolean;
@@ -409,14 +348,16 @@ begin
   Result := False;
   if not FRoutingStore.Save(FRoutingProfiles, ErrorMessage) then
   begin
-    MessageDlg('Routing', 'Не удалось сохранить routing.json:' +
-      LineEnding + ErrorMessage, mtError, [mbOK], 0);
+    MessageDlg('Routing', TZaryaTr.Tr('Не удалось сохранить routing.json:',
+      'Could not save routing.json:') + LineEnding +
+      ErrorMessage, mtError, [mbOK], 0);
     Exit;
   end;
   if not FDnsStore.Save(FDnsProfiles, ErrorMessage) then
   begin
-    MessageDlg('DNS', 'Не удалось сохранить dns.json:' +
-      LineEnding + ErrorMessage, mtError, [mbOK], 0);
+    MessageDlg('DNS', TZaryaTr.Tr('Не удалось сохранить dns.json:',
+      'Could not save dns.json:') + LineEnding +
+      ErrorMessage, mtError, [mbOK], 0);
     Exit;
   end;
   SaveAppSettings;
@@ -559,7 +500,8 @@ begin
       begin
         AppendLog('System proxy restore failed: ' + ErrorMessage);
         if AShowErrors then
-          MessageDlg('Системный прокси', ErrorMessage, mtError, [mbOK], 0);
+          MessageDlg(TZaryaTr.Tr('Системный прокси', 'System proxy'),
+            ErrorMessage, mtError, [mbOK], 0);
       end;
     end
     else
@@ -601,6 +543,12 @@ begin
     FTestThread.WaitFor;
     FreeAndNil(FTestThread);
   end;
+  if Assigned(FRealDelayThread) then
+  begin
+    FRealDelayThread.RequestCancel;
+    FRealDelayThread.WaitFor;
+    FreeAndNil(FRealDelayThread);
+  end;
   StopRuntime(False);
   FSystemProxy.Free;
   FEmbeddedXray.Free;
@@ -621,48 +569,57 @@ begin
   Menu := TMainMenu.Create(Self);
 
   RootItem := TMenuItem.Create(Menu);
-  RootItem.Caption := '&Файл';
+  RootItem.Caption := TZaryaTr.Tr('&Файл', '&File');
   Menu.Items.Add(RootItem);
-  RootItem.Add(NewMenuItem(Menu, 'Создать &backup…', @CreateBackupClick));
-  RootItem.Add(NewMenuItem(Menu, '&Восстановить backup…', @RestoreBackupClick));
+  RootItem.Add(NewMenuItem(Menu, TZaryaTr.Tr('Создать &backup…',
+    'Create &backup…'), @CreateBackupClick));
+  RootItem.Add(NewMenuItem(Menu, TZaryaTr.Tr('&Восстановить backup…',
+    '&Restore backup…'), @RestoreBackupClick));
   RootItem.Add(NewMenuItem(Menu, '-', nil));
-  RootItem.Add(NewMenuItem(Menu, 'Скрыть в &tray', @TrayShowClick));
+  RootItem.Add(NewMenuItem(Menu, TZaryaTr.Tr('Скрыть в &tray',
+    'Hide to &tray'), @TrayShowClick));
   RootItem.Add(NewMenuItem(Menu, '-', nil));
-  RootItem.Add(NewMenuItem(Menu, 'Вы&ход', @ExitClick));
+  RootItem.Add(NewMenuItem(Menu, TZaryaTr.Tr('Вы&ход', 'E&xit'), @ExitClick));
 
   RootItem := TMenuItem.Create(Menu);
-  RootItem.Caption := '&Профили';
+  RootItem.Caption := TZaryaTr.Tr('&Профили', '&Profiles');
   Menu.Items.Add(RootItem);
-  RootItem.Add(NewMenuItem(Menu, '&Добавить…', @AddClick));
-  RootItem.Add(NewMenuItem(Menu, '&Изменить…', @EditClick));
-  RootItem.Add(NewMenuItem(Menu, '&Удалить', @DeleteClick));
+  RootItem.Add(NewMenuItem(Menu, TZaryaTr.Tr('&Добавить…', '&Add…'), @AddClick));
+  RootItem.Add(NewMenuItem(Menu, TZaryaTr.Tr('&Изменить…', '&Edit…'), @EditClick));
+  RootItem.Add(NewMenuItem(Menu, TZaryaTr.Tr('&Удалить', '&Delete'), @DeleteClick));
   RootItem.Add(NewMenuItem(Menu, '-', nil));
-  RootItem.Add(NewMenuItem(Menu, '&Импортировать…', @ImportClick));
-  RootItem.Add(NewMenuItem(Menu, 'Под&писки…', @SubscriptionsClick));
+  RootItem.Add(NewMenuItem(Menu, TZaryaTr.Tr('&Импортировать…',
+    '&Import…'), @ImportClick));
+  RootItem.Add(NewMenuItem(Menu, TZaryaTr.Tr('Под&писки…',
+    'Sub&scriptions…'), @SubscriptionsClick));
 
   RootItem := TMenuItem.Create(Menu);
   RootItem.Caption := '&Core';
   Menu.Items.Add(RootItem);
-  FStartMenuItem := NewMenuItem(Menu, '&Запустить', @StartClick);
-  FStopMenuItem := NewMenuItem(Menu, '&Остановить', @StopClick);
+  FStartMenuItem := NewMenuItem(Menu, TZaryaTr.Tr('&Запустить', '&Start'), @StartClick);
+  FStopMenuItem := NewMenuItem(Menu, TZaryaTr.Tr('&Остановить', 'S&top'), @StopClick);
   RootItem.Add(FStartMenuItem);
   RootItem.Add(FStopMenuItem);
   RootItem.Add(NewMenuItem(Menu, '-', nil));
-  RootItem.Add(NewMenuItem(Menu, '&Менеджер ядер…', @CoreManagerClick));
+  RootItem.Add(NewMenuItem(Menu, TZaryaTr.Tr('&Менеджер ядер…',
+    '&Core Manager…'), @CoreManagerClick));
 
   RootItem := TMenuItem.Create(Menu);
-  RootItem.Caption := '&Инструменты';
+  RootItem.Caption := TZaryaTr.Tr('&Инструменты', '&Tools');
   Menu.Items.Add(RootItem);
   RootItem.Add(NewMenuItem(Menu, '&Runtime config…', @PreviewConfigClick));
-  RootItem.Add(NewMenuItem(Menu, 'Routing и &DNS…', @PoliciesClick));
+  RootItem.Add(NewMenuItem(Menu, TZaryaTr.Tr('Routing и &DNS…',
+    'Routing and &DNS…'), @PoliciesClick));
   RootItem.Add(NewMenuItem(Menu, '&Geo data…', @GeoDataClick));
-  RootItem.Add(NewMenuItem(Menu, '&Диагностика…', @DiagnosticsClick));
-  RootItem.Add(NewMenuItem(Menu, '&Настройки…', @SettingsClick));
+  RootItem.Add(NewMenuItem(Menu, TZaryaTr.Tr('&Диагностика…',
+    '&Diagnostics…'), @DiagnosticsClick));
+  RootItem.Add(NewMenuItem(Menu, TZaryaTr.Tr('&Настройки…',
+    '&Settings…'), @SettingsClick));
 
   RootItem := TMenuItem.Create(Menu);
-  RootItem.Caption := '&Справка';
+  RootItem.Caption := TZaryaTr.Tr('&Справка', '&Help');
   Menu.Items.Add(RootItem);
-  RootItem.Add(NewMenuItem(Menu, '&О прототипе', @AboutClick));
+  RootItem.Add(NewMenuItem(Menu, TZaryaTr.Tr('&О Zarya', '&About Zarya'), @AboutClick));
 end;
 
 procedure TMainForm.BuildInterface;
@@ -682,7 +639,8 @@ begin
   FStatusBar.Parent := Self;
   FStatusBar.Align := alBottom;
   FStatusBar.SimplePanel := True;
-  FStatusBar.SimpleText := 'Готово · embedded Xray';
+  FStatusBar.SimpleText := TZaryaTr.Tr('Готово · embedded Xray',
+    'Ready · embedded Xray');
 
   FStatusPanel := TPanel.Create(Self);
   FStatusPanel.Parent := Self;
@@ -700,7 +658,7 @@ begin
   FStateBadge.Parent := FStatusPanel;
   FStateBadge.BevelOuter := bvNone;
   FStateBadge.SetBounds(20, 48, 184, 28);
-  FStateBadge.Caption := 'Остановлено';
+  FStateBadge.Caption := TZaryaTr.Tr('Остановлено');
 
   FStateDetail := TLabel.Create(Self);
   FStateDetail.Parent := FStatusPanel;
@@ -709,20 +667,20 @@ begin
 
   FStartButton := TButton.Create(Self);
   FStartButton.Parent := FStatusPanel;
-  FStartButton.Caption := 'Запустить';
+  FStartButton.Caption := TZaryaTr.Tr('Запустить');
   FStartButton.OnClick := @StartClick;
   FStartButton.Default := True;
   FStartButton.SetBounds(708, 30, 132, 36);
 
   FStopButton := TButton.Create(Self);
   FStopButton.Parent := FStatusPanel;
-  FStopButton.Caption := 'Остановить';
+  FStopButton.Caption := TZaryaTr.Tr('Остановить');
   FStopButton.OnClick := @StopClick;
   FStopButton.SetBounds(850, 30, 132, 36);
 
   FSettingsButton := TButton.Create(Self);
   FSettingsButton.Parent := FStatusPanel;
-  FSettingsButton.Caption := 'Настройки…';
+  FSettingsButton.Caption := TZaryaTr.Tr('Настройки', 'Settings') + '…';
   FSettingsButton.OnClick := @SettingsClick;
   FSettingsButton.SetBounds(850, 76, 132, 32);
 
@@ -735,31 +693,31 @@ begin
 
   AddButton := TButton.Create(Self);
   AddButton.Parent := FToolbar;
-  AddButton.Caption := 'Добавить';
+  AddButton.Caption := TZaryaTr.Tr('Добавить');
   AddButton.OnClick := @AddClick;
   AddButton.SetBounds(12, 8, 92, 32);
 
   EditButton := TButton.Create(Self);
   EditButton.Parent := FToolbar;
-  EditButton.Caption := 'Изменить';
+  EditButton.Caption := TZaryaTr.Tr('Изменить');
   EditButton.OnClick := @EditClick;
   EditButton.SetBounds(110, 8, 92, 32);
 
   DeleteButton := TButton.Create(Self);
   DeleteButton.Parent := FToolbar;
-  DeleteButton.Caption := 'Удалить';
+  DeleteButton.Caption := TZaryaTr.Tr('Удалить');
   DeleteButton.OnClick := @DeleteClick;
   DeleteButton.SetBounds(208, 8, 92, 32);
 
   ImportButton := TButton.Create(Self);
   ImportButton.Parent := FToolbar;
-  ImportButton.Caption := 'Импорт';
+  ImportButton.Caption := TZaryaTr.Tr('Импорт', 'Import');
   ImportButton.OnClick := @ImportClick;
   ImportButton.SetBounds(312, 8, 92, 32);
 
   SubscriptionsButton := TButton.Create(Self);
   SubscriptionsButton.Parent := FToolbar;
-  SubscriptionsButton.Caption := 'Подписки';
+  SubscriptionsButton.Caption := TZaryaTr.Tr('Подписки');
   SubscriptionsButton.OnClick := @SubscriptionsClick;
   SubscriptionsButton.SetBounds(410, 8, 100, 32);
 
@@ -769,22 +727,33 @@ begin
   FTestButton.OnClick := @TestClick;
   FTestButton.SetBounds(522, 8, 100, 32);
 
+  FRealDelayButton := TButton.Create(Self);
+  FRealDelayButton.Parent := FToolbar;
+  FRealDelayButton.Caption := 'Real delay';
+  FRealDelayButton.OnClick := @RealDelayClick;
+  FRealDelayButton.SetBounds(628, 8, 100, 32);
+
   CoresButton := TButton.Create(Self);
   CoresButton.Parent := FToolbar;
-  CoresButton.Caption := 'Ядра';
+  CoresButton.Caption := TZaryaTr.Tr('Ядра');
   CoresButton.OnClick := @CoreManagerClick;
-  CoresButton.SetBounds(634, 8, 88, 32);
+  CoresButton.SetBounds(734, 8, 78, 32);
 
   ConfigButton := TButton.Create(Self);
   ConfigButton.Parent := FToolbar;
   ConfigButton.Caption := 'Runtime config…';
   ConfigButton.OnClick := @PreviewConfigClick;
-  ConfigButton.SetBounds(730, 8, 112, 32);
+  ConfigButton.SetBounds(818, 8, 132, 32);
 
   FTestTimer := TTimer.Create(Self);
   FTestTimer.Enabled := False;
   FTestTimer.Interval := 100;
   FTestTimer.OnTimer := @TestTimerTimer;
+
+  FRealDelayTimer := TTimer.Create(Self);
+  FRealDelayTimer.Enabled := False;
+  FRealDelayTimer.Interval := 100;
+  FRealDelayTimer.OnTimer := @RealDelayTimerTimer;
 
   FLogPanel := TPanel.Create(Self);
   FLogPanel.Parent := Self;
@@ -800,22 +769,22 @@ begin
 
   LogLabel := TLabel.Create(Self);
   LogLabel.Parent := FLogToolbar;
-  LogLabel.Caption := 'Журнал';
+  LogLabel.Caption := TZaryaTr.Tr('Журнал');
   LogLabel.Font.Style := [fsBold];
   LogLabel.SetBounds(12, 12, 70, 20);
 
   FLogFilter := TComboBox.Create(Self);
   FLogFilter.Parent := FLogToolbar;
   FLogFilter.Style := csDropDownList;
-  FLogFilter.Items.Add('Все сообщения');
-  FLogFilter.Items.Add('Ошибки');
+  FLogFilter.Items.Add(TZaryaTr.Tr('Все сообщения', 'All messages'));
+  FLogFilter.Items.Add(TZaryaTr.Tr('Ошибки', 'Errors'));
   FLogFilter.Items.Add('Runtime');
   FLogFilter.ItemIndex := 0;
   FLogFilter.SetBounds(92, 6, 160, 30);
 
   ClearButton := TButton.Create(Self);
   ClearButton.Parent := FLogToolbar;
-  ClearButton.Caption := 'Очистить';
+  ClearButton.Caption := TZaryaTr.Tr('Очистить');
   ClearButton.OnClick := @ClearLogClick;
   ClearButton.SetBounds(262, 6, 88, 30);
 
@@ -845,13 +814,13 @@ begin
   FGrid.Options := FGrid.Options + [goRowSelect, goColSizing, goDblClickAutoSize];
   FGrid.OnClick := @GridClick;
   FGrid.OnDblClick := @EditClick;
-  FGrid.Cells[0, 0] := 'Профиль';
-  FGrid.Cells[1, 0] := 'Протокол';
-  FGrid.Cells[2, 0] := 'Сервер';
-  FGrid.Cells[3, 0] := 'Задержка';
-  FGrid.Cells[4, 0] := 'Источник';
+  FGrid.Cells[0, 0] := TZaryaTr.Tr('Профиль', 'Profile');
+  FGrid.Cells[1, 0] := TZaryaTr.Tr('Протокол', 'Protocol');
+  FGrid.Cells[2, 0] := TZaryaTr.Tr('Сервер', 'Server');
+  FGrid.Cells[3, 0] := TZaryaTr.Tr('Задержка', 'Delay');
+  FGrid.Cells[4, 0] := TZaryaTr.Tr('Источник', 'Source');
   FGrid.Cells[5, 0] := 'Provider';
-  FGrid.Cells[6, 0] := 'Статус';
+  FGrid.Cells[6, 0] := TZaryaTr.Tr('Статус', 'Status');
   FGrid.ColWidths[0] := 190;
   FGrid.ColWidths[1] := 90;
   FGrid.ColWidths[2] := 230;
@@ -864,6 +833,33 @@ begin
   FReadyTimer.Enabled := False;
   FReadyTimer.Interval := 100;
   FReadyTimer.OnTimer := @ReadyTimerTimer;
+  LayoutToolbar;
+end;
+
+procedure TMainForm.LayoutToolbar;
+var
+  I, X, Y, AvailableWidth: Integer;
+  Control: TControl;
+begin
+  if not Assigned(FToolbar) then Exit;
+  AvailableWidth := ClientWidth - 24;
+  if AvailableWidth < 300 then AvailableWidth := 300;
+  X := 12;
+  Y := 8;
+  for I := 0 to FToolbar.ControlCount - 1 do
+  begin
+    Control := FToolbar.Controls[I];
+    if not (Control is TButton) then Continue;
+    if (X > 12) and (X + Control.Width > AvailableWidth) then
+    begin
+      X := 12;
+      Inc(Y, 40);
+    end;
+    Control.Left := X;
+    Control.Top := Y;
+    Inc(X, Control.Width + 6);
+  end;
+  FToolbar.Height := Y + 40;
 end;
 
 procedure TMainForm.BuildTray;
@@ -871,15 +867,16 @@ var
   Item: TMenuItem;
 begin
   FTrayMenu := TPopupMenu.Create(Self);
-  FTrayMenu.Items.Add(NewMenuItem(FTrayMenu, 'Показать Zarya', @TrayShowClick));
-  FTrayMenu.Items.Add(NewMenuItem(FTrayMenu, 'Запустить', @StartClick));
-  FTrayMenu.Items.Add(NewMenuItem(FTrayMenu, 'Остановить', @StopClick));
+  FTrayMenu.Items.Add(NewMenuItem(FTrayMenu, TZaryaTr.Tr('Показать Zarya',
+    'Show Zarya'), @TrayShowClick));
+  FTrayMenu.Items.Add(NewMenuItem(FTrayMenu, TZaryaTr.Tr('Запустить'), @StartClick));
+  FTrayMenu.Items.Add(NewMenuItem(FTrayMenu, TZaryaTr.Tr('Остановить'), @StopClick));
   Item := NewMenuItem(FTrayMenu, '-', nil);
   FTrayMenu.Items.Add(Item);
-  FTrayMenu.Items.Add(NewMenuItem(FTrayMenu, 'Выход', @ExitClick));
+  FTrayMenu.Items.Add(NewMenuItem(FTrayMenu, TZaryaTr.Tr('Выход'), @ExitClick));
 
   FTrayIcon := TTrayIcon.Create(Self);
-  FTrayIcon.Hint := 'Zarya — остановлено';
+  FTrayIcon.Hint := TZaryaTr.Tr('Zarya — остановлено', 'Zarya — stopped');
   FTrayIcon.PopUpMenu := FTrayMenu;
   FTrayIcon.OnDblClick := @TrayShowClick;
   if not Application.Icon.Empty then
@@ -893,7 +890,9 @@ var
 begin
   if not FProfileStore.Load(FProfiles, ErrorMessage) then
   begin
-    MessageDlg('Профили', 'Не удалось прочитать profiles.json:' + LineEnding +
+    MessageDlg(TZaryaTr.Tr('Профили'), TZaryaTr.Tr(
+      'Не удалось прочитать profiles.json:', 'Could not read profiles.json:') +
+      LineEnding +
       ErrorMessage, mtWarning, [mbOK], 0);
     SetLength(FProfiles, 0);
   end;
@@ -913,11 +912,14 @@ begin
     FGrid.Cells[1, I + 1] := FProfiles[I].ProtocolName;
     FGrid.Cells[2, I + 1] := ProfileEndpoint(FProfiles[I]);
     FGrid.Cells[3, I + 1] := FProfiles[I].Latency;
-    FGrid.Cells[4, I + 1] := FProfiles[I].Source;
-    if FProfiles[I].Enabled then
-      FGrid.Cells[6, I + 1] := 'Готов'
+    if SameText(FProfiles[I].Source, 'Вручную') then
+      FGrid.Cells[4, I + 1] := TZaryaTr.Tr('Вручную', 'Manual')
     else
-      FGrid.Cells[6, I + 1] := 'Выключен';
+      FGrid.Cells[4, I + 1] := FProfiles[I].Source;
+    if FProfiles[I].Enabled then
+      FGrid.Cells[6, I + 1] := TZaryaTr.Tr('Готов', 'Ready')
+    else
+      FGrid.Cells[6, I + 1] := TZaryaTr.Tr('Выключен', 'Disabled');
     FGrid.Cells[5, I + 1] := FProfiles[I].PreferredProviderId;
     if (ASelectedId <> '') and (FProfiles[I].Id = ASelectedId) then
       SelectedRow := I + 1;
@@ -933,7 +935,9 @@ var
 begin
   Result := FProfileStore.Save(FProfiles, ErrorMessage);
   if not Result then
-    MessageDlg('Профили', 'Не удалось сохранить profiles.json:' + LineEnding +
+    MessageDlg(TZaryaTr.Tr('Профили'), TZaryaTr.Tr(
+      'Не удалось сохранить profiles.json:', 'Could not save profiles.json:') +
+      LineEnding +
       ErrorMessage, mtError, [mbOK], 0);
 end;
 
@@ -983,62 +987,77 @@ begin
           ProviderText := FProfiles[Index].PreferredProviderId
         else
           ProviderText := '—';
-        FStateTitle.Caption := 'Runtime: остановлен';
-        FStateBadge.Caption := 'Остановлено';
+        FStateTitle.Caption := TZaryaTr.Tr('Runtime: остановлен',
+          'Runtime: stopped');
+        FStateBadge.Caption := TZaryaTr.Tr('Остановлено');
         FStateBadge.Color := Theme.Panel;
         FStateBadge.Font.Color := Theme.Muted;
         FStateDetail.Caption :=
-          'Выбранный профиль: ' + SelectedProfileName + LineEnding +
+          TZaryaTr.Tr('Выбранный профиль: ', 'Selected profile: ') +
+          SelectedProfileName + LineEnding +
           'Provider: ' + ProviderText +
-          '     Системный прокси: выключен';
+          TZaryaTr.Tr('     Системный прокси: выключен',
+            '     System proxy: disabled');
         FStartButton.Enabled := True;
         FStopButton.Enabled := False;
         FStartMenuItem.Enabled := True;
         FStopMenuItem.Enabled := False;
-        FStatusBar.SimpleText := 'Готово · системный прокси выключен';
-        FTrayIcon.Hint := 'Zarya — остановлено';
+        FStatusBar.SimpleText := TZaryaTr.Tr(
+          'Готово · системный прокси выключен',
+          'Ready · system proxy disabled');
+        FTrayIcon.Hint := TZaryaTr.Tr('Zarya — остановлено', 'Zarya — stopped');
       end;
     rsConnecting:
       begin
-        FStateTitle.Caption := 'Runtime: подключение — ' +
+        FStateTitle.Caption := TZaryaTr.Tr('Runtime: подключение — ',
+          'Runtime: connecting — ') +
           FActiveProvider.ProviderId;
-        FStateBadge.Caption := 'Проверка готовности';
+        FStateBadge.Caption := TZaryaTr.Tr('Проверка готовности');
         FStateBadge.Color := Theme.WarningSurface;
         FStateBadge.Font.Color := Theme.Warning;
         FStateDetail.Caption :=
-          'Профиль: ' + SelectedProfileName + LineEnding +
-          Format('Local endpoint: %s:%d     Системный прокси: пока выключен',
+          TZaryaTr.Tr('Профиль: ', 'Profile: ') + SelectedProfileName +
+          LineEnding + Format(TZaryaTr.Tr(
+            'Local endpoint: %s:%d     Системный прокси: пока выключен',
+            'Local endpoint: %s:%d     System proxy: still disabled'),
             [FReadinessHost, FReadinessPort]);
         FStartButton.Enabled := False;
         FStopButton.Enabled := True;
         FStartMenuItem.Enabled := False;
         FStopMenuItem.Enabled := True;
-        FStatusBar.SimpleText := Format('Ожидание готовности %s:%d…',
+        FStatusBar.SimpleText := Format(TZaryaTr.Tr(
+          'Ожидание готовности %s:%d…', 'Waiting for %s:%d readiness…'),
           [FReadinessHost, FReadinessPort]);
-        FTrayIcon.Hint := 'Zarya — подключение';
+        FTrayIcon.Hint := TZaryaTr.Tr('Zarya — подключение',
+          'Zarya — connecting');
       end;
     rsRunning:
       begin
         if Assigned(FSystemProxy) and FSystemProxy.EnabledByZarya then
-          ProxyStatus := 'включён'
+          ProxyStatus := TZaryaTr.Tr('включён', 'enabled')
         else
-          ProxyStatus := 'выключен';
-        FStateTitle.Caption := 'Runtime: работает — ' +
+          ProxyStatus := TZaryaTr.Tr('выключен', 'disabled');
+        FStateTitle.Caption := TZaryaTr.Tr('Runtime: работает — ',
+          'Runtime: running — ') +
           FActiveProvider.ProviderId;
-        FStateBadge.Caption := 'Подключено';
+        FStateBadge.Caption := TZaryaTr.Tr('Подключено');
         FStateBadge.Color := Theme.SuccessSurface;
         FStateBadge.Font.Color := Theme.Success;
         FStateDetail.Caption :=
-          'Профиль: ' + SelectedProfileName + LineEnding +
-          Format('Local endpoint: %s:%d     Системный прокси: %s',
+          TZaryaTr.Tr('Профиль: ', 'Profile: ') + SelectedProfileName +
+          LineEnding + Format(TZaryaTr.Tr(
+            'Local endpoint: %s:%d     Системный прокси: %s',
+            'Local endpoint: %s:%d     System proxy: %s'),
             [FReadinessHost, FReadinessPort, ProxyStatus]);
         FStartButton.Enabled := False;
         FStopButton.Enabled := True;
         FStartMenuItem.Enabled := False;
         FStopMenuItem.Enabled := True;
-        FStatusBar.SimpleText := Format('Подключено · %s:%d · %s',
+        FStatusBar.SimpleText := Format(TZaryaTr.Tr(
+          'Подключено · %s:%d · %s', 'Connected · %s:%d · %s'),
           [FReadinessHost, FReadinessPort, FActiveProvider.ProviderId]);
-        FTrayIcon.Hint := 'Zarya — подключено';
+        FTrayIcon.Hint := TZaryaTr.Tr('Zarya — подключено',
+          'Zarya — connected');
       end;
   end;
 end;
@@ -1161,34 +1180,43 @@ begin
     RoutingProfile, DnsProfile, MissingGeoData, AError) then
   begin
     if AError = '' then
-      AError := 'Для активных routing/DNS отсутствуют файлы: ' +
-        MissingGeoData + '. Откройте Инструменты -> Geo data.';
+      AError := TZaryaTr.Tr(
+        'Для активных routing/DNS отсутствуют файлы: ',
+        'Files required by active routing/DNS are missing: ') +
+        MissingGeoData + TZaryaTr.Tr('. Откройте Инструменты → Geo data.',
+        '. Open Tools → Geo data.');
     Exit(False);
   end;
   if AProfile.RawConfig <> '' then
   begin
     if not IsDefaultRouting(RoutingProfile) or not IsDefaultDns(DnsProfile) then
     begin
-      AError := 'Raw config управляет routing и DNS самостоятельно. ' +
-        'Выберите Proxy All и System DNS.';
+      AError := TZaryaTr.Tr(
+        'Raw config управляет routing и DNS самостоятельно. Выберите Proxy All и System DNS.',
+        'Raw config manages routing and DNS itself. Select Proxy All and System DNS.');
       Exit(False);
     end;
     if not SameText(ConfigFormatToString(AProvider.ConfigFormat),
       AProfile.RawConfigFormat) then
     begin
-      AError := 'Raw-конфигурация не соответствует диалекту provider.';
+      AError := TZaryaTr.Tr(
+        'Raw-конфигурация не соответствует диалекту provider.',
+        'The raw configuration does not match the provider dialect.');
       Exit(False);
     end;
     if not SameText(AProfile.ReadinessHost, '127.0.0.1') and
       not SameText(AProfile.ReadinessHost, 'localhost') then
     begin
-      AError := 'Readiness endpoint raw-профиля должен быть локальным.';
+      AError := TZaryaTr.Tr(
+        'Readiness endpoint raw-профиля должен быть локальным.',
+        'The raw profile readiness endpoint must be local.');
       Exit(False);
     end;
     if (AProfile.ReadinessPort < 1) or
       (AProfile.ReadinessPort > 65535) then
     begin
-      AError := 'Для raw-профиля укажите readiness port.';
+      AError := TZaryaTr.Tr('Для raw-профиля укажите readiness port.',
+        'Specify a readiness port for the raw profile.');
       Exit(False);
     end;
     AConfig := AProfile.RawConfig;
@@ -1200,8 +1228,10 @@ begin
   Adapter := CreateConfigAdapter(AProvider);
   if not Assigned(Adapter) then
   begin
-    AError := 'Для adapter ' + AProvider.AdapterId +
-      ' не зарегистрирован генератор; используйте raw config.';
+    AError := TZaryaTr.Tr('Для adapter ', 'No generator is registered for adapter ') +
+      AProvider.AdapterId + TZaryaTr.Tr(
+      ' не зарегистрирован генератор; используйте raw config.',
+      '; use raw config.');
     Exit(False);
   end;
   Context := Default(TZaryaConfigContext);
@@ -1385,12 +1415,16 @@ begin
   Index := SelectedProfileIndex;
   if Index < 0 then
   begin
-    MessageDlg('Запуск', 'Сначала выберите профиль.', mtInformation, [mbOK], 0);
+    MessageDlg(TZaryaTr.Tr('Запуск', 'Start'), TZaryaTr.Tr(
+      'Сначала выберите профиль.', 'Select a profile first.'),
+      mtInformation, [mbOK], 0);
     Exit;
   end;
   if not FProfiles[Index].Enabled then
   begin
-    MessageDlg('Запуск', 'Выбранный профиль выключен.', mtInformation, [mbOK], 0);
+    MessageDlg(TZaryaTr.Tr('Запуск', 'Start'), TZaryaTr.Tr(
+      'Выбранный профиль выключен.', 'The selected profile is disabled.'),
+      mtInformation, [mbOK], 0);
     Exit;
   end;
   if not ResolveRuntimeProvider(Index, Provider) then
@@ -1398,13 +1432,20 @@ begin
   if not PrepareRuntimeConfig(FProfiles[Index], Provider, Config,
     ErrorMessage) then
   begin
-    MessageDlg('Конфигурация provider', ErrorMessage, mtWarning, [mbOK], 0);
+    if (Pos('отсутствуют файлы', ErrorMessage) > 0) and
+      (MessageDlg('Geo data', ErrorMessage + LineEnding + LineEnding +
+        TZaryaTr.Tr('Открыть Geo Data Manager?', 'Open Geo Data Manager?'),
+        mtWarning, [mbYes, mbNo], 0) = mrYes) then
+      GeoDataClick(Self)
+    else if Pos('отсутствуют файлы', ErrorMessage) = 0 then
+      MessageDlg('Конфигурация provider', ErrorMessage, mtWarning, [mbOK], 0);
     Exit;
   end;
   if CanConnectLocalhost(FReadinessPort) then
   begin
     MessageDlg('Runtime provider', Format(
-      'Порт %s:%d уже занят. Выберите другой локальный порт.',
+      TZaryaTr.Tr('Порт %s:%d уже занят. Выберите другой локальный порт.',
+        'Port %s:%d is already in use. Choose another local port.'),
       [FReadinessHost, FReadinessPort]), mtWarning, [mbOK], 0);
     Exit;
   end;
@@ -1479,7 +1520,9 @@ begin
   DrainRuntimeLogs;
   if not ActiveRuntimeIsRunning then
   begin
-    HandleRuntimeFailure('Runtime provider неожиданно остановился.');
+    HandleRuntimeFailure(TZaryaTr.Tr(
+      'Runtime provider неожиданно остановился.',
+      'The runtime provider stopped unexpectedly.'));
     Exit;
   end;
   if FRuntimeState = rsConnecting then
@@ -1502,7 +1545,8 @@ begin
         else
         begin
           AppendLog('System proxy enable failed: ' + ErrorMessage);
-          MessageDlg('Системный прокси', ErrorMessage, mtWarning, [mbOK], 0);
+          MessageDlg(TZaryaTr.Tr('Системный прокси', 'System proxy'),
+            ErrorMessage, mtWarning, [mbOK], 0);
         end;
       end
       else if not EnableSystemProxy then
@@ -1534,7 +1578,9 @@ begin
       AppendLog('Local runtime endpoint did not become ready; system proxy remains off.');
       UpdateRuntimeSurface;
       MessageDlg('Runtime provider',
-        'Локальный endpoint provider не стал доступен за 5 секунд. Системный прокси не изменён.',
+        TZaryaTr.Tr(
+          'Локальный endpoint provider не стал доступен за 5 секунд. Системный прокси не изменён.',
+          'The provider local endpoint was not ready within 5 seconds. The system proxy was not changed.'),
         mtError, [mbOK], 0);
     end;
   end;
@@ -1546,17 +1592,20 @@ begin
   begin
     FTestThread.RequestCancel;
     FTestButton.Enabled := False;
-    FStatusBar.SimpleText := 'Отмена TCP ping после текущего соединения…';
+    FStatusBar.SimpleText := TZaryaTr.Tr(
+      'Отмена TCP ping после текущего соединения…',
+      'Canceling TCP ping after the current connection…');
     Exit;
   end;
   if Length(FProfiles) = 0 then
   begin
-    MessageDlg('TCP ping', 'Нет профилей для проверки.', mtInformation,
+    MessageDlg('TCP ping', TZaryaTr.Tr('Нет профилей для проверки.',
+      'There are no profiles to test.'), mtInformation,
       [mbOK], 0);
     Exit;
   end;
   FTestThread := TProfileTcpTestThread.Create(FProfiles);
-  FTestButton.Caption := 'Отменить';
+  FTestButton.Caption := TZaryaTr.Tr('Отмена');
   FTestTimer.Enabled := True;
   FStatusBar.SimpleText := 'TCP ping запущен…';
   AppendLog('TCP profile test started.');
@@ -1622,6 +1671,292 @@ begin
     [SuccessCount, CompletedCount]);
 end;
 
+function SafeTestDirectoryPart(const AValue: string): string;
+var
+  I: Integer;
+begin
+  Result := AValue;
+  for I := 1 to Length(Result) do
+    if not (Result[I] in ['a'..'z', 'A'..'Z', '0'..'9', '-', '_']) then
+      Result[I] := '-';
+  if Result = '' then Result := 'profile';
+end;
+
+function TMainForm.BuildRealDelayItems(out AItems: TZaryaRealDelayWorkItems;
+  out AError: string): Boolean;
+var
+  I, Count: Integer;
+  Profile: TZaryaProfile;
+  Provider: TZaryaCoreProvider;
+  ProviderId: string;
+  Adapter: IConfigAdapter;
+  Context: TZaryaConfigContext;
+  RuntimeRequest: TZaryaRuntimeRequest;
+  Config, ItemError, GeoError, MissingGeoData: string;
+  RoutingProfile: TZaryaRoutingProfile;
+  DnsProfile: TZaryaDnsProfile;
+  Item: TZaryaRealDelayWorkItem;
+  Ports: array[0..2] of Integer;
+
+  function AllocateDistinctPorts: Boolean;
+  var
+    Candidate: Integer;
+    PortIndex, Attempt: Integer;
+    Duplicate: Boolean;
+  begin
+    Result := False;
+    for PortIndex := 0 to High(Ports) do
+    begin
+      Ports[PortIndex] := 0;
+      for Attempt := 1 to 20 do
+      begin
+        if not AllocateLocalTcpUdpPort(Candidate, ItemError) then Exit;
+        Duplicate := (PortIndex > 0) and (Candidate = Ports[0]);
+        if PortIndex > 1 then
+          Duplicate := Duplicate or (Candidate = Ports[1]);
+        if not Duplicate then
+        begin
+          Ports[PortIndex] := Candidate;
+          Break;
+        end;
+      end;
+      if Ports[PortIndex] = 0 then
+      begin
+        ItemError := 'Could not allocate distinct local test ports.';
+        Exit;
+      end;
+    end;
+    Result := True;
+  end;
+
+  procedure FailItem(const AMessage: string);
+  begin
+    Item.Prepared := False;
+    Item.PreparationError := AMessage;
+  end;
+
+begin
+  Result := False;
+  AError := '';
+  AItems := nil;
+  RoutingProfile := ActiveRoutingProfile;
+  DnsProfile := ActiveDnsProfile;
+  MissingGeoData := '';
+  GeoError := '';
+  if Assigned(FGeoDataManager) and not FGeoDataManager.RequiredFilesPresent(
+    RoutingProfile, DnsProfile, MissingGeoData, GeoError) then
+  begin
+    if GeoError = '' then GeoError := 'Missing geo data: ' + MissingGeoData;
+  end;
+
+  Count := 0;
+  for I := 0 to High(FProfiles) do
+  begin
+    Profile := FProfiles[I];
+    if not Profile.Enabled or Profile.DeletedBySubscriptionUpdate then Continue;
+    Item := Default(TZaryaRealDelayWorkItem);
+    ItemError := '';
+    Item.ProfileId := Profile.Id;
+    Item.ProfileName := Profile.Name;
+    if GeoError <> '' then
+      FailItem(GeoError)
+    else
+    begin
+      ProviderId := Profile.PreferredProviderId;
+      if ProviderId = '' then
+        ProviderId := DefaultProviderForProtocol(Profile.ProtocolName);
+      if not FCoreRegistry.TryGet(ProviderId, Provider) then
+        FailItem('Provider ' + ProviderId + ' is not registered.')
+      else if not ProviderUsableForProfile(Provider, Profile) then
+        FailItem('Provider ' + ProviderId +
+          ' is unavailable or incompatible with the profile.')
+      else
+      begin
+        Config := '';
+        if Profile.RawConfig <> '' then
+        begin
+          if not IsDefaultRouting(RoutingProfile) or
+            not IsDefaultDns(DnsProfile) then
+            FailItem('Raw config requires Proxy All and System DNS.')
+          else if not ((SameText(Profile.SystemProxyKind, 'mixed')) or
+            SameText(Profile.SystemProxyKind, 'http') or
+            SameText(Profile.SystemProxyKind, 'socks')) then
+            FailItem('Raw profile needs an HTTP, mixed or SOCKS readiness endpoint.')
+          else
+            Config := Profile.RawConfig;
+          Context := Default(TZaryaConfigContext);
+          Context.MixedPort := Profile.ReadinessPort;
+          Context.HttpPort := Profile.ReadinessPort;
+          Context.SocksPort := Profile.ReadinessPort;
+        end
+        else if AllocateDistinctPorts then
+        begin
+          Context := Default(TZaryaConfigContext);
+          Context.MixedPort := Ports[0];
+          Context.HttpPort := Ports[1];
+          Context.SocksPort := Ports[2];
+          RuntimeRequest := CreateRuntimeRequest(Profile, Provider, Context);
+          RuntimeRequest.DataDirectory := ExtractFileDir(FProfileStore.FileName);
+          RuntimeRequest.AssetDirectory := FXrayAssetDirectory;
+          RuntimeRequest.RoutingProfile := RoutingProfile;
+          RuntimeRequest.DnsProfile := DnsProfile;
+          Adapter := CreateConfigAdapter(Provider);
+          if not Assigned(Adapter) then
+            FailItem('Provider has no registered config adapter.')
+          else if not Adapter.GenerateRequest(RuntimeRequest, Config,
+            ItemError) then
+            FailItem(ItemError);
+        end
+        else
+          FailItem(ItemError);
+
+        if (Config <> '') and (Item.PreparationError = '') then
+        begin
+          Item.Prepared := True;
+          Item.Request := Default(TZaryaNodeTestRequest);
+          Item.Request.SchemaVersion := 1;
+          Item.Request.Provider := Provider;
+          Item.Request.Config := Config;
+          Item.Request.DataDirectory := IncludeTrailingPathDelimiter(
+            ExtractFileDir(FProfileStore.FileName)) + 'runtime-tests' +
+            PathDelim + SafeTestDirectoryPart(Profile.Id);
+          Item.Request.AssetDirectory := Provider.AssetDirectory;
+          if Item.Request.AssetDirectory = '' then
+            Item.Request.AssetDirectory := FXrayAssetDirectory;
+          if Profile.RawConfig <> '' then
+          begin
+            Item.Request.ReadinessHost := Profile.ReadinessHost;
+            Item.Request.ReadinessPort := Profile.ReadinessPort;
+            Item.Request.ProxyKind := Profile.SystemProxyKind;
+          end
+          else
+          begin
+            Item.Request.ReadinessHost := '127.0.0.1';
+            case Provider.ReadinessKind of
+              rkMixedTcp:
+                begin
+                  Item.Request.ReadinessPort := Context.MixedPort;
+                  Item.Request.ProxyKind := 'mixed';
+                end;
+              rkHttpTcp:
+                begin
+                  Item.Request.ReadinessPort := Context.HttpPort;
+                  Item.Request.ProxyKind := 'http';
+                end;
+              rkSocksTcp:
+                begin
+                  Item.Request.ReadinessPort := Context.SocksPort;
+                  Item.Request.ProxyKind := 'socks';
+                end;
+            else
+              FailItem('Provider does not declare a testable local proxy endpoint.');
+            end;
+          end;
+          Item.Request.TestUrl := FAppSettings.RealDelayTestUrl;
+          Item.Request.TimeoutMs := FAppSettings.RealDelayTimeoutSeconds * 1000;
+        end;
+      end;
+    end;
+    SetLength(AItems, Count + 1);
+    AItems[Count] := Item;
+    Inc(Count);
+  end;
+  if Count = 0 then
+  begin
+    AError := 'Нет включённых профилей для Real delay.';
+    Exit;
+  end;
+  Result := True;
+end;
+
+procedure TMainForm.RealDelayClick(Sender: TObject);
+var
+  Items: TZaryaRealDelayWorkItems;
+  ErrorMessage: string;
+begin
+  if Assigned(FRealDelayThread) then
+  begin
+    FRealDelayThread.RequestCancel;
+    FRealDelayButton.Enabled := False;
+    FStatusBar.SimpleText := 'Отмена Real delay…';
+    Exit;
+  end;
+  if not BuildRealDelayItems(Items, ErrorMessage) then
+  begin
+    MessageDlg('Real delay', ErrorMessage, mtInformation, [mbOK], 0);
+    Exit;
+  end;
+  FRealDelayThread := TZaryaRealDelayBatchThread.Create(Items,
+    FAppSettings.RealDelayConcurrency);
+  FRealDelayButton.Caption := TZaryaTr.Tr('Отмена');
+  FRealDelayTimer.Enabled := True;
+  FStatusBar.SimpleText := Format('Real delay: 0/%d', [Length(Items)]);
+  AppendLog(Format('Real delay batch started: profiles=%d concurrency=%d.',
+    [Length(Items), FAppSettings.RealDelayConcurrency]));
+end;
+
+procedure TMainForm.RealDelayTimerTimer(Sender: TObject);
+var
+  Results: TZaryaRealDelayResults;
+  I, J, Completed, SuccessCount: Integer;
+  CurrentNames, SelectedId: string;
+begin
+  if not Assigned(FRealDelayThread) then Exit;
+  if not FRealDelayThread.IsDone then
+  begin
+    Completed := FRealDelayThread.CompletedCount;
+    CurrentNames := FRealDelayThread.ProgressText;
+    FStatusBar.SimpleText := Format('Real delay %d/%d: %s',
+      [Completed, Length(FRealDelayThread.Results), CurrentNames]);
+    Exit;
+  end;
+  FRealDelayTimer.Enabled := False;
+  FRealDelayThread.WaitFor;
+  Results := Copy(FRealDelayThread.Results);
+  FreeAndNil(FRealDelayThread);
+  if SelectedProfileIndex >= 0 then SelectedId :=
+    FProfiles[SelectedProfileIndex].Id else SelectedId := '';
+  Completed := 0;
+  SuccessCount := 0;
+  for I := 0 to High(Results) do
+    if Results[I].Tested then
+    begin
+      Inc(Completed);
+      for J := 0 to High(FProfiles) do
+        if SameText(FProfiles[J].Id, Results[I].ProfileId) then
+        begin
+          FProfiles[J].LastTestedAt := FormatDateTime(
+            'yyyy-mm-dd"T"hh:nn:ss', Now);
+          if Results[I].Success then
+          begin
+            Inc(SuccessCount);
+            FProfiles[J].LastRealDelayMs := Results[I].DelayMs;
+            FProfiles[J].Latency := IntToStr(Results[I].DelayMs) + ' мс';
+            FProfiles[J].LastTestStatus := 'success';
+            FProfiles[J].LastTestError := '';
+          end
+          else
+          begin
+            FProfiles[J].LastRealDelayMs := -1;
+            FProfiles[J].Latency := 'Ошибка';
+            FProfiles[J].LastTestStatus := 'failed';
+            FProfiles[J].LastTestError := Results[I].ErrorCode + ': ' +
+              Results[I].ErrorMessage;
+          end;
+          Break;
+        end;
+    end;
+  SaveProfiles;
+  RefreshProfileGrid(SelectedId);
+  FRealDelayButton.Caption := 'Real delay';
+  FRealDelayButton.Enabled := True;
+  FStatusBar.SimpleText := Format(TZaryaTr.Tr(
+    'Real delay: успешно %d из %d', 'Real delay: %d of %d succeeded'),
+    [SuccessCount, Completed]);
+  AppendLog(Format('Real delay batch completed: success=%d total=%d.',
+    [SuccessCount, Completed]));
+end;
+
 procedure TMainForm.PreviewConfigClick(Sender: TObject);
 var
   Index: Integer;
@@ -1629,11 +1964,14 @@ var
   ErrorMessage: string;
   ProviderId: string;
   Provider: TZaryaCoreProvider;
+  Adapter: IConfigAdapter;
+  Context: TZaryaConfigContext;
 begin
   Index := SelectedProfileIndex;
   if Index < 0 then
   begin
-    MessageDlg('Runtime config', 'Сначала выберите профиль.', mtInformation,
+    MessageDlg('Runtime config', TZaryaTr.Tr('Сначала выберите профиль.',
+      'Select a profile first.'), mtInformation,
       [mbOK], 0);
     Exit;
   end;
@@ -1642,11 +1980,34 @@ begin
     ProviderId := DefaultProviderForProtocol(FProfiles[Index].ProtocolName);
   if not FCoreRegistry.TryGet(ProviderId, Provider) then
     Provider := CreateProviderPreset(ProviderId);
-  if not PrepareRuntimeConfig(FProfiles[Index], Provider, Config,
-    ErrorMessage) then
+  if FProfiles[Index].RawConfig <> '' then
+    Config := FProfiles[Index].RawConfig
+  else
   begin
-    MessageDlg('Runtime config', ErrorMessage, mtWarning, [mbOK], 0);
-    Exit;
+    Adapter := CreateConfigAdapter(Provider);
+    if not Assigned(Adapter) then
+    begin
+      MessageDlg('Runtime config',
+        TZaryaTr.Tr('Для выбранного provider нет config adapter.',
+          'There is no config adapter for the selected provider.'),
+        mtWarning, [mbOK], 0);
+      Exit;
+    end;
+    Context := Default(TZaryaConfigContext);
+    Context.MixedPort := FAppSettings.MixedPort;
+    Context.HttpPort := FAppSettings.MixedPort;
+    Context.SocksPort := FAppSettings.MixedPort;
+    if SameText(Provider.AdapterId, 'hysteria2') then
+      if FAppSettings.MixedPort < 65535 then
+        Context.SocksPort := FAppSettings.MixedPort + 1
+      else
+        Context.SocksPort := FAppSettings.MixedPort - 1;
+    if not Adapter.Generate(FProfiles[Index], Context, Config,
+      ErrorMessage) then
+    begin
+      MessageDlg('Runtime config', ErrorMessage, mtWarning, [mbOK], 0);
+      Exit;
+    end;
   end;
   AppendLog('Runtime config generated for provider: ' + Provider.ProviderId);
   TXrayConfigDialog.Execute(Self, FProfiles[Index].Name, Config,
@@ -1680,7 +2041,8 @@ begin
   Index := SelectedProfileIndex;
   if Index < 0 then
   begin
-    MessageDlg('Профиль', 'Выберите профиль для изменения.', mtInformation,
+    MessageDlg(TZaryaTr.Tr('Профиль', 'Profile'), TZaryaTr.Tr(
+      'Выберите профиль для изменения.', 'Select a profile to edit.'), mtInformation,
       [mbOK], 0);
     Exit;
   end;
@@ -1704,12 +2066,15 @@ begin
   Index := SelectedProfileIndex;
   if Index < 0 then
   begin
-    MessageDlg('Профиль', 'Выберите профиль для удаления.', mtInformation,
+    MessageDlg(TZaryaTr.Tr('Профиль', 'Profile'), TZaryaTr.Tr(
+      'Выберите профиль для удаления.', 'Select a profile to delete.'), mtInformation,
       [mbOK], 0);
     Exit;
   end;
   ProfileName := FProfiles[Index].Name;
-  if MessageDlg('Удалить профиль', 'Удалить профиль «' + ProfileName + '»?',
+  if MessageDlg(TZaryaTr.Tr('Удалить профиль', 'Delete profile'),
+    TZaryaTr.Tr('Удалить профиль «', 'Delete profile “') + ProfileName +
+    TZaryaTr.Tr('»?', '”?'),
     mtConfirmation, [mbYes, mbNo], 0) <> mrYes then
     Exit;
   for I := Index to High(FProfiles) - 1 do
@@ -1750,7 +2115,8 @@ begin
         Continue;
       if not ParseShareLink(Trim(Links[I]), Profile, ErrorMessage) then
       begin
-        Errors.Add(Format('Строка %d: %s', [I + 1, ErrorMessage]));
+        Errors.Add(Format(TZaryaTr.Tr('Строка %d: %s', 'Line %d: %s'),
+          [I + 1, ErrorMessage]));
         Continue;
       end;
       NewIndex := Length(FProfiles);
@@ -1775,13 +2141,17 @@ begin
       end;
     end;
     if Errors.Count > 0 then
-      MessageDlg('Импорт профилей', Format('Импортировано: %d', [ImportedCount]) +
+      MessageDlg(TZaryaTr.Tr('Импорт профилей', 'Import profiles'),
+        Format(TZaryaTr.Tr('Импортировано: %d', 'Imported: %d'), [ImportedCount]) +
         LineEnding + LineEnding + Errors.Text, mtWarning, [mbOK], 0)
     else if ImportedCount > 0 then
-      MessageDlg('Импорт профилей', Format('Импортировано профилей: %d',
+      MessageDlg(TZaryaTr.Tr('Импорт профилей', 'Import profiles'),
+        Format(TZaryaTr.Tr('Импортировано профилей: %d', 'Profiles imported: %d'),
         [ImportedCount]), mtInformation, [mbOK], 0)
     else
-      MessageDlg('Импорт профилей', 'Вставьте хотя бы одну поддерживаемую share link.',
+      MessageDlg(TZaryaTr.Tr('Импорт профилей', 'Import profiles'),
+        TZaryaTr.Tr('Вставьте хотя бы одну поддерживаемую share link.',
+          'Paste at least one supported share link.'),
         mtInformation, [mbOK], 0);
   finally
     Errors.Free;
@@ -1808,17 +2178,76 @@ begin
   end;
 end;
 
+procedure TMainForm.SettingsClick(Sender: TObject);
+var
+  Dialog: TZaryaSettingsDialog;
+  Candidate: TZaryaAppSettings;
+  ErrorMessage: string;
+begin
+  if FRuntimeState <> rsStopped then
+  begin
+    MessageDlg(TZaryaTr.Tr('Настройки'), TZaryaTr.Tr(
+      'Остановите runtime перед изменением mixed-порта и системного прокси.',
+      'Stop the runtime before changing the mixed port or system proxy.'),
+      mtInformation, [mbOK], 0);
+    Exit;
+  end;
+  Dialog := TZaryaSettingsDialog.Create(Self, FAppSettings);
+  try
+    if Dialog.ShowModal = mrOk then
+    begin
+      Candidate := FAppSettings;
+      Dialog.ApplyTo(Candidate);
+      if Candidate.StartAtLogin then
+      begin
+        if Candidate.StartMinimizedToTray then
+        begin
+          if not FAutostartManager.SetEnabled(True, ExpandFileName(ParamStr(0)),
+            ['--minimized'], ErrorMessage) then
+          begin
+            MessageDlg(TZaryaTr.Tr('Автозапуск', 'Startup'), ErrorMessage,
+              mtError, [mbOK], 0);
+            Exit;
+          end;
+        end
+        else if not FAutostartManager.SetEnabled(True,
+          ExpandFileName(ParamStr(0)), [], ErrorMessage) then
+        begin
+          MessageDlg(TZaryaTr.Tr('Автозапуск', 'Startup'), ErrorMessage,
+            mtError, [mbOK], 0);
+          Exit;
+        end;
+      end
+      else if not FAutostartManager.SetEnabled(False,
+        ExpandFileName(ParamStr(0)), [], ErrorMessage) then
+      begin
+        MessageDlg(TZaryaTr.Tr('Автозапуск', 'Startup'), ErrorMessage,
+          mtError, [mbOK], 0);
+        Exit;
+      end;
+      FAppSettings := Candidate;
+      FDarkTheme := FAppSettings.DarkTheme;
+      FMinimizeToTray := FAppSettings.MinimizeToTray;
+      SaveAppSettings;
+      ApplyCurrentTheme;
+      AppendLog('Application settings applied.');
+    end;
+  finally
+    Dialog.Free;
+  end;
+end;
+
 procedure TMainForm.PoliciesClick(Sender: TObject);
 var
   RoutingProfiles: TZaryaRoutingProfiles;
   DnsProfiles: TZaryaDnsProfiles;
-  RoutingId: string;
-  DnsId: string;
+  RoutingId, DnsId: string;
 begin
   if FRuntimeState <> rsStopped then
   begin
-    MessageDlg('Routing и DNS',
+    MessageDlg(TZaryaTr.Tr('Routing и DNS', 'Routing and DNS'), TZaryaTr.Tr(
       'Остановите runtime перед изменением активных политик.',
+      'Stop the runtime before changing active policies.'),
       mtInformation, [mbOK], 0);
     Exit;
   end;
@@ -1850,61 +2279,6 @@ begin
   end;
 end;
 
-procedure TMainForm.SettingsClick(Sender: TObject);
-var
-  Dialog: TZaryaSettingsDialog;
-  Candidate: TZaryaAppSettings;
-  ErrorMessage: string;
-begin
-  if FRuntimeState <> rsStopped then
-  begin
-    MessageDlg('Настройки',
-      'Остановите runtime перед изменением mixed-порта и системного прокси.',
-      mtInformation, [mbOK], 0);
-    Exit;
-  end;
-  Dialog := TZaryaSettingsDialog.Create(Self, FAppSettings);
-  try
-    if Dialog.ShowModal = mrOk then
-    begin
-      Candidate := FAppSettings;
-      Dialog.ApplyTo(Candidate);
-      if Candidate.StartAtLogin then
-      begin
-        if Candidate.StartMinimizedToTray then
-        begin
-          if not FAutostartManager.SetEnabled(True, ExpandFileName(ParamStr(0)),
-            ['--minimized'], ErrorMessage) then
-          begin
-            MessageDlg('Автозапуск', ErrorMessage, mtError, [mbOK], 0);
-            Exit;
-          end;
-        end
-        else if not FAutostartManager.SetEnabled(True,
-          ExpandFileName(ParamStr(0)), [], ErrorMessage) then
-        begin
-          MessageDlg('Автозапуск', ErrorMessage, mtError, [mbOK], 0);
-          Exit;
-        end;
-      end
-      else if not FAutostartManager.SetEnabled(False,
-        ExpandFileName(ParamStr(0)), [], ErrorMessage) then
-      begin
-        MessageDlg('Автозапуск', ErrorMessage, mtError, [mbOK], 0);
-        Exit;
-      end;
-      FAppSettings := Candidate;
-      FDarkTheme := FAppSettings.DarkTheme;
-      FMinimizeToTray := FAppSettings.MinimizeToTray;
-      SaveAppSettings;
-      ApplyCurrentTheme;
-      AppendLog('Application settings applied.');
-    end;
-  finally
-    Dialog.Free;
-  end;
-end;
-
 procedure TMainForm.CoreManagerClick(Sender: TObject);
 var
   ProviderId: string;
@@ -1914,7 +2288,9 @@ var
 begin
   if FRuntimeState <> rsStopped then
   begin
-    MessageDlg('Ядра', 'Остановите runtime перед изменением ядер.',
+    MessageDlg(TZaryaTr.Tr('Ядра'), TZaryaTr.Tr(
+      'Остановите runtime перед изменением ядер.',
+      'Stop the runtime before changing cores.'),
       mtInformation, [mbOK], 0);
     Exit;
   end;
@@ -1929,13 +2305,16 @@ begin
       Inc(CompatibleCount);
   if CompatibleCount = 0 then
   begin
-    MessageDlg('Provider профилей',
-      'Совместимых профилей не найдено. Raw-конфигурации требуют тот же диалект.',
+    MessageDlg(TZaryaTr.Tr('Provider профилей', 'Profile provider'),
+      TZaryaTr.Tr(
+        'Совместимых профилей не найдено. Raw-конфигурации требуют тот же диалект.',
+        'No compatible profiles were found. Raw configurations require the same dialect.'),
       mtInformation, [mbOK], 0);
     Exit;
   end;
-  if MessageDlg('Provider профилей', Format(
-    'Назначить %s для совместимых профилей (%d)?',
+  if MessageDlg(TZaryaTr.Tr('Provider профилей', 'Profile provider'), Format(
+    TZaryaTr.Tr('Назначить %s для совместимых профилей (%d)?',
+      'Assign %s to compatible profiles (%d)?'),
     [Provider.DisplayName, CompatibleCount]), mtConfirmation,
     [mbYes, mbNo], 0) <> mrYes then
     Exit;
@@ -1963,7 +2342,8 @@ begin
   ForceDirectories(BackupDirectory);
   Dialog := TSaveDialog.Create(Self);
   try
-    Dialog.Title := 'Создать резервную копию Zarya';
+    Dialog.Title := TZaryaTr.Tr('Создать резервную копию Zarya',
+      'Create a Zarya backup');
     Dialog.Filter := 'Zarya backup (*.zarya-backup.zip)|*.zarya-backup.zip';
     Dialog.DefaultExt := 'zarya-backup.zip';
     Dialog.Options := Dialog.Options + [ofOverwritePrompt, ofPathMustExist];
@@ -1975,12 +2355,15 @@ begin
     if not CreateZaryaBackup(DataDirectory, Dialog.FileName,
       ErrorMessage) then
     begin
-      MessageDlg('Backup', 'Не удалось создать backup:' + LineEnding +
+      MessageDlg('Backup', TZaryaTr.Tr('Не удалось создать backup:',
+        'Could not create the backup:') + LineEnding +
         ErrorMessage, mtError, [mbOK], 0);
       Exit;
     end;
     AppendLog('Verified Zarya backup created.');
-    MessageDlg('Backup', 'Проверяемая резервная копия создана:' + LineEnding +
+    MessageDlg('Backup', TZaryaTr.Tr(
+      'Проверяемая резервная копия создана:',
+      'Verified backup created:') + LineEnding +
       Dialog.FileName, mtInformation, [mbOK], 0);
   finally
     Dialog.Free;
@@ -1996,36 +2379,48 @@ var
 begin
   if FRuntimeState <> rsStopped then
   begin
-    MessageDlg('Восстановление backup',
-      'Сначала остановите активный runtime.', mtWarning, [mbOK], 0);
+    MessageDlg(TZaryaTr.Tr('Восстановление backup', 'Restore backup'),
+      TZaryaTr.Tr('Сначала остановите активный runtime.',
+        'Stop the active runtime first.'), mtWarning, [mbOK], 0);
     Exit;
   end;
   Dialog := TOpenDialog.Create(Self);
   try
-    Dialog.Title := 'Восстановить резервную копию Zarya';
+    Dialog.Title := TZaryaTr.Tr('Восстановить резервную копию Zarya',
+      'Restore a Zarya backup');
     Dialog.Filter := 'Zarya backup (*.zarya-backup.zip)|*.zarya-backup.zip|' +
       'ZIP archives (*.zip)|*.zip';
     Dialog.Options := Dialog.Options + [ofFileMustExist, ofPathMustExist];
     if not Dialog.Execute then
       Exit;
-    if MessageDlg('Восстановление backup',
+    if MessageDlg(TZaryaTr.Tr('Восстановление backup', 'Restore backup'),
+      TZaryaTr.Tr(
       'Текущие файлы данных будут заменены после staging-проверки.' +
       LineEnding +
-      'Пути к внешним EXE не переносятся и их потребуется выбрать заново.' +
-      LineEnding + LineEnding + 'Продолжить?', mtConfirmation,
+      'Credentials, raw config и пути к внешним EXE не входят в backup; ' +
+      'профили после восстановления отключены.' +
+      LineEnding + LineEnding + 'Продолжить?',
+      'Current data files will be replaced after staging validation.' +
+      LineEnding +
+      'Credentials, raw configuration, and external EXE paths are omitted; ' +
+      'restored profiles are disabled.' +
+      LineEnding + LineEnding + 'Continue?'), mtConfirmation,
       [mbYes, mbNo], 0) <> mrYes then
       Exit;
     DataDirectory := ExtractFileDir(FProfileStore.FileName);
     if not RestoreZaryaBackup(Dialog.FileName, DataDirectory,
       PreRestoreBackup, ErrorMessage) then
     begin
-      MessageDlg('Восстановление backup',
-        'Данные не восстановлены:' + LineEnding + ErrorMessage,
+      MessageDlg(TZaryaTr.Tr('Восстановление backup', 'Restore backup'),
+        TZaryaTr.Tr('Данные не восстановлены:', 'Data was not restored:') +
+        LineEnding + ErrorMessage,
         mtError, [mbOK], 0);
       Exit;
     end;
     if not FCoreRegistry.Load(ErrorMessage) then
-      MessageDlg('Ядра', 'Backup восстановлен, но providers.json не прочитан:' +
+      MessageDlg(TZaryaTr.Tr('Ядра'), TZaryaTr.Tr(
+        'Backup восстановлен, но providers.json не прочитан:',
+        'The backup was restored, but providers.json could not be read:') +
         LineEnding + ErrorMessage, mtWarning, [mbOK], 0);
     FCoreRegistry.SetEmbeddedState(ProviderEmbeddedXray,
       FEmbeddedXray.Version, FEmbeddedXray.Available,
@@ -2035,8 +2430,9 @@ begin
     ApplyCurrentTheme;
     UpdateRuntimeSurface;
     AppendLog('Verified Zarya backup restored.');
-    MessageDlg('Восстановление backup',
-      'Данные восстановлены и перечитаны.' + LineEnding +
+    MessageDlg(TZaryaTr.Tr('Восстановление backup', 'Restore backup'),
+      TZaryaTr.Tr('Данные восстановлены и перечитаны.',
+        'Data was restored and reloaded.') + LineEnding +
       'Pre-restore backup: ' + PreRestoreBackup,
       mtInformation, [mbOK], 0);
   finally
@@ -2051,7 +2447,8 @@ var
 begin
   Dialog := TSaveDialog.Create(Self);
   try
-    Dialog.Title := 'Сохранить безопасный diagnostics bundle';
+    Dialog.Title := TZaryaTr.Tr('Сохранить безопасный diagnostics bundle',
+      'Save a safe diagnostics bundle');
     Dialog.Filter :=
       'Zarya diagnostics (*.zarya-diagnostics.zip)|*.zarya-diagnostics.zip';
     Dialog.DefaultExt := 'zarya-diagnostics.zip';
@@ -2064,13 +2461,15 @@ begin
     if not CreateDiagnosticsBundle(Dialog.FileName, FProfiles,
       FCoreRegistry, FAppSettings, ErrorMessage) then
     begin
-      MessageDlg('Диагностика', 'Не удалось создать bundle:' + LineEnding +
+      MessageDlg(TZaryaTr.Tr('Диагностика', 'Diagnostics'), TZaryaTr.Tr(
+        'Не удалось создать bundle:', 'Could not create the bundle:') + LineEnding +
         ErrorMessage, mtError, [mbOK], 0);
       Exit;
     end;
     AppendLog('Redacted diagnostics bundle created.');
-    MessageDlg('Диагностика',
-      'Bundle создан без runtime-логов, raw config, credentials и путей EXE.' +
+    MessageDlg(TZaryaTr.Tr('Диагностика', 'Diagnostics'), TZaryaTr.Tr(
+      'Bundle создан без runtime-логов, raw config, credentials и путей EXE.',
+      'The bundle excludes runtime logs, raw configuration, credentials, and EXE paths.') +
       LineEnding + Dialog.FileName, mtInformation, [mbOK], 0);
   finally
     Dialog.Free;
@@ -2079,13 +2478,17 @@ end;
 
 procedure TMainForm.AboutClick(Sender: TObject);
 begin
-  MessageDlg('О Zarya',
+  MessageDlg(TZaryaTr.Tr('О Zarya', 'About Zarya'),
     'Zarya · FPC/LCL' + LineEnding + LineEnding +
-    'Локальные профили, подписки, share links, runtime-конфигурации, ' +
+    TZaryaTr.Tr('Локальные профили, подписки, share links, runtime-конфигурации, ' +
     'встроенные и внешние providers.' + LineEnding +
     'Production-сборка статически линкует Xray через общий zarya-xray ABI. ' +
     'Системный прокси включается только после подтверждённой готовности ' +
     'объявленного локального endpoint.',
+    'Local profiles, subscriptions, share links, runtime configurations, ' +
+    'and embedded or external providers.' + LineEnding +
+    'The production build statically links Xray through the shared zarya-xray ABI. ' +
+    'The system proxy is enabled only after the declared local endpoint is ready.'),
     mtInformation, [mbOK], 0);
 end;
 
@@ -2127,6 +2530,7 @@ begin
   FStopButton.Left := ClientWidth - 176;
   FSettingsButton.Left := ClientWidth - 176;
   FStateDetail.Width := ClientWidth - 390;
+  LayoutToolbar;
 end;
 
 procedure TMainForm.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
