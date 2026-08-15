@@ -98,6 +98,7 @@ try {
         'RoutingDnsTest',
         'GeoDataTest',
         'TcpLatencyTest',
+        'AutostartTest',
         'CoreProviderTest',
         'ConfigAdapterTest',
         'ExternalProcessTest'

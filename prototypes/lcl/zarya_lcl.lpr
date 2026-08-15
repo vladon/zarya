@@ -23,6 +23,16 @@ var
   MigrationError: string;
   ProfileStorePath: string;
 
+function HasCommandLineSwitch(const AValue: string): Boolean;
+var
+  I: Integer;
+begin
+  for I := 1 to ParamCount do
+    if SameText(ParamStr(I), AValue) then
+      Exit(True);
+  Result := False;
+end;
+
 function ReadUtf8File(const AFileName: string): string;
 var
   Stream: TFileStream;
@@ -233,5 +243,10 @@ begin
         mtInformation, [mbOK], 0);
   end;
   Application.CreateForm(TMainForm, Window);
+  if HasCommandLineSwitch('--minimized') then
+  begin
+    Application.ShowMainForm := False;
+    Window.Hide;
+  end;
   Application.Run;
 end.
