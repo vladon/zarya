@@ -14,7 +14,8 @@ uses
   CoreManagerForm, ZaryaRuntimeProcess, ZaryaRuntimeConfigFile,
   ProviderChoiceForm, ZaryaFileIntegrity, ZaryaRuntimeContracts,
   ZaryaConfigAdapters, SubscriptionManagerForm, ZaryaTcpLatency,
-  ZaryaBackup, ZaryaDiagnostics;
+  ZaryaBackup, ZaryaDiagnostics, ZaryaRouting, ZaryaDns, ZaryaPolicyStore,
+  FpcPolicyStore, PolicyManagerForm, ZaryaGeoData, GeoDataManagerForm;
 
 type
   TRuntimeState = (rsStopped, rsConnecting, rsRunning);
@@ -52,6 +53,11 @@ type
     FProfileStore: IZaryaProfileStore;
     FAppSettings: TZaryaAppSettings;
     FSettingsStore: TZaryaAppSettingsStore;
+    FRoutingStore: IRoutingProfileStore;
+    FDnsStore: IDnsProfileStore;
+    FRoutingProfiles: TZaryaRoutingProfiles;
+    FDnsProfiles: TZaryaDnsProfiles;
+    FGeoDataManager: IGeoDataManager;
     FEmbeddedXray: TZaryaEmbeddedXray;
     FCoreRegistry: TZaryaCoreProviderRegistry;
     FExternalProcess: IZaryaRuntimeProcess;
@@ -94,6 +100,10 @@ type
     procedure BuildTray;
     procedure LoadAppSettings;
     procedure SaveAppSettings;
+    procedure LoadPolicies;
+    function SavePolicies: Boolean;
+    function ActiveRoutingProfile: TZaryaRoutingProfile;
+    function ActiveDnsProfile: TZaryaDnsProfile;
     function ResolveXrayAssetDirectory: string;
     function RedactRuntimeText(const AText: string): string;
     procedure DrainRuntimeLogs;
@@ -131,6 +141,8 @@ type
     procedure ImportClick(Sender: TObject);
     procedure SubscriptionsClick(Sender: TObject);
     procedure SettingsClick(Sender: TObject);
+    procedure PoliciesClick(Sender: TObject);
+    procedure GeoDataClick(Sender: TObject);
     procedure CoreManagerClick(Sender: TObject);
     procedure CreateBackupClick(Sender: TObject);
     procedure RestoreBackupClick(Sender: TObject);
@@ -233,7 +245,17 @@ begin
     IncludeTrailingPathDelimiter(ExtractFileDir(FProfileStore.FileName)) +
     'settings.ini');
   LoadAppSettings;
-  FXrayAssetDirectory := ResolveXrayAssetDirectory;
+  FRoutingStore := TFpcRoutingProfileStore.Create(
+    IncludeTrailingPathDelimiter(ExtractFileDir(FProfileStore.FileName)) +
+    'routing.json');
+  FDnsStore := TFpcDnsProfileStore.Create(
+    IncludeTrailingPathDelimiter(ExtractFileDir(FProfileStore.FileName)) +
+    'dns.json');
+  LoadPolicies;
+  FGeoDataManager := TZaryaGeoDataManager.Create(
+    IncludeTrailingPathDelimiter(ExtractFileDir(FProfileStore.FileName)) +
+    'geodata' + PathDelim + 'xray');
+  FXrayAssetDirectory := FGeoDataManager.TargetDirectory;
   FEmbeddedXray := TZaryaEmbeddedXray.Create(
     IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))) + 'zarya-xray.dll');
   FCoreRegistry.SetEmbeddedState(ProviderEmbeddedXray,
@@ -287,6 +309,82 @@ begin
   if not FSettingsStore.Save(FAppSettings, ErrorMessage) then
     MessageDlg('Настройки', 'Не удалось сохранить settings.ini:' +
       LineEnding + ErrorMessage, mtError, [mbOK], 0);
+end;
+
+procedure TMainForm.LoadPolicies;
+var
+  ErrorMessage: string;
+  I: Integer;
+  FoundRouting: Boolean;
+  FoundDns: Boolean;
+begin
+  if not FRoutingStore.Load(FRoutingProfiles, ErrorMessage) then
+  begin
+    FRoutingProfiles := CreateBuiltInRoutingProfiles;
+    MessageDlg('Routing', 'Не удалось прочитать routing.json:' +
+      LineEnding + ErrorMessage, mtWarning, [mbOK], 0);
+  end;
+  if not FDnsStore.Load(FDnsProfiles, ErrorMessage) then
+  begin
+    FDnsProfiles := CreateBuiltInDnsProfiles;
+    MessageDlg('DNS', 'Не удалось прочитать dns.json:' +
+      LineEnding + ErrorMessage, mtWarning, [mbOK], 0);
+  end;
+  FoundRouting := False;
+  for I := 0 to High(FRoutingProfiles) do
+    if SameText(FRoutingProfiles[I].Id,
+      FAppSettings.SelectedRoutingProfileId) then
+      FoundRouting := True;
+  if not FoundRouting then
+    FAppSettings.SelectedRoutingProfileId := RoutingBypassLanId;
+  FoundDns := False;
+  for I := 0 to High(FDnsProfiles) do
+    if SameText(FDnsProfiles[I].Id, FAppSettings.SelectedDnsProfileId) then
+      FoundDns := True;
+  if not FoundDns then
+    FAppSettings.SelectedDnsProfileId := DnsSystemId;
+end;
+
+function TMainForm.SavePolicies: Boolean;
+var
+  ErrorMessage: string;
+begin
+  Result := False;
+  if not FRoutingStore.Save(FRoutingProfiles, ErrorMessage) then
+  begin
+    MessageDlg('Routing', 'Не удалось сохранить routing.json:' +
+      LineEnding + ErrorMessage, mtError, [mbOK], 0);
+    Exit;
+  end;
+  if not FDnsStore.Save(FDnsProfiles, ErrorMessage) then
+  begin
+    MessageDlg('DNS', 'Не удалось сохранить dns.json:' +
+      LineEnding + ErrorMessage, mtError, [mbOK], 0);
+    Exit;
+  end;
+  SaveAppSettings;
+  Result := True;
+end;
+
+function TMainForm.ActiveRoutingProfile: TZaryaRoutingProfile;
+var
+  I: Integer;
+begin
+  for I := 0 to High(FRoutingProfiles) do
+    if SameText(FRoutingProfiles[I].Id,
+      FAppSettings.SelectedRoutingProfileId) then
+      Exit(FRoutingProfiles[I]);
+  Result := BuiltInProxyAllRouting;
+end;
+
+function TMainForm.ActiveDnsProfile: TZaryaDnsProfile;
+var
+  I: Integer;
+begin
+  for I := 0 to High(FDnsProfiles) do
+    if SameText(FDnsProfiles[I].Id, FAppSettings.SelectedDnsProfileId) then
+      Exit(FDnsProfiles[I]);
+  Result := BuiltInSystemDns;
 end;
 
 function TMainForm.ResolveXrayAssetDirectory: string;
@@ -449,6 +547,9 @@ begin
   FEmbeddedXray.Free;
   FCoreRegistry.Free;
   FSettingsStore.Free;
+  FRoutingStore := nil;
+  FDnsStore := nil;
+  FGeoDataManager := nil;
   FProfileStore := nil;
   inherited Destroy;
 end;
@@ -493,6 +594,8 @@ begin
   RootItem.Caption := '&Инструменты';
   Menu.Items.Add(RootItem);
   RootItem.Add(NewMenuItem(Menu, '&Runtime config…', @PreviewConfigClick));
+  RootItem.Add(NewMenuItem(Menu, 'Routing и &DNS…', @PoliciesClick));
+  RootItem.Add(NewMenuItem(Menu, '&Geo data…', @GeoDataClick));
   RootItem.Add(NewMenuItem(Menu, '&Диагностика…', @DiagnosticsClick));
   RootItem.Add(NewMenuItem(Menu, '&Настройки…', @SettingsClick));
 
@@ -985,11 +1088,31 @@ function TMainForm.PrepareRuntimeConfig(const AProfile: TZaryaProfile;
 var
   Adapter: IConfigAdapter;
   Context: TZaryaConfigContext;
+  Request: TZaryaRuntimeRequest;
+  RoutingProfile: TZaryaRoutingProfile;
+  DnsProfile: TZaryaDnsProfile;
+  MissingGeoData: string;
 begin
   AConfig := '';
   AError := '';
+  RoutingProfile := ActiveRoutingProfile;
+  DnsProfile := ActiveDnsProfile;
+  if Assigned(FGeoDataManager) and not FGeoDataManager.RequiredFilesPresent(
+    RoutingProfile, DnsProfile, MissingGeoData, AError) then
+  begin
+    if AError = '' then
+      AError := 'Для активных routing/DNS отсутствуют файлы: ' +
+        MissingGeoData + '. Откройте Инструменты -> Geo data.';
+    Exit(False);
+  end;
   if AProfile.RawConfig <> '' then
   begin
+    if not IsDefaultRouting(RoutingProfile) or not IsDefaultDns(DnsProfile) then
+    begin
+      AError := 'Raw config управляет routing и DNS самостоятельно. ' +
+        'Выберите Proxy All и System DNS.';
+      Exit(False);
+    end;
     if not SameText(ConfigFormatToString(AProvider.ConfigFormat),
       AProfile.RawConfigFormat) then
     begin
@@ -1030,7 +1153,12 @@ begin
       Context.SocksPort := FAppSettings.MixedPort + 1
     else
       Context.SocksPort := FAppSettings.MixedPort - 1;
-  Result := Adapter.Generate(AProfile, Context, AConfig, AError);
+  Request := CreateRuntimeRequest(AProfile, AProvider, Context);
+  Request.DataDirectory := ExtractFileDir(FProfileStore.FileName);
+  Request.AssetDirectory := FXrayAssetDirectory;
+  Request.RoutingProfile := RoutingProfile;
+  Request.DnsProfile := DnsProfile;
+  Result := Adapter.GenerateRequest(Request, AConfig, AError);
   if Result then
   begin
     FReadinessHost := '127.0.0.1';
@@ -1435,8 +1563,6 @@ var
   ErrorMessage: string;
   ProviderId: string;
   Provider: TZaryaCoreProvider;
-  Adapter: IConfigAdapter;
-  Context: TZaryaConfigContext;
 begin
   Index := SelectedProfileIndex;
   if Index < 0 then
@@ -1450,32 +1576,11 @@ begin
     ProviderId := DefaultProviderForProtocol(FProfiles[Index].ProtocolName);
   if not FCoreRegistry.TryGet(ProviderId, Provider) then
     Provider := CreateProviderPreset(ProviderId);
-  if FProfiles[Index].RawConfig <> '' then
-    Config := FProfiles[Index].RawConfig
-  else
+  if not PrepareRuntimeConfig(FProfiles[Index], Provider, Config,
+    ErrorMessage) then
   begin
-    Adapter := CreateConfigAdapter(Provider);
-    if not Assigned(Adapter) then
-    begin
-      MessageDlg('Runtime config',
-        'Для выбранного provider нет config adapter.', mtWarning, [mbOK], 0);
-      Exit;
-    end;
-    Context := Default(TZaryaConfigContext);
-    Context.MixedPort := FAppSettings.MixedPort;
-    Context.HttpPort := FAppSettings.MixedPort;
-    Context.SocksPort := FAppSettings.MixedPort;
-    if SameText(Provider.AdapterId, 'hysteria2') then
-      if FAppSettings.MixedPort < 65535 then
-        Context.SocksPort := FAppSettings.MixedPort + 1
-      else
-        Context.SocksPort := FAppSettings.MixedPort - 1;
-    if not Adapter.Generate(FProfiles[Index], Context, Config,
-      ErrorMessage) then
-    begin
-      MessageDlg('Runtime config', ErrorMessage, mtWarning, [mbOK], 0);
-      Exit;
-    end;
+    MessageDlg('Runtime config', ErrorMessage, mtWarning, [mbOK], 0);
+    Exit;
   end;
   AppendLog('Runtime config generated for provider: ' + Provider.ProviderId);
   TXrayConfigDialog.Execute(Self, FProfiles[Index].Name, Config,
@@ -1634,6 +1739,48 @@ begin
     end;
   finally
     Dialog.Free;
+  end;
+end;
+
+procedure TMainForm.PoliciesClick(Sender: TObject);
+var
+  RoutingProfiles: TZaryaRoutingProfiles;
+  DnsProfiles: TZaryaDnsProfiles;
+  RoutingId: string;
+  DnsId: string;
+begin
+  if FRuntimeState <> rsStopped then
+  begin
+    MessageDlg('Routing и DNS',
+      'Остановите runtime перед изменением активных политик.',
+      mtInformation, [mbOK], 0);
+    Exit;
+  end;
+  RoutingProfiles := Copy(FRoutingProfiles);
+  DnsProfiles := Copy(FDnsProfiles);
+  RoutingId := FAppSettings.SelectedRoutingProfileId;
+  DnsId := FAppSettings.SelectedDnsProfileId;
+  if not TPolicyManagerDialog.Execute(Self, RoutingProfiles, DnsProfiles,
+    RoutingId, DnsId, FDarkTheme) then
+    Exit;
+  FRoutingProfiles := RoutingProfiles;
+  FDnsProfiles := DnsProfiles;
+  FAppSettings.SelectedRoutingProfileId := RoutingId;
+  FAppSettings.SelectedDnsProfileId := DnsId;
+  if SavePolicies then
+    AppendLog('Active policies: routing=' + RoutingId + ', dns=' + DnsId + '.');
+end;
+
+procedure TMainForm.GeoDataClick(Sender: TObject);
+var
+  SourceId: string;
+begin
+  SourceId := FAppSettings.GeoSourceId;
+  TGeoDataManagerDialog.Execute(Self, FGeoDataManager, SourceId, FDarkTheme);
+  if not SameText(SourceId, FAppSettings.GeoSourceId) then
+  begin
+    FAppSettings.GeoSourceId := SourceId;
+    SaveAppSettings;
   end;
 end;
 

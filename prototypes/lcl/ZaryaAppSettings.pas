@@ -16,6 +16,11 @@ type
     MixedPort: Integer;
     AutoEnableSystemProxy: Boolean;
     RestoreSystemProxy: Boolean;
+    SelectedRoutingProfileId: string;
+    SelectedDnsProfileId: string;
+    GeoSourceId: string;
+    GeoAutoCheckOnStartup: Boolean;
+    GeoWarnIfMissing: Boolean;
   end;
 
 function DefaultAppSettings: TZaryaAppSettings;
@@ -45,6 +50,11 @@ begin
   Result.MixedPort := 10808;
   Result.AutoEnableSystemProxy := True;
   Result.RestoreSystemProxy := True;
+  Result.SelectedRoutingProfileId := 'builtin-bypass-lan';
+  Result.SelectedDnsProfileId := 'builtin-dns-system';
+  Result.GeoSourceId := 'runetfreedom';
+  Result.GeoAutoCheckOnStartup := True;
+  Result.GeoWarnIfMissing := True;
 end;
 
 constructor TZaryaAppSettingsStore.Create(const AFileName: string);
@@ -77,6 +87,16 @@ begin
       'autoEnableSystemProxy', ASettings.AutoEnableSystemProxy);
     ASettings.RestoreSystemProxy := Ini.ReadBool('proxy',
       'restoreSystemProxy', ASettings.RestoreSystemProxy);
+    ASettings.SelectedRoutingProfileId := Ini.ReadString('routing',
+      'selectedProfileId', ASettings.SelectedRoutingProfileId);
+    ASettings.SelectedDnsProfileId := Ini.ReadString('dns',
+      'selectedProfileId', ASettings.SelectedDnsProfileId);
+    ASettings.GeoSourceId := Ini.ReadString('geodata', 'selectedSourceId',
+      ASettings.GeoSourceId);
+    ASettings.GeoAutoCheckOnStartup := Ini.ReadBool('geodata',
+      'autoCheckOnStartup', ASettings.GeoAutoCheckOnStartup);
+    ASettings.GeoWarnIfMissing := Ini.ReadBool('geodata', 'warnIfMissing',
+      ASettings.GeoWarnIfMissing);
     Result := True;
   except
     on E: Exception do
@@ -109,6 +129,13 @@ begin
       ASettings.AutoEnableSystemProxy);
     Ini.WriteBool('proxy', 'restoreSystemProxy',
       ASettings.RestoreSystemProxy);
+    Ini.WriteString('routing', 'selectedProfileId',
+      ASettings.SelectedRoutingProfileId);
+    Ini.WriteString('dns', 'selectedProfileId', ASettings.SelectedDnsProfileId);
+    Ini.WriteString('geodata', 'selectedSourceId', ASettings.GeoSourceId);
+    Ini.WriteBool('geodata', 'autoCheckOnStartup',
+      ASettings.GeoAutoCheckOnStartup);
+    Ini.WriteBool('geodata', 'warnIfMissing', ASettings.GeoWarnIfMissing);
     Ini.UpdateFile;
     Result := True;
   except

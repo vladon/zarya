@@ -25,7 +25,7 @@
         <PackageName Value="LCL"/>
       </Item1>
     </RequiredPackages>
-    <Units Count="44">
+    <Units Count="53">
       <Unit0>
         <Filename Value="zarya_lcl.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -245,6 +245,51 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="ZaryaRealDelay"/>
       </Unit43>
+      <Unit44>
+        <Filename Value="ZaryaRouting.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaRouting"/>
+      </Unit44>
+      <Unit45>
+        <Filename Value="ZaryaDns.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaDns"/>
+      </Unit45>
+      <Unit46>
+        <Filename Value="ZaryaPolicyStore.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaPolicyStore"/>
+      </Unit46>
+      <Unit47>
+        <Filename Value="FpcPolicyStore.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="FpcPolicyStore"/>
+      </Unit47>
+      <Unit48>
+        <Filename Value="ZaryaPolicyGenerators.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaPolicyGenerators"/>
+      </Unit48>
+      <Unit49>
+        <Filename Value="PolicyManagerForm.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="PolicyManagerForm"/>
+      </Unit49>
+      <Unit50>
+        <Filename Value="ZaryaGeoData.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaGeoData"/>
+      </Unit50>
+      <Unit51>
+        <Filename Value="GeoDataManagerForm.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="GeoDataManagerForm"/>
+      </Unit51>
+      <Unit52>
+        <Filename Value="ZaryaTr.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaTr"/>
+      </Unit52>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
