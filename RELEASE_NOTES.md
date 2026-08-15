@@ -1,3 +1,12 @@
+# Zarya 1.5.8
+
+Zarya 1.5.8 hardens the LCL Qt-data migration, rollback, backup, and
+diagnostics privacy contracts.
+
+See [docs/release-notes/1.5.8.md](docs/release-notes/1.5.8.md) for details.
+
+---
+
 # Zarya 1.5.7
 
 Zarya 1.5.7 adds the versioned LCL routing and DNS model, capability-checked

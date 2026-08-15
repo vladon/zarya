@@ -19,8 +19,10 @@ function EnsureFirstRunQtMigration(const ATargetDirectory: string;
 implementation
 
 uses
-  Classes, fpjson, jsonparser, Zipper, ZaryaProfile, ZaryaProfileStore,
-  FpcProfileStore, ZaryaFileIntegrity;
+  Classes, Math, fpjson, jsonparser, Zipper, ZaryaProfile, ZaryaProfileStore,
+  FpcProfileStore, ZaryaFileIntegrity, ZaryaRouting, ZaryaDns,
+  ZaryaPolicyStore, FpcPolicyStore, ZaryaAppSettings
+  {$IFDEF MSWINDOWS}, Registry{$ENDIF};
 
 const
   MigratedFiles: array[0..3] of string = (
@@ -161,6 +163,202 @@ begin
       AError := E.Message;
   end;
   Data.Free;
+end;
+
+{$IFDEF MSWINDOWS}
+function TryReadQtRegistryValue(const AName: string; out AValue: string): Boolean;
+var
+  Registry: TRegistry;
+  Marker: Integer;
+  GroupName: string;
+  ValueName: string;
+  DataType: TRegDataType;
+begin
+  Result := False;
+  AValue := '';
+  Marker := LastDelimiter('/', AName);
+  if Marker < 1 then Exit;
+  GroupName := StringReplace(Copy(AName, 1, Marker - 1), '/', '\', [rfReplaceAll]);
+  ValueName := Copy(AName, Marker + 1, MaxInt);
+  Registry := TRegistry.Create;
+  try
+    Registry.RootKey := QWord($80000001);
+    if not Registry.OpenKeyReadOnly('\Software\Zarya\Zarya\' + GroupName) or
+      not Registry.ValueExists(ValueName) then Exit;
+    DataType := Registry.GetDataType(ValueName);
+    case DataType of
+      rdInteger: AValue := IntToStr(Registry.ReadInteger(ValueName));
+      rdString, rdExpandString: AValue := Registry.ReadString(ValueName);
+    else
+      Exit;
+    end;
+    Result := True;
+  finally
+    Registry.Free;
+  end;
+end;
+{$ELSE}
+function TryReadQtRegistryValue(const AName: string; out AValue: string): Boolean;
+begin
+  AValue := '';
+  Result := False;
+end;
+{$ENDIF}
+
+function TextToBool(const AValue: string; const ADefault: Boolean): Boolean;
+begin
+  if SameText(Trim(AValue), 'true') or (Trim(AValue) = '1') then Exit(True);
+  if SameText(Trim(AValue), 'false') or (Trim(AValue) = '0') then Exit(False);
+  Result := ADefault;
+end;
+
+function RoutingIdExists(const AProfiles: TZaryaRoutingProfiles;
+  const AId: string): Boolean;
+var
+  Profile: TZaryaRoutingProfile;
+begin
+  for Profile in AProfiles do if SameText(Profile.Id, AId) then Exit(True);
+  Result := False;
+end;
+
+function DnsIdExists(const AProfiles: TZaryaDnsProfiles;
+  const AId: string): Boolean;
+var
+  Profile: TZaryaDnsProfile;
+begin
+  for Profile in AProfiles do if SameText(Profile.Id, AId) then Exit(True);
+  Result := False;
+end;
+
+procedure AddJsonString(const AArray: TJSONArray; const AValue: string);
+begin
+  AArray.Add(AValue);
+end;
+
+function MigrateQtSettings(const AStagingDirectory: string;
+  const ARoutingProfiles: TZaryaRoutingProfiles;
+  const ADnsProfiles: TZaryaDnsProfiles; out AMigrationJson,
+  AError: string): Boolean;
+var
+  Settings: TZaryaAppSettings;
+  Store: ISettingsStore;
+  Value: string;
+  Number: Integer;
+  Root: TJSONObject;
+  Migrated, Skipped, Fallbacks: TJSONArray;
+
+  procedure ReadStringValue(const AQtName: string; var ADestination: string);
+  begin
+    if TryReadQtRegistryValue(AQtName, Value) then
+    begin
+      ADestination := Value;
+      AddJsonString(Migrated, AQtName);
+    end;
+  end;
+
+  procedure ReadBoolValue(const AQtName: string; var ADestination: Boolean);
+  begin
+    if TryReadQtRegistryValue(AQtName, Value) then
+    begin
+      ADestination := TextToBool(Value, ADestination);
+      AddJsonString(Migrated, AQtName);
+    end;
+  end;
+
+begin
+  Result := False;
+  AError := '';
+  AMigrationJson := '';
+  Settings := DefaultAppSettings;
+  Root := TJSONObject.Create;
+  try
+    Root.Add('schemaVersion', 2);
+    Root.Add('source', 'qt');
+    Migrated := TJSONArray.Create;
+    Skipped := TJSONArray.Create;
+    Fallbacks := TJSONArray.Create;
+    Root.Add('migratedSettings', Migrated);
+    Root.Add('skippedSettings', Skipped);
+    Root.Add('fallbacks', Fallbacks);
+
+    if TryReadQtRegistryValue('desktop/themeMode', Value) then
+    begin
+      Settings.DarkTheme := SameText(Value, 'dark');
+      AddJsonString(Migrated, 'desktop/themeMode');
+    end;
+    ReadStringValue('desktop/languageCode', Settings.Language);
+    ReadBoolValue('desktop/minimizeToTrayOnClose', Settings.MinimizeToTray);
+    if TryReadQtRegistryValue('proxy/mixedPort', Value) and
+      TryStrToInt(Value, Number) and (Number >= 1) and (Number <= 65535) then
+    begin
+      Settings.MixedPort := Number;
+      AddJsonString(Migrated, 'proxy/mixedPort');
+    end;
+    ReadBoolValue('proxy/autoEnableSystemProxyOnStart',
+      Settings.AutoEnableSystemProxy);
+    ReadBoolValue('proxy/restoreProxyOnExit', Settings.RestoreSystemProxy);
+    ReadStringValue('routing/selectedProfileId',
+      Settings.SelectedRoutingProfileId);
+    ReadStringValue('dns/selectedProfileId', Settings.SelectedDnsProfileId);
+    ReadBoolValue('startup/startAtLogin', Settings.StartAtLogin);
+    ReadBoolValue('startup/startMinimizedToTray',
+      Settings.StartMinimizedToTray);
+    ReadBoolValue('startup/autoStartLastProfile',
+      Settings.AutoStartLastProfile);
+    ReadBoolValue('startup/autoEnableSystemProxyAfterAutoStart',
+      Settings.AutoEnableSystemProxyAfterAutoStart);
+    if TryReadQtRegistryValue('startup/autoStartDelaySeconds', Value) and
+      TryStrToInt(Value, Number) then
+    begin
+      Settings.AutoStartDelaySeconds := EnsureRange(Number, 0, 120);
+      AddJsonString(Migrated, 'startup/autoStartDelaySeconds');
+    end;
+    ReadStringValue('startup/lastStartedProfileId',
+      Settings.LastStartedProfileId);
+    if TryReadQtRegistryValue('testing/maxConcurrentTests', Value) and
+      TryStrToInt(Value, Number) then
+    begin
+      Settings.RealDelayConcurrency := EnsureRange(Number, 1, 10);
+      AddJsonString(Migrated, 'testing/maxConcurrentTests');
+    end;
+    if TryReadQtRegistryValue('testing/realDelayTimeoutMs', Value) and
+      TryStrToInt(Value, Number) then
+    begin
+      Settings.RealDelayTimeoutSeconds := EnsureRange((Number + 999) div 1000,
+        1, 60);
+      AddJsonString(Migrated, 'testing/realDelayTimeoutMs');
+    end;
+    ReadStringValue('testing/testUrl', Settings.RealDelayTestUrl);
+    ReadStringValue('geodata/selectedSourceId', Settings.GeoSourceId);
+    ReadBoolValue('geodata/autoCheckOnStartup',
+      Settings.GeoAutoCheckOnStartup);
+    ReadBoolValue('geodata/warnIfMissing', Settings.GeoWarnIfMissing);
+
+    if not RoutingIdExists(ARoutingProfiles,
+      Settings.SelectedRoutingProfileId) then
+    begin
+      Settings.SelectedRoutingProfileId := RoutingBypassLanId;
+      AddJsonString(Fallbacks, 'routing/selectedProfileId -> builtin-bypass-lan');
+    end;
+    if not DnsIdExists(ADnsProfiles, Settings.SelectedDnsProfileId) then
+    begin
+      Settings.SelectedDnsProfileId := DnsSystemId;
+      AddJsonString(Fallbacks, 'dns/selectedProfileId -> builtin-dns-system');
+    end;
+    AddJsonString(Skipped, 'machine-specific core/provider paths');
+    AddJsonString(Skipped, 'helper and privileged settings');
+    AddJsonString(Skipped, 'tokens and credentials');
+    AddJsonString(Skipped, 'experimental feature flags');
+    Settings.FirstRunCompleted := True;
+    Store := TZaryaAppSettingsStore.Create(IncludeTrailingPathDelimiter(
+      AStagingDirectory) + 'settings.ini');
+    if not Store.Save(Settings, AError) then Exit(False);
+    Store := nil;
+    AMigrationJson := Root.FormatJSON;
+    Result := True;
+  finally
+    Root.Free;
+  end;
 end;
 
 function ValidateRelations(const AProfiles: TZaryaProfiles;
@@ -317,8 +515,13 @@ var
   StagingFile: string;
   Store: IZaryaProfileStore;
   VerifyStore: IZaryaProfileStore;
+  RoutingStore: IRoutingProfileStore;
+  DnsStore: IDnsProfileStore;
   Profiles: TZaryaProfiles;
   VerifiedProfiles: TZaryaProfiles;
+  RoutingProfiles, VerifiedRouting: TZaryaRoutingProfiles;
+  DnsProfiles, VerifiedDns: TZaryaDnsProfiles;
+  MigrationJson: string;
   I: Integer;
 begin
   Result := mrNotNeeded;
@@ -378,18 +581,33 @@ begin
     if not Store.Save(Profiles, AError) then
       raise Exception.Create(AError);
 
-    for I := 1 to High(MigratedFiles) do
+    SourceFile := IncludeTrailingPathDelimiter(LegacyDirectory) +
+      'subscriptions.json';
+    if FileExists(SourceFile) then
     begin
-      SourceFile := IncludeTrailingPathDelimiter(LegacyDirectory) +
-        MigratedFiles[I];
-      if not FileExists(SourceFile) then
-        Continue;
       StagingFile := IncludeTrailingPathDelimiter(StagingDirectory) +
-        MigratedFiles[I];
+        'subscriptions.json';
       CopyFileExact(SourceFile, StagingFile);
       if not ValidateJsonFile(StagingFile, AError) then
         raise Exception.Create(AError);
     end;
+
+    RoutingStore := TFpcRoutingProfileStore.Create(
+      IncludeTrailingPathDelimiter(LegacyDirectory) + 'routing.json');
+    if not RoutingStore.Load(RoutingProfiles, AError) then
+      raise Exception.Create(AError);
+    RoutingStore := TFpcRoutingProfileStore.Create(
+      IncludeTrailingPathDelimiter(StagingDirectory) + 'routing.json');
+    if not RoutingStore.Save(RoutingProfiles, AError) then
+      raise Exception.Create(AError);
+    DnsStore := TFpcDnsProfileStore.Create(
+      IncludeTrailingPathDelimiter(LegacyDirectory) + 'dns.json');
+    if not DnsStore.Load(DnsProfiles, AError) then
+      raise Exception.Create(AError);
+    DnsStore := TFpcDnsProfileStore.Create(
+      IncludeTrailingPathDelimiter(StagingDirectory) + 'dns.json');
+    if not DnsStore.Save(DnsProfiles, AError) then
+      raise Exception.Create(AError);
 
     VerifyStore := TFpcProfileStore.Create(IncludeTrailingPathDelimiter(
       StagingDirectory) + 'profiles.json');
@@ -404,8 +622,23 @@ begin
       IncludeTrailingPathDelimiter(StagingDirectory) +
       'subscriptions.json', AError) then
       raise Exception.Create(AError);
+    RoutingStore := TFpcRoutingProfileStore.Create(
+      IncludeTrailingPathDelimiter(StagingDirectory) + 'routing.json');
+    if not RoutingStore.Load(VerifiedRouting, AError) then
+      raise Exception.Create(AError);
+    if Length(VerifiedRouting) <> Length(RoutingProfiles) then
+      raise Exception.Create('Routing profile count changed during staging verification.');
+    DnsStore := TFpcDnsProfileStore.Create(
+      IncludeTrailingPathDelimiter(StagingDirectory) + 'dns.json');
+    if not DnsStore.Load(VerifiedDns, AError) then
+      raise Exception.Create(AError);
+    if Length(VerifiedDns) <> Length(DnsProfiles) then
+      raise Exception.Create('DNS profile count changed during staging verification.');
+    if not MigrateQtSettings(StagingDirectory, VerifiedRouting, VerifiedDns,
+      MigrationJson, AError) then
+      raise Exception.Create(AError);
     WriteUtf8File(IncludeTrailingPathDelimiter(StagingDirectory) +
-      'migration.json', '{"schemaVersion":1,"source":"qt"}');
+      'migration.json', MigrationJson);
 
     if not RenameFile(StagingDirectory, TargetDirectory) then
     begin
@@ -422,6 +655,8 @@ begin
   end;
   Store := nil;
   VerifyStore := nil;
+  RoutingStore := nil;
+  DnsStore := nil;
   RemoveTree(WorkDirectory);
   if Result <> mrMigrated then
     RemoveTree(StagingDirectory);
