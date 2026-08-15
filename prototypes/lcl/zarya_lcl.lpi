@@ -25,7 +25,7 @@
         <PackageName Value="LCL"/>
       </Item1>
     </RequiredPackages>
-    <Units Count="57">
+    <Units Count="60">
       <Unit0>
         <Filename Value="zarya_lcl.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -310,6 +310,21 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="ZaryaFeatureGate"/>
       </Unit56>
+      <Unit57>
+        <Filename Value="ZaryaProfileService.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaProfileService"/>
+      </Unit57>
+      <Unit58>
+        <Filename Value="ZaryaBackgroundOperations.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaBackgroundOperations"/>
+      </Unit58>
+      <Unit59>
+        <Filename Value="ZaryaRuntimeCoordinator.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaRuntimeCoordinator"/>
+      </Unit59>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
