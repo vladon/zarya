@@ -1,0 +1,111 @@
+name: LCL Windows
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_gate:
+        description: Run the self-hosted Windows 10/11 release gate
+        type: boolean
+        default: false
+  pull_request:
+    branches: [main]
+    paths:
+      - "prototypes/lcl/**"
+      - "src/runtime/embedded/xray/bridge/**"
+      - "cmake/ZaryaVersion.cmake"
+      - ".github/workflows/lcl-windows.yml"
+  push:
+    branches: [main]
+    paths:
+      - "prototypes/lcl/**"
+      - "src/runtime/embedded/xray/bridge/**"
+      - "cmake/ZaryaVersion.cmake"
+      - ".github/workflows/lcl-windows.yml"
+
+permissions:
+  contents: read
+
+env:
+  GO_VERSION: "1.26.5"
+  LCL_TOOLCHAIN_ROOT: '${{ github.workspace }}\build\tools\lcl-toolchain'
+
+jobs:
+  hosted-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+          cache-dependency-path: src/runtime/embedded/xray/bridge/go.sum
+      - name: Restore pinned LCL toolchain
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.LCL_TOOLCHAIN_ROOT }}
+          key: lcl-4.8-fpc-3.2.2-winlibs-16.1.0-r2
+      - name: Bootstrap pinned LCL toolchain
+        shell: pwsh
+        run: .\prototypes\lcl\bootstrap-toolchain.ps1 -ToolRoot $env:LCL_TOOLCHAIN_ROOT
+      - name: Verify Go bridge
+        working-directory: src/runtime/embedded/xray/bridge
+        shell: pwsh
+        run: |
+          go version
+          if ((go env GOVERSION) -ne "go$env:GO_VERSION") {
+            throw "Expected Go $env:GO_VERSION"
+          }
+          go mod verify
+          go test ./...
+      - name: Build one-file LCL runtime
+        working-directory: prototypes/lcl
+        shell: pwsh
+        run: .\build.ps1
+      - name: Run LCL tests
+        working-directory: prototypes/lcl
+        shell: pwsh
+        run: .\test.ps1
+      - name: Restore pinned external core cache
+        uses: actions/cache@v5
+        with:
+          path: prototypes/lcl/generated/known-cores-ci
+          key: known-cores-${{ hashFiles('prototypes/lcl/known-cores.json') }}
+      - name: Run real external core matrix
+        working-directory: prototypes/lcl
+        shell: pwsh
+        run: .\test-known-cores.ps1
+      - name: Package exact LCL artifact
+        working-directory: prototypes/lcl
+        shell: pwsh
+        run: .\package.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zarya-lcl-windows-x64
+          path: prototypes/lcl/dist/Zarya-*-windows-x64-portable.zip
+          if-no-files-found: error
+
+  release-gate:
+    if: github.event_name == 'workflow_dispatch' && inputs.release_gate
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [windows-10-x64, windows-11-x64]
+    runs-on: [self-hosted, windows, x64, "${{ matrix.runner }}"]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+          cache-dependency-path: src/runtime/embedded/xray/bridge/go.sum
+      - name: Bootstrap pinned LCL toolchain
+        shell: pwsh
+        run: .\prototypes\lcl\bootstrap-toolchain.ps1 -ToolRoot $env:LCL_TOOLCHAIN_ROOT
+      - name: Build, test and package
+        working-directory: prototypes/lcl
+        shell: pwsh
+        run: |
+          .\build.ps1
+          .\test.ps1
+          .\test-known-cores.ps1
+          .\package.ps1

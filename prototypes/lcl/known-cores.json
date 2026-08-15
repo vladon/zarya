@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "architecture": "windows-x86_64",
+  "providers": [
+    {
+      "providerId": "external.xray",
+      "version": "26.3.27",
+      "url": "https://github.com/XTLS/Xray-core/releases/download/v26.3.27/Xray-windows-64.zip",
+      "downloadSha256": "d004c39288ce9ada487c6f398c7c545f7d749e44bdfdd59dbc9f865afba4e1ad",
+      "archiveType": "zip",
+      "executablePath": "xray.exe",
+      "probeArguments": ["version"],
+      "validateArguments": ["run", "-test", "-config", "{config}"],
+      "startArguments": ["run", "-config", "{config}"]
+    },
+    {
+      "providerId": "external.singbox",
+      "version": "1.13.18",
+      "url": "https://github.com/SagerNet/sing-box/releases/download/v1.13.18/sing-box-1.13.18-windows-amd64.zip",
+      "downloadSha256": "65045155ffdc506334f01a4353889657ddfc024f72b394081a9abaef34dfbef3",
+      "archiveType": "zip",
+      "executablePath": "sing-box-1.13.18-windows-amd64/sing-box.exe",
+      "probeArguments": ["version"],
+      "validateArguments": ["check", "-c", "{config}"],
+      "startArguments": ["run", "-c", "{config}"]
+    },
+    {
+      "providerId": "external.v2ray",
+      "version": "5.52.0",
+      "url": "https://github.com/v2fly/v2ray-core/releases/download/v5.52.0/v2ray-windows-64.zip",
+      "downloadSha256": "a73b01d1dbfe054b260e37a79ca13b12b6549dbd1827a44f0bcaa113e990cc9d",
+      "archiveType": "zip",
+      "executablePath": "v2ray.exe",
+      "probeArguments": ["version"],
+      "validateArguments": ["test", "-c", "{config}"],
+      "startArguments": ["run", "-c", "{config}"]
+    },
+    {
+      "providerId": "external.hysteria2",
+      "version": "2.12.1",
+      "url": "https://github.com/apernet/hysteria/releases/download/app/v2.12.1/hysteria-windows-amd64.exe",
+      "downloadSha256": "2887cd9c70239d780bb48a1953b99c26d981dd71018bb351a3ee7b53a498e3a5",
+      "archiveType": "file",
+      "executablePath": "hysteria.exe",
+      "probeArguments": ["version"],
+      "validateArguments": [],
+      "startArguments": ["client", "-c", "{config}"]
+    },
+    {
+      "providerId": "external.mihomo",
+      "version": "1.19.29",
+      "url": "https://github.com/MetaCubeX/mihomo/releases/download/v1.19.29/mihomo-windows-amd64-compatible-v1.19.29.zip",
+      "downloadSha256": "322aaa5957ba9e72afdda9b71cc4329f691d2d45ec39e70bbca3f7bf5aa93d52",
+      "archiveType": "zip",
+      "executablePath": "mihomo-windows-amd64-compatible.exe",
+      "probeArguments": ["-v"],
+      "validateArguments": ["-t", "-f", "{config}"],
+      "startArguments": ["-f", "{config}", "-d", "{dataDir}"]
+    },
+    {
+      "providerId": "external.nekobox-core",
+      "version": "5.11.28.2",
+      "url": "https://github.com/qr243vbi/nekobox/releases/download/5.11.28.2/nekobox-5.11.28.2-windows64.zip",
+      "downloadSha256": "bbc5242f495c247c57edf31102b6071eec1be9411f72ae7d5b31beb34a05298a",
+      "archiveType": "zip",
+      "executablePath": "nekobox/nekobox_core.exe",
+      "probeArguments": ["sing-box", "version"],
+      "validateArguments": ["sing-box", "check", "-c", "{config}"],
+      "startArguments": ["sing-box", "run", "-c", "{config}"]
+    }
+  ]
+}

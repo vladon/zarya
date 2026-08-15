@@ -14,6 +14,13 @@
       <UseAppBundle Value="False"/>
       <ResourceType Value="res"/>
     </General>
+    <VersionInfo>
+      <UseVersionInfo Value="True"/>
+      <MajorVersionNr Value="1"/>
+      <MinorVersionNr Value="5"/>
+      <RevisionNr Value="12"/>
+      <StringTable CompanyName="Zarya contributors" FileDescription="Zarya proxy client" InternalName="Zarya" LegalCopyright="MIT or GPLv3+" OriginalFilename="Zarya.exe" ProductName="Zarya" ProductVersion="1.5.12"/>
+    </VersionInfo>
     <BuildModes Count="1">
       <Item1 Name="Default" Default="True"/>
     </BuildModes>
@@ -25,7 +32,7 @@
         <PackageName Value="LCL"/>
       </Item1>
     </RequiredPackages>
-    <Units Count="60">
+    <Units Count="61">
       <Unit0>
         <Filename Value="zarya_lcl.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -325,6 +332,11 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="ZaryaRuntimeCoordinator"/>
       </Unit59>
+      <Unit60>
+        <Filename Value="ZaryaVersion.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ZaryaVersion"/>
+      </Unit60>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
