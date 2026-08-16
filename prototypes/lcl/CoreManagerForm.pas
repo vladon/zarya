@@ -50,7 +50,7 @@ type
 implementation
 
 uses
-  LCLIntf, CustomProviderForm;
+  LCLIntf, CustomProviderForm, ZaryaTr;
 
 constructor TCoreManagerDialog.Create(AOwner: TComponent;
   const ARegistry: TZaryaCoreProviderRegistry; const ADarkTheme: Boolean);
@@ -60,7 +60,7 @@ begin
   inherited CreateNew(AOwner, 1);
   FRegistry := ARegistry;
   FDarkTheme := ADarkTheme;
-  Caption := 'Ядра — Zarya';
+  Caption := TZaryaTr.Tr('Ядра — Zarya', 'Cores — Zarya');
   Position := poOwnerFormCenter;
   BorderStyle := bsSizeable;
   ClientWidth := 1060;
@@ -89,55 +89,59 @@ begin
 
   FAddButton := TButton.Create(Self);
   FAddButton.Parent := Buttons;
-  FAddButton.Caption := 'Добавить EXE…';
+  FAddButton.Caption := TZaryaTr.Tr('Добавить EXE…', 'Add EXE…');
   FAddButton.SetBounds(12, 10, 128, 32);
   FAddButton.OnClick := @AddClick;
 
   FCheckButton := TButton.Create(Self);
   FCheckButton.Parent := Buttons;
-  FCheckButton.Caption := 'Проверить';
+  FCheckButton.Caption := TZaryaTr.Tr('Проверить', 'Check');
   FCheckButton.SetBounds(148, 10, 104, 32);
   FCheckButton.OnClick := @CheckClick;
 
   FChangeButton := TButton.Create(Self);
   FChangeButton.Parent := Buttons;
-  FChangeButton.Caption := 'Изменить путь…';
+  FChangeButton.Caption := TZaryaTr.Tr('Изменить путь…', 'Change path…');
   FChangeButton.SetBounds(260, 10, 136, 32);
   FChangeButton.OnClick := @ChangeClick;
 
   FConfigureButton := TButton.Create(Self);
   FConfigureButton.Parent := Buttons;
-  FConfigureButton.Caption := 'Настроить custom…';
+  FConfigureButton.Caption := TZaryaTr.Tr('Настроить custom…',
+    'Configure custom…');
   FConfigureButton.SetBounds(404, 10, 152, 32);
   FConfigureButton.OnClick := @ConfigureClick;
 
   FConfirmButton := TButton.Create(Self);
   FConfirmButton.Parent := Buttons;
-  FConfirmButton.Caption := 'Подтвердить замену';
+  FConfirmButton.Caption := TZaryaTr.Tr('Подтвердить замену',
+    'Confirm replacement');
   FConfirmButton.SetBounds(564, 10, 152, 32);
   FConfirmButton.OnClick := @ConfirmClick;
 
   FRemoveButton := TButton.Create(Self);
   FRemoveButton.Parent := Buttons;
-  FRemoveButton.Caption := 'Удалить регистрацию';
+  FRemoveButton.Caption := TZaryaTr.Tr('Удалить регистрацию',
+    'Remove registration');
   FRemoveButton.SetBounds(724, 10, 158, 32);
   FRemoveButton.OnClick := @RemoveClick;
 
   FOpenButton := TButton.Create(Self);
   FOpenButton.Parent := Buttons;
-  FOpenButton.Caption := 'Открыть каталог';
+  FOpenButton.Caption := TZaryaTr.Tr('Открыть каталог', 'Open directory');
   FOpenButton.SetBounds(890, 10, 150, 32);
   FOpenButton.OnClick := @OpenClick;
 
   FUseButton := TButton.Create(Self);
   FUseButton.Parent := Buttons;
-  FUseButton.Caption := 'Для совместимых профилей';
+  FUseButton.Caption := TZaryaTr.Tr('Для совместимых профилей',
+    'Use for compatible profiles');
   FUseButton.SetBounds(12, 50, 210, 32);
   FUseButton.OnClick := @UseClick;
 
   CloseButton := TButton.Create(Self);
   CloseButton.Parent := Buttons;
-  CloseButton.Caption := 'Закрыть';
+  CloseButton.Caption := TZaryaTr.Tr('Закрыть');
   CloseButton.ModalResult := mrCancel;
   CloseButton.SetBounds(920, 50, 120, 32);
   CloseButton.Anchors := [akRight, akBottom];
@@ -162,12 +166,12 @@ begin
   FGrid.Options := FGrid.Options + [goRowSelect, goColSizing];
   FGrid.OnClick := @GridClick;
   FGrid.Cells[0, 0] := 'Provider ID';
-  FGrid.Cells[1, 0] := 'Ядро';
-  FGrid.Cells[2, 0] := 'Поставка';
-  FGrid.Cells[3, 0] := 'Формат';
-  FGrid.Cells[4, 0] := 'Версия';
+  FGrid.Cells[1, 0] := TZaryaTr.Tr('Ядро', 'Core');
+  FGrid.Cells[2, 0] := TZaryaTr.Tr('Поставка', 'Distribution');
+  FGrid.Cells[3, 0] := TZaryaTr.Tr('Формат', 'Format');
+  FGrid.Cells[4, 0] := TZaryaTr.Tr('Версия', 'Version');
   FGrid.Cells[5, 0] := 'Архитектура / SHA-256';
-  FGrid.Cells[6, 0] := 'Состояние';
+  FGrid.Cells[6, 0] := TZaryaTr.Tr('Состояние', 'State');
   FGrid.ColWidths[0] := 170;
   FGrid.ColWidths[1] := 170;
   FGrid.ColWidths[2] := 90;
@@ -241,10 +245,11 @@ begin
     'Provider: ' + Provider.ProviderId + LineEnding +
     'Adapter: ' + Provider.AdapterId + ' / ' +
       ConfigFormatToString(Provider.ConfigFormat) + LineEnding +
-    'Протоколы: ' + Provider.SupportedProtocols + LineEnding +
-    'Путь: ' + Provider.ExecutablePath + LineEnding +
+    TZaryaTr.Tr('Протоколы: ', 'Protocols: ') +
+      Provider.SupportedProtocols + LineEnding +
+    TZaryaTr.Tr('Путь: ', 'Path: ') + Provider.ExecutablePath + LineEnding +
     'SHA-256: ' + Provider.Sha256 + LineEnding +
-    'Ошибка: ' + Provider.LastError;
+    TZaryaTr.Tr('Ошибка: ', 'Error: ') + Provider.LastError;
   IsExternal := Provider.Distribution = pdExternal;
   FChangeButton.Enabled := IsExternal;
   FRemoveButton.Enabled := IsExternal;
@@ -263,8 +268,11 @@ begin
   AFileName := '';
   OpenDialog := TOpenDialog.Create(Self);
   try
-    OpenDialog.Title := 'Выберите исполняемый файл ядра';
-    OpenDialog.Filter := 'Исполняемые файлы Windows (*.exe)|*.exe';
+    OpenDialog.Title := TZaryaTr.Tr('Выберите исполняемый файл ядра',
+      'Select a core executable');
+    OpenDialog.Filter := TZaryaTr.Tr(
+      'Исполняемые файлы Windows (*.exe)|*.exe',
+      'Windows executables (*.exe)|*.exe');
     OpenDialog.Options := [ofFileMustExist, ofPathMustExist, ofEnableSizing];
     Result := OpenDialog.Execute;
     if Result then
@@ -273,9 +281,12 @@ begin
     OpenDialog.Free;
   end;
   if Result then
-    Result := MessageDlg('Доверие внешнему ядру',
+    Result := MessageDlg(TZaryaTr.Tr('Доверие внешнему ядру',
+      'Trust external core'), TZaryaTr.Tr(
       'Zarya запустит выбранный EXE без повышения привилегий. ' +
-      'Подтвердите, что доверяете источнику файла:' + LineEnding +
+      'Подтвердите, что доверяете источнику файла:',
+      'Zarya will run the selected EXE without elevation. ' +
+      'Confirm that you trust the source of this file:') + LineEnding +
       AFileName, mtWarning, [mbYes, mbNo], 0) = mrYes;
 end;
 
@@ -289,7 +300,8 @@ begin
     Exit;
   if not FRegistry.RegisterExecutable(FileName, Provider, ErrorMessage) then
   begin
-    MessageDlg('Внешнее ядро', ErrorMessage, mtError, [mbOK], 0);
+    MessageDlg(TZaryaTr.Tr('Внешнее ядро', 'External core'), ErrorMessage,
+      mtError, [mbOK], 0);
     Exit;
   end;
   if (Pos('external.custom.', LowerCase(Provider.ProviderId)) = 1) and
@@ -308,9 +320,11 @@ begin
     Exit;
   if not FRegistry.CheckProvider(Provider.ProviderId, Provider,
     ErrorMessage) then
-    MessageDlg('Проверка ядра', ErrorMessage, mtWarning, [mbOK], 0)
+    MessageDlg(TZaryaTr.Tr('Проверка ядра', 'Core check'), ErrorMessage,
+      mtWarning, [mbOK], 0)
   else
-    MessageDlg('Проверка ядра', 'Ядро доступно: ' + Provider.Version,
+    MessageDlg(TZaryaTr.Tr('Проверка ядра', 'Core check'),
+      TZaryaTr.Tr('Ядро доступно: ', 'Core is available: ') + Provider.Version,
       mtInformation, [mbOK], 0);
   RefreshGrid(Provider.ProviderId);
 end;
@@ -330,7 +344,8 @@ begin
   if not FRegistry.ChangeExecutable(Current.ProviderId, FileName, UpdatedProvider,
     ErrorMessage) then
   begin
-    MessageDlg('Изменить путь', ErrorMessage, mtError, [mbOK], 0);
+    MessageDlg(TZaryaTr.Tr('Изменить путь', 'Change path'), ErrorMessage,
+      mtError, [mbOK], 0);
     Exit;
   end;
   RefreshGrid(UpdatedProvider.ProviderId);
@@ -361,12 +376,14 @@ var
 begin
   if not SelectedProvider(Provider) then
     Exit;
-  if MessageDlg('EXE изменился',
+  if MessageDlg(TZaryaTr.Tr('EXE изменился', 'EXE changed'), TZaryaTr.Tr(
     'SHA-256 файла отличается от подтверждённого. Повторно доверять этому EXE?',
+    'The file SHA-256 differs from the confirmed hash. Trust this EXE again?'),
     mtWarning, [mbYes, mbNo], 0) <> mrYes then
     Exit;
   if not FRegistry.ConfirmChanged(Provider.ProviderId, ErrorMessage) then
-    MessageDlg('Подтверждение EXE', ErrorMessage, mtError, [mbOK], 0);
+    MessageDlg(TZaryaTr.Tr('Подтверждение EXE', 'Confirm EXE'), ErrorMessage,
+      mtError, [mbOK], 0);
   RefreshGrid(Provider.ProviderId);
 end;
 
@@ -378,12 +395,15 @@ begin
   if not SelectedProvider(Provider) or
     (Provider.Distribution <> pdExternal) then
     Exit;
-  if MessageDlg('Удалить регистрацию',
-    'Удалить регистрацию «' + Provider.DisplayName + '»? Сам EXE не удаляется.',
+  if MessageDlg(TZaryaTr.Tr('Удалить регистрацию', 'Remove registration'),
+    TZaryaTr.Tr('Удалить регистрацию «', 'Remove registration “') +
+    Provider.DisplayName + TZaryaTr.Tr('»? Сам EXE не удаляется.',
+      '”? The EXE itself will not be deleted.'),
     mtConfirmation, [mbYes, mbNo], 0) <> mrYes then
     Exit;
   if not FRegistry.Remove(Provider.ProviderId, ErrorMessage) then
-    MessageDlg('Удалить регистрацию', ErrorMessage, mtError, [mbOK], 0);
+    MessageDlg(TZaryaTr.Tr('Удалить регистрацию', 'Remove registration'),
+      ErrorMessage, mtError, [mbOK], 0);
   RefreshGrid;
 end;
 

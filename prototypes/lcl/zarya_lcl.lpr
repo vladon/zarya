@@ -13,7 +13,10 @@ uses
   ZaryaDataMigration,
   ZaryaEmbeddedXray,
   ZaryaTcpProbe,
-  ZaryaNodeTestWorker;
+  ZaryaNodeTestWorker,
+  ZaryaAppSettings,
+  ZaryaTr,
+  FirstRunForm;
 
 var
   Window: TMainForm;
@@ -22,14 +25,17 @@ var
   MigrationBackup: string;
   MigrationError: string;
   ProfileStorePath: string;
+  SettingsFile: string;
+  SettingsError: string;
+  StartupSettings: TZaryaAppSettings;
+  SettingsStore: ISettingsStore;
 
-function HasCommandLineSwitch(const AValue: string): Boolean;
+function HasCommandLineSwitch(const ASwitch: string): Boolean;
 var
   I: Integer;
 begin
   for I := 1 to ParamCount do
-    if SameText(ParamStr(I), AValue) then
-      Exit(True);
+    if SameText(ParamStr(I), ASwitch) then Exit(True);
   Result := False;
 end;
 
@@ -220,7 +226,9 @@ begin
   RequireDerivedFormResource := False;
   Application.Title := 'Zarya';
   Application.Scaled := True;
+  TZaryaTr.SetLanguage('system');
   Application.Initialize;
+  MigrationResult := mrNotNeeded;
   ProfileStorePath := ProfileStorePathFromCommandLine;
   if SameText(ExcludeTrailingPathDelimiter(ExtractFileDir(ProfileStorePath)),
     ExcludeTrailingPathDelimiter(DefaultLclDataDirectory)) then
@@ -229,18 +237,48 @@ begin
       MigrationBackup, MigrationError);
     if MigrationResult = mrFailed then
     begin
-      MessageDlg('Миграция данных Zarya',
-        'Автоматическая миграция Qt-данных остановлена: ' + MigrationError +
+      MessageDlg(TZaryaTr.Tr('Миграция данных Zarya', 'Zarya data migration'),
+        TZaryaTr.Tr('Автоматическая миграция Qt-данных остановлена: ',
+          'Automatic Qt data migration stopped: ') + MigrationError +
         LineEnding + LineEnding +
-        'Legacy-файлы не изменены. Исправьте причину и запустите Zarya снова.',
+        TZaryaTr.Tr(
+          'Legacy-файлы не изменены. Исправьте причину и запустите Zarya снова.',
+          'Legacy files were not changed. Fix the problem and start Zarya again.'),
         mtError, [mbOK], 0);
       Halt(2);
     end;
-    if MigrationResult = mrMigrated then
-      MessageDlg('Миграция данных Zarya',
-        'Профили и настройки перенесены после полной staging-проверки.' +
-        LineEnding + 'Резервная копия: ' + MigrationBackup,
-        mtInformation, [mbOK], 0);
+  end;
+  SettingsFile := IncludeTrailingPathDelimiter(ExtractFileDir(ProfileStorePath)) +
+    'settings.ini';
+  SettingsStore := TZaryaAppSettingsStore.Create(SettingsFile);
+  if not SettingsStore.Load(StartupSettings, SettingsError) then
+  begin
+    MessageDlg(TZaryaTr.Tr('Настройки', 'Settings'),
+      TZaryaTr.Tr('Не удалось прочитать settings.ini: ',
+        'Could not read settings.ini: ') + SettingsError,
+      mtError, [mbOK], 0);
+    Halt(2);
+  end;
+  TZaryaTr.SetLanguage(StartupSettings.Language);
+  if MigrationResult = mrMigrated then
+    MessageDlg(TZaryaTr.Tr('Миграция данных Zarya', 'Zarya data migration'),
+      TZaryaTr.Tr(
+        'Профили и настройки перенесены после полной staging-проверки.',
+        'Profiles and settings were migrated after complete staging validation.') +
+      LineEnding + TZaryaTr.Tr('Резервная копия: ', 'Backup: ') +
+      MigrationBackup, mtInformation, [mbOK], 0);
+  if not StartupSettings.FirstRunCompleted then
+  begin
+    if not RunFirstRunDialog(nil, StartupSettings) then Halt(0);
+    if not SettingsStore.Save(StartupSettings, SettingsError) then
+    begin
+      MessageDlg(TZaryaTr.Tr('Настройки', 'Settings'),
+        TZaryaTr.Tr('Не удалось сохранить настройки первого запуска: ',
+          'Could not save first-run settings: ') + SettingsError,
+        mtError, [mbOK], 0);
+      Halt(2);
+    end;
+    TZaryaTr.SetLanguage(StartupSettings.Language);
   end;
   Application.CreateForm(TMainForm, Window);
   if HasCommandLineSwitch('--minimized') then

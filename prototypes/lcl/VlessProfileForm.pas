@@ -70,7 +70,7 @@ type
 implementation
 
 uses
-  ZaryaCoreProvider;
+  ZaryaCoreProvider, ZaryaTr;
 
 constructor TVlessProfileDialog.Create(AOwner: TComponent;
   const AProfile: TZaryaProfile; const ADarkTheme: Boolean);
@@ -79,7 +79,7 @@ var
 begin
   inherited CreateNew(AOwner, 1);
   FProfile := AProfile;
-  Caption := 'Профиль — Zarya LCL';
+  Caption := TZaryaTr.Tr('Профиль — Zarya', 'Profile — Zarya');
   BorderStyle := bsSizeable;
   Position := poOwnerFormCenter;
   ClientWidth := 720;
@@ -142,10 +142,10 @@ begin
   Buttons.Align := alBottom;
   Buttons.ShowButtons := [pbOK, pbCancel];
   Buttons.ShowGlyphs := [];
-  Buttons.OKButton.Caption := 'Сохранить';
+  Buttons.OKButton.Caption := TZaryaTr.Tr('Сохранить');
   Buttons.OKButton.ModalResult := mrNone;
   Buttons.OKButton.OnClick := @AcceptClick;
-  Buttons.CancelButton.Caption := 'Отмена';
+  Buttons.CancelButton.Caption := TZaryaTr.Tr('Отмена');
 
   Pages := TPageControl.Create(Self);
   Pages.Parent := Self;
@@ -154,10 +154,10 @@ begin
 
   GeneralTab := TTabSheet.Create(Self);
   GeneralTab.PageControl := Pages;
-  GeneralTab.Caption := 'Основное';
-  AddLabel(GeneralTab, 'Название', 20);
+  GeneralTab.Caption := TZaryaTr.Tr('Основное', 'General');
+  AddLabel(GeneralTab, TZaryaTr.Tr('Название', 'Name'), 20);
   FNameEdit := AddEdit(GeneralTab, 20);
-  AddLabel(GeneralTab, 'Протокол', 64);
+  AddLabel(GeneralTab, TZaryaTr.Tr('Протокол', 'Protocol'), 64);
   FProtocolCombo := TComboBox.Create(Self);
   FProtocolCombo.Parent := GeneralTab;
   FProtocolCombo.Style := csDropDownList;
@@ -169,18 +169,18 @@ begin
   FProtocolCombo.Items.Add('Hysteria2');
   FProtocolCombo.Items.Add('WireGuard');
   FProtocolCombo.SetBounds(220, 64, 190, 30);
-  AddLabel(GeneralTab, 'Сервер', 108);
+  AddLabel(GeneralTab, TZaryaTr.Tr('Сервер', 'Server'), 108);
   FHostEdit := AddEdit(GeneralTab, 108);
-  AddLabel(GeneralTab, 'Порт', 152);
+  AddLabel(GeneralTab, TZaryaTr.Tr('Порт', 'Port'), 152);
   FPortEdit := AddEdit(GeneralTab, 152, 130);
   FPortEdit.NumbersOnly := True;
-  AddLabel(GeneralTab, 'UUID / пароль', 196);
+  AddLabel(GeneralTab, TZaryaTr.Tr('UUID / пароль', 'UUID / password'), 196);
   FUuidEdit := AddEdit(GeneralTab, 196);
   AddLabel(GeneralTab, 'Encryption', 240);
   FEncryptionEdit := AddEdit(GeneralTab, 240, 190);
   AddLabel(GeneralTab, 'Flow', 284);
   FFlowEdit := AddEdit(GeneralTab, 284);
-  AddLabel(GeneralTab, 'Источник', 328);
+  AddLabel(GeneralTab, TZaryaTr.Tr('Источник', 'Source'), 328);
   FSourceEdit := AddEdit(GeneralTab, 328);
   AddLabel(GeneralTab, 'Runtime provider', 372);
   FProviderCombo := TComboBox.Create(Self);
@@ -197,12 +197,12 @@ begin
   FProviderCombo.SetBounds(220, 372, 300, 30);
   FEnabledCheck := TCheckBox.Create(Self);
   FEnabledCheck.Parent := GeneralTab;
-  FEnabledCheck.Caption := 'Профиль включён';
+  FEnabledCheck.Caption := TZaryaTr.Tr('Профиль включён', 'Profile enabled');
   FEnabledCheck.SetBounds(220, 416, 260, 26);
 
   ProtocolTab := TTabSheet.Create(Self);
   ProtocolTab.PageControl := Pages;
-  ProtocolTab.Caption := 'Протокол';
+  ProtocolTab.Caption := TZaryaTr.Tr('Протокол', 'Protocol');
   ProtocolScroll := TScrollBox.Create(Self);
   ProtocolScroll.Parent := ProtocolTab;
   ProtocolScroll.Align := alClient;
@@ -277,17 +277,20 @@ begin
   FShortIdEdit := AddEdit(SecurityTab, 196);
   AddLabel(SecurityTab, 'Spider X', 240);
   FSpiderXEdit := AddEdit(SecurityTab, 240);
-  AddLabel(SecurityTab, 'ALPN (через запятую)', 284);
+  AddLabel(SecurityTab, TZaryaTr.Tr('ALPN (через запятую)',
+    'ALPN (comma-separated)'), 284);
   FAlpnEdit := AddEdit(SecurityTab, 284);
   FAllowInsecureCheck := TCheckBox.Create(Self);
   FAllowInsecureCheck.Parent := SecurityTab;
-  FAllowInsecureCheck.Caption := 'Разрешить недоверенный TLS-сертификат';
+  FAllowInsecureCheck.Caption := TZaryaTr.Tr(
+    'Разрешить недоверенный TLS-сертификат',
+    'Allow an untrusted TLS certificate');
   FAllowInsecureCheck.SetBounds(220, 330, 390, 26);
 
   RawTab := TTabSheet.Create(Self);
   RawTab.PageControl := Pages;
   RawTab.Caption := 'Raw config';
-  AddLabel(RawTab, 'Диалект', 20);
+  AddLabel(RawTab, TZaryaTr.Tr('Диалект', 'Dialect'), 20);
   FRawFormatCombo := TComboBox.Create(Self);
   FRawFormatCombo.Parent := RawTab;
   FRawFormatCombo.Style := csDropDownList;
@@ -303,7 +306,7 @@ begin
   AddLabel(RawTab, 'Readiness port', 108);
   FReadinessPortEdit := AddEdit(RawTab, 108, 130);
   FReadinessPortEdit.NumbersOnly := True;
-  AddLabel(RawTab, 'Системный прокси', 152);
+  AddLabel(RawTab, TZaryaTr.Tr('Системный прокси', 'System proxy'), 152);
   FSystemProxyKindCombo := TComboBox.Create(Self);
   FSystemProxyKindCombo.Parent := RawTab;
   FSystemProxyKindCombo.Style := csDropDownList;
@@ -442,7 +445,8 @@ begin
   StoreProfile;
   if not ValidateProfile(FProfile, ErrorMessage) then
   begin
-    MessageDlg('Профиль', ErrorMessage, mtWarning, [mbOK], 0);
+    MessageDlg(TZaryaTr.Tr('Профиль', 'Profile'), ErrorMessage,
+      mtWarning, [mbOK], 0);
     Exit;
   end;
   ModalResult := mrOk;

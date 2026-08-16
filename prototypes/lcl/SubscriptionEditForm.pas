@@ -25,19 +25,22 @@ type
 
 implementation
 
+uses
+  ZaryaTr;
+
 constructor TSubscriptionEditDialog.Create(AOwner: TComponent);
 var
   SaveButton: TButton;
   CancelButton: TButton;
 begin
   inherited CreateNew(AOwner, 1);
-  Caption := 'Подписка';
+  Caption := TZaryaTr.Tr('Подписка', 'Subscription');
   Position := poOwnerFormCenter;
   BorderStyle := bsDialog;
   ClientWidth := 620;
   ClientHeight := 390;
   Constraints.MinWidth := 520;
-  AddLabel('Название', 18);
+  AddLabel(TZaryaTr.Tr('Название', 'Name'), 18);
   FNameEdit := TEdit.Create(Self);
   FNameEdit.Parent := Self;
   FNameEdit.SetBounds(20, 42, 580, 28);
@@ -47,26 +50,28 @@ begin
   FUrlEdit.SetBounds(20, 106, 580, 28);
   FEnabledCheck := TCheckBox.Create(Self);
   FEnabledCheck.Parent := Self;
-  FEnabledCheck.Caption := 'Подписка включена';
+  FEnabledCheck.Caption := TZaryaTr.Tr('Подписка включена',
+    'Subscription enabled');
   FEnabledCheck.SetBounds(20, 146, 220, 28);
-  AddLabel('User-Agent (необязательно)', 184);
+  AddLabel(TZaryaTr.Tr('User-Agent (необязательно)',
+    'User-Agent (optional)'), 184);
   FUserAgentEdit := TEdit.Create(Self);
   FUserAgentEdit.Parent := Self;
   FUserAgentEdit.SetBounds(20, 208, 580, 28);
-  AddLabel('Примечание', 248);
+  AddLabel(TZaryaTr.Tr('Примечание', 'Notes'), 248);
   FRemarksMemo := TMemo.Create(Self);
   FRemarksMemo.Parent := Self;
   FRemarksMemo.ScrollBars := ssVertical;
   FRemarksMemo.SetBounds(20, 272, 580, 58);
   SaveButton := TButton.Create(Self);
   SaveButton.Parent := Self;
-  SaveButton.Caption := 'Сохранить';
+  SaveButton.Caption := TZaryaTr.Tr('Сохранить');
   SaveButton.Default := True;
   SaveButton.OnClick := @SaveClick;
   SaveButton.SetBounds(390, 344, 100, 32);
   CancelButton := TButton.Create(Self);
   CancelButton.Parent := Self;
-  CancelButton.Caption := 'Отмена';
+  CancelButton.Caption := TZaryaTr.Tr('Отмена');
   CancelButton.Cancel := True;
   CancelButton.ModalResult := mrCancel;
   CancelButton.SetBounds(500, 344, 100, 32);
@@ -89,14 +94,17 @@ var
 begin
   if Trim(FNameEdit.Text) = '' then
   begin
-    MessageDlg('Подписка', 'Введите название.', mtWarning, [mbOK], 0);
+    MessageDlg(TZaryaTr.Tr('Подписка', 'Subscription'), TZaryaTr.Tr(
+      'Введите название.', 'Enter a name.'), mtWarning, [mbOK], 0);
     FNameEdit.SetFocus;
     Exit;
   end;
   Url := LowerCase(Trim(FUrlEdit.Text));
   if (Pos('https://', Url) <> 1) and (Pos('http://', Url) <> 1) then
   begin
-    MessageDlg('Подписка', 'URL должен начинаться с https:// или http://.',
+    MessageDlg(TZaryaTr.Tr('Подписка', 'Subscription'), TZaryaTr.Tr(
+      'URL должен начинаться с https:// или http://.',
+      'The URL must start with https:// or http://.'),
       mtWarning, [mbOK], 0);
     FUrlEdit.SetFocus;
     Exit;
