@@ -22,6 +22,7 @@ var
   Digest: string;
   ErrorMessage: string;
   Store: IZaryaCoreProviderStore;
+  Registry: TZaryaCoreProviderRegistry;
   Providers: TZaryaCoreProviders;
   Loaded: TZaryaCoreProviders;
   Provider: TZaryaCoreProvider;
@@ -85,6 +86,17 @@ begin
     'Provider id mismatch.');
   Check(Loaded[0].RunArguments[1] = '{config}',
     'Provider command template mismatch.');
+
+  Registry := TZaryaCoreProviderRegistry.Create(Store);
+  try
+    Check(Registry.Load(ErrorMessage), 'Registry load failed: ' + ErrorMessage);
+    Check(Registry.IndexOf(ProviderEmbeddedXray) >= 0,
+      'Stable registry is missing embedded Xray.');
+    Check(Registry.IndexOf(ProviderEmbeddedSingBox) < 0,
+      'Stable registry exposed gated embedded sing-box.');
+  finally
+    Registry.Free;
+  end;
 
   Store := nil;
   DeleteFile(ProviderFile);

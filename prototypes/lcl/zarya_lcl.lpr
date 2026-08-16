@@ -1,6 +1,7 @@
 program zarya_lcl;
 
 {$mode objfpc}{$H+}
+{$R *.res}
 
 uses
   Interfaces,
@@ -16,7 +17,9 @@ uses
   ZaryaNodeTestWorker,
   ZaryaAppSettings,
   ZaryaTr,
-  FirstRunForm;
+  FirstRunForm,
+  ZaryaVersion
+  {$IFDEF WINDOWS}, Windows{$ENDIF};
 
 var
   Window: TMainForm;
@@ -37,6 +40,27 @@ begin
   for I := 1 to ParamCount do
     if SameText(ParamStr(I), ASwitch) then Exit(True);
   Result := False;
+end;
+
+procedure WriteStandardOutputLine(const AText: string);
+{$IFDEF WINDOWS}
+var
+  Stream: THandleStream;
+  Value: UTF8String;
+{$ENDIF}
+begin
+  {$IFDEF WINDOWS}
+  Value := UTF8String(AText + LineEnding);
+  Stream := THandleStream.Create(GetStdHandle(STD_OUTPUT_HANDLE));
+  try
+    if Length(Value) > 0 then Stream.WriteBuffer(Value[1], Length(Value));
+  finally
+    Stream.Free;
+  end;
+  {$ELSE}
+  WriteLn(Output, AText);
+  Flush(Output);
+  {$ENDIF}
 end;
 
 function ReadUtf8File(const AFileName: string): string;
@@ -117,7 +141,7 @@ begin
     end;
     ErrorFile := ParamStr(4);
     if FileExists(ErrorFile) then
-      DeleteFile(ErrorFile);
+      SysUtils.DeleteFile(ErrorFile);
     try
       Config := ReadUtf8File(ParamStr(2));
       Runtime := TZaryaEmbeddedXray.Create(
@@ -158,7 +182,7 @@ begin
     end;
     ErrorFile := ParamStr(4);
     if FileExists(ErrorFile) then
-      DeleteFile(ErrorFile);
+      SysUtils.DeleteFile(ErrorFile);
     Port := StrToIntDef(ParamStr(3), 0);
     if (Port < 1) or (Port > 65535) then
     begin
@@ -219,6 +243,11 @@ begin
 end;
 
 begin
+  if HasCommandLineSwitch('--version') then
+  begin
+    WriteStandardOutputLine('Zarya ' + ZaryaVersionString);
+    Halt(0);
+  end;
   if RunCoreTestWorkerMode(WorkerExitCode) then
     Halt(WorkerExitCode);
   if RunWorkerMode(WorkerExitCode) then

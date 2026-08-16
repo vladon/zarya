@@ -3,6 +3,7 @@ $ErrorActionPreference = 'Stop'
 $projectDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoDir = Split-Path -Parent (Split-Path -Parent $projectDir)
 $candidates = @(@(
+    $(if ($env:LAZARUS_DIR) { Join-Path $env:LAZARUS_DIR 'lazbuild.exe' }),
     (Get-Command lazbuild -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue),
     'C:\lazarus\lazbuild.exe',
     'C:\Program Files\Lazarus\lazbuild.exe',
@@ -15,6 +16,8 @@ if (-not $candidates) {
 
 $lazbuild = $candidates[0]
 $fpcCandidates = @(@(
+    $(if ($env:FPC_DIR) { Join-Path $env:FPC_DIR 'fpc.exe' }),
+    $(if ($env:LAZARUS_DIR) { Join-Path $env:LAZARUS_DIR 'fpc\3.2.2\bin\x86_64-win64\fpc.exe' }),
     (Get-Command fpc -ErrorAction SilentlyContinue |
         Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue),
     'C:\lazarus\fpc\3.2.2\bin\x86_64-win64\fpc.exe'
@@ -40,6 +43,39 @@ if (-not $go) {
 }
 
 $gcc = $gccCandidates[0]
+$lazarusVersion = (& $lazbuild --version 2>&1 | Out-String).Trim()
+$fpcVersion = (& $fpc -iV 2>&1 | Out-String).Trim()
+$goVersion = (& $go env GOVERSION 2>&1 | Out-String).Trim()
+$gccVersion = (& $gcc -dumpfullversion 2>&1 | Out-String).Trim()
+if ($lazarusVersion -notmatch '4\.8') {
+    throw "Zarya LCL requires Lazarus 4.8; found: $lazarusVersion"
+}
+if ($fpcVersion -ne '3.2.2') {
+    throw "Zarya LCL requires FPC 3.2.2; found: $fpcVersion"
+}
+if ($goVersion -ne 'go1.26.5') {
+    throw "Zarya LCL requires Go 1.26.5; found: $goVersion"
+}
+if ($gccVersion -ne '16.1.0') {
+    throw "Zarya LCL requires MinGW-w64 GCC 16.1.0; found: $gccVersion"
+}
+$cmakeVersionFile = Join-Path $repoDir 'cmake\ZaryaVersion.cmake'
+$pascalVersionFile = Join-Path $projectDir 'ZaryaVersion.pas'
+$cmakeVersionText = Get-Content -LiteralPath $cmakeVersionFile -Raw
+$pascalVersionText = Get-Content -LiteralPath $pascalVersionFile -Raw
+if ($cmakeVersionText -notmatch `
+    'set\(ZARYA_VERSION_STRING "([^"]+)"\)') {
+    throw 'Could not read the CMake application version.'
+}
+$expectedVersion = $Matches[1]
+if ($pascalVersionText -notmatch `
+    "ZaryaVersionString\s*=\s*'([^']+)'\s*;") {
+    throw 'Could not read the Pascal application version.'
+}
+$pascalVersion = $Matches[1]
+if ($pascalVersion -ne $expectedVersion) {
+    throw "Version contract mismatch: CMake=$expectedVersion Pascal=$pascalVersion"
+}
 $fpcBin = Split-Path -Parent $fpc
 $fpcLinker = Join-Path $fpcBin 'ld.exe'
 $mingwRoot = Split-Path -Parent (Split-Path -Parent $gcc)
@@ -83,7 +119,6 @@ function Remove-TemporaryBinArtifacts {
         ForEach-Object { Remove-BinArtifact -Path $_.FullName }
     @(
         'ppas.bat',
-        'zarya-lcl-prototype.exe',
         'Zarya-nogc.exe',
         'zarya-xray.dll'
     ) | ForEach-Object { Remove-BinArtifact -Path (Join-Path $binDir $_) }
@@ -203,6 +238,21 @@ try {
     & $largeAddressLinker @linkArguments
     if ($LASTEXITCODE -ne 0) {
         throw "Static executable link failed with exit code $LASTEXITCODE"
+    }
+
+    $selfTest = Invoke-EmbeddedSelfTest -SelfTestArguments @('--version')
+    if (($selfTest.ExitCode -ne 0) -or
+        ($selfTest.Output -ne "Zarya $expectedVersion")) {
+        throw "CLI version contract failed: $($selfTest.Output)"
+    }
+    $versionInfo = [Diagnostics.FileVersionInfo]::GetVersionInfo($output)
+    if (([Version] $versionInfo.FileVersion) -ne
+        ([Version] "$expectedVersion.0")) {
+        throw "PE file version mismatch: $($versionInfo.FileVersion)"
+    }
+    if (-not $versionInfo.ProductVersion.StartsWith($expectedVersion,
+        [StringComparison]::Ordinal)) {
+        throw "PE product version mismatch: $($versionInfo.ProductVersion)"
     }
 
     $selfTest = Invoke-EmbeddedSelfTest `

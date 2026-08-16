@@ -1,7 +1,7 @@
 # Zarya FPC/LCL
 
-Новая реализация Zarya на Free Pascal/Lazarus LCL. Qt-версия пока остаётся в
-репозитории как эталон поведения до достижения функционального паритета.
+Windows-реализация Zarya на Free Pascal/Lazarus LCL. Qt-версия пока остаётся в
+репозитории как эталон поведения до прохождения release gate и cutover.
 Формы создаются программно и используют стандартные нативные Win32-контролы.
 
 Что можно проверить:
@@ -53,6 +53,14 @@
   subscription URLs и внешних путей;
 - относительные пути для пользовательских ядер внутри каталога приложения и
   абсолютные пути для остальных файлов.
+- versioned routing/DNS stores и нативный редактор built-in/custom правил;
+- capability validation без молчаливого отбрасывания routing/DNS-настроек;
+- Geo Data Manager с WinHTTP progress/cancel, SHA-256 и атомарной заменой пары
+  `geoip.dat`/`geosite.dat` в пользовательском data-каталоге;
+- `Real delay` через `Zarya.exe --core-test-worker`: динамические TCP/UDP-порты,
+  максимум три параллельных worker и гарантированное завершение Job Object;
+- first-run flow, autostart через HKCU Run, встроенные EN/RU-таблицы и выбор
+  `system|ru|en` с применением после перезапуска.
 
 При первом обычном запуске LCL-версия читает Qt-данные из
 `%LOCALAPPDATA%\Zarya\Zarya`, сначала создаёт
@@ -61,8 +69,10 @@
 Qt-файлы не изменяются; definitions внешних providers и пути к EXE не
 переносятся. Для `--portable` и `--data-dir` этот импорт отключён.
 
-UUID, ключи и subscription URLs остаются в локальном хранилище и не записываются
-в журнал. URL также не показывается в таблице подписок. При включённой опции
+UUID, ключи и subscription URLs остаются только в рабочем локальном хранилище и
+не записываются в журнал или переносимый backup. В backup профили и подписки
+восстанавливаются отключёнными, поскольку credentials, raw config и URL
+намеренно исключены. URL также не показывается в таблице подписок. При включённой опции
 автоматического прокси приложение изменяет WinINet только после того, как
 объявленный mixed/HTTP/SOCKS endpoint принял соединение.
 Snapshot лежит рядом с `profiles.json` и удаляется после успешного
@@ -70,7 +80,15 @@ Snapshot лежит рядом с `profiles.json` и удаляется посл
 
 ## Сборка
 
-Установить Lazarus/FPC, Go и MinGW-w64 x86_64. Скрипт использует исходники
+Закреплённый toolchain: Lazarus 4.8, FPC 3.2.2, Go 1.26.5 и WinLibs
+MinGW-w64 GCC 16.1.0. Для CI или чистой машины Lazarus/FPC и MinGW можно
+установить с проверкой SHA-256 и подписи:
+
+```powershell
+.\bootstrap-toolchain.ps1
+```
+
+Скрипт сборки использует исходники
 общего Go bridge из `src\runtime\embedded\xray\bridge`, собирает `c-archive`,
 полностью пересобирает Pascal units со статическим ABI и выполняет embedded
 self-test:
@@ -92,7 +110,7 @@ cd D:\projects\zarya\prototypes\lcl
 `%LOCALAPPDATA%\Zarya\LCL`.
 
 Результат — только `bin\Zarya.exe` и `bin\Zarya.exe.sha256`; build-сценарий
-удаляет свои временные linker-файлы и прежние prototype artifacts. Runtime DLL
+удаляет свои временные linker-файлы и прежние development artifacts. Runtime DLL
 не нужна.
 Для конфигураций с `geoip:`/`geosite:` development-сборка использует данные из
 `build\Release\cores\xray`; в пакете они должны находиться в `bin\cores\xray`.
@@ -114,6 +132,21 @@ validation/start/readiness/stop на loopback:
 
 ```powershell
 .\test.ps1
+```
+
+`known-cores.json` закрепляет официальные x64-выпуски и неизменяемые URL/SHA.
+Следующая команда скачивает их только в `generated`, проверяет PE/SHA/version и
+запускает validation/start/readiness/cleanup matrix; файлы никогда не попадают
+в release ZIP:
+
+```powershell
+.\test-known-cores.ps1
+```
+
+Release-пакет с точным составом `Zarya.exe` + `Zarya.exe.sha256` создаётся так:
+
+```powershell
+.\package.ps1
 ```
 
 ## Чек-лист сравнения
@@ -143,10 +176,10 @@ validation/start/readiness/stop на loopback:
 - Hysteria 2 YAML: Hysteria2 с локальными HTTP и SOCKS5 listeners.
 
 Локальные external Xray и sing-box дополнительно проходят настоящий
-validation/start/readiness/Job-stop integration smoke. Для V2Ray, Mihomo,
-NekoBox core и Hysteria 2 unit-тесты проверяют структуру и capability rules;
-проверка соответствующими реальными EXE будет добавляться в CI с закреплёнными
-версиями. Неподдерживаемые сочетания блокируются capability matrix; raw-конфиг
+validation/start/readiness/Job-stop integration smoke. Windows CI скачивает по
+`known-cores.json` и проверяет также V2Ray, Mihomo, NekoBox core и Hysteria 2;
+скачанные EXE используются только как test fixtures. Неподдерживаемые сочетания
+блокируются capability matrix; raw-конфиг
 можно переключить только на provider того же диалекта и после подтверждения.
 
 Текущий статус и оставшиеся срезы описаны в `MIGRATION.md`.

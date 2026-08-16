@@ -14,6 +14,9 @@
 # Linker files
 *.ilk
 
+# Lazarus project resource generated from zarya_lcl.lpi
+/prototypes/lcl/zarya_lcl.res
+
 # Debugger Files
 *.pdb
 

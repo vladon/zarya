@@ -101,6 +101,8 @@ try {
         'AutostartTest',
         'TranslationTest',
         'ApplicationServicesTest',
+        'VersionContractTest',
+        'KnownCoresManifestTest',
         'CoreProviderTest',
         'ConfigAdapterTest',
         'ExternalProcessTest'
@@ -134,7 +136,8 @@ try {
             throw "$integrationTest compilation failed with exit code $LASTEXITCODE"
         }
         & (Join-Path $testBin "$integrationTest.exe") `
-            $xrayFixture $singBoxFixture
+            "external.xray=$xrayFixture" `
+            "external.singbox=$singBoxFixture"
         if ($LASTEXITCODE -ne 0) {
             throw "$integrationTest failed with exit code $LASTEXITCODE"
         }
