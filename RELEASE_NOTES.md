@@ -1,3 +1,12 @@
+# Zarya 1.5.12
+
+Zarya 1.5.12 adds reproducible LCL Windows release engineering, a pinned
+external-core integration matrix, and a verified two-file portable package.
+
+See [docs/release-notes/1.5.12.md](docs/release-notes/1.5.12.md) for details.
+
+---
+
 # Zarya 1.5.11
 
 Zarya 1.5.11 extracts the LCL runtime, profile, and background-operation
