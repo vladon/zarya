@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ExtCtrls, StdCtrls,
   ComCtrls, Grids, Menus, ZaryaThemes, ZaryaSettingsForm, ZaryaProfile,
-  ZaryaProfileStore, FpcProfileStore, ProfileForm, ImportVlessForm,
+  FpcProfileStore, ProfileForm, ImportVlessForm,
   XrayConfigForm, ZaryaShareLink, ZaryaAppSettings,
   ZaryaEmbeddedXray, ZaryaSystemProxy, WindowsSystemProxy, ZaryaTcpProbe,
   ZaryaCoreProvider, ZaryaCoreProviderRegistry, FpcCoreProviderStore,
@@ -16,16 +16,14 @@ uses
   ZaryaConfigAdapters, SubscriptionManagerForm, ZaryaProfileTesting,
   ZaryaBackup, ZaryaDiagnostics, ZaryaRouting, ZaryaDns, ZaryaPolicyStore,
   FpcPolicyStore, PolicyManagerForm, ZaryaGeoData, GeoDataManagerForm,
-  WindowsAutostart, ZaryaRealDelay, ZaryaTr;
+  WindowsAutostart, ZaryaRealDelay, ZaryaTr, ZaryaProfileService,
+  ZaryaBackgroundOperations, ZaryaRuntimeCoordinator;
 
 type
-  TRuntimeState = (rsStopped, rsConnecting, rsRunning);
-
   TMainForm = class(TForm)
   private
-    FRuntimeState: TRuntimeState;
     FProfiles: TZaryaProfiles;
-    FProfileStore: IZaryaProfileStore;
+    FProfileService: TZaryaProfileService;
     FAppSettings: TZaryaAppSettings;
     FSettingsStore: TZaryaAppSettingsStore;
     FRoutingStore: IRoutingProfileStore;
@@ -34,18 +32,14 @@ type
     FDnsProfiles: TZaryaDnsProfiles;
     FGeoDataManager: IGeoDataManager;
     FAutostartManager: IAutostartManager;
+    FBackgroundOperations: TZaryaBackgroundOperations;
+    FRuntimeCoordinator: TZaryaRuntimeCoordinator;
     FEmbeddedXray: TZaryaEmbeddedXray;
     FCoreRegistry: TZaryaCoreProviderRegistry;
     FExternalProcess: IZaryaRuntimeProcess;
-    FActiveProvider: TZaryaCoreProvider;
     FActiveConfigPath: string;
-    FReadinessHost: string;
-    FReadinessPort: Integer;
-    FActiveSystemProxyKind: string;
     FSystemProxy: TZaryaSystemProxyController;
     FXrayAssetDirectory: string;
-    FReadyDeadline: QWord;
-    FActiveProfile: TZaryaProfile;
     FDarkTheme: Boolean;
     FMinimizeToTray: Boolean;
     FQuitting: Boolean;
@@ -67,9 +61,7 @@ type
     FReadyTimer: TTimer;
     FTestTimer: TTimer;
     FAutoStartTimer: TTimer;
-    FTestThread: TProfileTcpTestThread;
     FTestButton: TButton;
-    FRealDelayThread: TZaryaRealDelayBatchThread;
     FRealDelayButton: TButton;
     FRealDelayTimer: TTimer;
     FTrayIcon: TTrayIcon;
@@ -171,16 +163,16 @@ begin
   Constraints.MinHeight := 560;
   Scaled := True;
   Randomize;
-  FRuntimeState := rsStopped;
   FMinimizeToTray := True;
   OnResize := @FormResize;
   OnCloseQuery := @FormCloseQuery;
   BuildMenus;
   BuildInterface;
   BuildTray;
-  FProfileStore := TFpcProfileStore.Create(ProfileStorePathFromCommandLine);
+  FProfileService := TZaryaProfileService.Create(
+    TFpcProfileStore.Create(ProfileStorePathFromCommandLine));
   FCoreRegistry := TZaryaCoreProviderRegistry.Create(TFpcCoreProviderStore.Create(
-    IncludeTrailingPathDelimiter(ExtractFileDir(FProfileStore.FileName)) +
+    IncludeTrailingPathDelimiter(ExtractFileDir(FProfileService.FileName)) +
     'providers.json'));
   if not FCoreRegistry.Load(ErrorMessage) then
     MessageDlg(TZaryaTr.Tr('Ядра'), TZaryaTr.Tr(
@@ -188,19 +180,19 @@ begin
       'Could not read providers.json:') + LineEnding +
       ErrorMessage, mtWarning, [mbOK], 0);
   FSettingsStore := TZaryaAppSettingsStore.Create(
-    IncludeTrailingPathDelimiter(ExtractFileDir(FProfileStore.FileName)) +
+    IncludeTrailingPathDelimiter(ExtractFileDir(FProfileService.FileName)) +
     'settings.ini');
   LoadAppSettings;
   FAutostartManager := TWindowsAutostartManager.Create;
   FRoutingStore := TFpcRoutingProfileStore.Create(
-    IncludeTrailingPathDelimiter(ExtractFileDir(FProfileStore.FileName)) +
+    IncludeTrailingPathDelimiter(ExtractFileDir(FProfileService.FileName)) +
     'routing.json');
   FDnsStore := TFpcDnsProfileStore.Create(
-    IncludeTrailingPathDelimiter(ExtractFileDir(FProfileStore.FileName)) +
+    IncludeTrailingPathDelimiter(ExtractFileDir(FProfileService.FileName)) +
     'dns.json');
   LoadPolicies;
   FGeoDataManager := TZaryaGeoDataManager.Create(
-    IncludeTrailingPathDelimiter(ExtractFileDir(FProfileStore.FileName)) +
+    IncludeTrailingPathDelimiter(ExtractFileDir(FProfileService.FileName)) +
     'geodata' + PathDelim + 'xray');
   FXrayAssetDirectory := FGeoDataManager.TargetDirectory;
   FEmbeddedXray := TZaryaEmbeddedXray.Create(
@@ -209,12 +201,16 @@ begin
     FEmbeddedXray.Version, FEmbeddedXray.Available, FEmbeddedXray.LoadStatus);
   FSystemProxy := TZaryaSystemProxyController.Create(
     TWindowsSystemProxyBackend.Create,
-    IncludeTrailingPathDelimiter(ExtractFileDir(FProfileStore.FileName)) +
+    IncludeTrailingPathDelimiter(ExtractFileDir(FProfileService.FileName)) +
     'proxy-previous-state.ini');
+  FRuntimeCoordinator := TZaryaRuntimeCoordinator.Create(
+    ExtractFileDir(FProfileService.FileName), FXrayAssetDirectory,
+    FGeoDataManager, FSystemProxy);
+  FBackgroundOperations := TZaryaBackgroundOperations.Create;
   LoadProfiles;
   ApplyCurrentTheme;
   UpdateRuntimeSurface;
-  AppendLog('Zarya LCL started. Profiles: ' + FProfileStore.FileName);
+  AppendLog('Zarya LCL started. Profiles: ' + FProfileService.FileName);
   if FEmbeddedXray.Available then
     AppendLog(Format('Embedded Xray loaded: %s (ABI %d).',
       [FEmbeddedXray.Version, FEmbeddedXray.AbiVersion]))
@@ -264,7 +260,7 @@ end;
 
 procedure TMainForm.ConfigureStartup;
 var
-  I: Integer;
+  I, ProfileIndex: Integer;
   DisableProfileAutostart: Boolean;
 begin
   DisableProfileAutostart := False;
@@ -273,21 +269,21 @@ begin
       DisableProfileAutostart := True;
   if DisableProfileAutostart or not FAppSettings.AutoStartLastProfile or
     (Trim(FAppSettings.LastStartedProfileId) = '') then Exit;
-  for I := 0 to High(FProfiles) do
-    if SameText(FProfiles[I].Id, FAppSettings.LastStartedProfileId) and
-      FProfiles[I].Enabled and not FProfiles[I].DeletedBySubscriptionUpdate then
-    begin
-      RefreshProfileGrid(FProfiles[I].Id);
-      FAutoStartTimer := TTimer.Create(Self);
-      FAutoStartTimer.Enabled := False;
-      FAutoStartTimer.Interval := FAppSettings.AutoStartDelaySeconds * 1000;
-      if FAutoStartTimer.Interval < 1 then FAutoStartTimer.Interval := 1;
-      FAutoStartTimer.OnTimer := @AutoStartTimerTick;
-      FAutoStartTimer.Enabled := True;
-      AppendLog(Format('Auto-start of profile scheduled in %d second(s).',
-        [FAppSettings.AutoStartDelaySeconds]));
-      Exit;
-    end;
+  ProfileIndex := FProfileService.FindRunnableById(FProfiles,
+    FAppSettings.LastStartedProfileId);
+  if ProfileIndex >= 0 then
+  begin
+    RefreshProfileGrid(FProfiles[ProfileIndex].Id);
+    FAutoStartTimer := TTimer.Create(Self);
+    FAutoStartTimer.Enabled := False;
+    FAutoStartTimer.Interval := FAppSettings.AutoStartDelaySeconds * 1000;
+    if FAutoStartTimer.Interval < 1 then FAutoStartTimer.Interval := 1;
+    FAutoStartTimer.OnTimer := @AutoStartTimerTick;
+    FAutoStartTimer.Enabled := True;
+    AppendLog(Format('Auto-start of profile scheduled in %d second(s).',
+      [FAppSettings.AutoStartDelaySeconds]));
+    Exit;
+  end;
   AppendLog('Configured auto-start profile is missing or disabled; skipped.');
 end;
 
@@ -296,7 +292,7 @@ begin
   FAutoStartTimer.Enabled := False;
   FAutoStarting := True;
   StartClick(Sender);
-  if FRuntimeState = rsStopped then FAutoStarting := False;
+  if FRuntimeCoordinator.State = rsStopped then FAutoStarting := False;
 end;
 
 function TMainForm.AutoProxyEnabledForCurrentStart: Boolean;
@@ -409,16 +405,19 @@ begin
 end;
 
 function TMainForm.RedactRuntimeText(const AText: string): string;
+var
+  ActiveProfile: TZaryaProfile;
 begin
+  ActiveProfile := FRuntimeCoordinator.ActiveProfile;
   Result := AText;
-  if FActiveProfile.Uuid <> '' then
-    Result := StringReplace(Result, FActiveProfile.Uuid, '[uuid-redacted]',
+  if ActiveProfile.Uuid <> '' then
+    Result := StringReplace(Result, ActiveProfile.Uuid, '[uuid-redacted]',
       [rfReplaceAll]);
-  if FActiveProfile.PublicKey <> '' then
-    Result := StringReplace(Result, FActiveProfile.PublicKey,
+  if ActiveProfile.PublicKey <> '' then
+    Result := StringReplace(Result, ActiveProfile.PublicKey,
       '[public-key-redacted]', [rfReplaceAll]);
-  if FActiveProfile.Host <> '' then
-    Result := StringReplace(Result, FActiveProfile.Host, '[server-redacted]',
+  if ActiveProfile.Host <> '' then
+    Result := StringReplace(Result, ActiveProfile.Host, '[server-redacted]',
       [rfReplaceAll, rfIgnoreCase]);
 end;
 
@@ -428,13 +427,15 @@ var
   I: Integer;
   RuntimeText: string;
   Prefix: string;
+  ActiveProvider: TZaryaCoreProvider;
 begin
-  if FActiveProvider.Distribution = pdExternal then
+  ActiveProvider := FRuntimeCoordinator.ActiveProvider;
+  if ActiveProvider.Distribution = pdExternal then
   begin
     if not Assigned(FExternalProcess) then
       Exit;
     RuntimeText := FExternalProcess.DrainOutput;
-    Prefix := '[' + FActiveProvider.DisplayName + '] ';
+    Prefix := '[' + ActiveProvider.DisplayName + '] ';
   end
   else
   begin
@@ -476,10 +477,8 @@ begin
     FEmbeddedXray.Stop(ErrorMessage);
   DeleteRuntimeConfig(FActiveConfigPath);
   FActiveConfigPath := '';
-  FRuntimeState := rsStopped;
   AppendLog(AMessage);
-  FActiveProfile := Default(TZaryaProfile);
-  FActiveProvider := Default(TZaryaCoreProvider);
+  FRuntimeCoordinator.Reset;
   FAutoStarting := False;
   UpdateRuntimeSurface;
   MessageDlg('Runtime provider', AMessage, mtError, [mbOK], 0);
@@ -508,7 +507,7 @@ begin
       AppendLog('System proxy was left unchanged by user setting.');
   end;
   if Assigned(FEmbeddedXray) and
-    (FActiveProvider.Distribution = pdEmbedded) and
+    (FRuntimeCoordinator.ActiveProvider.Distribution = pdEmbedded) and
     (FEmbeddedXray.State <> xrsStopped) then
   begin
     if not FEmbeddedXray.Stop(ErrorMessage) then
@@ -527,9 +526,7 @@ begin
   end;
   DeleteRuntimeConfig(FActiveConfigPath);
   FActiveConfigPath := '';
-  FRuntimeState := rsStopped;
-  FActiveProfile := Default(TZaryaProfile);
-  FActiveProvider := Default(TZaryaCoreProvider);
+  FRuntimeCoordinator.Reset;
   FAutoStarting := False;
   if Assigned(FStatusBar) then
     UpdateRuntimeSurface;
@@ -537,19 +534,9 @@ end;
 
 destructor TMainForm.Destroy;
 begin
-  if Assigned(FTestThread) then
-  begin
-    FTestThread.RequestCancel;
-    FTestThread.WaitFor;
-    FreeAndNil(FTestThread);
-  end;
-  if Assigned(FRealDelayThread) then
-  begin
-    FRealDelayThread.RequestCancel;
-    FRealDelayThread.WaitFor;
-    FreeAndNil(FRealDelayThread);
-  end;
+  FBackgroundOperations.Free;
   StopRuntime(False);
+  FRuntimeCoordinator.Free;
   FSystemProxy.Free;
   FEmbeddedXray.Free;
   FCoreRegistry.Free;
@@ -558,7 +545,7 @@ begin
   FDnsStore := nil;
   FGeoDataManager := nil;
   FAutostartManager := nil;
-  FProfileStore := nil;
+  FProfileService.Free;
   inherited Destroy;
 end;
 
@@ -888,7 +875,7 @@ procedure TMainForm.LoadProfiles;
 var
   ErrorMessage: string;
 begin
-  if not FProfileStore.Load(FProfiles, ErrorMessage) then
+  if not FProfileService.Load(FProfiles, ErrorMessage) then
   begin
     MessageDlg(TZaryaTr.Tr('Профили'), TZaryaTr.Tr(
       'Не удалось прочитать profiles.json:', 'Could not read profiles.json:') +
@@ -933,7 +920,7 @@ function TMainForm.SaveProfiles: Boolean;
 var
   ErrorMessage: string;
 begin
-  Result := FProfileStore.Save(FProfiles, ErrorMessage);
+  Result := FProfileService.Save(FProfiles, ErrorMessage);
   if not Result then
     MessageDlg(TZaryaTr.Tr('Профили'), TZaryaTr.Tr(
       'Не удалось сохранить profiles.json:', 'Could not save profiles.json:') +
@@ -952,8 +939,9 @@ function TMainForm.SelectedProfileName: string;
 var
   Index: Integer;
 begin
-  if (FRuntimeState <> rsStopped) and (FActiveProfile.Name <> '') then
-    Exit(FActiveProfile.Name);
+  if (FRuntimeCoordinator.State <> rsStopped) and
+    (FRuntimeCoordinator.ActiveProfile.Name <> '') then
+    Exit(FRuntimeCoordinator.ActiveProfile.Name);
   Index := SelectedProfileIndex;
   if Index >= 0 then
     Result := FProfiles[Index].Name
@@ -979,7 +967,7 @@ begin
   else
     Theme := ZaryaThemes.LightTheme;
 
-  case FRuntimeState of
+  case FRuntimeCoordinator.State of
     rsStopped:
       begin
         Index := SelectedProfileIndex;
@@ -1011,7 +999,7 @@ begin
       begin
         FStateTitle.Caption := TZaryaTr.Tr('Runtime: подключение — ',
           'Runtime: connecting — ') +
-          FActiveProvider.ProviderId;
+          FRuntimeCoordinator.ActiveProvider.ProviderId;
         FStateBadge.Caption := TZaryaTr.Tr('Проверка готовности');
         FStateBadge.Color := Theme.WarningSurface;
         FStateBadge.Font.Color := Theme.Warning;
@@ -1020,14 +1008,16 @@ begin
           LineEnding + Format(TZaryaTr.Tr(
             'Local endpoint: %s:%d     Системный прокси: пока выключен',
             'Local endpoint: %s:%d     System proxy: still disabled'),
-            [FReadinessHost, FReadinessPort]);
+            [FRuntimeCoordinator.ReadinessHost,
+             FRuntimeCoordinator.ReadinessPort]);
         FStartButton.Enabled := False;
         FStopButton.Enabled := True;
         FStartMenuItem.Enabled := False;
         FStopMenuItem.Enabled := True;
         FStatusBar.SimpleText := Format(TZaryaTr.Tr(
           'Ожидание готовности %s:%d…', 'Waiting for %s:%d readiness…'),
-          [FReadinessHost, FReadinessPort]);
+          [FRuntimeCoordinator.ReadinessHost,
+           FRuntimeCoordinator.ReadinessPort]);
         FTrayIcon.Hint := TZaryaTr.Tr('Zarya — подключение',
           'Zarya — connecting');
       end;
@@ -1039,7 +1029,7 @@ begin
           ProxyStatus := TZaryaTr.Tr('выключен', 'disabled');
         FStateTitle.Caption := TZaryaTr.Tr('Runtime: работает — ',
           'Runtime: running — ') +
-          FActiveProvider.ProviderId;
+          FRuntimeCoordinator.ActiveProvider.ProviderId;
         FStateBadge.Caption := TZaryaTr.Tr('Подключено');
         FStateBadge.Color := Theme.SuccessSurface;
         FStateBadge.Font.Color := Theme.Success;
@@ -1048,14 +1038,17 @@ begin
           LineEnding + Format(TZaryaTr.Tr(
             'Local endpoint: %s:%d     Системный прокси: %s',
             'Local endpoint: %s:%d     System proxy: %s'),
-            [FReadinessHost, FReadinessPort, ProxyStatus]);
+            [FRuntimeCoordinator.ReadinessHost,
+             FRuntimeCoordinator.ReadinessPort, ProxyStatus]);
         FStartButton.Enabled := False;
         FStopButton.Enabled := True;
         FStartMenuItem.Enabled := False;
         FStopMenuItem.Enabled := True;
         FStatusBar.SimpleText := Format(TZaryaTr.Tr(
           'Подключено · %s:%d · %s', 'Connected · %s:%d · %s'),
-          [FReadinessHost, FReadinessPort, FActiveProvider.ProviderId]);
+          [FRuntimeCoordinator.ReadinessHost,
+           FRuntimeCoordinator.ReadinessPort,
+           FRuntimeCoordinator.ActiveProvider.ProviderId]);
         FTrayIcon.Hint := TZaryaTr.Tr('Zarya — подключено',
           'Zarya — connected');
       end;
@@ -1083,23 +1076,8 @@ end;
 function TMainForm.ProviderUsableForProfile(
   const AProvider: TZaryaCoreProvider;
   const AProfile: TZaryaProfile): Boolean;
-var
-  RequiredFormat: string;
 begin
-  Result := False;
-  if AProvider.State <> psAvailable then
-    Exit;
-  if not ProviderSupportsProtocol(AProvider, AProfile.ProtocolName) then
-    Exit;
-  if AProfile.RawConfig <> '' then
-  begin
-    RequiredFormat := AProfile.RawConfigFormat;
-    if RequiredFormat = '' then
-      RequiredFormat := 'raw';
-    Exit(SameText(ConfigFormatToString(AProvider.ConfigFormat),
-      RequiredFormat));
-  end;
-  Result := ProviderCanGenerateConfig(AProvider, AProfile, RequiredFormat);
+  Result := FRuntimeCoordinator.ProviderUsableForProfile(AProvider, AProfile);
 end;
 
 function TMainForm.ResolveRuntimeProvider(const AProfileIndex: Integer;
@@ -1164,115 +1142,9 @@ end;
 function TMainForm.PrepareRuntimeConfig(const AProfile: TZaryaProfile;
   const AProvider: TZaryaCoreProvider; out AConfig,
   AError: string): Boolean;
-var
-  Adapter: IConfigAdapter;
-  Context: TZaryaConfigContext;
-  Request: TZaryaRuntimeRequest;
-  RoutingProfile: TZaryaRoutingProfile;
-  DnsProfile: TZaryaDnsProfile;
-  MissingGeoData: string;
 begin
-  AConfig := '';
-  AError := '';
-  RoutingProfile := ActiveRoutingProfile;
-  DnsProfile := ActiveDnsProfile;
-  if Assigned(FGeoDataManager) and not FGeoDataManager.RequiredFilesPresent(
-    RoutingProfile, DnsProfile, MissingGeoData, AError) then
-  begin
-    if AError = '' then
-      AError := TZaryaTr.Tr(
-        'Для активных routing/DNS отсутствуют файлы: ',
-        'Files required by active routing/DNS are missing: ') +
-        MissingGeoData + TZaryaTr.Tr('. Откройте Инструменты → Geo data.',
-        '. Open Tools → Geo data.');
-    Exit(False);
-  end;
-  if AProfile.RawConfig <> '' then
-  begin
-    if not IsDefaultRouting(RoutingProfile) or not IsDefaultDns(DnsProfile) then
-    begin
-      AError := TZaryaTr.Tr(
-        'Raw config управляет routing и DNS самостоятельно. Выберите Proxy All и System DNS.',
-        'Raw config manages routing and DNS itself. Select Proxy All and System DNS.');
-      Exit(False);
-    end;
-    if not SameText(ConfigFormatToString(AProvider.ConfigFormat),
-      AProfile.RawConfigFormat) then
-    begin
-      AError := TZaryaTr.Tr(
-        'Raw-конфигурация не соответствует диалекту provider.',
-        'The raw configuration does not match the provider dialect.');
-      Exit(False);
-    end;
-    if not SameText(AProfile.ReadinessHost, '127.0.0.1') and
-      not SameText(AProfile.ReadinessHost, 'localhost') then
-    begin
-      AError := TZaryaTr.Tr(
-        'Readiness endpoint raw-профиля должен быть локальным.',
-        'The raw profile readiness endpoint must be local.');
-      Exit(False);
-    end;
-    if (AProfile.ReadinessPort < 1) or
-      (AProfile.ReadinessPort > 65535) then
-    begin
-      AError := TZaryaTr.Tr('Для raw-профиля укажите readiness port.',
-        'Specify a readiness port for the raw profile.');
-      Exit(False);
-    end;
-    AConfig := AProfile.RawConfig;
-    FReadinessHost := AProfile.ReadinessHost;
-    FReadinessPort := AProfile.ReadinessPort;
-    FActiveSystemProxyKind := AProfile.SystemProxyKind;
-    Exit(True);
-  end;
-  Adapter := CreateConfigAdapter(AProvider);
-  if not Assigned(Adapter) then
-  begin
-    AError := TZaryaTr.Tr('Для adapter ', 'No generator is registered for adapter ') +
-      AProvider.AdapterId + TZaryaTr.Tr(
-      ' не зарегистрирован генератор; используйте raw config.',
-      '; use raw config.');
-    Exit(False);
-  end;
-  Context := Default(TZaryaConfigContext);
-  Context.MixedPort := FAppSettings.MixedPort;
-  Context.HttpPort := FAppSettings.MixedPort;
-  Context.SocksPort := FAppSettings.MixedPort;
-  if SameText(AProvider.AdapterId, 'hysteria2') then
-    if FAppSettings.MixedPort < 65535 then
-      Context.SocksPort := FAppSettings.MixedPort + 1
-    else
-      Context.SocksPort := FAppSettings.MixedPort - 1;
-  Request := CreateRuntimeRequest(AProfile, AProvider, Context);
-  Request.DataDirectory := ExtractFileDir(FProfileStore.FileName);
-  Request.AssetDirectory := FXrayAssetDirectory;
-  Request.RoutingProfile := RoutingProfile;
-  Request.DnsProfile := DnsProfile;
-  Result := Adapter.GenerateRequest(Request, AConfig, AError);
-  if Result then
-  begin
-    FReadinessHost := '127.0.0.1';
-    case AProvider.ReadinessKind of
-      rkMixedTcp:
-        begin
-          FReadinessPort := Context.MixedPort;
-          FActiveSystemProxyKind := 'mixed';
-        end;
-      rkHttpTcp:
-        begin
-          FReadinessPort := Context.HttpPort;
-          FActiveSystemProxyKind := 'http';
-        end;
-      rkSocksTcp:
-        begin
-          FReadinessPort := Context.SocksPort;
-          FActiveSystemProxyKind := 'socks';
-        end;
-    else
-      FReadinessPort := Context.MixedPort;
-      FActiveSystemProxyKind := 'none';
-    end;
-  end;
+  Result := FRuntimeCoordinator.PrepareConfig(AProfile, AProvider,
+    FAppSettings, ActiveRoutingProfile, ActiveDnsProfile, AConfig, AError);
 end;
 
 function TMainForm.StartExternalRuntime(
@@ -1296,7 +1168,7 @@ begin
       'Откройте Core Manager и подтвердите новый SHA-256.';
     Exit;
   end;
-  DataDirectory := ExtractFileDir(FProfileStore.FileName);
+  DataDirectory := ExtractFileDir(FProfileService.FileName);
   if not WriteRuntimeConfig(DataDirectory, AProvider, AConfig,
     FActiveConfigPath, AError) then
     Exit;
@@ -1306,9 +1178,9 @@ begin
   Context.AssetDirectory := AProvider.AssetDirectory;
   if Context.AssetDirectory = '' then
     Context.AssetDirectory := FXrayAssetDirectory;
-  Context.MixedPort := FReadinessPort;
-  Context.HttpPort := FReadinessPort;
-  Context.SocksPort := FReadinessPort;
+  Context.MixedPort := FRuntimeCoordinator.ReadinessPort;
+  Context.HttpPort := FRuntimeCoordinator.ReadinessPort;
+  Context.SocksPort := FRuntimeCoordinator.ReadinessPort;
   Context.LogLevel := 'warning';
 
   if Length(AProvider.ValidateArguments) > 0 then
@@ -1344,7 +1216,7 @@ end;
 
 function TMainForm.ActiveRuntimeIsRunning: Boolean;
 begin
-  if FActiveProvider.Distribution = pdExternal then
+  if FRuntimeCoordinator.ActiveProvider.Distribution = pdExternal then
     Result := Assigned(FExternalProcess) and FExternalProcess.IsRunning
   else
     Result := Assigned(FEmbeddedXray) and
@@ -1366,7 +1238,7 @@ begin
   Result := False;
   AError := '';
   ConfigPath := '';
-  DataDirectory := ExtractFileDir(FProfileStore.FileName);
+  DataDirectory := ExtractFileDir(FProfileService.FileName);
   if not WriteRuntimeConfig(DataDirectory, AProvider, AConfig, ConfigPath,
     AError) then
     Exit;
@@ -1410,7 +1282,7 @@ var
   ErrorMessage: string;
   Provider: TZaryaCoreProvider;
 begin
-  if FRuntimeState <> rsStopped then
+  if FRuntimeCoordinator.State <> rsStopped then
     Exit;
   Index := SelectedProfileIndex;
   if Index < 0 then
@@ -1441,17 +1313,17 @@ begin
       MessageDlg('Конфигурация provider', ErrorMessage, mtWarning, [mbOK], 0);
     Exit;
   end;
-  if CanConnectLocalhost(FReadinessPort) then
+  if CanConnectLocalhost(FRuntimeCoordinator.ReadinessPort) then
   begin
     MessageDlg('Runtime provider', Format(
       TZaryaTr.Tr('Порт %s:%d уже занят. Выберите другой локальный порт.',
         'Port %s:%d is already in use. Choose another local port.'),
-      [FReadinessHost, FReadinessPort]), mtWarning, [mbOK], 0);
+      [FRuntimeCoordinator.ReadinessHost,
+       FRuntimeCoordinator.ReadinessPort]), mtWarning, [mbOK], 0);
     Exit;
   end;
   ForceDirectories(FXrayAssetDirectory);
-  FActiveProfile := FProfiles[Index];
-  FActiveProvider := Provider;
+  FRuntimeCoordinator.Activate(FProfiles[Index], Provider);
   if Provider.Distribution = pdExternal then
   begin
     AppendLog('Starting external provider ' + Provider.ProviderId + '…');
@@ -1459,10 +1331,9 @@ begin
     begin
       DeleteRuntimeConfig(FActiveConfigPath);
       FActiveConfigPath := '';
-      FActiveProfile := Default(TZaryaProfile);
-      FActiveProvider := Default(TZaryaCoreProvider);
       MessageDlg('External runtime', RedactRuntimeText(ErrorMessage),
         mtError, [mbOK], 0);
+      FRuntimeCoordinator.Reset;
       Exit;
     end;
   end
@@ -1471,15 +1342,15 @@ begin
     if not Assigned(FEmbeddedXray) or not FEmbeddedXray.Available then
     begin
       MessageDlg('Xray runtime', FEmbeddedXray.LoadStatus, mtError, [mbOK], 0);
+      FRuntimeCoordinator.Reset;
       Exit;
     end;
     if not ValidateEmbeddedRuntime(Provider, Config, ErrorMessage) then
     begin
       AppendLog('Embedded Xray validation failed.');
       ErrorMessage := RedactRuntimeText(ErrorMessage);
-      FActiveProfile := Default(TZaryaProfile);
-      FActiveProvider := Default(TZaryaCoreProvider);
       MessageDlg('Xray runtime', ErrorMessage, mtError, [mbOK], 0);
+      FRuntimeCoordinator.Reset;
       Exit;
     end;
     AppendLog('Starting embedded Xray…');
@@ -1487,79 +1358,65 @@ begin
     begin
       AppendLog('Embedded Xray start failed.');
       ErrorMessage := RedactRuntimeText(ErrorMessage);
-      FActiveProfile := Default(TZaryaProfile);
-      FActiveProvider := Default(TZaryaCoreProvider);
       MessageDlg('Xray runtime', ErrorMessage, mtError, [mbOK], 0);
+      FRuntimeCoordinator.Reset;
       Exit;
     end;
   end;
-  FRuntimeState := rsConnecting;
+  FRuntimeCoordinator.BeginConnecting;
   FAppSettings.LastStartedProfileId := FProfiles[Index].Id;
   SaveAppSettings;
-  FReadyDeadline := GetTickCount64 + 5000;
   FReadyTimer.Interval := 100;
   AppendLog(Format('Waiting for local endpoint %s:%d before enabling system proxy…',
-    [FReadinessHost, FReadinessPort]));
+    [FRuntimeCoordinator.ReadinessHost,
+     FRuntimeCoordinator.ReadinessPort]));
   FReadyTimer.Enabled := True;
   UpdateRuntimeSurface;
 end;
 
 procedure TMainForm.StopClick(Sender: TObject);
 begin
-  if FRuntimeState = rsStopped then
+  if FRuntimeCoordinator.State = rsStopped then
     Exit;
-  AppendLog('Stopping runtime provider ' + FActiveProvider.ProviderId + '…');
+  AppendLog('Stopping runtime provider ' +
+    FRuntimeCoordinator.ActiveProvider.ProviderId + '…');
   StopRuntime(True);
 end;
 
 procedure TMainForm.ReadyTimerTimer(Sender: TObject);
 var
   ErrorMessage: string;
-  EnableSystemProxy: Boolean;
+  Poll: TZaryaRuntimePollResult;
 begin
   DrainRuntimeLogs;
-  if not ActiveRuntimeIsRunning then
-  begin
-    HandleRuntimeFailure(TZaryaTr.Tr(
-      'Runtime provider неожиданно остановился.',
-      'The runtime provider stopped unexpectedly.'));
-    Exit;
-  end;
-  if FRuntimeState = rsConnecting then
-  begin
-    if CanConnectLocalhost(FReadinessPort) then
+  if not FRuntimeCoordinator.Poll(ActiveRuntimeIsRunning,
+    AutoProxyEnabledForCurrentStart, Poll) then Exit;
+  case Poll.Kind of
+    rpkStoppedUnexpectedly:
+      HandleRuntimeFailure(TZaryaTr.Tr(
+        'Runtime provider неожиданно остановился.',
+        'The runtime provider stopped unexpectedly.'));
+    rpkReady:
     begin
       AppendLog('Declared local endpoint accepted a connection; runtime is ready.');
-      FRuntimeState := rsRunning;
       FReadyTimer.Interval := 200;
-      EnableSystemProxy := AutoProxyEnabledForCurrentStart;
-      if EnableSystemProxy and
-        (SameText(FActiveSystemProxyKind, 'mixed') or
-         SameText(FActiveSystemProxyKind, 'http') or
-         SameText(FActiveSystemProxyKind, 'socks')) then
+      if Poll.SystemProxyEnabled then
+        AppendLog('System proxy (' + FRuntimeCoordinator.SystemProxyKind +
+          ') enabled after runtime readiness.')
+      else if Poll.ErrorMessage <> '' then
       begin
-        if FSystemProxy.Enable(FReadinessPort, FActiveSystemProxyKind,
-          ErrorMessage) then
-          AppendLog('System proxy (' + FActiveSystemProxyKind +
-            ') enabled after runtime readiness.')
-        else
-        begin
-          AppendLog('System proxy enable failed: ' + ErrorMessage);
-          MessageDlg(TZaryaTr.Tr('Системный прокси', 'System proxy'),
-            ErrorMessage, mtWarning, [mbOK], 0);
-        end;
+        AppendLog('System proxy enable failed: ' + Poll.ErrorMessage);
+        MessageDlg(TZaryaTr.Tr('Системный прокси', 'System proxy'),
+          Poll.ErrorMessage, mtWarning, [mbOK], 0);
       end
-      else if not EnableSystemProxy then
+      else if Poll.SystemProxyDisabledBySetting then
         AppendLog('Automatic system proxy activation is disabled.');
-      if EnableSystemProxy and
-        not (SameText(FActiveSystemProxyKind, 'mixed') or
-             SameText(FActiveSystemProxyKind, 'http') or
-             SameText(FActiveSystemProxyKind, 'socks')) then
+      if Poll.UnsupportedSystemProxyKind then
         AppendLog('System proxy was not enabled: this profile does not expose a supported local proxy endpoint.');
       FAutoStarting := False;
       UpdateRuntimeSurface;
-    end
-    else if GetTickCount64 >= FReadyDeadline then
+    end;
+    rpkReadinessTimeout:
     begin
       if Assigned(FExternalProcess) then
       begin
@@ -1571,9 +1428,7 @@ begin
       DeleteRuntimeConfig(FActiveConfigPath);
       FActiveConfigPath := '';
       FReadyTimer.Enabled := False;
-      FRuntimeState := rsStopped;
-      FActiveProfile := Default(TZaryaProfile);
-      FActiveProvider := Default(TZaryaCoreProvider);
+      FRuntimeCoordinator.Reset;
       FAutoStarting := False;
       AppendLog('Local runtime endpoint did not become ready; system proxy remains off.');
       UpdateRuntimeSurface;
@@ -1588,9 +1443,9 @@ end;
 
 procedure TMainForm.TestClick(Sender: TObject);
 begin
-  if Assigned(FTestThread) then
+  if FBackgroundOperations.ProfileTestRunning then
   begin
-    FTestThread.RequestCancel;
+    FBackgroundOperations.CancelProfileTest;
     FTestButton.Enabled := False;
     FStatusBar.SimpleText := TZaryaTr.Tr(
       'Отмена TCP ping после текущего соединения…',
@@ -1604,7 +1459,7 @@ begin
       [mbOK], 0);
     Exit;
   end;
-  FTestThread := TProfileTcpTestThread.Create(FProfiles);
+  FBackgroundOperations.StartProfileTest(FProfiles);
   FTestButton.Caption := TZaryaTr.Tr('Отмена');
   FTestTimer.Enabled := True;
   FStatusBar.SimpleText := 'TCP ping запущен…';
@@ -1620,19 +1475,17 @@ var
   CurrentIndex: Integer;
   TestResults: TZaryaTcpTestResults;
 begin
-  if not Assigned(FTestThread) then Exit;
-  if not FTestThread.IsDone then
+  if not FBackgroundOperations.ProfileTestRunning then Exit;
+  if not FBackgroundOperations.ProfileTestDone then
   begin
-    CurrentIndex := FTestThread.CurrentIndex;
+    CurrentIndex := FBackgroundOperations.ProfileTestCurrentIndex;
     if (CurrentIndex >= 0) and (CurrentIndex <= High(FProfiles)) then
       FStatusBar.SimpleText := Format('TCP ping %d/%d: %s',
         [CurrentIndex + 1, Length(FProfiles), FProfiles[CurrentIndex].Name]);
     Exit;
   end;
   FTestTimer.Enabled := False;
-  FTestThread.WaitFor;
-  TestResults := FTestThread.Results;
-  FreeAndNil(FTestThread);
+  if not FBackgroundOperations.TakeProfileTestResults(TestResults) then Exit;
   if SelectedProfileIndex >= 0 then
     SelectedId := FProfiles[SelectedProfileIndex].Id
   else
@@ -1671,212 +1524,23 @@ begin
     [SuccessCount, CompletedCount]);
 end;
 
-function SafeTestDirectoryPart(const AValue: string): string;
-var
-  I: Integer;
-begin
-  Result := AValue;
-  for I := 1 to Length(Result) do
-    if not (Result[I] in ['a'..'z', 'A'..'Z', '0'..'9', '-', '_']) then
-      Result[I] := '-';
-  if Result = '' then Result := 'profile';
-end;
-
 function TMainForm.BuildRealDelayItems(out AItems: TZaryaRealDelayWorkItems;
   out AError: string): Boolean;
-var
-  I, Count: Integer;
-  Profile: TZaryaProfile;
-  Provider: TZaryaCoreProvider;
-  ProviderId: string;
-  Adapter: IConfigAdapter;
-  Context: TZaryaConfigContext;
-  RuntimeRequest: TZaryaRuntimeRequest;
-  Config, ItemError, GeoError, MissingGeoData: string;
-  RoutingProfile: TZaryaRoutingProfile;
-  DnsProfile: TZaryaDnsProfile;
-  Item: TZaryaRealDelayWorkItem;
-  Ports: array[0..2] of Integer;
-
-  function AllocateDistinctPorts: Boolean;
-  var
-    Candidate: Integer;
-    PortIndex, Attempt: Integer;
-    Duplicate: Boolean;
-  begin
-    Result := False;
-    for PortIndex := 0 to High(Ports) do
-    begin
-      Ports[PortIndex] := 0;
-      for Attempt := 1 to 20 do
-      begin
-        if not AllocateLocalTcpUdpPort(Candidate, ItemError) then Exit;
-        Duplicate := (PortIndex > 0) and (Candidate = Ports[0]);
-        if PortIndex > 1 then
-          Duplicate := Duplicate or (Candidate = Ports[1]);
-        if not Duplicate then
-        begin
-          Ports[PortIndex] := Candidate;
-          Break;
-        end;
-      end;
-      if Ports[PortIndex] = 0 then
-      begin
-        ItemError := 'Could not allocate distinct local test ports.';
-        Exit;
-      end;
-    end;
-    Result := True;
-  end;
-
-  procedure FailItem(const AMessage: string);
-  begin
-    Item.Prepared := False;
-    Item.PreparationError := AMessage;
-  end;
-
 begin
-  Result := False;
-  AError := '';
-  AItems := nil;
-  RoutingProfile := ActiveRoutingProfile;
-  DnsProfile := ActiveDnsProfile;
-  MissingGeoData := '';
-  GeoError := '';
-  if Assigned(FGeoDataManager) and not FGeoDataManager.RequiredFilesPresent(
-    RoutingProfile, DnsProfile, MissingGeoData, GeoError) then
-  begin
-    if GeoError = '' then GeoError := 'Missing geo data: ' + MissingGeoData;
-  end;
-
-  Count := 0;
-  for I := 0 to High(FProfiles) do
-  begin
-    Profile := FProfiles[I];
-    if not Profile.Enabled or Profile.DeletedBySubscriptionUpdate then Continue;
-    Item := Default(TZaryaRealDelayWorkItem);
-    ItemError := '';
-    Item.ProfileId := Profile.Id;
-    Item.ProfileName := Profile.Name;
-    if GeoError <> '' then
-      FailItem(GeoError)
-    else
-    begin
-      ProviderId := Profile.PreferredProviderId;
-      if ProviderId = '' then
-        ProviderId := DefaultProviderForProtocol(Profile.ProtocolName);
-      if not FCoreRegistry.TryGet(ProviderId, Provider) then
-        FailItem('Provider ' + ProviderId + ' is not registered.')
-      else if not ProviderUsableForProfile(Provider, Profile) then
-        FailItem('Provider ' + ProviderId +
-          ' is unavailable or incompatible with the profile.')
-      else
-      begin
-        Config := '';
-        if Profile.RawConfig <> '' then
-        begin
-          if not IsDefaultRouting(RoutingProfile) or
-            not IsDefaultDns(DnsProfile) then
-            FailItem('Raw config requires Proxy All and System DNS.')
-          else if not ((SameText(Profile.SystemProxyKind, 'mixed')) or
-            SameText(Profile.SystemProxyKind, 'http') or
-            SameText(Profile.SystemProxyKind, 'socks')) then
-            FailItem('Raw profile needs an HTTP, mixed or SOCKS readiness endpoint.')
-          else
-            Config := Profile.RawConfig;
-          Context := Default(TZaryaConfigContext);
-          Context.MixedPort := Profile.ReadinessPort;
-          Context.HttpPort := Profile.ReadinessPort;
-          Context.SocksPort := Profile.ReadinessPort;
-        end
-        else if AllocateDistinctPorts then
-        begin
-          Context := Default(TZaryaConfigContext);
-          Context.MixedPort := Ports[0];
-          Context.HttpPort := Ports[1];
-          Context.SocksPort := Ports[2];
-          RuntimeRequest := CreateRuntimeRequest(Profile, Provider, Context);
-          RuntimeRequest.DataDirectory := ExtractFileDir(FProfileStore.FileName);
-          RuntimeRequest.AssetDirectory := FXrayAssetDirectory;
-          RuntimeRequest.RoutingProfile := RoutingProfile;
-          RuntimeRequest.DnsProfile := DnsProfile;
-          Adapter := CreateConfigAdapter(Provider);
-          if not Assigned(Adapter) then
-            FailItem('Provider has no registered config adapter.')
-          else if not Adapter.GenerateRequest(RuntimeRequest, Config,
-            ItemError) then
-            FailItem(ItemError);
-        end
-        else
-          FailItem(ItemError);
-
-        if (Config <> '') and (Item.PreparationError = '') then
-        begin
-          Item.Prepared := True;
-          Item.Request := Default(TZaryaNodeTestRequest);
-          Item.Request.SchemaVersion := 1;
-          Item.Request.Provider := Provider;
-          Item.Request.Config := Config;
-          Item.Request.DataDirectory := IncludeTrailingPathDelimiter(
-            ExtractFileDir(FProfileStore.FileName)) + 'runtime-tests' +
-            PathDelim + SafeTestDirectoryPart(Profile.Id);
-          Item.Request.AssetDirectory := Provider.AssetDirectory;
-          if Item.Request.AssetDirectory = '' then
-            Item.Request.AssetDirectory := FXrayAssetDirectory;
-          if Profile.RawConfig <> '' then
-          begin
-            Item.Request.ReadinessHost := Profile.ReadinessHost;
-            Item.Request.ReadinessPort := Profile.ReadinessPort;
-            Item.Request.ProxyKind := Profile.SystemProxyKind;
-          end
-          else
-          begin
-            Item.Request.ReadinessHost := '127.0.0.1';
-            case Provider.ReadinessKind of
-              rkMixedTcp:
-                begin
-                  Item.Request.ReadinessPort := Context.MixedPort;
-                  Item.Request.ProxyKind := 'mixed';
-                end;
-              rkHttpTcp:
-                begin
-                  Item.Request.ReadinessPort := Context.HttpPort;
-                  Item.Request.ProxyKind := 'http';
-                end;
-              rkSocksTcp:
-                begin
-                  Item.Request.ReadinessPort := Context.SocksPort;
-                  Item.Request.ProxyKind := 'socks';
-                end;
-            else
-              FailItem('Provider does not declare a testable local proxy endpoint.');
-            end;
-          end;
-          Item.Request.TestUrl := FAppSettings.RealDelayTestUrl;
-          Item.Request.TimeoutMs := FAppSettings.RealDelayTimeoutSeconds * 1000;
-        end;
-      end;
-    end;
-    SetLength(AItems, Count + 1);
-    AItems[Count] := Item;
-    Inc(Count);
-  end;
-  if Count = 0 then
-  begin
-    AError := 'Нет включённых профилей для Real delay.';
-    Exit;
-  end;
-  Result := True;
+  Result := FBackgroundOperations.BuildRealDelayItems(FProfiles,
+    FCoreRegistry, FRuntimeCoordinator, ActiveRoutingProfile,
+    ActiveDnsProfile, FGeoDataManager, FAppSettings,
+    ExtractFileDir(FProfileService.FileName), FXrayAssetDirectory,
+    AItems, AError);
 end;
-
 procedure TMainForm.RealDelayClick(Sender: TObject);
 var
   Items: TZaryaRealDelayWorkItems;
   ErrorMessage: string;
 begin
-  if Assigned(FRealDelayThread) then
+  if FBackgroundOperations.RealDelayRunning then
   begin
-    FRealDelayThread.RequestCancel;
+    FBackgroundOperations.CancelRealDelay;
     FRealDelayButton.Enabled := False;
     FStatusBar.SimpleText := 'Отмена Real delay…';
     Exit;
@@ -1886,7 +1550,7 @@ begin
     MessageDlg('Real delay', ErrorMessage, mtInformation, [mbOK], 0);
     Exit;
   end;
-  FRealDelayThread := TZaryaRealDelayBatchThread.Create(Items,
+  FBackgroundOperations.StartRealDelay(Items,
     FAppSettings.RealDelayConcurrency);
   FRealDelayButton.Caption := TZaryaTr.Tr('Отмена');
   FRealDelayTimer.Enabled := True;
@@ -1901,19 +1565,17 @@ var
   I, J, Completed, SuccessCount: Integer;
   CurrentNames, SelectedId: string;
 begin
-  if not Assigned(FRealDelayThread) then Exit;
-  if not FRealDelayThread.IsDone then
+  if not FBackgroundOperations.RealDelayRunning then Exit;
+  if not FBackgroundOperations.RealDelayDone then
   begin
-    Completed := FRealDelayThread.CompletedCount;
-    CurrentNames := FRealDelayThread.ProgressText;
+    Completed := FBackgroundOperations.RealDelayCompletedCount;
+    CurrentNames := FBackgroundOperations.RealDelayProgressText;
     FStatusBar.SimpleText := Format('Real delay %d/%d: %s',
-      [Completed, Length(FRealDelayThread.Results), CurrentNames]);
+      [Completed, FBackgroundOperations.RealDelayResultCount, CurrentNames]);
     Exit;
   end;
   FRealDelayTimer.Enabled := False;
-  FRealDelayThread.WaitFor;
-  Results := Copy(FRealDelayThread.Results);
-  FreeAndNil(FRealDelayThread);
+  if not FBackgroundOperations.TakeRealDelayResults(Results) then Exit;
   if SelectedProfileIndex >= 0 then SelectedId :=
     FProfiles[SelectedProfileIndex].Id else SelectedId := '';
   Completed := 0;
@@ -2163,8 +1825,9 @@ procedure TMainForm.SubscriptionsClick(Sender: TObject);
 var
   Dialog: TSubscriptionManagerDialog;
 begin
-  Dialog := TSubscriptionManagerDialog.Create(Self, FProfiles, FProfileStore,
-    ExtractFileDir(FProfileStore.FileName), @AppendLog);
+  Dialog := TSubscriptionManagerDialog.Create(Self, FProfiles,
+    FProfileService.Store, ExtractFileDir(FProfileService.FileName),
+    @AppendLog);
   try
     Dialog.ShowModal;
     if Dialog.ProfilesChanged then
@@ -2184,7 +1847,7 @@ var
   Candidate: TZaryaAppSettings;
   ErrorMessage: string;
 begin
-  if FRuntimeState <> rsStopped then
+  if FRuntimeCoordinator.State <> rsStopped then
   begin
     MessageDlg(TZaryaTr.Tr('Настройки'), TZaryaTr.Tr(
       'Остановите runtime перед изменением mixed-порта и системного прокси.',
@@ -2243,7 +1906,7 @@ var
   DnsProfiles: TZaryaDnsProfiles;
   RoutingId, DnsId: string;
 begin
-  if FRuntimeState <> rsStopped then
+  if FRuntimeCoordinator.State <> rsStopped then
   begin
     MessageDlg(TZaryaTr.Tr('Routing и DNS', 'Routing and DNS'), TZaryaTr.Tr(
       'Остановите runtime перед изменением активных политик.',
@@ -2286,7 +1949,7 @@ var
   I: Integer;
   CompatibleCount: Integer;
 begin
-  if FRuntimeState <> rsStopped then
+  if FRuntimeCoordinator.State <> rsStopped then
   begin
     MessageDlg(TZaryaTr.Tr('Ядра'), TZaryaTr.Tr(
       'Остановите runtime перед изменением ядер.',
@@ -2336,7 +1999,7 @@ var
   BackupDirectory: string;
   ErrorMessage: string;
 begin
-  DataDirectory := ExtractFileDir(FProfileStore.FileName);
+  DataDirectory := ExtractFileDir(FProfileService.FileName);
   BackupDirectory := IncludeTrailingPathDelimiter(
     ExtractFileDir(DataDirectory)) + 'backups';
   ForceDirectories(BackupDirectory);
@@ -2377,7 +2040,7 @@ var
   PreRestoreBackup: string;
   ErrorMessage: string;
 begin
-  if FRuntimeState <> rsStopped then
+  if FRuntimeCoordinator.State <> rsStopped then
   begin
     MessageDlg(TZaryaTr.Tr('Восстановление backup', 'Restore backup'),
       TZaryaTr.Tr('Сначала остановите активный runtime.',
@@ -2407,7 +2070,7 @@ begin
       LineEnding + LineEnding + 'Continue?'), mtConfirmation,
       [mbYes, mbNo], 0) <> mrYes then
       Exit;
-    DataDirectory := ExtractFileDir(FProfileStore.FileName);
+    DataDirectory := ExtractFileDir(FProfileService.FileName);
     if not RestoreZaryaBackup(Dialog.FileName, DataDirectory,
       PreRestoreBackup, ErrorMessage) then
     begin

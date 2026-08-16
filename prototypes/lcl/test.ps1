@@ -100,6 +100,7 @@ try {
         'TcpLatencyTest',
         'AutostartTest',
         'TranslationTest',
+        'ApplicationServicesTest',
         'CoreProviderTest',
         'ConfigAdapterTest',
         'ExternalProcessTest'

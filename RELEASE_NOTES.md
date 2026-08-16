@@ -1,3 +1,12 @@
+# Zarya 1.5.11
+
+Zarya 1.5.11 extracts the LCL runtime, profile, and background-operation
+services from `MainForm` without changing stable behavior.
+
+See [docs/release-notes/1.5.11.md](docs/release-notes/1.5.11.md) for details.
+
+---
+
 # Zarya 1.5.10
 
 Zarya 1.5.10 completes the LCL first-run and built-in EN/RU stable UI while
