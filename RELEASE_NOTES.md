@@ -1,3 +1,12 @@
+# Zarya 1.5.9
+
+Zarya 1.5.9 adds the LCL Windows settings and lifecycle foundation, including
+safe autostart of an existing compatible profile.
+
+See [docs/release-notes/1.5.9.md](docs/release-notes/1.5.9.md) for details.
+
+---
+
 # Zarya 1.5.8
 
 Zarya 1.5.8 hardens the LCL Qt-data migration, rollback, backup, and

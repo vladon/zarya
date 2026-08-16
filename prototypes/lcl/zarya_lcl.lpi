@@ -25,7 +25,7 @@
         <PackageName Value="LCL"/>
       </Item1>
     </RequiredPackages>
-    <Units Count="53">
+    <Units Count="54">
       <Unit0>
         <Filename Value="zarya_lcl.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -36,9 +36,9 @@
         <UnitName Value="MainForm"/>
       </Unit1>
       <Unit2>
-        <Filename Value="SettingsForm.pas"/>
+        <Filename Value="ZaryaSettingsForm.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="SettingsForm"/>
+        <UnitName Value="ZaryaSettingsForm"/>
       </Unit2>
       <Unit3>
         <Filename Value="ZaryaThemes.pas"/>
@@ -290,6 +290,11 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="ZaryaTr"/>
       </Unit52>
+      <Unit53>
+        <Filename Value="WindowsAutostart.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="WindowsAutostart"/>
+      </Unit53>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

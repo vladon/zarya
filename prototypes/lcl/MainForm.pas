@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ExtCtrls, StdCtrls,
-  ComCtrls, Grids, Menus, ZaryaThemes, SettingsForm, ZaryaProfile,
+  ComCtrls, Grids, Menus, ZaryaThemes, ZaryaSettingsForm, ZaryaProfile,
   ZaryaProfileStore, FpcProfileStore, ProfileForm, ImportVlessForm,
   XrayConfigForm, ZaryaShareLink, ZaryaAppSettings,
   ZaryaEmbeddedXray, ZaryaSystemProxy, WindowsSystemProxy, ZaryaTcpProbe,
@@ -15,7 +15,8 @@ uses
   ProviderChoiceForm, ZaryaFileIntegrity, ZaryaRuntimeContracts,
   ZaryaConfigAdapters, SubscriptionManagerForm, ZaryaTcpLatency,
   ZaryaBackup, ZaryaDiagnostics, ZaryaRouting, ZaryaDns, ZaryaPolicyStore,
-  FpcPolicyStore, PolicyManagerForm, ZaryaGeoData, GeoDataManagerForm;
+  FpcPolicyStore, PolicyManagerForm, ZaryaGeoData, GeoDataManagerForm,
+  WindowsAutostart;
 
 type
   TRuntimeState = (rsStopped, rsConnecting, rsRunning);
@@ -58,6 +59,7 @@ type
     FRoutingProfiles: TZaryaRoutingProfiles;
     FDnsProfiles: TZaryaDnsProfiles;
     FGeoDataManager: IGeoDataManager;
+    FAutostartManager: IAutostartManager;
     FEmbeddedXray: TZaryaEmbeddedXray;
     FCoreRegistry: TZaryaCoreProviderRegistry;
     FExternalProcess: IZaryaRuntimeProcess;
@@ -73,6 +75,7 @@ type
     FDarkTheme: Boolean;
     FMinimizeToTray: Boolean;
     FQuitting: Boolean;
+    FAutoStarting: Boolean;
     FStatusPanel: TPanel;
     FStateTitle: TLabel;
     FStateBadge: TPanel;
@@ -89,6 +92,7 @@ type
     FStatusBar: TStatusBar;
     FReadyTimer: TTimer;
     FTestTimer: TTimer;
+    FAutoStartTimer: TTimer;
     FTestThread: TProfileTcpTestThread;
     FTestButton: TButton;
     FTrayIcon: TTrayIcon;
@@ -100,6 +104,9 @@ type
     procedure BuildTray;
     procedure LoadAppSettings;
     procedure SaveAppSettings;
+    procedure ConfigureStartup;
+    procedure AutoStartTimerTick(Sender: TObject);
+    function AutoProxyEnabledForCurrentStart: Boolean;
     procedure LoadPolicies;
     function SavePolicies: Boolean;
     function ActiveRoutingProfile: TZaryaRoutingProfile;
@@ -245,6 +252,7 @@ begin
     IncludeTrailingPathDelimiter(ExtractFileDir(FProfileStore.FileName)) +
     'settings.ini');
   LoadAppSettings;
+  FAutostartManager := TWindowsAutostartManager.Create;
   FRoutingStore := TFpcRoutingProfileStore.Create(
     IncludeTrailingPathDelimiter(ExtractFileDir(FProfileStore.FileName)) +
     'routing.json');
@@ -286,6 +294,7 @@ begin
         [mbOK], 0);
     end;
   end;
+  ConfigureStartup;
 end;
 
 procedure TMainForm.LoadAppSettings;
@@ -309,6 +318,54 @@ begin
   if not FSettingsStore.Save(FAppSettings, ErrorMessage) then
     MessageDlg('Настройки', 'Не удалось сохранить settings.ini:' +
       LineEnding + ErrorMessage, mtError, [mbOK], 0);
+end;
+
+procedure TMainForm.ConfigureStartup;
+var
+  I: Integer;
+  DisableProfileAutostart: Boolean;
+begin
+  DisableProfileAutostart := False;
+  for I := 1 to ParamCount do
+    if SameText(ParamStr(I), '--no-autostart-profile') then
+      DisableProfileAutostart := True;
+  if DisableProfileAutostart or not FAppSettings.AutoStartLastProfile or
+    (Trim(FAppSettings.LastStartedProfileId) = '') then
+    Exit;
+  for I := 0 to High(FProfiles) do
+    if SameText(FProfiles[I].Id, FAppSettings.LastStartedProfileId) and
+      FProfiles[I].Enabled and not FProfiles[I].DeletedBySubscriptionUpdate then
+    begin
+      RefreshProfileGrid(FProfiles[I].Id);
+      FAutoStartTimer := TTimer.Create(Self);
+      FAutoStartTimer.Enabled := False;
+      FAutoStartTimer.Interval := FAppSettings.AutoStartDelaySeconds * 1000;
+      if FAutoStartTimer.Interval < 1 then
+        FAutoStartTimer.Interval := 1;
+      FAutoStartTimer.OnTimer := @AutoStartTimerTick;
+      FAutoStartTimer.Enabled := True;
+      AppendLog(Format('Auto-start of profile scheduled in %d second(s).',
+        [FAppSettings.AutoStartDelaySeconds]));
+      Exit;
+    end;
+  AppendLog('Configured auto-start profile is missing or disabled; skipped.');
+end;
+
+procedure TMainForm.AutoStartTimerTick(Sender: TObject);
+begin
+  FAutoStartTimer.Enabled := False;
+  FAutoStarting := True;
+  StartClick(Sender);
+  if FRuntimeState = rsStopped then
+    FAutoStarting := False;
+end;
+
+function TMainForm.AutoProxyEnabledForCurrentStart: Boolean;
+begin
+  if FAutoStarting then
+    Result := FAppSettings.AutoEnableSystemProxyAfterAutoStart
+  else
+    Result := FAppSettings.AutoEnableSystemProxy;
 end;
 
 procedure TMainForm.LoadPolicies;
@@ -482,6 +539,7 @@ begin
   AppendLog(AMessage);
   FActiveProfile := Default(TZaryaProfile);
   FActiveProvider := Default(TZaryaCoreProvider);
+  FAutoStarting := False;
   UpdateRuntimeSurface;
   MessageDlg('Runtime provider', AMessage, mtError, [mbOK], 0);
 end;
@@ -530,6 +588,7 @@ begin
   FRuntimeState := rsStopped;
   FActiveProfile := Default(TZaryaProfile);
   FActiveProvider := Default(TZaryaCoreProvider);
+  FAutoStarting := False;
   if Assigned(FStatusBar) then
     UpdateRuntimeSurface;
 end;
@@ -550,6 +609,7 @@ begin
   FRoutingStore := nil;
   FDnsStore := nil;
   FGeoDataManager := nil;
+  FAutostartManager := nil;
   FProfileStore := nil;
   inherited Destroy;
 end;
@@ -1393,6 +1453,8 @@ begin
     end;
   end;
   FRuntimeState := rsConnecting;
+  FAppSettings.LastStartedProfileId := FProfiles[Index].Id;
+  SaveAppSettings;
   FReadyDeadline := GetTickCount64 + 5000;
   FReadyTimer.Interval := 100;
   AppendLog(Format('Waiting for local endpoint %s:%d before enabling system proxy…',
@@ -1412,6 +1474,7 @@ end;
 procedure TMainForm.ReadyTimerTimer(Sender: TObject);
 var
   ErrorMessage: string;
+  EnableSystemProxy: Boolean;
 begin
   DrainRuntimeLogs;
   if not ActiveRuntimeIsRunning then
@@ -1426,7 +1489,8 @@ begin
       AppendLog('Declared local endpoint accepted a connection; runtime is ready.');
       FRuntimeState := rsRunning;
       FReadyTimer.Interval := 200;
-      if FAppSettings.AutoEnableSystemProxy and
+      EnableSystemProxy := AutoProxyEnabledForCurrentStart;
+      if EnableSystemProxy and
         (SameText(FActiveSystemProxyKind, 'mixed') or
          SameText(FActiveSystemProxyKind, 'http') or
          SameText(FActiveSystemProxyKind, 'socks')) then
@@ -1441,13 +1505,14 @@ begin
           MessageDlg('Системный прокси', ErrorMessage, mtWarning, [mbOK], 0);
         end;
       end
-      else if not FAppSettings.AutoEnableSystemProxy then
+      else if not EnableSystemProxy then
         AppendLog('Automatic system proxy activation is disabled.');
-      if FAppSettings.AutoEnableSystemProxy and
+      if EnableSystemProxy and
         not (SameText(FActiveSystemProxyKind, 'mixed') or
              SameText(FActiveSystemProxyKind, 'http') or
              SameText(FActiveSystemProxyKind, 'socks')) then
         AppendLog('System proxy was not enabled: this profile does not expose a supported local proxy endpoint.');
+      FAutoStarting := False;
       UpdateRuntimeSurface;
     end
     else if GetTickCount64 >= FReadyDeadline then
@@ -1465,6 +1530,7 @@ begin
       FRuntimeState := rsStopped;
       FActiveProfile := Default(TZaryaProfile);
       FActiveProvider := Default(TZaryaCoreProvider);
+      FAutoStarting := False;
       AppendLog('Local runtime endpoint did not become ready; system proxy remains off.');
       UpdateRuntimeSurface;
       MessageDlg('Runtime provider',
@@ -1786,7 +1852,9 @@ end;
 
 procedure TMainForm.SettingsClick(Sender: TObject);
 var
-  Dialog: TSettingsDialog;
+  Dialog: TZaryaSettingsDialog;
+  Candidate: TZaryaAppSettings;
+  ErrorMessage: string;
 begin
   if FRuntimeState <> rsStopped then
   begin
@@ -1795,23 +1863,42 @@ begin
       mtInformation, [mbOK], 0);
     Exit;
   end;
-  Dialog := TSettingsDialog.Create(Self, FDarkTheme, FMinimizeToTray,
-    FAppSettings.MixedPort, FAppSettings.AutoEnableSystemProxy,
-    FAppSettings.RestoreSystemProxy);
+  Dialog := TZaryaSettingsDialog.Create(Self, FAppSettings);
   try
     if Dialog.ShowModal = mrOk then
     begin
-      FDarkTheme := Dialog.DarkThemeSelected;
-      FMinimizeToTray := Dialog.MinimizeToTraySelected;
-      FAppSettings.DarkTheme := FDarkTheme;
-      FAppSettings.MinimizeToTray := FMinimizeToTray;
-      FAppSettings.MixedPort := Dialog.MixedPortSelected;
-      FAppSettings.AutoEnableSystemProxy :=
-        Dialog.AutoEnableSystemProxySelected;
-      FAppSettings.RestoreSystemProxy := Dialog.RestoreSystemProxySelected;
+      Candidate := FAppSettings;
+      Dialog.ApplyTo(Candidate);
+      if Candidate.StartAtLogin then
+      begin
+        if Candidate.StartMinimizedToTray then
+        begin
+          if not FAutostartManager.SetEnabled(True, ExpandFileName(ParamStr(0)),
+            ['--minimized'], ErrorMessage) then
+          begin
+            MessageDlg('Автозапуск', ErrorMessage, mtError, [mbOK], 0);
+            Exit;
+          end;
+        end
+        else if not FAutostartManager.SetEnabled(True,
+          ExpandFileName(ParamStr(0)), [], ErrorMessage) then
+        begin
+          MessageDlg('Автозапуск', ErrorMessage, mtError, [mbOK], 0);
+          Exit;
+        end;
+      end
+      else if not FAutostartManager.SetEnabled(False,
+        ExpandFileName(ParamStr(0)), [], ErrorMessage) then
+      begin
+        MessageDlg('Автозапуск', ErrorMessage, mtError, [mbOK], 0);
+        Exit;
+      end;
+      FAppSettings := Candidate;
+      FDarkTheme := FAppSettings.DarkTheme;
+      FMinimizeToTray := FAppSettings.MinimizeToTray;
       SaveAppSettings;
       ApplyCurrentTheme;
-      AppendLog('Interface settings applied.');
+      AppendLog('Application settings applied.');
     end;
   finally
     Dialog.Free;
