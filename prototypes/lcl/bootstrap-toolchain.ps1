@@ -18,7 +18,7 @@ $lazarusInstaller = Join-Path $downloadDir `
 $winlibsArchive = Join-Path $downloadDir `
     'winlibs-x86_64-posix-seh-gcc-16.1.0-mingw-w64ucrt-14.0.0-r2.zip'
 
-$lazarusUrl = 'https://sourceforge.net/projects/lazarus/files/Lazarus%20Windows%2064%20bits/Lazarus%204.8/lazarus-4.8-fpc-3.2.2-win64.exe/download'
+$lazarusUrl = 'https://download.lazarus-ide.org/Lazarus%20Windows%2064%20bits/Lazarus%204.8/lazarus-4.8-fpc-3.2.2-win64.exe'
 $lazarusSha256 = 'ed25ee171d55e23cf14e0633159fdd2325efba56e186f8ab817ad3bf97d267d7'
 $winlibsUrl = 'https://github.com/brechtsanders/winlibs_mingw/releases/download/16.1.0posix-14.0.0-ucrt-r2/winlibs-x86_64-posix-seh-gcc-16.1.0-mingw-w64ucrt-14.0.0-r2.zip'
 $winlibsSha256 = '78eff1e2e804b6a6320c713f084b8f820c662104a24cea6a3bfcab82032bdd60'
