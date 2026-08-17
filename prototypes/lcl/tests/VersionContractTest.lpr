@@ -11,7 +11,7 @@ begin
 end;
 
 var
-  ZaryaPath, CMakePath, OutputText: string;
+  ZaryaPath, CMakePath, LpiPath, OutputText: string;
   Child: TProcess;
   Lines: TStringList;
 begin
@@ -46,6 +46,25 @@ begin
     Lines.LoadFromFile(CMakePath);
     Check(Pos('set(ZARYA_VERSION_STRING "' + ZaryaVersionString + '")',
       Lines.Text) > 0, 'Pascal and CMake versions drifted.');
+  finally
+    Lines.Free;
+  end;
+
+  LpiPath := ExpandFileName(IncludeTrailingPathDelimiter(
+    ExtractFileDir(ParamStr(0))) + '..' + PathDelim + '..' + PathDelim +
+    'zarya_lcl.lpi');
+  Check(FileExists(LpiPath), 'LPI project file is missing.');
+  Lines := TStringList.Create;
+  try
+    Lines.LoadFromFile(LpiPath);
+    Check(Pos('<MajorVersionNr Value="' + IntToStr(ZaryaVersionMajor) + '"/>',
+      Lines.Text) > 0, 'LPI MajorVersionNr drifted.');
+    Check(Pos('<MinorVersionNr Value="' + IntToStr(ZaryaVersionMinor) + '"/>',
+      Lines.Text) > 0, 'LPI MinorVersionNr drifted.');
+    Check(Pos('<RevisionNr Value="' + IntToStr(ZaryaVersionPatch) + '"/>',
+      Lines.Text) > 0, 'LPI RevisionNr drifted.');
+    Check(Pos('ProductVersion="' + ZaryaVersionString + '"',
+      Lines.Text) > 0, 'LPI ProductVersion drifted.');
   finally
     Lines.Free;
   end;
