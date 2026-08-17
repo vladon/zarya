@@ -75,6 +75,67 @@ def find_staging_root(extracted: Path) -> Path:
     return extracted
 
 
+def list_zip_entries(artifact: Path) -> list[str]:
+    """Return the raw entry names of a ZIP archive without extracting it."""
+    import zipfile
+
+    with zipfile.ZipFile(artifact) as archive:
+        return [entry.replace("\\", "/") for entry in archive.namelist()]
+
+
+def verify_windows_lcl_single_exe(artifact: Path, extracted: Path) -> list[str]:
+    """Strict Windows LCL cutover contract.
+
+    The Windows artifact is a single-file LCL build: the ZIP root must
+    contain exactly ``Zarya.exe`` and ``Zarya.exe.sha256``. No DLLs, no
+    nested directories, nothing else.
+    """
+    errors: list[str] = []
+    if artifact.suffix != ".zip":
+        return [f"--windows-lcl-single-exe requires a .zip artifact, got {artifact.name}"]
+
+    entries = list_zip_entries(artifact)
+    if len(entries) != 2:
+        errors.append(
+            "LCL single-EXE ZIP must contain exactly 2 entries; "
+            f"found {len(entries)}: {', '.join(sorted(entries))}"
+        )
+    for name in entries:
+        if "/" in name.rstrip("/"):
+            errors.append(f"nested directory entry is not allowed in LCL ZIP: {name}")
+        if name.endswith("/"):
+            errors.append(f"directory entry is not allowed in LCL ZIP: {name}")
+    normalized = {name.rstrip("/") for name in entries}
+    allowed = {"Zarya.exe", "Zarya.exe.sha256"}
+    extra = sorted(normalized - allowed)
+    missing = sorted(allowed - normalized)
+    if extra:
+        errors.append(f"unexpected file(s) in LCL ZIP root: {', '.join(extra)}")
+    if missing:
+        errors.append(f"missing file(s) in LCL ZIP root: {', '.join(missing)}")
+    if extra or missing:
+        return errors
+
+    root = find_staging_root(extracted)
+    exe = root / "Zarya.exe"
+    checksum = root / "Zarya.exe.sha256"
+    if not exe.is_file():
+        errors.append("Zarya.exe is missing from the extracted LCL ZIP")
+        return errors
+    if checksum.is_file():
+        text = checksum.read_text(encoding="utf-8", errors="replace").strip()
+        parts = text.split()
+        recorded = parts[0] if parts else ""
+        actual = sha256_file(exe)
+        if not recorded:
+            errors.append("Zarya.exe.sha256 is empty")
+        elif recorded.lower() != actual.lower():
+            errors.append("Zarya.exe.sha256 does not match Zarya.exe")
+    else:
+        errors.append("Zarya.exe.sha256 is missing from the extracted LCL ZIP")
+    return errors
+
+
 def load_manifest(staging: Path) -> dict | None:
     manifest = staging / "release-manifest.json"
     if not manifest.is_file():
@@ -526,6 +587,16 @@ def main() -> int:
         dest="stable_release",
         help="Verify stable release docs, channel defaults, release notes, and stable-scope gating",
     )
+    parser.add_argument(
+        "--windows-lcl-single-exe",
+        action="store_true",
+        dest="windows_lcl_single_exe",
+        help=(
+            "Strict Windows LCL cutover contract: the ZIP root must contain "
+            "exactly Zarya.exe and Zarya.exe.sha256, with no DLLs and no "
+            "nested directories"
+        ),
+    )
     args = parser.parse_args()
 
     if args.require_signed and args.allow_unsigned:
@@ -563,7 +634,32 @@ def main() -> int:
         staging = find_staging_root(temp_dir)
         content = artifact_content_root(staging)
         errors.extend(verify_forbidden_files(staging))
+        if args.windows_lcl_single_exe:
+            # Strict single-EXE LCL contract: exactly two root files, inner
+            # checksum, and (optionally) Authenticode on Zarya.exe. The flat
+            # LCL ZIP intentionally has no release-manifest.json or bundled
+            # docs, so the Qt-oriented manifest/doc checks do not apply.
+            errors.extend(verify_windows_lcl_single_exe(artifact, temp_dir))
+            if not errors and args.require_signed:
+                signtool = _find_signtool()
+                if not signtool:
+                    errors.append(
+                        "Windows Authenticode verification failed: signtool not available"
+                    )
+                else:
+                    exe = staging / "Zarya.exe"
+                    proc = subprocess.run(
+                        [signtool, "verify", "/pa", "/all", "/tw", "/v", str(exe)],
+                        capture_output=True,
+                        text=True,
+                    )
+                    if proc.returncode != 0:
+                        errors.append(
+                            "Windows Authenticode verification failed: "
+                            "Zarya.exe is unsigned or the signature is invalid"
+                        )
         if args.public_beta or args.release_candidate or args.stable_release:
+
             errors.extend(verify_public_beta_docs(content))
             errors.extend(verify_installer_docs(content))
             errors.extend(verify_updater_docs(content))
@@ -594,9 +690,9 @@ def main() -> int:
                     f"expected stable version {cmake_version} from cmake, got {expected_version}"
                 )
         manifest = load_manifest(staging)
-        if manifest is None:
+        if manifest is None and not args.windows_lcl_single_exe:
             errors.append("release-manifest.json is missing")
-        else:
+        elif manifest is not None:
             if manifest.get("version") != expected_version:
                 errors.append(
                     f"version mismatch: expected {expected_version}, found {manifest.get('version')}"
