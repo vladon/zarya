@@ -47,9 +47,12 @@ backup, staging-преобразования и полной проверки. L
    release gate на чистых Windows 10/11 x64.
 3. Завершить ручную DPI 100/150/200%, tab order, keyboard navigation и
    screen-reader проверку нативных форм.
-4. Поставить контрольный тег последней Windows Qt-версии, отдельным PR
-   переключить Windows packaging на LCL и ещё одним удалить Windows Qt/lib_ui
-   targets. Linux/macOS Qt пока оставить.
+4. Поставить контрольный тег последней Windows Qt-версии
+   (`windows-qt-final-1.5.12`), отдельным PR переключить Windows packaging на
+   LCL и ещё одним удалить Windows Qt/lib_ui targets. Linux/macOS Qt пока
+   оставить. С версии 1.5.13 Windows CI/release и SignPath уже работают по
+   LCL-контракту: ровно `Zarya.exe` + `Zarya.exe.sha256` в корне ZIP
+   (`--windows-lcl-single-exe`), подписывается только `Zarya.exe`.
 5. После cutover отдельно развивать gated embedded sing-box, TUN,
    helper/service, kill switch и self-update.
 

@@ -17,14 +17,42 @@ Checksum sidecars:
 - `<artifact>.sha256`
 - `SHA256SUMS.txt` in the output directory
 
-## Windows portable ZIP
+## Windows portable ZIP (LCL single-EXE cutover contract)
+
+Since the Windows LCL cutover, Windows release artifacts are built from the
+pinned LCL toolchain, not from Qt/lib_ui:
 
 ```powershell
-.\scripts\package-windows.ps1 -Configuration Release -OutputDir .\dist
-.\scripts\smoke-windows.ps1 -ArtifactDir .\dist
+.\prototypes\lcl\build.ps1
+.\prototypes\lcl\test.ps1
+.\prototypes\lcl\package.ps1
 ```
 
-Layout inside the ZIP:
+Layout inside the ZIP (exactly two files at the root, no nested directories,
+no DLLs):
+
+```
+Zarya.exe
+Zarya.exe.sha256
+```
+
+Verification enforces the strict contract:
+
+```powershell
+python scripts\verify-release-artifacts.py `
+  --artifact prototypes/lcl/dist/Zarya-<version>-windows-x64-portable.zip `
+  --expected-version <version> `
+  --windows-lcl-single-exe --require-checksum --allow-unsigned
+```
+
+Add `--require-signed` (used by `scripts/finalize-signpath-windows.ps1`) to
+fail closed unless `Zarya.exe` carries a valid, timestamped Authenticode
+signature. The active SignPath configuration signs only `Zarya.exe`; helper,
+updater, worker, and bridge binaries are no longer part of the Windows
+package.
+
+The legacy Qt layout below applies to Windows artifacts built before the
+cutover (tag `windows-qt-final-1.5.12`) and to Linux/macOS packages:
 
 ```
 Zarya-<version>-windows-x64-portable/
@@ -51,7 +79,8 @@ Zarya-<version>-windows-x64-portable/
   RELEASE_NOTES.md
 ```
 
-`windeployqt` is used when available (shared Qt builds). Static Qt builds ship a single `Zarya.exe` without separate Qt DLLs.
+Static Qt builds of that legacy layout ship a single `Zarya.exe` without separate Qt DLLs.
+
 
 ## macOS app bundle
 
