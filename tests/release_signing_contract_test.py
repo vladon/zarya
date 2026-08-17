@@ -163,5 +163,163 @@ class ReleaseSigningContractTest(unittest.TestCase):
         self.assertIn("Privacy", policy)
 
 
+def make_lcl_zip(temp: Path, name: str, files: dict[str, bytes]) -> Path:
+    import zipfile
+
+    artifact = temp / name
+    with zipfile.ZipFile(artifact, "w", zipfile.ZIP_DEFLATED) as archive:
+        for entry, payload in files.items():
+            archive.writestr(entry, payload)
+    return artifact
+
+
+class WindowsLclSingleExeContractTest(unittest.TestCase):
+    """Negative packaging/signing tests for the LCL single-EXE ZIP."""
+
+    GOOD_EXE = b"MZ" + b"\x00" * 64
+
+    def setUp(self) -> None:
+        import hashlib
+
+        self._temp = tempfile.TemporaryDirectory()
+        self.temp = Path(self._temp.name)
+        self.good_digest = hashlib.sha256(self.GOOD_EXE).hexdigest()
+
+    def tearDown(self) -> None:
+        self._temp.cleanup()
+
+    def extract(self, artifact: Path) -> Path:
+        dest = self.temp / "extracted"
+        VERIFIER.extract_zip(artifact, dest)
+        return dest
+
+    def good_zip(self) -> Path:
+        return make_lcl_zip(
+            self.temp,
+            "good.zip",
+            {
+                "Zarya.exe": self.GOOD_EXE,
+                "Zarya.exe.sha256": f"{self.good_digest} *Zarya.exe\n".encode(),
+            },
+        )
+
+    def test_valid_two_file_zip_passes(self) -> None:
+        artifact = self.good_zip()
+        errors = VERIFIER.verify_windows_lcl_single_exe(
+            artifact, self.extract(artifact)
+        )
+        self.assertEqual(errors, [])
+
+    def test_zip_with_extra_file_fails(self) -> None:
+        artifact = make_lcl_zip(
+            self.temp,
+            "extra.zip",
+            {
+                "Zarya.exe": self.GOOD_EXE,
+                "Zarya.exe.sha256": f"{self.good_digest} *Zarya.exe\n".encode(),
+                "extra.dll": b"dll payload",
+            },
+        )
+        errors = VERIFIER.verify_windows_lcl_single_exe(
+            artifact, self.extract(artifact)
+        )
+        self.assertTrue(errors)
+        self.assertTrue(
+            any("extra.dll" in error for error in errors), errors
+        )
+
+    def test_zip_with_dll_renamed_as_exe_partner_fails(self) -> None:
+        artifact = make_lcl_zip(
+            self.temp,
+            "nested.zip",
+            {
+                "Zarya.exe": self.GOOD_EXE,
+                "Zarya.exe.sha256": f"{self.good_digest} *Zarya.exe\n".encode(),
+                "lib/zarya-xray.dll": b"dll payload",
+            },
+        )
+        errors = VERIFIER.verify_windows_lcl_single_exe(
+            artifact, self.extract(artifact)
+        )
+        self.assertTrue(
+            any("nested directory" in error for error in errors), errors
+        )
+
+    def test_zip_without_sha256_sidecar_fails(self) -> None:
+        artifact = make_lcl_zip(
+            self.temp, "no-sha.zip", {"Zarya.exe": self.GOOD_EXE}
+        )
+        errors = VERIFIER.verify_windows_lcl_single_exe(
+            artifact, self.extract(artifact)
+        )
+        self.assertTrue(errors)
+        self.assertTrue(
+            any("Zarya.exe.sha256" in error for error in errors), errors
+        )
+
+    def test_mismatched_sha256_fails(self) -> None:
+        artifact = make_lcl_zip(
+            self.temp,
+            "bad-sha.zip",
+            {
+                "Zarya.exe": self.GOOD_EXE,
+                "Zarya.exe.sha256": f"{'0' * 64} *Zarya.exe\n".encode(),
+            },
+        )
+        errors = VERIFIER.verify_windows_lcl_single_exe(
+            artifact, self.extract(artifact)
+        )
+        self.assertTrue(
+            any("does not match" in error for error in errors), errors
+        )
+
+    def _run_main_require_signed(self, artifact: Path, signtool_result):
+        import sys
+
+        argv = [
+            "verify-release-artifacts.py",
+            "--artifact",
+            str(artifact),
+            "--windows-lcl-single-exe",
+            "--require-signed",
+        ]
+        with mock.patch.object(
+            VERIFIER, "_find_signtool", return_value="signtool"
+        ), mock.patch.object(
+            VERIFIER.subprocess, "run", return_value=signtool_result
+        ) as run, mock.patch.object(sys, "argv", argv):
+            return VERIFIER.main(), run
+
+    def test_unsigned_exe_fails_require_signed_mode(self) -> None:
+        artifact = self.good_zip()
+        unsigned = SimpleNamespace(returncode=1, stdout="", stderr="")
+        exit_code, run = self._run_main_require_signed(artifact, unsigned)
+        self.assertEqual(exit_code, 1)
+        self.assertEqual(run.call_count, 1)
+        self.assertIn("Zarya.exe", str(run.call_args.args[0]))
+
+    def test_tampered_exe_fails_require_signed_mode(self) -> None:
+        # A signature over a different payload must fail closed even when the
+        # ZIP layout itself is valid: signtool rejects the modified EXE.
+        payload = self.GOOD_EXE + b"tampered"
+        import hashlib
+
+        artifact = make_lcl_zip(
+            self.temp,
+            "tampered.zip",
+            {
+                "Zarya.exe": payload,
+                "Zarya.exe.sha256": (
+                    f"{hashlib.sha256(payload).hexdigest()} *Zarya.exe\n".encode()
+                ),
+            },
+        )
+        broken = SimpleNamespace(returncode=1, stdout="", stderr="")
+        exit_code, _run = self._run_main_require_signed(artifact, broken)
+        self.assertEqual(exit_code, 1)
+
+
+
+
 if __name__ == "__main__":
     unittest.main()
