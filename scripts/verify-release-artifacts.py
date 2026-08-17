@@ -83,7 +83,9 @@ def list_zip_entries(artifact: Path) -> list[str]:
         return [entry.replace("\\", "/") for entry in archive.namelist()]
 
 
-def verify_windows_lcl_single_exe(artifact: Path, extracted: Path) -> list[str]:
+def verify_windows_lcl_single_exe(
+    artifact: Path, extracted: Path, expected_version: str | None = None
+) -> list[str]:
     """Strict Windows LCL cutover contract.
 
     The Windows artifact is a single-file LCL build: the ZIP root must
@@ -133,6 +135,14 @@ def verify_windows_lcl_single_exe(artifact: Path, extracted: Path) -> list[str]:
             errors.append("Zarya.exe.sha256 does not match Zarya.exe")
     else:
         errors.append("Zarya.exe.sha256 is missing from the extracted LCL ZIP")
+    if expected_version:
+        ok, output = run_version_check(exe, gui=True)
+        if not ok:
+            errors.append(f"Zarya.exe --version failed: {output}")
+        elif expected_version not in output:
+            errors.append(
+                f"Zarya.exe --version does not report {expected_version}: {output}"
+            )
     return errors
 
 

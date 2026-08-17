@@ -205,9 +205,14 @@ class WindowsLclSingleExeContractTest(unittest.TestCase):
 
     def test_valid_two_file_zip_passes(self) -> None:
         artifact = self.good_zip()
-        errors = VERIFIER.verify_windows_lcl_single_exe(
-            artifact, self.extract(artifact)
-        )
+        with mock.patch.object(
+            VERIFIER,
+            "run_version_check",
+            return_value=(True, "Zarya 1.5.13"),
+        ):
+            errors = VERIFIER.verify_windows_lcl_single_exe(
+                artifact, self.extract(artifact), "1.5.13"
+            )
         self.assertEqual(errors, [])
 
     def test_zip_with_extra_file_fails(self) -> None:
@@ -287,7 +292,11 @@ class WindowsLclSingleExeContractTest(unittest.TestCase):
             VERIFIER, "_find_signtool", return_value="signtool"
         ), mock.patch.object(
             VERIFIER.subprocess, "run", return_value=signtool_result
-        ) as run, mock.patch.object(sys, "argv", argv):
+        ) as run, mock.patch.object(
+            VERIFIER,
+            "run_version_check",
+            return_value=(True, "Zarya 1.5.13"),
+        ), mock.patch.object(sys, "argv", argv):
             return VERIFIER.main(), run
 
     def test_unsigned_exe_fails_require_signed_mode(self) -> None:

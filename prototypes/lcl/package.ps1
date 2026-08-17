@@ -57,4 +57,10 @@ try {
 finally {
     $zip.Dispose()
 }
+
+# Outer checksum sidecar consumed by verify-release-artifacts.py
+# --require-checksum and by release tooling.
+$zipDigest = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+Set-Content -LiteralPath ($archive + '.sha256') -Encoding ascii -NoNewline `
+    -Value "$zipDigest $((Split-Path -Leaf $archive))`n"
 Write-Host "Packaged: $archive"
