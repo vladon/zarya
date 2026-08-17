@@ -149,6 +149,9 @@ class ReleaseSigningContractTest(unittest.TestCase):
         self.assertIn("SignPath Foundation", finalizer)
         # Fail closed: the finalizer must not warn its way past a bad package.
         self.assertNotIn("Write-Warning", finalizer)
+        # The Qt-era multi-file smoke gate (LICENSE, helper, updater, bridges)
+        # does not apply to the flat LCL single-EXE ZIP and must not run there.
+        self.assertNotIn('"scripts\\smoke-package.py"', finalizer)
 
     def test_public_policy_contains_foundation_requirements(self) -> None:
         policy = (ROOT / "docs" / "signing" / "code-signing-policy.md").read_text(

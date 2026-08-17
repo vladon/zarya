@@ -110,10 +110,10 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
-& python (Join-Path $Root "scripts\smoke-package.py") --artifact $ZipPath
-if ($LASTEXITCODE -ne 0) {
-    exit $LASTEXITCODE
-}
+# The Qt-era multi-file smoke gate (LICENSE, translations, helper/updater,
+# bridges) cannot pass for the flat single-EXE LCL contract. The strict
+# --windows-lcl-single-exe verification below is the authoritative fail-closed
+# gate for this artifact.
 & python (Join-Path $Root "scripts\verify-release-artifacts.py") `
     --artifact $ZipPath `
     --expected-version $Version `
