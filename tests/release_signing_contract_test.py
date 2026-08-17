@@ -111,14 +111,14 @@ class ReleaseSigningContractTest(unittest.TestCase):
                 updated["checksums"]["cores/xray/xray.exe"], "sha256:unchanged"
             )
 
-    def test_signpath_configuration_signs_only_zarya_binaries(self) -> None:
+    def test_signpath_configuration_signs_only_zarya_exe(self) -> None:
         config = ROOT / ".signpath" / "artifact-configuration.xml"
         tree = ElementTree.parse(config)
         namespace = {"s": "http://signpath.io/artifact-configuration/v1"}
         files = tree.findall(".//s:pe-file", namespace)
         self.assertEqual(
             {item.attrib["path"] for item in files},
-            {"Zarya.exe", "zarya-helper.exe", "zarya-updater.exe", "zarya-core-test-worker.exe", "zarya-xray.dll"},
+            {"Zarya.exe"},
         )
         for item in files:
             self.assertEqual(item.attrib["product-name"], "Zarya")
@@ -145,7 +145,10 @@ class ReleaseSigningContractTest(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn("--require-signed", finalizer)
+        self.assertIn("--windows-lcl-single-exe", finalizer)
         self.assertIn("SignPath Foundation", finalizer)
+        # Fail closed: the finalizer must not warn its way past a bad package.
+        self.assertNotIn("Write-Warning", finalizer)
 
     def test_public_policy_contains_foundation_requirements(self) -> None:
         policy = (ROOT / "docs" / "signing" / "code-signing-policy.md").read_text(

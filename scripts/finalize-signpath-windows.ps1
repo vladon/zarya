@@ -25,7 +25,7 @@ if ((Split-Path -Leaf $Staging) -ne $ArtifactBase) {
     throw "Signed staging directory must be named $ArtifactBase"
 }
 
-$RequiredExecutables = @("Zarya.exe", "zarya-helper.exe", "zarya-updater.exe", "zarya-core-test-worker.exe", "zarya-xray.dll", "zarya-singbox.dll")
+$RequiredExecutables = @("Zarya.exe")
 $Signtool = Get-Command signtool -ErrorAction SilentlyContinue
 if (-not $Signtool) {
     $SdkSigntool = @(
@@ -97,7 +97,14 @@ $ZipPath = Join-Path $DistDir "$ArtifactBase.zip"
 if (Test-Path -LiteralPath $ZipPath) {
     Remove-Item -LiteralPath $ZipPath -Force
 }
-Compress-Archive -Path $Staging -DestinationPath $ZipPath
+# Flat single-EXE contract: the ZIP root contains exactly Zarya.exe and its
+# refreshed checksum sidecar. Compress-Archive on the directory would add a
+# nested root folder, which the LCL verifier rejects.
+$SignedExe = Join-Path $Staging "Zarya.exe"
+$InnerChecksum = $SignedExe + ".sha256"
+$SignedDigest = (Get-FileHash -LiteralPath $SignedExe -Algorithm SHA256).Hash.ToLowerInvariant()
+Set-Content -LiteralPath $InnerChecksum -Encoding ascii -NoNewline -Value "$SignedDigest *Zarya.exe`n"
+Compress-Archive -LiteralPath $SignedExe,$InnerChecksum -DestinationPath $ZipPath
 python -c "import sys; sys.path.insert(0, r'$Root\scripts'); from pathlib import Path; from release_common import write_checksum_sidecars; write_checksum_sidecars(Path(r'$DistDir'), Path(r'$ZipPath'))"
 if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
@@ -110,7 +117,7 @@ if ($LASTEXITCODE -ne 0) {
 & python (Join-Path $Root "scripts\verify-release-artifacts.py") `
     --artifact $ZipPath `
     --expected-version $Version `
-    --stable-release `
+    --windows-lcl-single-exe `
     --require-checksum `
     --require-signed
 if ($LASTEXITCODE -ne 0) {
