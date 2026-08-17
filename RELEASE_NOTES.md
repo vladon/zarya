@@ -1,3 +1,13 @@
+# Zarya 1.5.13
+
+Zarya 1.5.13 prepares the Windows LCL cutover: Windows CI/release jobs build
+the single-file LCL artifact, strict two-file packaging verification is
+enforced, and SignPath signs only `Zarya.exe` with fail-closed checks.
+
+See [docs/release-notes/1.5.13.md](docs/release-notes/1.5.13.md) for details.
+
+---
+
 # Zarya 1.5.12
 
 Zarya 1.5.12 adds reproducible LCL Windows release engineering, a pinned
