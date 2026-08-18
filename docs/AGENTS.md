@@ -14,6 +14,7 @@ Design and release documentation. Prefer updating the doc that owns the topic ra
 | App updater | `updater/` |
 | Signing | `signing/` |
 | Feature designs | `tun-design.md`, `kill-switch-design.md`, `privileged-helper-design.md`, … |
+| Session handoff (Windows LCL cutover, 2026-08-17) | `agent-handoff-2026-08-17-lcl-cutover.md` |
 | Session handoff (lib_ui + static Qt, 2026-07-28) | `agent-handoff-2026-07-28-libui-static-qt.md` |
 
 ## Rules

@@ -76,6 +76,39 @@ $pascalVersion = $Matches[1]
 if ($pascalVersion -ne $expectedVersion) {
     throw "Version contract mismatch: CMake=$expectedVersion Pascal=$pascalVersion"
 }
+if ($expectedVersion -notmatch '^(\d+)\.(\d+)\.(\d+)') {
+    throw "Unexpected CMake version format: $expectedVersion"
+}
+$expectedMajor = $Matches[1]
+$expectedMinor = $Matches[2]
+$expectedPatch = $Matches[3]
+$lpiVersionFile = Join-Path $projectDir 'zarya_lcl.lpi'
+$lpiVersionText = Get-Content -LiteralPath $lpiVersionFile -Raw
+if ($lpiVersionText -notmatch '<MajorVersionNr\s+Value="(\d+)"') {
+    throw 'Could not read the LPI major version (MajorVersionNr).'
+}
+$lpiMajor = $Matches[1]
+if ($lpiVersionText -notmatch '<MinorVersionNr\s+Value="(\d+)"') {
+    throw 'Could not read the LPI minor version (MinorVersionNr).'
+}
+$lpiMinor = $Matches[1]
+if ($lpiVersionText -notmatch '<RevisionNr\s+Value="(\d+)"') {
+    throw 'Could not read the LPI revision (RevisionNr).'
+}
+$lpiRevision = $Matches[1]
+if ($lpiMajor -ne $expectedMajor -or $lpiMinor -ne $expectedMinor -or
+    $lpiRevision -ne $expectedPatch) {
+    throw ("Version contract mismatch: CMake=$expectedVersion " +
+        "LPI=$lpiMajor.$lpiMinor.$lpiRevision")
+}
+if ($lpiVersionText -notmatch 'ProductVersion="([^"]+)"') {
+    throw 'Could not read the LPI product version (ProductVersion).'
+}
+$lpiProductVersion = $Matches[1]
+if ($lpiProductVersion -ne $expectedVersion) {
+    throw ("Version contract mismatch: CMake=$expectedVersion " +
+        "LPI ProductVersion=$lpiProductVersion")
+}
 $fpcBin = Split-Path -Parent $fpc
 $fpcLinker = Join-Path $fpcBin 'ld.exe'
 $mingwRoot = Split-Path -Parent (Split-Path -Parent $gcc)
