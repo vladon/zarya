@@ -10,13 +10,13 @@ the stable architecture and security documentation.
 |------|---------------|
 | Repository | `vladon/zarya` |
 | Trunk | `main` at `6cb4bc6cb14701c843a7eba64a15cc3b21c95dd9` |
-| Application version | `1.5.12` (`stable`) |
-| Windows release | Still Qt; LCL cutover has **not** happened |
+| Application version | `1.5.13` on `chore/windows-lcl-cutover`; `1.5.12` on `main` |
+| Windows release | Qt until the cutover PR merges; LCL prepared on `chore/windows-lcl-cutover` |
 | Working tree before this handoff | Clean and synchronized with `origin/main` |
 | LCL package contract | `Zarya.exe` + `Zarya.exe.sha256` only |
-| Rollback tag | `windows-qt-final-1.5.12` does not exist yet |
-| Cutover branch | `chore/windows-lcl-cutover` does not exist yet |
-| Self-hosted runners | None registered (`total_count: 0`) |
+| Rollback tag | `windows-qt-final-1.5.12` on `6cb4bc6` (created and pushed) |
+| Cutover branch | `chore/windows-lcl-cutover` created from `main` at `6cb4bc6` |
+| Self-hosted runners | `zarya-win10-gate` / `zarya-win11-gate`, online |
 
 The old local snapshot branch `wip/lcl-precutover-473fea3` and the merged local
 feature branch were deleted after the seven-PR series landed. The remote branch
@@ -25,6 +25,23 @@ old mixed snapshot.
 
 Other local branches/worktrees predate this effort and belong to the user. Do
 not delete or rewrite them.
+
+## Update 2026-08-19 — release gate complete
+
+- Both self-hosted runners are registered, online, and idle:
+  `zarya-win10-gate` (`windows-10-x64`) and `zarya-win11-gate`
+  (`windows-11-x64`).
+- The gate ran with `release_gate=true` on frozen `main` at `6cb4bc6`
+  (run `32042153728`, 2026-08-17). `hosted-windows`,
+  `release-gate (windows-10-x64)`, and `release-gate (windows-11-x64)` all
+  passed: build, Pascal/Go tests, the six-core matrix, and exact packaging.
+- The manual UI matrix passed on the 1.5.12 LCL artifact: 100%, 150%, and
+  200% DPI; EN/RU; light/dark theme; Tab order; keyboard-only operation; and
+  Narrator.
+- The rollback tag `windows-qt-final-1.5.12` was created and pushed exactly on
+  `6cb4bc6` (step 4). The cutover branch bumps to `1.5.13` and implements
+  step 6, including removal of the duplicate `hosted-windows` job from
+  `lcl-windows.yml` (the main Windows build job is now the LCL flow).
 
 ## Landed LCL series
 
@@ -101,6 +118,10 @@ An `xray.exe` observed after the tests belongs to the user's long-running
 cleanup.
 
 ## Current blockers
+
+> Status 2026-08-19: all three blockers below are resolved — runners are
+> online, the gate passed (run `32042153728`), and the UI matrix is complete.
+> The text is kept for the record.
 
 ### 1. No self-hosted Windows runners
 
@@ -217,11 +238,11 @@ Do not proceed if any of these remain:
 
 ```text
 Read AGENTS.md and docs/agent-handoff-2026-08-17-lcl-cutover.md completely.
-Continue the Windows LCL cutover from main at 6cb4bc6 / version 1.5.12.
-First verify that both self-hosted runners (windows-10-x64 and windows-11-x64)
-are online, run LCL Windows with release_gate=true, and complete the manual UI
-matrix. Do not create windows-qt-final-1.5.12 or start the cutover PR until the
-full gate passes. Then follow the handoff's exact tag, branch, signing,
-packaging, PR, and release sequence. Never push directly to main; use signed
+The Windows LCL release gate and manual UI matrix are complete (run 32042153728
+on main at 6cb4bc6), and the rollback tag windows-qt-final-1.5.12 is pushed.
+Continue with the chore/windows-lcl-cutover PR (version 1.5.13): wait for all
+CI, mark ready, squash-merge when green, then create the signed tag v1.5.13
+and verify the signed ZIP on clean Windows 10/11 before starting
+chore/remove-windows-qt (1.5.14). Never push directly to main; use signed
 commits and scoped PRs. Do not kill the user's v2rayN-owned xray.exe.
 ```
