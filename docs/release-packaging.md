@@ -49,7 +49,9 @@ Add `--require-signed` (used by `scripts/finalize-signpath-windows.ps1`) to
 fail closed unless `Zarya.exe` carries a valid, timestamped Authenticode
 signature. The active SignPath configuration signs only `Zarya.exe`; helper,
 updater, worker, and bridge binaries are no longer part of the Windows
-package.
+package. Signing is optional: while SignPath is inactive, stable Windows
+releases are verified and published unsigned with `--allow-unsigned` and
+mandatory checksums.
 
 The legacy Qt layout below applies to Windows artifacts built before the
 cutover (tag `windows-qt-final-1.5.12`) and to Linux/macOS packages:

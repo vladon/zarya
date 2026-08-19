@@ -3,7 +3,9 @@
 ## Current state
 
 Windows release signing is prepared for SignPath Foundation origin-verified builds.
-It remains disabled until the project is approved and the protected release-signing
+Signing is **optional and not required for any release level**: stable releases
+are published unsigned with mandatory SHA-256 checksums. The SignPath path stays
+dormant until the project is approved and the protected release-signing
 environment is configured. Local certificate hooks remain available for maintainers.
 
 ## Goals
@@ -42,7 +44,8 @@ Signed where credentials are available.
 
 ### Stable
 
-Signing required for Windows/macOS.
+SHA-256 checksums required. Code signing is optional (currently inactive);
+Windows/macOS artifacts may be published unsigned.
 
 ## Documentation
 
@@ -73,8 +76,8 @@ Verification: `python scripts/verify-release-artifacts.py --help`
 
 The release workflow uses the checked-in
 `.signpath/artifact-configuration.xml` and is enabled only when the repository
-variable `SIGNPATH_ENABLED` is `true`. Configure these values after SignPath
-Foundation approves the project:
+variable `SIGNPATH_ENABLED` is `true`; until then releases proceed unsigned.
+Configure these values after SignPath Foundation approves the project:
 
 - environment: `release-signing` with required reviewer approval
 - secret: `SIGNPATH_API_TOKEN`

@@ -29,9 +29,12 @@ python scripts/verify-release-artifacts.py \
 | `--allow-unsigned` | Accept unsigned artifacts while signing is unavailable |
 | `--require-signed` | Fail unless manifest and platform signatures validate |
 
-For Windows, `--require-signed` requires valid, timestamped Authenticode
-signatures on `Zarya.exe`, `zarya-helper.exe`, `zarya-updater.exe`, `zarya-core-test-worker.exe`, and `zarya-xray.dll`. One
-missing or invalid executable fails the complete artifact.
+For Windows, `--require-signed` requires a valid, timestamped Authenticode
+signature on `Zarya.exe` (the single-EXE LCL contract; helper, updater, worker,
+and bridge binaries are no longer part of the Windows package). It is used by
+the optional SignPath finalize path; while signing is inactive, stable
+verification runs with `--allow-unsigned` and relies on the mandatory SHA-256
+checksums.
 
 ## Manifest fields
 

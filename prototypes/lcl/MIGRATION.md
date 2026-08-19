@@ -52,7 +52,7 @@ backup, staging-преобразования и полной проверки. L
    LCL и ещё одним удалить Windows Qt/lib_ui targets. Linux/macOS Qt пока
    оставить. С версии 1.5.13 Windows CI/release и SignPath уже работают по
    LCL-контракту: ровно `Zarya.exe` + `Zarya.exe.sha256` в корне ZIP
-   (`--windows-lcl-single-exe`), подписывается только `Zarya.exe`.
+   (`--windows-lcl-single-exe`), подпись через SignPath (только `Zarya.exe`) опциональна.
 5. После cutover отдельно развивать gated embedded sing-box, TUN,
    helper/service, kill switch и self-update.
 

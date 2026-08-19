@@ -43,6 +43,15 @@ not delete or rewrite them.
   step 6, including removal of the duplicate `hosted-windows` job from
   `lcl-windows.yml` (the main Windows build job is now the LCL flow).
 
+## Update 2026-08-19 — signing requirement dropped
+
+By maintainer decision, code signing is no longer required for releases,
+including stable ones. Stable artifacts are published unsigned with mandatory
+SHA-256 checksums. The SignPath workflow, finalizer, artifact configuration,
+and the fail-closed `--require-signed` verification remain in the tree as an
+optional path that activates only when `SIGNPATH_ENABLED=true` is configured.
+Relevant policy and packaging documentation was updated in 1.5.14.
+
 ## Landed LCL series
 
 All changes were delivered as scoped squash-merged PRs:
@@ -196,8 +205,9 @@ the same command with escalated/user context succeeds. Never print the token.
    - make active SignPath configuration sign only `Zarya.exe`;
    - after signing, verify publisher/timestamp, regenerate
      `Zarya.exe.sha256`, and create the exact two-file ZIP;
-   - make stable Windows release fail closed if SignPath is disabled or
-     misconfigured;
+   - ~~make stable Windows release fail closed if SignPath is disabled or
+     misconfigured~~ (superseded 2026-08-19: signing is optional, see the
+     update above; fail-closed still applies when signing is enabled);
    - add negative package/signing tests and release notes for `1.5.13`.
 
 7. Run the required local checks, push a signed commit, open a draft PR, wait
@@ -221,8 +231,9 @@ Do not proceed if any of these remain:
 - failed embedded Xray or any supported external adapter;
 - raw config, credentials, external executables, user data, or full paths in
   ZIP/backup/diagnostics;
-- unsigned/untrusted `Zarya.exe` or a ZIP containing anything except the two
-  allowed files.
+- a ZIP containing anything except the two allowed files, or a `Zarya.exe`
+  whose checksum does not match (unsigned artifacts are acceptable since the
+  2026-08-19 optional-signing decision; checksums remain mandatory).
 
 ## Git workflow
 
