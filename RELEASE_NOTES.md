@@ -1,3 +1,13 @@
+# Zarya 1.5.14
+
+Zarya 1.5.14 makes release code signing optional: stable releases are
+published unsigned with mandatory SHA-256 checksums, and the dormant SignPath
+path stays available for future activation.
+
+See [docs/release-notes/1.5.14.md](docs/release-notes/1.5.14.md) for details.
+
+---
+
 # Zarya 1.5.13
 
 Zarya 1.5.13 prepares the Windows LCL cutover: Windows CI/release jobs build

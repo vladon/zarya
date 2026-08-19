@@ -151,8 +151,8 @@ Release-пакет с точным составом `Zarya.exe` + `Zarya.exe.sha
 
 С версии 1.5.13 Windows CI/release используют именно этот контракт:
 `scripts/verify-release-artifacts.py --windows-lcl-single-exe` требует ровно
-два файла в корне ZIP без DLL и вложенных каталогов, а SignPath подписывает
-только `Zarya.exe`.
+два файла в корне ZIP без DLL и вложенных каталогов; подпись через SignPath (только
+`Zarya.exe`) опциональна и для релиза не обязательна.
 
 ## Чек-лист сравнения
 

@@ -5,14 +5,15 @@ Free code signing provided by [SignPath.io](https://signpath.io/), certificate b
 
 ## Scope
 
-Official Windows release artifacts built from this repository may contain these
-Zarya-authored signed binaries:
+Official Windows release artifacts built from this repository may contain this
+Zarya-authored signed binary:
 
 - `Zarya.exe`
-- `zarya-helper.exe`
-- `zarya-updater.exe`
-- `zarya-core-test-worker.exe`
-- `zarya-xray.dll`
+
+Helper, updater, core-test-worker, and Xray bridge binaries have not been part
+of the Windows package since the 1.5.13 LCL single-EXE cutover. Signing is
+optional and currently inactive: stable releases are published unsigned with
+mandatory SHA-256 checksums until SignPath is activated.
 
 Downloaded or bundled third-party cores, including Xray and sing-box, are not
 signed as Zarya-authored code. Their versions and checksums are recorded by the
